@@ -124,42 +124,67 @@ export default function FlightPanel({ design, frame }) {
      re-issuing it. maxSegments (12) is a validated scenario limit, so
      the pad disables itself at the cap instead of building a scenario
      makeScenario would reject. */
-  const STEP_DEG = 10, STEP_YAW_DEG = 45, STEP_ALT_M = 1, STEP_S = 1;
-  const padFull = scen.segments.length >= SCENARIO_LIMITS.maxSegments;
-  const clampTilt = (d) => Math.max(-SCENARIO_LIMITS.maxTiltDeg,
-                                    Math.min(SCENARIO_LIMITS.maxTiltDeg, d));
-  const command = (mut) => setScen((st) => {
-    if (st.segments.length >= SCENARIO_LIMITS.maxSegments) return st;
+  /* ── FLYING IT, IN LOITER ─────────────────────────────────────────
+     A press commands a VELOCITY and appends two segments: the move, for
+     as long as the button is held, and then a release. In Loiter the
+     release commands zero velocity, so the aircraft BRAKES and HOLDS
+     rather than coasting away — which is the whole reason the pad used
+     to feel broken. Pressing forward twice now flies further, instead
+     of doubling a tilt that never stops.
+
+     Still not keyframed: each press rewrites the scenario and the whole
+     flight is integrated again. */
+  const STEP_MPS = 3, STEP_YAW_DEG = 45, STEP_ALT_M = 1;
+  const RELEASE_S = 4;                      // long enough to brake and settle
+  const MIN_HOLD_S = 0.4;                   // a tap is still a move
+  const padFull = scen.segments.length >= SCENARIO_LIMITS.maxSegments - 1;
+  const held = useRef(null);
+
+  const appendMove = (mut, holdS) => setScen((st) => {
+    if (st.segments.length >= SCENARIO_LIMITS.maxSegments - 1) return st;
     const last = st.segments[st.segments.length - 1] ?? {};
-    const base = {
-      durationS: STEP_S,
-      rollDeg: Number(last.rollDeg) || 0,
-      pitchDeg: Number(last.pitchDeg) || 0,
-      yawDeg: Number(last.yawDeg) || 0,
-      altitudeM: Number(last.altitudeM) || Number(st.startAltitudeM) || 2,
-      altitudeRateMps: "",
-    };
-    return { ...st, label: "Flown by hand", segments: [...st.segments, mut(base)] };
+    const alt = Number(last.altitudeM) || Number(st.startAltitudeM) || 2;
+    const yaw = Number(last.yawDeg) || 0;
+    const base = { mode: "loiter", durationS: Math.max(MIN_HOLD_S, holdS),
+                   rollDeg: 0, pitchDeg: 0, yawDeg: yaw, altitudeM: alt,
+                   vxMps: 0, vyMps: 0, altitudeRateMps: "" };
+    const move = mut(base);
+    /* Drop a previous trailing release: holding forward, releasing, then
+       holding again should read as two moves, not move-stop-move-stop. */
+    const segs = [...st.segments];
+    const prev = segs[segs.length - 1];
+    if (prev && prev.mode === "loiter" && !prev.vxMps && !prev.vyMps && prev.isRelease) segs.pop();
+    return { ...st, label: "Flown by hand", segments: [...segs, move,
+      { ...base, durationS: RELEASE_S, vxMps: 0, vyMps: 0, isRelease: true,
+        yawDeg: move.yawDeg, altitudeM: move.altitudeM }] };
   });
+
+  const startHold = (mut) => { held.current = { mut, at: performance.now() }; };
+  const endHold = () => {
+    const h = held.current; held.current = null;
+    if (!h) return;
+    appendMove(h.mut, (performance.now() - h.at) / 1000);
+  };
+
   const CONTROLS = [
-    { k: "fwd",  glyph: "▲", title: `forward — pitch ${-STEP_DEG}° for ${STEP_S}s (nose down)`,
-      go: () => command((b) => ({ ...b, pitchDeg: clampTilt(b.pitchDeg - STEP_DEG) })) },
-    { k: "back", glyph: "▼", title: `backward — pitch +${STEP_DEG}° for ${STEP_S}s`,
-      go: () => command((b) => ({ ...b, pitchDeg: clampTilt(b.pitchDeg + STEP_DEG) })) },
-    { k: "left", glyph: "◀", title: `left — roll ${-STEP_DEG}° for ${STEP_S}s`,
-      go: () => command((b) => ({ ...b, rollDeg: clampTilt(b.rollDeg - STEP_DEG) })) },
-    { k: "right",glyph: "▶", title: `right — roll +${STEP_DEG}° for ${STEP_S}s`,
-      go: () => command((b) => ({ ...b, rollDeg: clampTilt(b.rollDeg + STEP_DEG) })) },
+    { k: "fwd",  glyph: "▲", title: `forward at ${STEP_MPS} m/s while held — release and it brakes to a hover`,
+      mut: (b) => ({ ...b, vxMps: STEP_MPS }) },
+    { k: "back", glyph: "▼", title: `backward at ${STEP_MPS} m/s while held`,
+      mut: (b) => ({ ...b, vxMps: -STEP_MPS }) },
+    { k: "left", glyph: "◀", title: `left at ${STEP_MPS} m/s while held`,
+      mut: (b) => ({ ...b, vyMps: -STEP_MPS }) },
+    { k: "right",glyph: "▶", title: `right at ${STEP_MPS} m/s while held`,
+      mut: (b) => ({ ...b, vyMps: STEP_MPS }) },
     { k: "yawL", glyph: "↺", title: `yaw left ${STEP_YAW_DEG}°`,
-      go: () => command((b) => ({ ...b, yawDeg: b.yawDeg - STEP_YAW_DEG })) },
+      mut: (b) => ({ ...b, yawDeg: b.yawDeg - STEP_YAW_DEG }) },
     { k: "yawR", glyph: "↻", title: `yaw right ${STEP_YAW_DEG}°`,
-      go: () => command((b) => ({ ...b, yawDeg: b.yawDeg + STEP_YAW_DEG })) },
+      mut: (b) => ({ ...b, yawDeg: b.yawDeg + STEP_YAW_DEG }) },
     { k: "up",   glyph: "↑", title: `climb ${STEP_ALT_M} m`,
-      go: () => command((b) => ({ ...b, altitudeM: Math.min(SCENARIO_LIMITS.maxAltitudeM, b.altitudeM + STEP_ALT_M) })) },
+      mut: (b) => ({ ...b, altitudeM: Math.min(SCENARIO_LIMITS.maxAltitudeM, b.altitudeM + STEP_ALT_M) }) },
     { k: "down", glyph: "↓", title: `descend ${STEP_ALT_M} m`,
-      go: () => command((b) => ({ ...b, altitudeM: Math.max(0, b.altitudeM - STEP_ALT_M) })) },
-    { k: "level",glyph: "⌂", title: "level — roll and pitch to zero, heading and altitude held",
-      go: () => command((b) => ({ ...b, rollDeg: 0, pitchDeg: 0 })) },
+      mut: (b) => ({ ...b, altitudeM: Math.max(0, b.altitudeM - STEP_ALT_M) }) },
+    { k: "hold", glyph: "⌂", title: "hold position here",
+      mut: (b) => ({ ...b }) },
   ];
 
   const [motorTau, setMotorTau] = useState(0.05);
@@ -257,7 +282,24 @@ export default function FlightPanel({ design, frame }) {
      keeps flying, so the trace is already correct and must not be cut.
      Cutting is only right when nothing after the strike is modelled. */
   const trace = (!bounce && strike) ? fullTrace.slice(0, Math.max(2, strike.index + 1)) : fullTrace;
-  useEffect(() => { setI(0); }, [scenario, failedKey, motorTau, cd, scenery, bounce, restitution, breakSpeed]);
+  /* PLAYBACK DOES NOT RESTART ON A COMMAND. It used to setI(0) whenever
+     the scenario changed, so every press of the pad threw the animation
+     back to t=0 — which is most of why flying it felt like it was not
+     moving at all. A command now resumes at the moment the NEW segment
+     begins, and only a change that invalidates the whole flight
+     (a different aircraft, a dead rotor, new impact physics) restarts it. */
+  const prevDuration = useRef(0);
+  useEffect(() => {
+    const dur = scenario.totalDurationS;
+    const grew = dur > prevDuration.current + 1e-9;
+    const resumeAt = grew ? prevDuration.current : 0;
+    prevDuration.current = dur;
+    if (!trace.length) return;
+    const k = trace.findIndex((r) => r.t >= resumeAt);
+    setI(k < 0 ? 0 : k);
+    if (grew) setPlaying(true);
+  }, [scenario]);
+  useEffect(() => { setI(0); }, [failedKey, motorTau, cd, scenery, bounce, restitution, breakSpeed]);
 
   useEffect(() => {
     if (!playing || trace.length < 2) return;
@@ -510,7 +552,9 @@ export default function FlightPanel({ design, frame }) {
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
             <span style={{ fontSize: T.label, color: SC.muted }}>fly</span>
             {CONTROLS.map((c) => (
-              <button key={c.k} type="button" onClick={c.go} disabled={padFull} title={c.title}
+              <button key={c.k} type="button" disabled={padFull} title={c.title}
+                onPointerDown={() => startHold(c.mut)}
+                onPointerUp={endHold} onPointerLeave={() => { if (held.current) endHold(); }}
                 style={{ background: SC.inset, color: padFull ? SC.dim : SC.text,
                          border: `1px solid ${SC.caution}`, borderRadius: 3,
                          padding: "3px 8px", fontSize: T.body, lineHeight: 1.1,

@@ -46,7 +46,7 @@ import {
   buildModel, simulate, SCENARIOS, derivative, rk4, inertiaFromDesign,
   eulerToQ, qToEuler, qRotate, buildMixer, allocate, allocateDegraded,
   ARDUPILOT_GAINS, DECLARED_DYNAMICS_INPUTS, G_NED,
-  makeScenario, SCENARIO_PRESETS, SCENARIO_LIMITS, tiltAccelerationMps2,
+  makeScenario, SCENARIO_PRESETS, SCENARIO_LIMITS, tiltAccelerationMps2, ARDUPILOT_LOITER,
 } from "../src/classes/drone/dynamics.js";
 import { buildAirframe } from "../src/classes/drone/geometry3d.js";
 import { sizeDrone } from "../src/classes/drone/sizing.js";
@@ -454,6 +454,66 @@ check("a user-built scenario is indistinguishable to the integrator",
     return run.trace.length > 10 && Math.abs(last.altitudeM - 2) < 0.25
         && Math.abs(last.rollDeg) < 2 && Math.abs(last.pitchDeg) < 2;
   })(), "simulate takes it through the same path as a shipped scenario");
+
+/* ── LOITER: THE LOOP THAT MAKES RELEASING THE STICK MEAN SOMETHING ───
+   This simulation closed attitude and altitude and nothing else, which
+   is ArduPilot's STABILIZE: levelling removes the accelerating force but
+   not the velocity, so the aircraft coasts away for ever. That is right
+   for Stabilize and wrong for what a drone does when you let go, because
+   a real one is flown in LOITER, which closes velocity and position.
+
+   The gains are ArduPilot's own, and these checks are what makes using
+   them honest: the difference between the two modes has to be VISIBLE IN
+   THE TRAJECTORY, not merely asserted in a comment. */
+console.log("\n-- Stabilize coasts; Loiter stops. The trajectory must show it --");
+{
+  const flyIt = (segs) => {
+    const sc = makeScenario({ label: "t", startAltitudeM: 5, segments: segs });
+    return simulate({ model: quad.model, scenario: sc, declared: DD,
+                      durationS: sc.totalDurationS, failed: new Set() });
+  };
+  const last = (r) => r.trace[r.trace.length - 1];
+  const spd = (r) => Math.hypot(r.vx, r.vy);
+
+  const stab = flyIt([{ durationS: 4, pitchDeg: 15, altitudeM: 5 },
+                      { durationS: 6, pitchDeg: 0, altitudeM: 5 }]);
+  check("STABILIZE: levelling does NOT stop it -- no position loop is closed",
+    spd(last(stab)) > 3,
+    `still ${spd(last(stab)).toFixed(2)} m/s six seconds after levelling, `
+    + `${Math.abs(last(stab).x).toFixed(1)} m downrange`);
+
+  const loit = flyIt([{ durationS: 4, mode: "loiter", vxMps: 5, altitudeM: 5 },
+                      { durationS: 10, mode: "loiter", vxMps: 0, altitudeM: 5 }]);
+  const settled = loit.trace.filter((r) => r.t >= 10);
+  const range = Math.max(...settled.map((r) => r.x)) - Math.min(...settled.map((r) => r.x));
+  check("LOITER: releasing the stick brakes it to a stop",
+    Math.max(...settled.map(spd)) < 2,
+    `peak ${Math.max(...settled.map(spd)).toFixed(2)} m/s once settled, against `
+    + `${spd(last(stab)).toFixed(2)} m/s for the same manoeuvre in Stabilize`);
+  check("and then HOLDS the spot it stopped on", range < 1.5,
+    `position wanders ${range.toFixed(2)} m over the last four seconds`);
+
+  const held = flyIt([{ durationS: 8, mode: "loiter", vxMps: 5, altitudeM: 5 }]);
+  check("a HELD command keeps flying at the speed asked for, not an ever-growing tilt",
+    Math.abs(spd(last(held)) - 5) < 1.5,
+    `${spd(last(held)).toFixed(2)} m/s against 5 commanded`);
+
+  const there = flyIt([{ durationS: 4, mode: "loiter", vxMps: 5, altitudeM: 5 },
+                       { durationS: 4, mode: "loiter", vxMps: 0, altitudeM: 5 },
+                       { durationS: 4, mode: "loiter", vxMps: -5, altitudeM: 5 }]);
+  const turn = Math.max(...there.trace.map((r) => r.x));
+  check("and a reverse command flies back from WHERE IT STOPPED",
+    last(there).x < turn - 5,
+    `out to ${turn.toFixed(1)} m, back to ${last(there).x.toFixed(1)} m`);
+
+  check("the braking numbers are ArduPilot's, not chosen here",
+    ARDUPILOT_LOITER.brakeDelayS === 1.0 && ARDUPILOT_LOITER.brakeAccelMps2 === 2.5,
+    `AC_Loiter.cpp non-Heli: brake ${ARDUPILOT_LOITER.brakeAccelMps2} m/s^2 after `
+    + `${ARDUPILOT_LOITER.brakeDelayS} s, jerk ${ARDUPILOT_LOITER.brakeJerkMps3} m/s^3`);
+  check("and so are the velocity PID gains",
+    ARDUPILOT_LOITER.velP === 2.0 && ARDUPILOT_LOITER.velI === 1.0 && ARDUPILOT_LOITER.velD === 0.25,
+    "AC_PosControl.cpp Copter defaults: PSC_VELXY_P 2.0, I 1.0, D 0.25, PSC_POSXY_P 1.0");
+}
 
 console.log("=".repeat(78));
 console.log(fail === 0 ? `DRONE DYNAMICS GATE PASSED (${pass} checks)`

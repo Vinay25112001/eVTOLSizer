@@ -346,6 +346,150 @@ function solveN(A, b) {
 /* ── THE CONTROLLER ─────────────────────────────────────────────────
    ArduPilot's cascade: angle error -> rate demand (P, limited by the
    published acceleration maxima), rate error -> moment (PID). */
+/* ── LOITER: THE LOOP THAT MAKES RELEASING THE STICK MEAN SOMETHING ──
+   Until now this simulation closed ATTITUDE and ALTITUDE and nothing
+   else, which is ArduPilot's STABILIZE mode. In Stabilize, levelling the
+   aircraft removes the accelerating force but not the velocity already
+   built up: it keeps going, for ever, because nothing is asked to stop
+   it. That is correct for Stabilize and it is why a commanded 15 deg
+   pulse drifts 38.7 m after returning to level.
+
+   It is NOT what a drone does when you let go of the stick, because a
+   real one is flown in LOITER (ArduPilot) or POSITION (PX4), which close
+   an outer loop on velocity and position. Releasing the stick there
+   commands zero velocity and the aircraft BRAKES to a stop and holds.
+
+   THE NUMBERS ARE ARDUPILOT'S OWN, from AC_Loiter.cpp's default block
+   for the non-helicopter build:
+
+     LOITER_SPEED_DEFAULT_MS            12.5   m/s    max horizontal speed
+     LOITER_ACCEL_MAX_DEFAULT_MSS        5.0   m/s^2  max correction accel
+     LOITER_BRAKE_ACCEL_DEFAULT_MSS      2.5   m/s^2  braking accel
+     LOITER_BRAKE_JERK_DEFAULT_MSSS      5.0   m/s^3  braking jerk limit
+     LOITER_BRAKE_START_DELAY_DEFAULT_S  1.0   s      delay before braking
+
+   and the brake delay is real behaviour, not a detail: ArduPilot waits a
+   second before braking so that a pilot feathering the stick is not
+   fought by the controller. A release therefore coasts briefly and then
+   stops, which is what one looks like.
+
+   A HORIZONTAL ACCELERATION IS A LEAN ANGLE. The only way a multirotor
+   pushes sideways is by tilting its thrust, so the outer loop's output
+   is converted with theta = atan(a / g) — the same relation
+   tiltAccelerationMps2 already inverts for the Stabilize case. Braking
+   at 2.5 m/s^2 is a 14.3 deg lean, which is why the aircraft visibly
+   pitches back as it stops. */
+export const ARDUPILOT_LOITER = Object.freeze({
+  source: "ArduPilot AC_Loiter.cpp, non-Heli defaults (APM_BUILD_Heli branch not taken)",
+  maxSpeedMps: 12.5,
+  maxAccelMps2: 5.0,
+  brakeAccelMps2: 2.5,
+  brakeJerkMps3: 5.0,
+  brakeDelayS: 1.0,
+  minSpeedMps: 0.2,
+  /* The cascade's gains, from AC_PosControl.cpp's constructor defaults
+     for the Copter build (the Heli, Plane and Sub branches differ):
+
+       PSC_VELXY_P  2.0    PSC_VELXY_I  1.0    PSC_VELXY_D  0.25
+       PSC_VELXY_IMAX 10.0  FLTE 5.0 Hz        FLTD 5.0 Hz
+       PSC_POSXY_P  1.0
+
+     The D term is not optional. With P alone the loop limit-cycled at
+     plus or minus 0.9 m/s and plus or minus 24 degrees of pitch once it
+     had stopped — a proportional velocity loop driving an attitude loop
+     that lags it will always do that. */
+  velP: 2.0, velI: 1.0, velD: 0.25, velIMax: 10.0, velFiltHz: 5.0,
+  posP: 1.0,
+});
+
+/* The horizontal lean a velocity-hold loop asks for.
+
+   `vel` and `target` are world-frame horizontal velocities. Returns the
+   acceleration to command, already limited: to maxAccel while a target
+   is being tracked, and to the braking accel and jerk while stopping.
+   `state` carries the jerk limiter and the brake delay between steps. */
+export function loiterStep(state, { vel, target, pos, dt, cfg = ARDUPILOT_LOITER }) {
+  const stopping = Math.hypot(target[0] ?? 0, target[1] ?? 0) < 1e-9;
+  state.idleS = stopping ? (state.idleS ?? 0) + dt : 0;
+  const braking = stopping && state.idleS >= cfg.brakeDelayS;
+  if (stopping && !braking) {
+    state.hold = null;
+    return { ax: 0, ay: 0, braking: false, coasting: true, holding: false };
+  }
+
+  /* POSITION HOLD closes the outer-most loop. Once braking has brought
+     the aircraft below ArduPilot's own minimum loiter speed the spot is
+     LATCHED, and from then on the velocity target comes from the
+     position error rather than being zero — which is what stops it
+     sliding away on the residual and makes "release and it hovers"
+     literally true rather than approximately true. */
+  let tx = target[0] ?? 0, ty = target[1] ?? 0;
+  const speed = Math.hypot(vel[0], vel[1]);
+  if (braking && pos) {
+    if (!state.hold && speed < cfg.minSpeedMps) state.hold = [pos[0], pos[1]];
+    if (state.hold) {
+      tx = cfg.posP * (state.hold[0] - pos[0]);
+      ty = cfg.posP * (state.hold[1] - pos[1]);
+      const tm = Math.hypot(tx, ty);
+      if (tm > cfg.maxSpeedMps) { tx *= cfg.maxSpeedMps / tm; ty *= cfg.maxSpeedMps / tm; }
+    }
+  } else if (!stopping) {
+    state.hold = null;
+  }
+
+  const ex = tx - vel[0], ey = ty - vel[1];
+
+  /* DERIVATIVE ON THE MEASUREMENT, NOT THE ERROR. The position-hold
+     latch steps the velocity target the instant it engages, and a
+     derivative taken on the error turns that step into a spike — the
+     classic derivative kick. Differentiating the measured velocity
+     instead gives the same damping with no response to a target change.
+     Low-pass filtered at FLTD, as ArduPilot does, because an unfiltered
+     derivative of a sampled velocity is mostly noise. */
+  const rc = 1 / (2 * Math.PI * cfg.velFiltHz);
+  const a = dt / (dt + rc);
+  const dvx = (vel[0] - (state.lastVx ?? vel[0])) / dt;
+  const dvy = (vel[1] - (state.lastVy ?? vel[1])) / dt;
+  state.dEx = (state.dEx ?? 0) + a * (-dvx - (state.dEx ?? 0));
+  state.dEy = (state.dEy ?? 0) + a * (-dvy - (state.dEy ?? 0));
+  state.lastVx = vel[0]; state.lastVy = vel[1];
+
+  const cap = braking ? cfg.brakeAccelMps2 : cfg.maxAccelMps2;
+
+  /* CONDITIONAL INTEGRATION. The acceleration is capped, so while the
+     loop is saturated the integrator is accumulating error it cannot
+     act on; releasing it later is an overshoot that has nothing to do
+     with the aircraft. Integrating only while unsaturated is the
+     standard remedy and costs no gain anybody has to invent — without
+     it this loop held position to 2.7 m and plus or minus 1.9 m/s. */
+  const pdx = cfg.velP * ex + cfg.velD * state.dEx;
+  const pdy = cfg.velP * ey + cfg.velD * state.dEy;
+  if (Math.hypot(pdx, pdy) < cap) {
+    state.iEx = Math.max(-cfg.velIMax, Math.min(cfg.velIMax, (state.iEx ?? 0) + ex * dt));
+    state.iEy = Math.max(-cfg.velIMax, Math.min(cfg.velIMax, (state.iEy ?? 0) + ey * dt));
+  }
+
+  let ax = pdx + cfg.velI * (state.iEx ?? 0);
+  let ay = pdy + cfg.velI * (state.iEy ?? 0);
+
+  const mag = Math.hypot(ax, ay);
+  if (mag > cap && mag > 0) { ax *= cap / mag; ay *= cap / mag; }
+
+  const jmax = cfg.brakeJerkMps3 * dt;
+  const dax = ax - (state.ax ?? 0), day = ay - (state.ay ?? 0);
+  const dmag = Math.hypot(dax, day);
+  if (dmag > jmax && dmag > 0) { ax = (state.ax ?? 0) + dax * jmax / dmag; ay = (state.ay ?? 0) + day * jmax / dmag; }
+  state.ax = ax; state.ay = ay;
+  return { ax, ay, braking, coasting: false, holding: !!state.hold };
+}
+
+/* A horizontal acceleration expressed as the lean angle that produces
+   it. The exact inverse of tiltAccelerationMps2. */
+export function leanForAccel(aMps2, maxTiltRad = 45 * Math.PI / 180) {
+  const th = Math.atan(Math.abs(aMps2) / 9.80665);
+  return Math.sign(aMps2) * Math.min(th, maxTiltRad);
+}
+
 export function makeController(gains = ARDUPILOT_GAINS) {
   return { integ: [0, 0, 0], lastErr: [0, 0, 0], gains };
 }
@@ -542,12 +686,36 @@ export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
   const every = Math.max(1, Math.round(0.02 / dt));
   let allocationFailed = 0, axesDropped = [], hitGround = false, fullRankButUnattainable = false;
   const impacts = [], broken = [];
+  const loiter = { ax: 0, ay: 0, idleS: 0 };
+  let brakingS = 0;
 
   for (let s = 0; s <= steps; s++) {
     const t = s * dt;
     const q = [state[6], state[7], state[8], state[9]];
     const rates = [state[10], state[11], state[12]];
     const target = scenario.target(t, state);
+
+    /* LOITER: the outer loop picks the lean angle, the attitude loop
+       then flies it. In STABILIZE the commanded attitude is used as it
+       always was, so nothing about the existing scenarios changes. */
+    if (target.mode === "loiter") {
+      const yaw = qToEuler([state[6], state[7], state[8], state[9]]).yawRad;
+      const c = Math.cos(yaw), sn = Math.sin(yaw);
+      /* The stick is in BODY axes — forward is forward whichever way the
+         nose points — so the commanded velocity is rotated into the
+         world before it is compared with the world velocity. */
+      const wantX = target.vxMps * c - target.vyMps * sn;
+      const wantY = target.vxMps * sn + target.vyMps * c;
+      const a = loiterStep(loiter, { vel: [state[3], state[4]], target: [wantX, wantY],
+                                    pos: [state[0], state[1]], dt });
+      /* World acceleration back into body axes, then into lean angles.
+         Forward is a NEGATIVE pitch: nose down tilts the thrust ahead. */
+      const aFwd = a.ax * c + a.ay * sn;
+      const aRight = -a.ax * sn + a.ay * c;
+      target.pitchRad = -leanForAccel(aFwd);
+      target.rollRad = leanForAccel(aRight);
+      if (a.braking) brakingS += dt;
+    }
 
     const { moment, angErr } = controllerStep(ctl, { attitude: q, rates, target, dt });
     /* Collective: hold altitude with a simple proportional term on
@@ -673,7 +841,7 @@ export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
     /* Ground contact is detected by the integrator crossing zero, not by
        whether the last SAMPLED trace point happens to be low: the trace
        is recorded every 20 ms and the crossing can fall between samples. */
-    impacts, broken,
+    impacts, broken, brakingS,
     crashed: hitGround,
     hitGroundAtS: hitGround ? last.t : null,
     maxTiltDeg: Math.max(...trace.map((r) => Math.hypot(r.rollDeg, r.pitchDeg))),
@@ -794,8 +962,17 @@ export function makeScenario({
     const startAlt = commandedAlt;
     commandedAlt = altitudeM;
     total += durationS;
+    /* MODE. "stabilize" commands an ATTITUDE, which is what this
+       simulation has always done and is ArduPilot's Stabilize. "loiter"
+       commands a VELOCITY and lets the outer loop choose the attitude,
+       which is what Loiter and PX4 Position do — and the only mode in
+       which releasing the stick brings the aircraft to a stop. */
+    const mode = s.mode === "loiter" ? "loiter" : "stabilize";
+    const vxMps = Number(s.vxMps ?? 0) || 0;
+    const vyMps = Number(s.vyMps ?? 0) || 0;
     const seg = {
       durationS, startAlt, altitudeM, rateMps: rateRaw,
+      mode, vxMps, vyMps,
       rollDeg, pitchDeg, yawDeg,
       rollRad: rollDeg * Math.PI / 180,
       pitchRad: pitchDeg * Math.PI / 180,
@@ -825,7 +1002,8 @@ export function makeScenario({
         ? Math.min(seg.altitudeM, seg.startAlt + moved)
         : Math.max(seg.altitudeM, seg.startAlt - moved);
     }
-    return { rollRad: seg.rollRad, pitchRad: seg.pitchRad, yawRad: seg.yawRad, altitudeM };
+    return { rollRad: seg.rollRad, pitchRad: seg.pitchRad, yawRad: seg.yawRad, altitudeM,
+             mode: seg.mode, vxMps: seg.vxMps, vyMps: seg.vyMps };
   };
 
   return {

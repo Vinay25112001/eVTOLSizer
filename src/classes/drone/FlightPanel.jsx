@@ -234,12 +234,73 @@ export default function FlightPanel({ design, frame }) {
     follow: followPt,
   });
   const gridStep = world > 8 ? 2 : 1;
-  /* In follow mode the ground must not travel with the camera or the
-     motion becomes invisible. Snapping the grid origin to whole squares
-     keeps a continuous floor the aircraft visibly moves over. */
-  const gridCx = mode === "follow" ? Math.round(now.x / gridStep) * gridStep : ext.cx;
-  const gridCy = mode === "follow" ? Math.round(now.y / gridStep) * gridStep : ext.cy;
+  /* THE GROUND IS FIXED IN THE WORLD, NOT UNDER THE AIRCRAFT.
+
+     It used to snap: `gridCx = round(now.x / gridStep) * gridStep`, meant
+     to keep a continuous floor in follow mode. But the grid is PERIODIC
+     and every line was drawn identically, so snapping it to the nearest
+     whole square made it translation-invariant — the aircraft drifted up
+     to half a square, the whole grid jumped back by one square, and it
+     appeared to return to where it started. A 15 deg pitch really does
+     accelerate the aircraft at g*tan(theta) and carry it 38.7 m in a
+     pulse, and NONE of that was visible: it read as the aircraft wobbling
+     back and forth over a floor that never moved.
+
+     So the lattice is now absolute. Lines are drawn at whole multiples of
+     gridStep in WORLD coordinates and the visible window slides over them,
+     which is what makes travel legible. Every fifth line is heavier and
+     CARRIES ITS COORDINATE, because a uniform grid — snapped or not — is
+     still ambiguous at its own period: only a number distinguishes 20 m
+     from 30 m. */
+  const gridHalfSpan = 10 * gridStep;
+  const gridAnchorX = Math.round((mode === "follow" ? now.x : ext.cx) / gridStep) * gridStep;
+  const gridAnchorY = Math.round((mode === "follow" ? now.y : ext.cy) / gridStep) * gridStep;
+  const MAJOR_EVERY = 5;
   const travelledM = trace.length ? Math.hypot(now.x - trace[0].x, now.y - trace[0].y) : 0;
+
+  /* Where each major grid line's number goes. The line is a segment in
+     screen space; this clips it to the viewport (Liang-Barsky on the
+     rectangle) and returns the visible end that sits LOWER on screen,
+     which under this projection is the end nearest the viewer. A line
+     that misses the viewport entirely gets no label rather than a number
+     parked against the frame edge pointing at nothing. */
+  const gridLabels = (() => {
+    const PAD = 14, out = [];
+    const clip = (p0, p1) => {
+      let t0 = 0, t1 = 1;
+      const dx = p1.sx - p0.sx, dy = p1.sy - p0.sy;
+      const tests = [[-dx, p0.sx - PAD], [dx, W - PAD - p0.sx], [-dy, p0.sy - PAD], [dy, H - PAD - p0.sy]];
+      for (const [p, q] of tests) {
+        if (p === 0) { if (q < 0) return null; continue; }
+        const r = q / p;
+        if (p < 0) { if (r > t1) return null; if (r > t0) t0 = r; }
+        else { if (r < t0) return null; if (r < t1) t1 = r; }
+      }
+      const at = (t) => ({ sx: p0.sx + t * dx, sy: p0.sy + t * dy });
+      return [at(t0), at(t1)];
+    };
+    for (let k = 0; k <= 20; k++) {
+      const off = (k - 10) * gridStep;
+      const wx = gridAnchorX + off, wy = gridAnchorY + off;
+      if (Math.round(wx / gridStep) % MAJOR_EVERY === 0) {
+        const seg = clip(project([wx, gridAnchorY - gridHalfSpan, 0]),
+                         project([wx, gridAnchorY + gridHalfSpan, 0]));
+        if (seg) {
+          const p = seg[0].sy >= seg[1].sy ? seg[0] : seg[1];
+          out.push({ key: `gx${k}`, sx: p.sx, sy: p.sy - 4, anchor: "middle", text: `${wx.toFixed(0)}` });
+        }
+      }
+      if (Math.round(wy / gridStep) % MAJOR_EVERY === 0) {
+        const seg = clip(project([gridAnchorX - gridHalfSpan, wy, 0]),
+                         project([gridAnchorX + gridHalfSpan, wy, 0]));
+        if (seg) {
+          const p = seg[0].sy >= seg[1].sy ? seg[0] : seg[1];
+          out.push({ key: `gy${k}`, sx: p.sx, sy: p.sy - 4, anchor: "middle", text: `${wy.toFixed(0)}` });
+        }
+      }
+    }
+    return out;
+  })();
 
   /* The aircraft, at this frame's attitude and position. */
   const q = eulerToQ({
@@ -478,20 +539,46 @@ export default function FlightPanel({ design, frame }) {
             <rect x="0" y="0" width={W} height={H} fill="url(#fp-sky)" />
             <rect x="0" y="0" width={W} height={H} fill="url(#fp-glow)" />
 
-            {/* ground plane, one square per metre, fading with distance so
-                it reads as receding rather than as a flat pattern */}
+            {/* THE GROUND, ON AN ABSOLUTE WORLD LATTICE. Lines sit at whole
+                multiples of gridStep in world coordinates and the window
+                slides over them, so travel is visible instead of being
+                cancelled out by a grid that moved with the aircraft. Every
+                fifth line is heavier and labelled with its own coordinate:
+                a uniform grid is ambiguous at its own period, and only the
+                number separates 20 m from 30 m. Fades with distance so it
+                reads as receding rather than as flat pattern. */}
             <g>
               {Array.from({ length: 21 }, (_, k) => {
-                const t = (k - 10) * gridStep;
-                const L = 10 * gridStep;
+                const off = (k - 10) * gridStep;
+                const wx = gridAnchorX + off, wy = gridAnchorY + off;
+                const L = gridHalfSpan;
                 const fade = 0.34 * (1 - Math.abs(k - 10) / 12);
-                const a = project([gridCx + t, gridCy - L, 0]), b = project([gridCx + t, gridCy + L, 0]);
-                const c = project([gridCx - L, gridCy + t, 0]), d = project([gridCx + L, gridCy + t, 0]);
+                const majorX = Math.round(wx / gridStep) % MAJOR_EVERY === 0;
+                const majorY = Math.round(wy / gridStep) % MAJOR_EVERY === 0;
+                const a = project([wx, gridAnchorY - L, 0]), b = project([wx, gridAnchorY + L, 0]);
+                const c = project([gridAnchorX - L, wy, 0]), d = project([gridAnchorX + L, wy, 0]);
                 return (<g key={k} opacity={Math.max(0.05, fade)}>
-                  <line x1={a.sx} y1={a.sy} x2={b.sx} y2={b.sy} stroke="#5b7f9e" strokeWidth="1" />
-                  <line x1={c.sx} y1={c.sy} x2={d.sx} y2={d.sy} stroke="#5b7f9e" strokeWidth="1" />
+                  <line x1={a.sx} y1={a.sy} x2={b.sx} y2={b.sy}
+                        stroke={majorX ? "#7ea6c8" : "#5b7f9e"} strokeWidth={majorX ? 1.7 : 1} />
+                  <line x1={c.sx} y1={c.sy} x2={d.sx} y2={d.sy}
+                        stroke={majorY ? "#7ea6c8" : "#5b7f9e"} strokeWidth={majorY ? 1.7 : 1} />
                 </g>);
               })}
+              {/* THE COORDINATES, PLACED WHERE THEY CAN ACTUALLY BE SEEN.
+
+                  Drawn first at the lattice edge (+/-10 m), which is off
+                  screen at every zoom this panel uses, so the caption
+                  promised labels the view never showed. Each major line is
+                  now clipped to the viewport and the number is put at the
+                  end that is lower on screen, i.e. nearest the viewer.
+                  Full strength, because a faded number is not a reference
+                  anyone can read. */}
+              {gridLabels.map((L) => (
+                <text key={L.key} x={L.sx} y={L.sy} textAnchor={L.anchor}
+                      fill={VIEW.muted} fontSize="10" fontFamily={MONO} opacity="0.9">
+                  {L.text}
+                </text>
+              ))}
             </g>
 
             {/* shadow and the vertical drop line, so altitude is readable.
@@ -570,7 +657,7 @@ export default function FlightPanel({ design, frame }) {
             })()}
 
             <text x={10} y={H - 10} fill={VIEW.muted} fontSize="10" fontFamily={MONO}>
-              {`drag to orbit · grid ${gridStep} m · green = computed thrust per rotor · orthographic`}
+              {`drag to orbit · grid ${gridStep} m, every ${MAJOR_EVERY * gridStep} m labelled in world metres · green = computed thrust per rotor · orthographic`}
             </text>
           </svg>
 

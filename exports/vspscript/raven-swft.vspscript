@@ -1,0 +1,397 @@
+/* ============================================================
+ *  RAVEN SWFT VSP Public Release.vsp3
+ *  Rebuilt as an AngelScript by tools/vsp3-to-vspscript.py
+ *
+ *  This is a CHECK, not a convenience: if it rebuilds the
+ *  released model, the geom tree, types and parm names this
+ *  project reads out of that file are correct.
+ * ============================================================ */
+
+void main()
+{
+    bool hingeOK = true;
+
+    // Fuselage  [Fuselage]
+    string fuselage = AddGeom( "FUSELAGE", "" );
+    SetGeomName( fuselage, "Fuselage" );
+    SetParmVal( fuselage, "X_Rel_Location", "XForm", -0.691690 );
+    SetParmVal( fuselage, "Y_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( fuselage, "Z_Rel_Location", "XForm", -3.100000 );
+    SetParmVal( fuselage, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( fuselage, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( fuselage, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( fuselage, "Length", "Design", 51.366690 );
+    SetParmVal( fuselage, "Sym_Planar_Flag", "Sym", 0.000000 );
+    Update();
+
+    // Wing  [Wing]
+    string wing = AddGeom( "WING", "" );
+    SetGeomName( wing, "Wing" );
+    SetParmVal( wing, "X_Rel_Location", "XForm", 14.431200 );
+    SetParmVal( wing, "Y_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( wing, "Z_Rel_Location", "XForm", 6.527000 );
+    SetParmVal( wing, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( wing, "Y_Rel_Rotation", "XForm", 2.890000 );
+    SetParmVal( wing, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( wing, "TotalSpan", "WingGeom", 68.560000 );
+    SetParmVal( wing, "TotalArea", "WingGeom", 625.610000 );
+    SetParmVal( wing, "TotalAR", "WingGeom", 7.513425 );
+    SetParmVal( wing, "Sym_Planar_Flag", "Sym", 2.000000 );
+    Update();
+
+    // Hinge - Horizontal Stabiltor Pivot  [Hinge]
+    string hinge_horizontal_stabiltor_pivot = AddGeom( "HINGE", "" );
+    if ( hinge_horizontal_stabiltor_pivot.length() == 0 ) { hingeOK = false; }
+    SetGeomName( hinge_horizontal_stabiltor_pivot, "Hinge - Horizontal Stabiltor Pivot" );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "X_Rel_Location", "XForm", 47.618000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "Y_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "Z_Rel_Location", "XForm", -0.672000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "Sym_Planar_Flag", "Sym", 0.000000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "PrimXVec", "Hinge", 0.000000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "PrimYVec", "Hinge", 1.000000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "PrimZVec", "Hinge", 0.000000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "JointRotMin", "Hinge", -20.000000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "JointRotMax", "Hinge", 20.000000 );
+    SetParmVal( hinge_horizontal_stabiltor_pivot, "JointRotate", "Hinge", 0.000000 );
+    Update();
+
+    // Horizontal Stabilator  [Wing]
+    string horizontal_stabilator = AddGeom( "WING", hinge_horizontal_stabiltor_pivot );
+    SetGeomName( horizontal_stabilator, "Horizontal Stabilator" );
+    SetParmVal( horizontal_stabilator, "X_Rel_Location", "XForm", -1.524000 );
+    SetParmVal( horizontal_stabilator, "Y_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( horizontal_stabilator, "Z_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( horizontal_stabilator, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( horizontal_stabilator, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( horizontal_stabilator, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( horizontal_stabilator, "TotalSpan", "WingGeom", 17.250000 );
+    SetParmVal( horizontal_stabilator, "TotalArea", "WingGeom", 126.012975 );
+    SetParmVal( horizontal_stabilator, "TotalAR", "WingGeom", 2.361364 );
+    SetParmVal( horizontal_stabilator, "Sym_Planar_Flag", "Sym", 2.000000 );
+    Update();
+
+    // Vertical Stabilizer  [Wing]
+    string vertical_stabilizer = AddGeom( "WING", "" );
+    SetGeomName( vertical_stabilizer, "Vertical Stabilizer" );
+    SetParmVal( vertical_stabilizer, "X_Rel_Location", "XForm", 39.340000 );
+    SetParmVal( vertical_stabilizer, "Y_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( vertical_stabilizer, "Z_Rel_Location", "XForm", 0.950000 );
+    SetParmVal( vertical_stabilizer, "X_Rel_Rotation", "XForm", 90.000000 );
+    SetParmVal( vertical_stabilizer, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( vertical_stabilizer, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( vertical_stabilizer, "TotalSpan", "WingGeom", 10.577290 );
+    SetParmVal( vertical_stabilizer, "TotalArea", "WingGeom", 101.442976 );
+    SetParmVal( vertical_stabilizer, "TotalAR", "WingGeom", 1.102876 );
+    SetParmVal( vertical_stabilizer, "Sym_Planar_Flag", "Sym", 0.000000 );
+    Update();
+
+    // Inboard Sponson  [Fuselage]
+    string inboard_sponson = AddGeom( "FUSELAGE", "" );
+    SetGeomName( inboard_sponson, "Inboard Sponson" );
+    SetParmVal( inboard_sponson, "X_Rel_Location", "XForm", 6.500000 );
+    SetParmVal( inboard_sponson, "Y_Rel_Location", "XForm", -14.771000 );
+    SetParmVal( inboard_sponson, "Z_Rel_Location", "XForm", 5.218390 );
+    SetParmVal( inboard_sponson, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( inboard_sponson, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( inboard_sponson, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( inboard_sponson, "Length", "Design", 23.592000 );
+    SetParmVal( inboard_sponson, "Sym_Planar_Flag", "Sym", 2.000000 );
+    Update();
+
+    // Hinge - Proprotor Pivot - Inboard All  [Hinge]
+    string hinge_proprotor_pivot_inboard_all = AddGeom( "HINGE", inboard_sponson );
+    if ( hinge_proprotor_pivot_inboard_all.length() == 0 ) { hingeOK = false; }
+    SetGeomName( hinge_proprotor_pivot_inboard_all, "Hinge - Proprotor Pivot - Inboard All" );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "X_Rel_Location", "XForm", 6.260000 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "Y_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "Z_Rel_Location", "XForm", 6.243340 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "Sym_Planar_Flag", "Sym", 0.000000 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "PrimXVec", "Hinge", 0.000000 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "PrimYVec", "Hinge", 1.000000 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "PrimZVec", "Hinge", 0.000000 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "JointRotMin", "Hinge", 0.000000 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "JointRotMax", "Hinge", 110.000000 );
+    SetParmVal( hinge_proprotor_pivot_inboard_all, "JointRotate", "Hinge", 90.000000 );
+    Update();
+
+    // Hinge - Inboard Proprotor Pivot  [Hinge]
+    string hinge_inboard_proprotor_pivot = AddGeom( "HINGE", hinge_proprotor_pivot_inboard_all );
+    if ( hinge_inboard_proprotor_pivot.length() == 0 ) { hingeOK = false; }
+    SetGeomName( hinge_inboard_proprotor_pivot, "Hinge - Inboard Proprotor Pivot" );
+    SetParmVal( hinge_inboard_proprotor_pivot, "X_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "Y_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "Z_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "Sym_Planar_Flag", "Sym", 0.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "PrimXVec", "Hinge", 0.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "PrimYVec", "Hinge", 1.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "PrimZVec", "Hinge", 0.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "JointRotMin", "Hinge", 0.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "JointRotMax", "Hinge", 110.000000 );
+    SetParmVal( hinge_inboard_proprotor_pivot, "JointRotate", "Hinge", 0.000000 );
+    Update();
+
+    // Inboard Motors  [Fuselage]
+    string inboard_motors = AddGeom( "FUSELAGE", hinge_inboard_proprotor_pivot );
+    SetGeomName( inboard_motors, "Inboard Motors" );
+    SetParmVal( inboard_motors, "X_Rel_Location", "XForm", -2.155090 );
+    SetParmVal( inboard_motors, "Y_Rel_Location", "XForm", -14.771000 );
+    SetParmVal( inboard_motors, "Z_Rel_Location", "XForm", -1.024950 );
+    SetParmVal( inboard_motors, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( inboard_motors, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( inboard_motors, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( inboard_motors, "Length", "Design", 3.070145 );
+    SetParmVal( inboard_motors, "Sym_Planar_Flag", "Sym", 2.000000 );
+    Update();
+
+    // L Inboard Proprotor  [Propeller]
+    string l_inboard_proprotor = AddGeom( "PROP", hinge_inboard_proprotor_pivot );
+    SetGeomName( l_inboard_proprotor, "L Inboard Proprotor" );
+    SetParmVal( l_inboard_proprotor, "X_Rel_Location", "XForm", -2.155090 );
+    SetParmVal( l_inboard_proprotor, "Y_Rel_Location", "XForm", -14.771000 );
+    SetParmVal( l_inboard_proprotor, "Z_Rel_Location", "XForm", -1.024950 );
+    SetParmVal( l_inboard_proprotor, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( l_inboard_proprotor, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( l_inboard_proprotor, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( l_inboard_proprotor, "Diameter", "Design", 19.500000 );
+    SetParmVal( l_inboard_proprotor, "NumBlade", "Design", 3.000000 );
+    SetParmVal( l_inboard_proprotor, "Solidity", "Design", 0.169649 );
+    SetParmVal( l_inboard_proprotor, "Sym_Planar_Flag", "Sym", 0.000000 );
+    Update();
+
+    // R Inboard Proprotor  [Propeller]
+    string r_inboard_proprotor = AddGeom( "PROP", hinge_inboard_proprotor_pivot );
+    SetGeomName( r_inboard_proprotor, "R Inboard Proprotor" );
+    SetParmVal( r_inboard_proprotor, "X_Rel_Location", "XForm", -2.155090 );
+    SetParmVal( r_inboard_proprotor, "Y_Rel_Location", "XForm", 14.771000 );
+    SetParmVal( r_inboard_proprotor, "Z_Rel_Location", "XForm", -1.024950 );
+    SetParmVal( r_inboard_proprotor, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( r_inboard_proprotor, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( r_inboard_proprotor, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( r_inboard_proprotor, "Diameter", "Design", 19.500000 );
+    SetParmVal( r_inboard_proprotor, "NumBlade", "Design", 3.000000 );
+    SetParmVal( r_inboard_proprotor, "Solidity", "Design", 0.169649 );
+    SetParmVal( r_inboard_proprotor, "Sym_Planar_Flag", "Sym", 0.000000 );
+    Update();
+
+    // Aft Hover Motors  [Fuselage]
+    string aft_hover_motors = AddGeom( "FUSELAGE", inboard_sponson );
+    SetGeomName( aft_hover_motors, "Aft Hover Motors" );
+    SetParmVal( aft_hover_motors, "X_Rel_Location", "XForm", 31.263000 );
+    SetParmVal( aft_hover_motors, "Y_Rel_Location", "XForm", 14.771000 );
+    SetParmVal( aft_hover_motors, "Z_Rel_Location", "XForm", 9.893240 );
+    SetParmVal( aft_hover_motors, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( aft_hover_motors, "Y_Rel_Rotation", "XForm", 90.000000 );
+    SetParmVal( aft_hover_motors, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( aft_hover_motors, "Length", "Design", 2.837340 );
+    SetParmVal( aft_hover_motors, "Sym_Planar_Flag", "Sym", 2.000000 );
+    Update();
+
+    // Aft Motor Covers  [Fuselage]
+    string aft_motor_covers = AddGeom( "FUSELAGE", aft_hover_motors );
+    SetGeomName( aft_motor_covers, "Aft Motor Covers" );
+    SetParmVal( aft_motor_covers, "X_Rel_Location", "XForm", 31.200000 );
+    SetParmVal( aft_motor_covers, "Y_Rel_Location", "XForm", 14.771000 );
+    SetParmVal( aft_motor_covers, "Z_Rel_Location", "XForm", 8.050000 );
+    SetParmVal( aft_motor_covers, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( aft_motor_covers, "Y_Rel_Rotation", "XForm", 90.000000 );
+    SetParmVal( aft_motor_covers, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( aft_motor_covers, "Length", "Design", 3.135000 );
+    SetParmVal( aft_motor_covers, "Sym_Planar_Flag", "Sym", 2.000000 );
+    Update();
+
+    // L Hover Proprotor  [Propeller]
+    string l_hover_proprotor = AddGeom( "PROP", aft_hover_motors );
+    SetGeomName( l_hover_proprotor, "L Hover Proprotor" );
+    SetParmVal( l_hover_proprotor, "X_Rel_Location", "XForm", 31.263000 );
+    SetParmVal( l_hover_proprotor, "Y_Rel_Location", "XForm", -14.771000 );
+    SetParmVal( l_hover_proprotor, "Z_Rel_Location", "XForm", 9.143240 );
+    SetParmVal( l_hover_proprotor, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( l_hover_proprotor, "Y_Rel_Rotation", "XForm", 90.000000 );
+    SetParmVal( l_hover_proprotor, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( l_hover_proprotor, "Diameter", "Design", 19.500000 );
+    SetParmVal( l_hover_proprotor, "NumBlade", "Design", 3.000000 );
+    SetParmVal( l_hover_proprotor, "Solidity", "Design", 0.169649 );
+    SetParmVal( l_hover_proprotor, "Sym_Planar_Flag", "Sym", 0.000000 );
+    Update();
+
+    // R Hover Proprotor  [Propeller]
+    string r_hover_proprotor = AddGeom( "PROP", aft_hover_motors );
+    SetGeomName( r_hover_proprotor, "R Hover Proprotor" );
+    SetParmVal( r_hover_proprotor, "X_Rel_Location", "XForm", 31.263000 );
+    SetParmVal( r_hover_proprotor, "Y_Rel_Location", "XForm", 14.771000 );
+    SetParmVal( r_hover_proprotor, "Z_Rel_Location", "XForm", 9.143240 );
+    SetParmVal( r_hover_proprotor, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( r_hover_proprotor, "Y_Rel_Rotation", "XForm", 90.000000 );
+    SetParmVal( r_hover_proprotor, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( r_hover_proprotor, "Diameter", "Design", 19.500000 );
+    SetParmVal( r_hover_proprotor, "NumBlade", "Design", 3.000000 );
+    SetParmVal( r_hover_proprotor, "Solidity", "Design", 0.169649 );
+    SetParmVal( r_hover_proprotor, "Sym_Planar_Flag", "Sym", 0.000000 );
+    Update();
+
+    // Hinge - Proprotor and Sponson Pivot - Outboard All  [Hinge]
+    string hinge_proprotor_and_sponson_pivot_outboard_all = AddGeom( "HINGE", "" );
+    if ( hinge_proprotor_and_sponson_pivot_outboard_all.length() == 0 ) { hingeOK = false; }
+    SetGeomName( hinge_proprotor_and_sponson_pivot_outboard_all, "Hinge - Proprotor and Sponson Pivot - Outboard All" );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "X_Rel_Location", "XForm", 17.590800 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "Y_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "Z_Rel_Location", "XForm", 6.545940 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "Sym_Planar_Flag", "Sym", 0.000000 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "PrimXVec", "Hinge", 0.000000 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "PrimYVec", "Hinge", 1.000000 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "PrimZVec", "Hinge", 0.000000 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "JointRotMin", "Hinge", 0.000000 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "JointRotMax", "Hinge", 110.000000 );
+    SetParmVal( hinge_proprotor_and_sponson_pivot_outboard_all, "JointRotate", "Hinge", 90.000000 );
+    Update();
+
+    // Hinge - Outboard Proprotor and Sponson Pivot  [Hinge]
+    string hinge_outboard_proprotor_and_sponson_pivot = AddGeom( "HINGE", hinge_proprotor_and_sponson_pivot_outboard_all );
+    if ( hinge_outboard_proprotor_and_sponson_pivot.length() == 0 ) { hingeOK = false; }
+    SetGeomName( hinge_outboard_proprotor_and_sponson_pivot, "Hinge - Outboard Proprotor and Sponson Pivot" );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "X_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "Y_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "Z_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "Sym_Planar_Flag", "Sym", 0.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "PrimXVec", "Hinge", 0.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "PrimYVec", "Hinge", 1.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "PrimZVec", "Hinge", 0.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "JointRotMin", "Hinge", 0.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "JointRotMax", "Hinge", 110.000000 );
+    SetParmVal( hinge_outboard_proprotor_and_sponson_pivot, "JointRotate", "Hinge", 0.000000 );
+    Update();
+
+    // Outboard Motor and Sponson Assembly  [Fuselage]
+    string outboard_motor_and_sponson_assembly = AddGeom( "FUSELAGE", hinge_outboard_proprotor_and_sponson_pivot );
+    SetGeomName( outboard_motor_and_sponson_assembly, "Outboard Motor and Sponson Assembly" );
+    SetParmVal( outboard_motor_and_sponson_assembly, "X_Rel_Location", "XForm", -5.990800 );
+    SetParmVal( outboard_motor_and_sponson_assembly, "Y_Rel_Location", "XForm", 35.725000 );
+    SetParmVal( outboard_motor_and_sponson_assembly, "Z_Rel_Location", "XForm", -0.018880 );
+    SetParmVal( outboard_motor_and_sponson_assembly, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( outboard_motor_and_sponson_assembly, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( outboard_motor_and_sponson_assembly, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( outboard_motor_and_sponson_assembly, "Length", "Design", 11.943000 );
+    SetParmVal( outboard_motor_and_sponson_assembly, "Sym_Planar_Flag", "Sym", 2.000000 );
+    Update();
+
+    // L Outboard Proprotor  [Propeller]
+    string l_outboard_proprotor = AddGeom( "PROP", hinge_outboard_proprotor_and_sponson_pivot );
+    SetGeomName( l_outboard_proprotor, "L Outboard Proprotor" );
+    SetParmVal( l_outboard_proprotor, "X_Rel_Location", "XForm", -5.515800 );
+    SetParmVal( l_outboard_proprotor, "Y_Rel_Location", "XForm", -35.725000 );
+    SetParmVal( l_outboard_proprotor, "Z_Rel_Location", "XForm", -0.018880 );
+    SetParmVal( l_outboard_proprotor, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( l_outboard_proprotor, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( l_outboard_proprotor, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( l_outboard_proprotor, "Diameter", "Design", 19.500000 );
+    SetParmVal( l_outboard_proprotor, "NumBlade", "Design", 3.000000 );
+    SetParmVal( l_outboard_proprotor, "Solidity", "Design", 0.169649 );
+    SetParmVal( l_outboard_proprotor, "Sym_Planar_Flag", "Sym", 0.000000 );
+    Update();
+
+    // R Outboard Proprotor  [Propeller]
+    string r_outboard_proprotor = AddGeom( "PROP", hinge_outboard_proprotor_and_sponson_pivot );
+    SetGeomName( r_outboard_proprotor, "R Outboard Proprotor" );
+    SetParmVal( r_outboard_proprotor, "X_Rel_Location", "XForm", -5.515800 );
+    SetParmVal( r_outboard_proprotor, "Y_Rel_Location", "XForm", 35.725000 );
+    SetParmVal( r_outboard_proprotor, "Z_Rel_Location", "XForm", -0.018880 );
+    SetParmVal( r_outboard_proprotor, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( r_outboard_proprotor, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( r_outboard_proprotor, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( r_outboard_proprotor, "Diameter", "Design", 19.500000 );
+    SetParmVal( r_outboard_proprotor, "NumBlade", "Design", 3.000000 );
+    SetParmVal( r_outboard_proprotor, "Solidity", "Design", 0.169649 );
+    SetParmVal( r_outboard_proprotor, "Sym_Planar_Flag", "Sym", 0.000000 );
+    Update();
+
+    // Nose Gear  [Fuselage]
+    string nose_gear = AddGeom( "FUSELAGE", "" );
+    SetGeomName( nose_gear, "Nose Gear" );
+    SetParmVal( nose_gear, "X_Rel_Location", "XForm", 3.540000 );
+    SetParmVal( nose_gear, "Y_Rel_Location", "XForm", -0.500000 );
+    SetParmVal( nose_gear, "Z_Rel_Location", "XForm", -9.350000 );
+    SetParmVal( nose_gear, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( nose_gear, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( nose_gear, "Z_Rel_Rotation", "XForm", 90.000000 );
+    SetParmVal( nose_gear, "Length", "Design", 1.000000 );
+    SetParmVal( nose_gear, "Sym_Planar_Flag", "Sym", 0.000000 );
+    Update();
+
+    // Nose Gear Caster  [Fuselage]
+    string nose_gear_caster = AddGeom( "FUSELAGE", nose_gear );
+    SetGeomName( nose_gear_caster, "Nose Gear Caster" );
+    SetParmVal( nose_gear_caster, "X_Rel_Location", "XForm", -0.760870 );
+    SetParmVal( nose_gear_caster, "Y_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( nose_gear_caster, "Z_Rel_Location", "XForm", 0.950000 );
+    SetParmVal( nose_gear_caster, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( nose_gear_caster, "Y_Rel_Rotation", "XForm", -45.000000 );
+    SetParmVal( nose_gear_caster, "Z_Rel_Rotation", "XForm", 90.000000 );
+    SetParmVal( nose_gear_caster, "Length", "Design", 1.000000 );
+    SetParmVal( nose_gear_caster, "Sym_Planar_Flag", "Sym", 0.000000 );
+    Update();
+
+    // Nose Gear Spar  [Fuselage]
+    string nose_gear_spar = AddGeom( "FUSELAGE", nose_gear );
+    SetGeomName( nose_gear_spar, "Nose Gear Spar" );
+    SetParmVal( nose_gear_spar, "X_Rel_Location", "XForm", 2.222218 );
+    SetParmVal( nose_gear_spar, "Y_Rel_Location", "XForm", 0.000000 );
+    SetParmVal( nose_gear_spar, "Z_Rel_Location", "XForm", -8.001019 );
+    SetParmVal( nose_gear_spar, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( nose_gear_spar, "Y_Rel_Rotation", "XForm", -40.250000 );
+    SetParmVal( nose_gear_spar, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( nose_gear_spar, "Length", "Design", 5.500000 );
+    SetParmVal( nose_gear_spar, "Sym_Planar_Flag", "Sym", 0.000000 );
+    Update();
+
+    // Main Gear  [Fuselage]
+    string main_gear = AddGeom( "FUSELAGE", "" );
+    SetGeomName( main_gear, "Main Gear" );
+    SetParmVal( main_gear, "X_Rel_Location", "XForm", 20.440000 );
+    SetParmVal( main_gear, "Y_Rel_Location", "XForm", 6.525000 );
+    SetParmVal( main_gear, "Z_Rel_Location", "XForm", -9.350000 );
+    SetParmVal( main_gear, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( main_gear, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( main_gear, "Z_Rel_Rotation", "XForm", 90.000000 );
+    SetParmVal( main_gear, "Length", "Design", 1.000000 );
+    SetParmVal( main_gear, "Sym_Planar_Flag", "Sym", 2.000000 );
+    Update();
+
+    // Main Gear Struts  [Wing]
+    string main_gear_struts = AddGeom( "WING", main_gear );
+    SetGeomName( main_gear_struts, "Main Gear Struts" );
+    SetParmVal( main_gear_struts, "X_Rel_Location", "XForm", -2.420000 );
+    SetParmVal( main_gear_struts, "Y_Rel_Location", "XForm", -6.525000 );
+    SetParmVal( main_gear_struts, "Z_Rel_Location", "XForm", 4.550000 );
+    SetParmVal( main_gear_struts, "X_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( main_gear_struts, "Y_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( main_gear_struts, "Z_Rel_Rotation", "XForm", 0.000000 );
+    SetParmVal( main_gear_struts, "TotalSpan", "WingGeom", 17.000000 );
+    SetParmVal( main_gear_struts, "TotalArea", "WingGeom", 40.000000 );
+    SetParmVal( main_gear_struts, "TotalAR", "WingGeom", 4.510125 );
+    SetParmVal( main_gear_struts, "Sym_Planar_Flag", "Sym", 2.000000 );
+    Update();
+
+    if ( !hingeOK )
+        Print( string("NOTE: AddGeom(\"HINGE\") returned nothing; hinges are absent and the model cannot convert.\n") );
+    // NOT emitted, because this converter does not handle their type:
+    //   Inboard Forward ESC (Custom)
+    //   Inboard Aft ESC (Custom)
+    //   Outboard ESC (Custom)
+    WriteVSPFile( "rebuilt.vsp3" );
+    Print( string("Rebuilt 25 of 28 geoms.\n") );
+}

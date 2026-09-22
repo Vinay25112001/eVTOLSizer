@@ -1,0 +1,40 @@
+eVTOL Conceptual Sizing Tool
+Copyright 2026 Vinay Kumar Reddy Sirigireddy
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+--------------------------------------------------------------------------
+THIRD-PARTY AND REFERENCE MATERIAL
+
+This project's runtime dependencies (React, react-dom, Recharts, Vite and
+@vitejs/plugin-react) are each distributed under the MIT License by their
+respective authors. They are not vendored into this repository; they are
+resolved from npm at build time.
+
+The weight, performance and acoustic METHODS implemented here are drawn from
+published literature, principally the NDARC Theory Manual and the AFDD
+weight equations (NASA), NASA/TM-20210017971, EASA SC-VTOL and its Means of
+Compliance, IEC 61672-1 and ISO 9613-1. Those documents are the property of
+their publishers and are NOT redistributed here. What this repository
+contains is an independent implementation of the published methods, together
+with the numeric results of running it, each traced to its source in the
+code and in VALIDATION.md.
+
+--------------------------------------------------------------------------
+VENDORED THIRD-PARTY FILE
+
+validation/schemas/cpacs-3.5.1/cpacs_schema.xsd is the CPACS 3.5.1 schema
+(Common Parametric Aircraft Configuration Schema), developed by the German
+Aerospace Center (DLR), https://github.com/DLR-SL/CPACS, distributed under
+the Apache License 2.0 (copy alongside it as LICENSE.txt). It is included
+unmodified and used only to validate this tool's CPACS export.

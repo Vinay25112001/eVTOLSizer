@@ -1,0 +1,256 @@
+<title>Sizing Loop Anatomy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#F4F6F8; --paper:#FFFFFF; --ink:#18212B; --ink-2:#4B5966; --rule:#D3DAE1;
+    --accent:#0A4F8C; --accent-soft:#E3EDF6;
+    --wing:#0A4F8C; --wing-soft:#E3EDF6;
+    --rotor:#9C4A12; --rotor-soft:#F7E9DD;
+    --ok:#1F6F43; --warn:#8A5A00; --bad:#9B2C2C;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#111820; --paper:#18222D; --ink:#E6ECF2; --ink-2:#A6B3C0; --rule:#2B3743;
+    --accent:#7FB3E6; --accent-soft:#1B2E42; --wing:#7FB3E6; --wing-soft:#1B2E42;
+    --rotor:#E5A06A; --rotor-soft:#3A2717; --ok:#6CC08F; --warn:#E0B458; --bad:#E27C7C; } }
+  :root[data-theme="dark"]{
+    --bg:#111820; --paper:#18222D; --ink:#E6ECF2; --ink-2:#A6B3C0; --rule:#2B3743;
+    --accent:#7FB3E6; --accent-soft:#1B2E42; --wing:#7FB3E6; --wing-soft:#1B2E42;
+    --rotor:#E5A06A; --rotor-soft:#3A2717; --ok:#6CC08F; --warn:#E0B458; --bad:#E27C7C; }
+
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0}
+  main{max-width:880px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:30px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+  .sub{color:var(--ink-2);font-size:15px;max-width:66ch;margin:0 0 28px}
+  h2{font-size:20px;font-weight:600;margin:44px 0 10px;padding-top:18px;border-top:1px solid var(--rule);text-wrap:balance}
+  h3{font-size:15px;font-weight:600;margin:22px 0 6px}
+  p{max-width:68ch;margin:0 0 12px}
+  code,.f{font-family:var(--mono);font-size:.92em}
+  .f{display:block;background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:10px 14px;margin:8px 0 12px;white-space:pre;overflow-x:auto;line-height:1.5}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+  .fig{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:16px 16px 8px;margin:14px 0 22px;overflow-x:auto}
+  .fig .cap{font-size:13px;color:var(--ink-2);margin:6px 0 0;max-width:none}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:14px 0 8px}
+  .card{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:14px 16px}
+  .card h3{margin:0 0 8px;display:flex;align-items:center;gap:8px}
+  .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;padding:2px 7px;border-radius:3px;text-transform:uppercase}
+  .tag.wing{background:var(--wing-soft);color:var(--wing)} .tag.rotor{background:var(--rotor-soft);color:var(--rotor)}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13.5px;margin:0}
+  .kv dt{color:var(--ink-2)} .kv dd{margin:0;font-variant-numeric:tabular-nums}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0 16px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-weight:600;color:var(--ink-2);font-size:12.5px}
+  td.n{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12.5px}
+  .wrap{overflow-x:auto}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 4px 4px 0;margin:14px 0}
+  .honest{border-left:3px solid var(--warn);background:var(--paper);padding:12px 16px;border-radius:0 4px 4px 0;margin:18px 0}
+  .honest p{margin:0 0 8px}
+  .src{font-size:12.5px;color:var(--ink-2)}
+  ul{padding-left:20px;max-width:68ch} li{margin:3px 0}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;margin:6px 0 0}
+  .sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:6px}
+  .stage{font-family:var(--mono);color:var(--accent);font-size:12.5px}
+</style>
+
+<main>
+<div class="eyebrow">eVTOL Sizer · engine reference · commit 151 · 2026-09-16</div>
+<h1>Sizing Loop Anatomy</h1>
+<p class="sub">Every stage the engine runs, in the order it runs them, for each of the six configurations — drawn from <code>src/engine.js</code> and <code>src/engine/configuration.js</code> as they are, with the source behind each formula. Nothing here is a description of what the tool should do; it is what it does.</p>
+
+<div class="note"><strong>One loop, six configurations.</strong> There is a single sizing iteration. It is NDARC's own architecture — NASA/TP-20220000355 §5-1.2 describes one sizing task for every rotorcraft type, parameterised by configuration — and a separate loop per layout would be the mistake, not the feature. What differs by configuration is <em>which branches fire inside it</em>, and that is what the diagrams below make visible.</p></div>
+
+<div class="legend"><span><i class="sw" style="background:var(--wing)"></i>winged branch — lift+cruise, tiltrotor, hybrid, hybrid-pusher</span><span><i class="sw" style="background:var(--rotor)"></i>rotor-borne branch — multicopter, side-by-side</span></div>
+
+<h2>1 · The whole run</h2>
+<p>Four phases. The first two run once; R2 iterates until gross weight closes; the last two evaluate the converged aircraft.</p>
+<div class="fig">
+<pre class="mermaid">
+flowchart TD
+  IN["Inputs<br/>payload · range · cruise speed · altitude<br/>configuration · rotor count · weight model"]:::io
+  PRE["PRE-LOOP (once)<br/>atmosphere at field &amp; cruise<br/>tolerance 0.01·W·ε — NDARC §5-1.2<br/>hops in the sizing mission<br/>rotor diameter from disk loading target<br/>fuselage length &amp; equivalent diameter<br/>body long enough for its rotor array"]:::pre
+  R1["R1 (once) — first estimate<br/>MTOW₁ = payload + ewf·MTOW₁ + bf·MTOW₁<br/>bf = g·range / (L/D · η · SED)"]:::pre
+  R2{{"R2 — coupled mass + energy<br/>up to 600 successive substitutions<br/>MTOWₙ₊₁ = payload + Wempty(MTOWₙ) + Wbat(MTOWₙ)"}}:::loop
+  CONV{"|ΔW| &lt; 0.01·W·ε ?"}:::dec
+  DIV{"MTOW &gt; ceiling ?"}:::dec
+  POST["POST-LOOP (once)<br/>bracketing solver if R2 oscillated<br/>wing position → neutral point → static margin<br/>tail sized at its drawn angle<br/>motor sizing · pack energy · V-n + gust lines · wing box"]:::post
+  CHK["CHECKS — 29 to 43 by layout<br/>airworthiness, feasibility, structure, geometry"]:::post
+  OUT["Outputs — 427 keys (416 wingless)<br/>each with provenance status"]:::io
+  IN --> PRE --> R1 --> R2 --> CONV
+  CONV -- no --> DIV
+  DIV -- no --> R2
+  DIV -- "yes: does not close" --> CHK
+  CONV -- yes --> POST --> CHK --> OUT
+  classDef io fill:#EEF2F6,stroke:#8A98A6,color:#18212B
+  classDef pre fill:#E3EDF6,stroke:#0A4F8C,color:#18212B
+  classDef loop fill:#FFF6E8,stroke:#B0541A,color:#18212B,stroke-width:2px
+  classDef dec fill:#FFFFFF,stroke:#4B5966,color:#18212B
+  classDef post fill:#E8F3EC,stroke:#1F6F43,color:#18212B
+</pre>
+<p class="cap">The tolerance is scaled to gross weight — 0.01·W·ε — per NDARC §5-1.2 verbatim: <em>"0.01Wε for gross weight, maximum takeoff weight, fuel weight, jet thrust, and design rotor thrust."</em> Until 2026-09-08 it was an absolute 10⁻⁶ kg, unreachable on the heavier layouts, which were reported as non-converged while within micrograms of the answer.</p>
+</div>
+
+<h2>2 · Inside R2 — the sixteen stages, in order</h2>
+<p>Each iteration takes the current MTOW, rebuilds the aircraft from it, and returns the mass that aircraft would weigh. The fork at stage 1 is the configuration fork: everything downstream of it that concerns a wing is skipped on the rotor-borne layouts, and their cruise is charged at a rotor-borne L/D and efficiency instead.</p>
+<div class="fig">
+<pre class="mermaid">
+flowchart TD
+  W["W = MTOW·g"]:::io
+  S1["1 · DRAG AREA<br/>f = ΣC_D·S per component — the primitive; CD0 is presentation"]:::st
+  FORK{"hasWing ?"}:::dec
+  WA["Wing area from wing loading<br/>span · chord · MAC · sweep<br/>CD0 = f/S · CL_cr = W/(qS)<br/>CD_i = CL²/(π·AR·e) · L/D = CL/(CD0+CD_i)"]:::wing
+  RB["No wing.<br/>L/D = rotor-borne value<br/>η = rotor-borne value<br/>tail areas = 0"]:::rotor
+  S2["2 · HOVER DOWNLOAD — thrust ÷ (1 − DL/T)"]:::st
+  S3["3 · SOLIDITY from blade loading C_T/σ — not a constant"]:::st
+  S4["4 · SIDE-BY-SIDE OVERLAP — NDARC 12-5.1.3, twin-rotor induced power"]:::rotor
+  S5["5 · CLIMB &amp; DESCENT L/D at their own airspeeds"]:::st
+  S6["6 · DESCENT POWER — regeneration credit stated, not silent"]:::st
+  S7["7 · HOVER ALLOWANCE · 8 · HEADWIND"]:::st
+  E["Mission energy E = Σ P·t<br/>hover · climb · cruise · descent · reserve"]:::st
+  S9{"9 · EMPTY WEIGHT — which model ?"}:::dec
+  BU["buildup: NDARC/AFDD groups<br/>structure at n_ult from this iterate's load cases<br/>rotor (AFDD82/84/93/00) · fuselage (AFDD84)<br/>drive (AFDD00) · gear (CS-27 drop) · booms · systems"]:::st
+  FR["fraction: W_empty = ewf · MTOW<br/>one ewf for all six layouts"]:::st
+  S10["10 · THE GUARD MUST NOT BE SILENT — fallbacks are reported"]:::st
+  S11["11 · SPECIFIC-ENERGY BASIS · 12 · battery η on vertical flight only"]:::st
+  B["Battery: W_E = E/(SED·η·usable) vs W_P = P_hov/specific power<br/>W_bat = max(W_E, W_P)"]:::st
+  S14["13 · specific power · 14 · PACK SYSTEMS inside the loop (BTMS, BMS, tray)"]:::st
+  M["m_new = payload + W_empty + W_bat"]:::io
+  S15["15 · CEILING — divergence guard, 2× cert MTOM or 20 000 kg"]:::st
+  S16["16 · RELAXATION — measured NOT to help; bracketing instead"]:::st
+  W --> S1 --> FORK
+  FORK -- "winged" --> WA --> S2
+  FORK -- "rotor-borne" --> RB --> S2
+  S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> E --> S9
+  S9 -- default --> BU --> S10
+  S9 -- fallback --> FR --> S10
+  S10 --> S11 --> B --> S14 --> M --> S15 --> S16
+  classDef io fill:#EEF2F6,stroke:#8A98A6,color:#18212B
+  classDef st fill:#FFFFFF,stroke:#8A98A6,color:#18212B
+  classDef dec fill:#FFFFFF,stroke:#4B5966,color:#18212B,stroke-width:2px
+  classDef wing fill:#E3EDF6,stroke:#0A4F8C,color:#18212B
+  classDef rotor fill:#F7E9DD,stroke:#9C4A12,color:#18212B
+</pre>
+<p class="cap">Stage 4 fires only on the side-by-side. Stage 9's <em>fraction</em> branch applies one empty-weight fraction to every layout; NASA's own all-electric vehicles span 0.49–0.585 ex-battery, so that branch is 17% light on lift+cruise — recorded, not yet fixed. The <em>buildup</em> branch is the default.</p>
+</div>
+
+<h2>3 · The six configurations — what each one switches on</h2>
+<p>The parameters that select branches, from <code>CONFIG_DEFAULTS</code> and <code>capabilitiesFor()</code>. Disk loading and rotor count are NASA Table 12 values per layout, not one number shared across them.</p>
+
+<div class="grid">
+  <div class="card"><h3>Multicopter <span class="tag rotor">rotor-borne</span></h3>
+    <dl class="kv"><dt>rotors</dt><dd>4 · DL 3.00 lb/ft² (NASA Quad-E)</dd><dt>wing</dt><dd>none — rotor-borne L/D</dd><dt>coaxial</dt><dd>supported (EHang, SkyDrive, SureFly)</dd><dt>booms</dt><dd>yes, one arm per rotor; Yang 2024: 4.8·m_r</dd><dt>body</dt><dd>capsule, H/W 1.267, ellipsoid loft</dd><dt>NDARC</dt><dd>§2-7 Multicopter</dd></dl></div>
+  <div class="card"><h3>Side-by-side <span class="tag rotor">rotor-borne</span></h3>
+    <dl class="kv"><dt>rotors</dt><dd>2 · DL 3.50 lb/ft² (NASA SbS-E)</dd><dt>wing</dt><dd>none</dd><dt>overlap</dt><dd>NDARC 12-5.1.3 twin-rotor induced power; 15% overlap is the design</dd><dt>booms</dt><dd>two pylons, one per rotor</dd><dt>NDARC</dt><dd>12-5.1.3; no Ch. 2 entry of its own</dd></dl></div>
+  <div class="card"><h3>Lift + cruise <span class="tag wing">winged</span></h3>
+    <dl class="kv"><dt>rotors</dt><dd>4 lift · DL 13.1 lb/ft² (NASA L+C-E)</dd><dt>wing</dt><dd>yes — wing loading per aircraft</dd><dt>stopped</dt><dd>lift rotors stop in cruise; hub drag exposed</dd><dt>cruise</dt><dd>separate propulsor</dd><dt>NDARC</dt><dd>nearest §2-6 Compound</dd></dl></div>
+  <div class="card"><h3>Tiltrotor <span class="tag wing">winged</span></h3>
+    <dl class="kv"><dt>rotors</dt><dd>6 · DL 12.4 lb/ft² (Yanev &amp; Staack TR6-E)</dd><dt>wing</dt><dd>yes</dd><dt>tilt</dt><dd>rotors tilt; AFDD f_tilt = 1.1794 on rotor weight</dd><dt>download</dt><dd>hover download on the wing — not zero</dd><dt>NDARC</dt><dd>§2-5 Tiltrotor</dd></dl></div>
+  <div class="card"><h3>Hybrid <span class="tag wing">winged</span></h3>
+    <dl class="kv"><dt>rotors</dt><dd>12 · DL 12.4 lb/ft²</dd><dt>wing</dt><dd>yes</dd><dt>tilt</dt><dd>yes</dd><dt>NDARC</dt><dd>nearest §2-6 Compound; no exact NDARC or VFS slot</dd></dl></div>
+  <div class="card"><h3>Hybrid pusher <span class="tag wing">winged</span></h3>
+    <dl class="kv"><dt>rotors</dt><dd>6 · DL 12.0 lb/ft²</dd><dt>wing</dt><dd>yes</dd><dt>tilt</dt><dd>yes</dd><dt>cruise</dt><dd>aft pusher behind the tail, on the body axis</dd><dt>NDARC</dt><dd>nearest §2-6 Compound</dd></dl></div>
+</div>
+
+<h3>Which stages each configuration runs</h3>
+<div class="wrap"><table>
+<tr><th>stage</th><th>multicopter</th><th>side-by-side</th><th>lift+cruise</th><th>tiltrotor</th><th>hybrid</th><th>hybrid pusher</th></tr>
+<tr><td>wing aero (area, CL, CD_i, L/D)</td><td>—</td><td>—</td><td>●</td><td>●</td><td>●</td><td>●</td></tr>
+<tr><td>rotor-borne L/D and η</td><td>●</td><td>●</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>twin-rotor overlap (NDARC 12-5.1.3)</td><td>—</td><td>●</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>tilt factor on rotor weight</td><td>—</td><td>—</td><td>—</td><td>●</td><td>●</td><td>●</td></tr>
+<tr><td>stopped-rotor hub drag in cruise</td><td>—</td><td>—</td><td>●</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>boom mass (shell buckling, min gauge)</td><td>●</td><td>●</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>capsule section, equivalent diameter</td><td>●</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>tail sizing (volume coefficients)</td><td>—</td><td>—</td><td>●</td><td>●</td><td>●</td><td>●</td></tr>
+<tr><td>neutral point, static margin</td><td>—</td><td>—</td><td>●</td><td>●</td><td>●</td><td>●</td></tr>
+<tr><td>wing box structural design</td><td>—</td><td>—</td><td>●</td><td>●</td><td>●</td><td>●</td></tr>
+<tr><td>cabin floor ≥ occupants × 1.65 m²</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td></tr>
+<tr><td>OEI controllability (ACAI)</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td></tr>
+</table></div>
+
+<h2>4 · The formulas the loop turns on, with their sources</h2>
+<p>Only the ones that carry a citation the reader can open. The full census is in §6.</p>
+
+<h3>Hover power — momentum theory</h3>
+<div class="f">P_hover = (W / η_hov) · √( DL / (2ρ) )        DL = W·(T/W) / (N · π R²)
+rotor diameter is a CONSEQUENCE of the disk-loading target, solved per iteration</div>
+<p class="src">Disk loading targets: NASA/TM-20210017971 Table 12 per vehicle. Hover download: Felker; tiltrotor download on the wing is not defaulted to zero.</p>
+
+<h3>Convergence — NDARC §5-1.2</h3>
+<div class="f">converged when  |m_new − MTOW| &lt; 0.01 · W · ε        ε = 10^convTolExp, default 10⁻⁶
+cap 600 iterations; runaway stopped by the MTOW ceiling, not the cap</div>
+<p class="src">NASA/TP-20220000355 §5-1.1–5-1.2. Relaxation on W_MTO was implemented per §5-2.1, measured, and found not to help here — the fraction-model divergences are a missing root, not a repelling one.</p>
+
+<h3>Fuselage wetted area — Raymer, with a floor where Raymer fails</h3>
+<div class="f">λ &gt; 2.5 :  S_wet = π·D·L·(1 − 2/λ)^(2/3)·(1 + 1/λ²)        Raymer Eq 12.31
+λ ≤ 2.5 :  prolate spheroid, exact                            (1 − 2/λ) &lt; 0 below λ = 2 → NaN</div>
+<p class="src">Below fineness 2.5 the Raymer term collapses (0.19 at λ = 2.18, an 81% under-count). Both the in-loop and post-loop paths now call the same helper; a gate fails any open-coded occurrence.</p>
+
+<h3>Capsule section — equivalent diameter</h3>
+<div class="f">D_eq = √(W · H)        π/4·D_eq² = π/4·W·H exactly
+area terms take D_eq; cabin floor and rotor clearance keep the true width</div>
+<p class="src">Reference cabin 1.5 m wide × 1.9 m tall: a circle of D = W is 21% low on frontal area, D = H is 27% high.</p>
+
+<h3>Cabin floor — occupancy constraint</h3>
+<div class="f">fusLen · fusDiam  ≥  occupants · 1.65 m²        occupants = payload / 90.718 kg</div>
+<p class="src">90.718 kg = 200 lb: NASA/20180006683, <em>"6 occupants at 1200 lb total."</em> 1.65 m²: one CAD-measured cabin; population of eight (Yang 2024 Table 4, image estimates) spans 1.60–3.12 m²/occupant, mean 2.21 — the floor sits at the bottom of a real population.</p>
+
+<h3>Limit load factors — one home, every layout</h3>
+<div class="f">manoeuvre  n+ ≥ +2.0 ,  n− ≤ −0.5          MOC VTOL.2200(f) — certified FLOORS
+           proposal default 3.5 / −1.5      sidebar (Structure), range +2..6 / −3..−0.5 — NO SOURCE
+winged     n_limit = max(n+, gust cases)    gusts 9.14 / 15.24 / 20.12 m/s (Enhanced) — MOC VTOL.2215(f)
+           Δn = K_g·U_de·V·a·ρ0 / (2·W/S),  K_g = 0.88μ/(5.3+μ)
+wingless   n_limit = max(2.0, installed T/W)   thrust-borne, the positive input is unused
+n_ult = 1.5 · n_limit                         VTOL.2230(a)(2) / AC 21.17-4 PL.2230(b)
+n_ult → AFDD wing and fuselage weights, inside the sizing loop</div>
+<p class="src">All of it lives in <code>engine/loadcases.js</code>; the certification rows, weight model, wing box, V-n and Performance tabs, exported report and regulation tracker read it from there, and the <code>npm run loadfactor</code> gate fails a copy anywhere else. EASA MOC SC-VTOL Issue 2, verbatim: <em>"The positive load factor is not less than 2.0 and the negative limit manoeuvring load factor is not less than −0.5."</em> The gust velocities are MOC VTOL.2215(f); the <em>"currently not defined"</em> sentence in MOC VTOL.2135 is the handling-qualities MOC, a different question. FAA AC 21.17-4 gives no load factor at all — its only requirement, PL.2200(b), is performance-based. The negative factor draws the V-n envelope and sizes no structure.</p>
+
+<h3>Weight groups — NDARC / AFDD</h3>
+<div class="wrap"><table>
+<tr><th>group</th><th>equation</th><th>in-population error (AFDD, 42 helicopters)</th></tr>
+<tr><td>rotor blade + hub</td><td>AFDD82 / 84 / 93 / 00, per layout; f_tilt 1.1794 on tilting rotors</td><td class="n">8.6%</td></tr>
+<tr><td>fuselage</td><td>AFDD84, gear-location factors 1.1627 / 1.1437</td><td class="n">— (structure group 6.1%)</td></tr>
+<tr><td>drive system</td><td>AFDD00, gearbox + shaft</td><td class="n">8.6%</td></tr>
+<tr><td>flight controls</td><td>scales on airframe weight, not MTOW</td><td class="n">8.7%</td></tr>
+<tr><td>landing gear</td><td>CS-27 drop-test energy</td><td class="n">—</td></tr>
+<tr><td>booms</td><td>shell buckling + minimum gauge; Yang 2024 4.8·m_r</td><td class="n">—</td></tr>
+</table></div>
+<p class="src">NDARC Theory Manual (NASA/TP-2015-218751) §27-13 Table 27-21 for the AFDD errors. NASA/TP-20250006187 Table 3 records its own calibration as fuselage 0.994±0.069, blade 0.853±0.081, hub 0.954±0.083 — the form a calibration record should take.</p>
+
+<h2>5 · The checks stage — 43 checks, 29 to 43 applicable per layout</h2>
+<p>The winged layouts run up to 43; the wingless ones 29 or 30, with the wing-borne criteria reported as not applicable rather than failed.</p>
+<div class="grid">
+  <div class="card"><h3>Convergence &amp; feasibility</h3><ul><li>Sizing loop converged</li><li>Sizing loop stayed inside the design space</li><li>Weight-closure margin &gt; 10%</li><li>Cruise range &gt; 0 km</li><li>Usable pack ≥ mission energy</li><li>Battery fraction &lt; 55%</li><li>Residual SoC at mission end</li><li>Cabin holds its occupants</li><li>Mission matches the reference aircraft</li></ul></div>
+  <div class="card"><h3>Certification</h3><ul><li>MTOW within the SC-VTOL-02 limit (5 700 kg)</li><li>Climb gradient ≥ 2.5% (MOC VTOL.2120, by category)</li></ul></div>
+  <div class="card"><h3>Rotor &amp; hover</h3><ul><li>Blade loading C_T/σ &lt; 0.12</li><li>Rotor solidity within buildable bound</li><li>Disk loading ≤ 25 lb/ft²</li><li>Tip Mach &lt; 0.70</li><li>Hover download</li><li>Hover T/W ≥ 1.30</li><li>Hover load factor n_z ≥ 1.35 (continuous torque)</li><li>Hover thrust split within T/W</li><li>Hover trim: CG inside rotor array</li><li>Rotors even and ≥ 4 · rotors fit within the span</li></ul></div>
+  <div class="card"><h3>Failure, power &amp; thermal</h3><ul><li>Controllable after a single rotor failure (ACAI)</li><li>Cruise thrust loss per failure &lt; 40%</li><li>Motor peak capability ≥ OEI transient</li><li>Cruise duty &lt; 80% continuous · cruise thermally balanced</li><li>Cell peak &lt; 55 °C</li></ul></div>
+  <div class="card"><h3>Cruise &amp; envelope</h3><ul><li>Cruise L/D ≥ 9.5 (advisory) · AR vs L/D compatible</li><li>Mach &lt; 0.45</li><li>Descent speed inside the flight envelope</li><li>Static margin −10–25% MAC (advisory)</li><li>V-tail pitch and yaw authority</li></ul></div>
+  <div class="card"><h3>Structure &amp; geometry</h3><ul><li>Structural margin of safety ≥ 0</li><li>Wing tip deflection &lt; 15% semi-span</li><li>Boom mass &lt; 15% of MTOW</li><li>Main tyre rated load · strut clears reserve-energy drop</li><li>Fus/Span 0.40–0.75 · Tail/Wing area 25–50%</li><li>Fuselage pitch moment in NP</li></ul></div>
+</div>
+
+<h2>6 · What is sourced, what is calibrated, what is not yet</h2>
+<div class="honest">
+<p><strong>Read this before trusting a number.</strong> Of 427 engine outputs, <strong>14 (3%)</strong> have been compared numerically to a published aircraft. 131 are traced to a citation; 207 are derived; 6 are calibrated; <strong>69 are unverified</strong>; none is unregistered. The weight buildup carries 5 <code>[SRC]</code>, 12 <code>[CAL]</code>, 6 <code>[FRAC]</code>, 5 <code>[LAY]</code> tags; three of the twelve calibrations say in their own words that they have no published source.</p>
+<p>Benchmark: 14.5% mean error over 39 NASA Table 12 comparisons, 13.8% over 11 commercial metrics (component buildup). AFDD's own equations carry 5–10% on the helicopters they were fitted to; this is conceptual-design fidelity, and a tool at this level claiming better than ~10% would be the suspicious one.</p>
+<p>The programme to close the gaps, in order, is <code>docs/VALIDATION-PROGRAM.md</code>. The sixteen NASA weight statements and NASA's own calibration set are now in <code>src/data/aircraft-database.js</code>, tiered by pedigree.</p>
+</div>
+
+<h2>7 · Sources</h2>
+<div class="wrap"><table>
+<tr><th>document</th><th>used for</th></tr>
+<tr><td>Johnson, <em>NDARC Theory</em>, NASA/TP-20220000355 (2022); TP-2015-218751 §27</td><td>sizing iteration §5-1.2; relaxation §5-2.1; AFDD weight equations and Table 27-21 errors; twin-rotor §12-5.1.3</td></tr>
+<tr><td>Silva, Johnson, Antcliff, Patterson, NASA/20180006683</td><td>occupant mass, 6 at 1200 lb; reference-vehicle definitions</td></tr>
+<tr><td>Johnson, Silva, Solis, NASA/20180003381</td><td>quadrotor, side-by-side, tiltwing concept vehicles; Table 6 technology factors</td></tr>
+<tr><td>NASA/TM-20210017971 Table 12</td><td>disk loading, tip speed, solidity per layout; the 39-comparison benchmark</td></tr>
+<tr><td>NASA/TP-20250006187 (2025)</td><td>Table 2 calibration set; Table 3 calibration record; Tables 10, 12 weight statements</td></tr>
+<tr><td>EASA SC-VTOL-02 Issue 2; MOC SC-VTOL Issues 1–5</td><td>MTOM 5 700 kg; load-factor floors VTOL.2200(f); gust velocities VTOL.2215(f); factor of safety VTOL.2230(a)(2)</td></tr>
+<tr><td>FAA, 89 FR 17230 (Joby JAS4-1)</td><td>4 800 lb gross, five seats, §21.17(b) basis</td></tr>
+<tr><td>Yang et al., <em>Aerospace</em> 2024 11:200</td><td>Table 4 cabins; Table 1 motors; Table 5 T-MOTOR hover; boom mass 4.8·m_r</td></tr>
+<tr><td>Yanev &amp; Staack, <em>Aerospace</em> 2026 13(566)</td><td>TR6-E six-rotor tiltrotor, C_T/σ 0.0973</td></tr>
+<tr><td>Raymer, <em>Aircraft Design</em>, Eq 12.31</td><td>fuselage wetted area above fineness 2.5</td></tr>
+<tr><td>Du, Quan, Yang, Cai (ACAI); Malpica, Suh, Silva</td><td>rotor-failure controllability; hover handling-qualities ranking</td></tr>
+<tr><td>NASA-STD-7009B</td><td>credibility factors; calibration must be recorded with its domain</td></tr>
+</table></div>
+<p class="src">Every source above is on disk in the project's research corpus and was read, not recalled, for the passages quoted.</p>
+</main>

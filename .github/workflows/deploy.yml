@@ -1,0 +1,105 @@
+# =====================================================================
+# DEPLOY TO GITHUB PAGES
+# =====================================================================
+# THE GATES DECIDE WHETHER THIS PUBLISHES.
+#
+# Until 2026-09-09 this workflow and the verification gates were two separate
+# workflows started by the same push, with nothing connecting them. They raced.
+# The site went live at evtolsizer.live while the golden master was failing,
+# because a red gate in one workflow has no bearing on a deployment in another
+# — a build that failed all 39 gates would still have shipped.
+#
+# `verify` below calls the SAME workflow that runs on every pull request, so
+# there is one definition of the gates rather than a second copy here that can
+# drift away from it, and `build-and-deploy` needs it. No gates, no deploy.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # The full suite — npm test, provenance, VALIDATION.md freshness, a clean
+  # build. Defined in verify.yml so the deployment cannot be gated on a weaker
+  # set of checks than a reviewer sees.
+  verify:
+    uses: ./.github/workflows/verify.yml
+
+  build-and-deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      # `npm ci` for the lockfile exactly, matching the gates. `npm install`
+      # can resolve a different tree than the one the gates just passed on.
+      - run: npm ci
+
+      # ── A SECRET THAT IS ABSENT MUST STOP THE DEPLOY, NOT WARN ──────────
+      # Vite replaces import.meta.env.VITE_X with `undefined` when X is empty
+      # and does not warn, so the feature behind it is simply off on the live
+      # site with nothing in the log.
+      #
+      # This step used to test $VITE_EMAILJS_SERVICE_ID while its own env
+      # block defined VITE_EMAILJS_SERVICE — different names, so it read three
+      # variables that were never set and printed "WARNING: ... is empty!" on
+      # every run no matter what the secrets held. A warning that is always
+      # there is one nobody reads. It now tests the names the build actually
+      # receives, and fails.
+      #
+      # Why these three and not the others. All three ARE read with a
+      # fallback -- src/AuthSystem.jsx:53-55 uses `|| ""` -- so the deploy-env
+      # gate lists them as optional and is right to. What makes them required
+      # here is what the fallback does: AuthSystem.jsx:59 throws "Email
+      # delivery is not configured" as soon as anyone tries to sign up, so an
+      # empty secret does not disable the feature, it breaks it, in front of a
+      # visitor instead of in a build log. VITE_SSO_CODE is the contrast --
+      # `?? ""` genuinely disables single sign-on, which is the intended
+      # secure default. The Groq and Supabase keys likewise degrade to a
+      # feature that is off, not one that throws.
+      - name: Secrets the build has no fallback for are present
+        run: |
+          missing=0
+          for v in VITE_EMAILJS_SERVICE VITE_EMAILJS_TEMPLATE VITE_EMAILJS_KEY; do
+            if [ -z "${!v}" ]; then echo "MISSING: $v"; missing=1; else echo "ok: $v is set"; fi
+          done
+          if [ "$missing" = 1 ]; then
+            echo "::error::A secret the source reads with no fallback is empty. Vite compiles it to undefined, so the one-time-password path would be dead on the live site with no error anywhere. Set it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+        env:
+          VITE_EMAILJS_SERVICE: ${{ secrets.VITE_EMAILJS_SERVICE_ID }}
+          VITE_EMAILJS_TEMPLATE: ${{ secrets.VITE_EMAILJS_TEMPLATE_ID }}
+          VITE_EMAILJS_KEY: ${{ secrets.VITE_EMAILJS_PUBLIC_KEY }}
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_EMAILJS_SERVICE: ${{ secrets.VITE_EMAILJS_SERVICE_ID }}
+          VITE_EMAILJS_TEMPLATE: ${{ secrets.VITE_EMAILJS_TEMPLATE_ID }}
+          VITE_EMAILJS_KEY: ${{ secrets.VITE_EMAILJS_PUBLIC_KEY }}
+          VITE_GROQ_KEY: ${{ secrets.VITE_GROQ_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,82 @@
+# =====================================================================
+# VERIFICATION GATES
+# =====================================================================
+# The accuracy claims this project makes are only worth anything if a third
+# party can re-run them. Every harness under validation/ runs here on every
+# push and pull request, so a reviewer can see the gates pass on a clean
+# machine rather than take a screenshot's word for it.
+#
+# THIS IS ALSO THE DEPLOYMENT'S GATE. deploy.yml calls this workflow with
+# `uses:` and will not publish unless it passes, so the gates a reviewer sees
+# on a pull request are the same ones, from the same file, that decide whether
+# the live site updates. Note the `workflow_call` trigger below: removing it
+# does not make this workflow independent, it breaks the deployment.
+#
+# THIS WORKFLOW STANDS ON ITS OWN. `main` is in the push triggers even though
+# deploy.yml also calls it there, so pushing to main runs the suite twice. That
+# duplication is deliberate. It was removed once, on the reasoning that
+# deploy.yml would always call it -- and then deploy.yml did not get updated
+# alongside this file, so main had no verification at all and nothing reported
+# that. Four deploys went out in five minutes, 44 to 55 seconds each, with no
+# gates beside them.
+#
+# A duplicate run costs a few minutes of Actions time. A missing run ships
+# unverified physics to evtolsizer.live. Never make this file's coverage
+# conditional on another file being up to date.
+name: Verification gates
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+# Least privilege: the gates read the tree and nothing else. When called by
+# deploy.yml this caps what the called job can do regardless of what the
+# caller holds.
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    name: npm test (all verification harnesses)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # PINNED TO THE VERSION THE GOLDEN MASTER WAS RECORDED ON.
+          # golden-master.mjs is a byte-level regression over 277 stored cases,
+          # so it compares numbers against a snapshot rather than against a
+          # tolerance, and the snapshot is only meaningful in the environment
+          # that produced it. On Node 20 this run reported 8 differences across
+          # 4 cases in `checksPassed` and `governs_pitch` -- the latter being
+          # `Svt_panel_pitch >= Svt_panel_yaw` (engine.js), a bare comparison of
+          # two floats that a last-bit difference flips outright. That is a
+          # regression gate disagreeing about the V8 build, not about the
+          # engine. Re-record the snapshot if this pin is ever changed.
+          node-version: 24
+          cache: npm
+      # `npm ci` installs exactly the lockfile, so the run is reproducible.
+      - run: npm ci
+      # The CPACS export gate validates against the CPACS XML Schema with lxml;
+      # Node has no schema validator of its own.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "lxml>=5,<7"
+      - name: Verification gates
+        run: npm test
+      # Provenance coverage is now a gate inside `npm test` (unregistered,
+      # orphaned or duplicate registry keys fail it), so it has no step of its own.
+      # The validation report is GENERATED from the harnesses. This step
+      # regenerates it and fails if the committed VALIDATION.md no longer
+      # matches, so the published accuracy claims cannot drift away from the
+      # code that is supposed to produce them.
+      - name: Validation report is current
+        run: npm run report:check
+      # Builds WITHOUT the secrets, which is the point: this proves the tree
+      # compiles on its own. The deploy builds again with them.
+      - name: Build
+        run: npm run build

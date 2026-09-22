@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+title: "eVTOL Conceptual Sizing Tool"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - given-names: "Vinay Kumar Reddy"
+    family-names: "Sirigireddy"
+    email: "sirigireddy.vinaykumarreddy@wright.edu"
+    affiliation: "Wright State University"
+repository-code: "https://github.com/Vinay25112001/eVTOLSizer"
+abstract: >-
+  A browser-based conceptual sizing tool for electric VTOL aircraft, built on
+  NDARC/AFDD weight models. It sizes six configurations (multicopter,
+  side-by-side, lift+cruise, tiltrotor and two hybrid layouts) and is validated
+  against the published weight statements of NASA's UAM concept vehicles
+  (NASA/TM-20210017971 Table 12) and against manufacturer figures for
+  commercial types. Group errors are reported against AFDD's own published
+  in-population accuracy (NDARC Theory Manual Table 27-21) rather than a
+  self-chosen tolerance. Credibility is self-assessed against NASA-STD-7009B;
+  the generated VALIDATION.md carries the current numbers and the assessment,
+  including the factors scored zero.
+keywords:
+  - eVTOL
+  - conceptual design
+  - aircraft sizing
+  - NDARC
+  - rotorcraft
+  - urban air mobility
+  - verification and validation
+license: Apache-2.0
+version: "0.1.0"
+date-released: "2026-09-01"

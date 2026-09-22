@@ -1,0 +1,93 @@
+/* =====================================================================
+   VSPAERO POLAR — a real vortex-lattice solve on an exported model
+   =====================================================================
+   Reads a .vsp3 written by this project's exporter, runs VSPAERO over an
+   alpha sweep, and prints the polar in a form validation/vspaero.mjs can
+   parse. Invoked as:
+
+       vspscript -script vspaero-polar.vspscript
+
+   with MODEL / SREF / BREF / CREF supplied by the runner rewriting the
+   constants below — AngelScript has no argv.
+
+   ── THREE THINGS THAT HAD TO BE RIGHT, ALL OF WHICH WERE WRONG FIRST ──
+
+   1. THE RESULT FIELD IS "CLtot" IN "VSPAERO_History", NOT "CL" FROM THE
+      SWEEP. ExecAnalysis returns a CONTAINER whose ResultsVec holds the
+      per-case ids, and the aerodynamic coefficients live in a result named
+      VSPAERO_History with CLtot / CDi / CDtot. Asking for "CL" returns an
+      EMPTY ARRAY, not an error, so six configurations in a row reported a
+      confident CL = 0. The shipped example scripts/TestAnalysisVSPAERO.
+      vspscript line 238 does it correctly and settled it.
+
+   2. THE WAKE MUST BE FIXED, OR IT DIVERGES. With wake relaxation the
+      iteration history at alpha 8 ran CL = -0.001 -> 1.126 -> -5.506: a
+      physically sensible answer in the middle and a blow-up after it. Taking
+      the last iteration therefore took the divergence. FixedWakeFlag = 1
+      gives the straight VLM answer and converges.
+
+   3. THIN AND THICK MUST NOT BE MIXED HERE. Running the wings as thin
+      surfaces together with the fuselage as a thick body produced NEGATIVE
+      induced drag at four of five alphas — impossible, and a clear sign the
+      mixed solve was not converging. Wings alone, with an empty thick set,
+      gives CDi positive and rising at every alpha and CDi/CL^2 constant to
+      2%. The fuselage's drag is not lost: this engine takes it from NDARC
+      drag areas, which is what that method is for. VSPAERO is used for the
+      lifting-surface aerodynamics it is good at.
+   ===================================================================== */
+
+void setD( string a, string n, double v ) { array<double> x = { v }; SetDoubleAnalysisInput( a, n, x ); }
+void setI( string a, string n, int v )    { array<int>    x = { v }; SetIntAnalysisInput( a, n, x ); }
+
+void main()
+{
+    string model = "@@MODEL@@";
+    double sref  = @@SREF@@;
+    double bref  = @@BREF@@;
+    double cref  = @@CREF@@;
+
+    ReadVSPFile( model );
+    Update();
+
+    /* Lifting surfaces into a thin set; the thick set is left EMPTY. */
+    array<string> g = FindGeoms();
+    int nThin = 0;
+    for ( uint i = 0 ; i < g.length() ; i++ )
+    {
+        if ( GetGeomTypeName( g[i] ) == "Wing" ) { SetSetFlag( g[i], 3, true ); nThin++; }
+    }
+    Update();
+    Print( "@@THIN " + nThin );
+    if ( nThin == 0 ) { Print( "@@NOWING" ); return; }
+
+    string cg = "VSPAEROComputeGeometry";
+    SetAnalysisInputDefaults( cg );
+    setI( cg, "GeomSet", 9 );        // empty user set: no thick bodies
+    setI( cg, "ThinGeomSet", 3 );
+    ExecAnalysis( cg );
+
+    string sw = "VSPAEROSweep";
+    SetAnalysisInputDefaults( sw );
+    setI( sw, "GeomSet", 9 );
+    setI( sw, "ThinGeomSet", 3 );
+    setI( sw, "RefFlag", MANUAL_REF );
+    setD( sw, "Sref", sref );  setD( sw, "bref", bref );  setD( sw, "cref", cref );
+    setD( sw, "AlphaStart", 0.0 ); setD( sw, "AlphaEnd", 8.0 ); setI( sw, "AlphaNpts", 5 );
+    setD( sw, "MachStart", 0.20 ); setD( sw, "MachEnd", 0.20 ); setI( sw, "MachNpts", 1 );
+    setI( sw, "FixedWakeFlag", 1 );
+    string rid = ExecAnalysis( sw );
+
+    array<string> sub = GetStringResults( rid, "ResultsVec" );
+    for ( uint i = 0 ; i < sub.length() ; i++ )
+    {
+        array<double> A  = GetDoubleResults( sub[i], "Alpha", 0 );
+        array<double> C  = GetDoubleResults( sub[i], "CLtot", 0 );
+        array<double> Di = GetDoubleResults( sub[i], "CDi",   0 );
+        array<double> Dt = GetDoubleResults( sub[i], "CDtot", 0 );
+        if ( C.length() == 0 ) { continue; }
+        uint n = C.length() - 1;
+        if ( C[n] == 0 && Di[n] == 0 ) { continue; }     // empty trailing case
+        Print( "@@POLAR " + A[n] + " " + C[n] + " " + Di[n] + " " + Dt[n] );
+    }
+    Print( "@@DONE" );
+}

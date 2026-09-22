@@ -86,7 +86,19 @@ export default function FlightPanel({ design, frame }) {
   const [scen, setScen] = useState(() => presetToState(SCENARIO_PRESETS.disturbance));
   const [editing, setEditing] = useState(false);
   const lastGoodScenario = useRef(null);
-  const [failedMotor, setFailedMotor] = useState(0);         // 0 = none
+  /* A SET, BECAUSE THE SIMULATION ALWAYS TOOK ONE. simulate() accepts
+     `failed` as a Set and zeroes eta on every motor in it, so multiple
+     simultaneous failures were supported from the start; the UI was a
+     single <select> and could only ever express one. Clicking a rotor
+     in the viewport toggles it, which is also the only way to ask for
+     the two-motor cases the controllability work is about. */
+  const [failedMotors, setFailedMotors] = useState(() => new Set());
+  const failedKey = [...failedMotors].sort((a, b) => a - b).join(",");
+  const toggleMotor = (m) => setFailedMotors((prev) => {
+    const next = new Set(prev);
+    next.has(m) ? next.delete(m) : next.add(m);
+    return next;
+  });
   const [motorTau, setMotorTau] = useState(0.05);
   const [cd, setCd] = useState(1.0);
   const [view, setView] = useState({ yaw: 38, pitch: 26 });
@@ -137,7 +149,7 @@ export default function FlightPanel({ design, frame }) {
         sizing: result, airframe,
         declared: { motorTimeConstantS: motorTau, bodyDragCoefficient: cd },
       });
-      const failed = new Set(failedMotor ? [failedMotor] : []);
+      const failed = new Set(failedMotors);
       return {
         model,
         run: simulate({
@@ -147,10 +159,10 @@ export default function FlightPanel({ design, frame }) {
         }),
       };
     } catch (e) { return { error: e.message }; }
-  }, [ok, airframe, result, scenario, failedMotor, motorTau, cd]);
+  }, [ok, airframe, result, scenario, failedKey, motorTau, cd]);
 
   const trace = sim?.run?.trace ?? [];
-  useEffect(() => { setI(0); }, [scenario, failedMotor, motorTau, cd]);
+  useEffect(() => { setI(0); }, [scenario, failedKey, motorTau, cd]);
 
   useEffect(() => {
     if (!playing || trace.length < 2) return;
@@ -316,7 +328,7 @@ export default function FlightPanel({ design, frame }) {
     const p = project(world);
     const thrust = now.thrusts?.[k] ?? 0;
     const tipTop = project(bodyToWorld([r.x, r.y, r.z - 0.12 - 0.5 * thrust / Math.max(1, sim.model.maxThrustPerRotorN)]));
-    return { ...r, p, thrust, tipTop, dead: failedMotor === r.motor, depth: p.depth, world };
+    return { ...r, p, thrust, tipTop, dead: failedMotors.has(r.motor), depth: p.depth, world };
   }).sort((a, b) => a.depth - b.depth);
 
   const trail = trace.slice(0, i + 1).filter((_, k) => k % 2 === 0)
@@ -353,14 +365,40 @@ export default function FlightPanel({ design, frame }) {
                      borderRadius: 3, padding: "4px 10px", fontSize: T.label, cursor: "pointer", fontFamily: SANS }}>
             {editing ? "hide scenario" : `edit scenario (${scen.segments.length} segment${scen.segments.length === 1 ? "" : "s"})`}
           </button>
-          <label style={{ fontSize: T.label, color: SC.muted }}>failed rotor{" "}
-            <select value={failedMotor} onChange={(e) => setFailedMotor(+e.target.value)}
-              style={{ background: SC.bg, color: SC.text, border: `1px solid ${SC.border}`,
-                       borderRadius: 4, padding: "3px 6px", fontFamily: SANS }}>
-              <option value={0}>none</option>
-              {airframe.rotors.map((r) => <option key={r.motor} value={r.motor}>motor {r.motor}</option>)}
-            </select>
-          </label>
+          {/* KILL ROTORS BY NAME HERE OR BY CLICKING THEM IN THE VIEW. One
+              chip per motor, because the simulation takes a SET and the old
+              single <select> could not express the multi-failure cases that
+              decide whether a layout is controllable at all. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span style={{ fontSize: T.label, color: SC.muted }}>kill rotor</span>
+            {/* Sorted for the hand, not for the geometry: ArduPilot motor
+                numbers are OUTPUT CHANNELS, so airframe.rotors comes back in
+                ring order (2,3,1,4 on a quad X) and the chips would be shuffled.
+                Sorting the buttons changes nothing about which motor is which. */}
+            {[...airframe.rotors].sort((a, b) => a.motor - b.motor).map((r) => {
+              const dead = failedMotors.has(r.motor);
+              return (
+                <button key={r.motor} type="button" aria-pressed={dead}
+                  onClick={() => toggleMotor(r.motor)}
+                  title={dead ? `motor ${r.motor} is dead — click to restore` : `kill motor ${r.motor}`}
+                  style={{ background: dead ? "#7d2a22" : SC.inset,
+                           color: dead ? "#ffd9d4" : SC.text,
+                           border: `1px solid ${dead ? "#e0574a" : SC.border}`,
+                           borderRadius: 3, padding: "3px 8px", fontSize: T.label,
+                           cursor: "pointer", fontFamily: MONO, minWidth: 26 }}>
+                  {r.motor}
+                </button>
+              );
+            })}
+            <button type="button" onClick={() => setFailedMotors(new Set())}
+              disabled={failedMotors.size === 0}
+              style={{ background: "transparent", color: failedMotors.size ? SC.text : SC.dim,
+                       border: `1px solid ${SC.border}`, borderRadius: 3, padding: "3px 8px",
+                       fontSize: T.label, cursor: failedMotors.size ? "pointer" : "default",
+                       fontFamily: SANS }}>
+              all live
+            </button>
+          </div>
           <button onClick={() => setPlaying((p) => !p)}
             style={{ background: SC.teal, color: SC.bg, border: "none", borderRadius: 4,
                      padding: "4px 14px", fontSize: T.body, fontWeight: 600, cursor: "pointer" }}>
@@ -623,7 +661,13 @@ export default function FlightPanel({ design, frame }) {
                 `L${r.p.sx - px * wTip},${r.p.sy - py * wTip} ` +
                 `L${centre.sx - px * wRoot},${centre.sy - py * wRoot} Z`;
               return (
-                <g key={r.motor}>
+                /* The disc is the target: clicking a rotor in the picture is
+                   the same action as its chip above, so a failure can be
+                   chosen where it is being looked at. */
+                <g key={r.motor} onClick={() => toggleMotor(r.motor)}
+                   style={{ cursor: "pointer" }}
+                   role="button" tabIndex={0}
+                   aria-label={r.dead ? `motor ${r.motor} dead, click to restore` : `kill motor ${r.motor}`}>
                   <path d={armPath} fill={r.dead ? "#7d2a22" : "url(#fp-arm)"}
                         stroke="#0a1118" strokeWidth="0.7" opacity={r.dead ? 0.7 : 1} />
                   <path d={disc.join(" ") + " Z"} fill={`url(#fp-disc-${key})`}

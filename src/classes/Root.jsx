@@ -23,6 +23,7 @@ import App from "../App";
 import { CLASS_IDS } from "./registry.js";
 import { routeFromSearch, STUDIO_TYPES } from "./route.js";
 import { DESIGN_MODE_EVENT } from "./aircraft/DesignModeSwitch.jsx";
+import { AuthSessionProvider } from "../lib/auth-session.jsx";
 
 const AircraftStudio = lazy(() => import("./aircraft/AircraftStudio.jsx"));
 const DroneStudio = lazy(() => import("./drone/DroneStudio.jsx"));
@@ -82,8 +83,11 @@ export default function Root() {
   }, []);
 
   if (initial.unknown) return <UnknownClass id={initial.unknown} />;
+  /* THE PROVIDER WRAPS ALL THREE, which is the whole point: the studios
+     stay mounted together, so one session held above them is one fact
+     rather than three copies that can disagree. */
   return (
-    <>
+    <AuthSessionProvider>
       {evtolMounted && (
         <div style={{ display: mode === "evtol" ? "contents" : "none" }}>
           <App />
@@ -99,6 +103,6 @@ export default function Root() {
           <Suspense fallback={loadingDrone}><DroneStudio /></Suspense>
         </div>
       )}
-    </>
+    </AuthSessionProvider>
   );
 }

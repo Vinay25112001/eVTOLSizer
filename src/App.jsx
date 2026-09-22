@@ -1,6 +1,7 @@
 import { mark } from "./ui/marks.jsx";
 import React, { useState, useMemo, useCallback, useEffect, useRef, useDeferredValue } from "react";
-import { AuthModal, AuthGate, UserHeaderBar, getSession, saveSession, clearSession, addNotif, saveDesign, addReport, setAuthTheme } from "./AuthSystem";
+import { AuthGate, UserHeaderBar, saveSession, clearSession, addNotif, saveDesign, addReport, setAuthTheme } from "./AuthSystem";
+import { useAuthSession } from "./lib/auth-session.jsx";
 import { ShareDesignButton, LeaderboardPanel, CollabPanel, PublicDesignBanner } from "./CommunityFeatures";
 import { WBEnvelopePanel, ComponentDBPanel } from "./Components";
 import {
@@ -160,8 +161,13 @@ export default function App(){
 
   const[showOverflow,setShowOverflow]=useState(false);
   const[sidebarOpen,setSidebarOpen]=useState(()=>window.innerWidth>768&&localStorage.getItem("sb")!=="0");
-  const[user,setUser]=useState(()=>getSession());
-  const[showAuthModal,setShowAuthModal]=useState(false);
+  /* THE SESSION IS NOT THIS COMPONENT'S ANY MORE. Root mounts all three
+     studios at once and holds one session above them, so this reads it
+     rather than keeping a second copy that could disagree with the
+     aircraft and drone headers. */
+  const auth=useAuthSession();
+  const user=auth?auth.user:null;
+  const setShowAuthModal=(v)=>{ if(auth) v?auth.openAuth():auth.closeAuth(); };
   const[darkMode,setDarkMode]=useState(()=>qsTheme ?? (window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? true));
   const[useImperial,setUseImperial]=useState(false);
 
@@ -490,13 +496,12 @@ export default function App(){
     }).catch(()=>{});
   },[]);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleAuth=(session)=>{
-    saveSession(session);
-    setUser(session);
-    setShowAuthModal(false);
-  };
-  const handleSignOut=()=>{ clearSession(); setUser(null); };
-  const handleUpdate=(session)=>{ saveSession(session); setUser(session); };
+  /* Delegated: the provider persists and updates the one session.
+     handleAuth is still needed here -- AuthGate and CollabPanel take it as
+     a callback for the sign-in they trigger themselves. */
+  const handleAuth=(session)=>auth?.handleAuth(session);
+  const handleSignOut=()=>auth?.handleSignOut();
+  const handleUpdate=(session)=>auth?.handleUpdate(session);
 
   /* ── CSV Export ── */
   const exportCSV=()=>{
@@ -1485,7 +1490,7 @@ export default function App(){
           </div>
 
           <UserHeaderBar user={user} onSignOut={handleSignOut} onSignIn={()=>setShowAuthModal(true)} onUpdate={handleUpdate}/>
-          {showAuthModal&&<AuthModal onClose={()=>setShowAuthModal(false)} onAuth={handleAuth}/>}
+          {/* AuthModal is rendered once by AuthSessionProvider, above all three studios. */}
         </div>
       </div>
 

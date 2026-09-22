@@ -35,6 +35,7 @@ import { T, S, MONO, SANS } from "../../ui/tokens.js";
 import { Card, th, td } from "../ui-kit.jsx";
 import { appVersionLabel } from "../../lib/designfile.js";
 import DesignModeSwitch from "../aircraft/DesignModeSwitch.jsx";
+import { SharedAuthBar } from "../../lib/auth-session.jsx";
 import { FRAMES, FRAME_CLASSES, FRAME_SOURCE, FRAMES_OMITTED, framesOfClass } from "../../data/drone-frames.js";
 import { ALL_COMPONENTS, CATEGORIES, BLDC_MOTORS, MODELLABLE_MOTORS } from "../../data/drone-components.js";
 import { PROPELLERS, PROPELLER_SOURCE } from "../../data/drone-propellers.js";
@@ -219,8 +220,10 @@ export default function DroneStudio() {
                 style={chip(c === frameClass)}>{c}</button>
             ))}
           </nav>
-          <div style={{ marginLeft: "auto" }}>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
             <button type="button" style={chip(false)} onClick={() => setDark((d) => !d)}>{dark ? "DAY" : "NIGHT"}</button>
+            {/* The same session the eVTOL and aircraft studios show. */}
+            <SharedAuthBar dark={dark} />
           </div>
         </div>
         <div style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap",

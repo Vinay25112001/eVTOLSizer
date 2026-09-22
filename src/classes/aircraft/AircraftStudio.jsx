@@ -14,6 +14,7 @@ import { fmt, Card, StatusChip } from "../ui-kit.jsx";
 import InputPanel, { InputRow } from "./InputPanel.jsx";
 import { appVersionLabel } from "../../lib/designfile.js";
 import DesignModeSwitch from "./DesignModeSwitch.jsx";
+import { SharedAuthBar } from "../../lib/auth-session.jsx";
 import { AIRCRAFT_TYPES, TYPE_IDS, typeOf, designAircraft, METHOD_ACCURACY } from "./engine.js";
 import { uncertaintyOf } from "./uncertainty.js";
 import { REFERENCE_AIRCRAFT } from "./reference-aircraft.js";
@@ -115,9 +116,11 @@ export default function AircraftStudio({ initialType = "transport", requestedTyp
             <button type="button" aria-pressed={job === "size"} onClick={() => setJob("size")} style={chip(job === "size")}>Size from requirements</button>
             <button type="button" aria-pressed={job === "analyse"} onClick={() => setJob("analyse")} style={chip(job === "analyse")}>Analyse an aircraft</button>
           </nav>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
             <button type="button" style={chip(false)} onClick={() => setTab("export")}>⤓ Export</button>
             <button type="button" style={chip(false)} onClick={() => setDark((d) => !d)}>{dark ? "DAY" : "NIGHT"}</button>
+            {/* The same session the eVTOL and drone studios show. */}
+            <SharedAuthBar dark={dark} />
           </div>
         </div>
         {result && (

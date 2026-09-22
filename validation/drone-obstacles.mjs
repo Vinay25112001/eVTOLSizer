@@ -24,6 +24,7 @@
    ===================================================================== */
 import {
   makeBox, makeTree, signedDistance, firstContact, DEFAULT_SCENE, OBSTACLE_KINDS,
+  contactNormal, reflectVelocity, DECLARED_IMPACT_INPUTS,
 } from "../src/classes/drone/obstacles.js";
 
 const fails = [];
@@ -122,15 +123,72 @@ check(firstContact(hover, DEFAULT_SCENE, ENV) === null,
   "no spurious contact when nothing is near");
 check(firstContact(hover, [], ENV) === null, "and none at all with an empty scene");
 
-/* ── 3. THE CLAIM STOPS AT CONTACT ──────────────────────────────────── */
-console.log("\n-- what is NOT modelled is stated, not implied --");
-check(!!hit && /not modelled/i.test(hit.note),
-  "every contact carries the limit of the claim with it", hit ? hit.note : "-");
-check(!!hit && !("restitution" in hit) && !("bounceMps" in hit) && !("damage" in hit),
-  "and carries no post-impact quantity of any kind",
-  "no bounce, no tumble, no broken arm: structureMassKg is a declared scalar "
-  + "with no material or geometry, and nothing in the survey publishes a "
-  + "propeller's impact strength");
+/* ── 3. THE RESPONSE IS FALSIFIABLE EVEN THOUGH ITS CONSTANTS ARE NOT ──
+   Restitution, scrub and the blade-break speed are DECLARED: nothing in
+   this project sources them. What can still be checked is that the
+   response obeys the physics it claims to, and these are the checks that
+   make a declared coefficient defensible rather than decorative. */
+console.log("\n-- the impact response obeys its own physics --");
+
+const n = [-1, 0, 0];                        // a wall face, aircraft flying +x
+const vIn = [10, 0, 0];
+
+const stopped = reflectVelocity(vIn, n, { restitution: 0, scrub: 1 });
+check(near(stopped[0], 0, 1e-12),
+  "e = 0 removes the normal velocity EXACTLY", `${stopped[0].toFixed(12)} m/s`);
+
+const perfect = reflectVelocity(vIn, n, { restitution: 1, scrub: 1 });
+check(near(perfect[0], -10, 1e-12),
+  "e = 1 reverses it EXACTLY, and no more", `${perfect[0].toFixed(12)} m/s`);
+
+let grew = null;
+for (const e of [0, 0.1, 0.25, 0.5, 0.9, 1]) {
+  const out = reflectVelocity(vIn, n, { restitution: e, scrub: 1 });
+  if (Math.hypot(...out) > Math.hypot(...vIn) + 1e-12) grew = e;
+}
+check(grew === null, "no restitution in [0,1] increases speed -- energy is never created",
+  grew === null ? "checked e = 0, 0.1, 0.25, 0.5, 0.9, 1" : `e = ${grew} created energy`);
+
+const sep = reflectVelocity([-5, 0, 0], n, { restitution: 1, scrub: 1 });
+check(near(sep[0], -5, 1e-12),
+  "a SEPARATING contact is left alone, not reflected again",
+  "reflecting it would inject energy and pin the aircraft to the surface");
+
+/* An APPROACHING velocity, because scrub applies at an impact. A purely
+   tangential velocity is not an impact at all - it is a slide - and the
+   function correctly leaves it alone; scrubbing it here would be sliding
+   friction, which is a force over time and is not modelled. */
+const scrubbed = reflectVelocity([10, 6, 0], n, { restitution: 0.5, scrub: 0.25 });
+check(near(scrubbed[1], 1.5, 1e-12) && near(scrubbed[0], -5, 1e-12),
+  "at an impact the tangential part is scrubbed while the normal part reflects",
+  `along the wall 6 x 0.25 = ${scrubbed[1]}, into it 10 x 0.5 -> ${scrubbed[0]} m/s`);
+check(near(reflectVelocity([0, 6, 0], n, { restitution: 0.5, scrub: 0.25 })[1], 6, 1e-12),
+  "a pure SLIDE is untouched -- sliding friction is a force over time, not an impulse",
+  "scrubbing it per step would erase the velocity in milliseconds");
+
+console.log("\n-- the surface normal is a unit vector everywhere --");
+const probes = [
+  ["-x face", [8, 0, 3], [-1, 0, 0]],
+  ["roof", [10, 0, 6], [0, 0, 1]],
+  ["vertical corner", [8, -2, 3], [-Math.SQRT1_2, -Math.SQRT1_2, 0]],
+];
+for (const [what, at, want] of probes) {
+  const nn = contactNormal(b, ...at);
+  check(near(Math.hypot(...nn), 1, 1e-6) && nn.every((c, i) => near(c, want[i], 1e-3)),
+    `unit and correct on the ${what}`,
+    `[${nn.map((c) => c.toFixed(4)).join(", ")}]`);
+}
+const tn = contactNormal(t, 3, 0, 8);
+check(near(Math.hypot(...tn), 1, 1e-6),
+  "and on a tree canopy, where an analytic normal must pick a branch",
+  `|n| = ${Math.hypot(...tn).toFixed(9)}`);
+
+console.log("\n-- the coefficients are declared, and say so --");
+for (const [k, v] of Object.entries(DECLARED_IMPACT_INPUTS)) {
+  check(v.status === "declared" && typeof v.why === "string" && v.why.length > 40,
+    `${k} is marked declared and states why it cannot be sourced`,
+    `${v.value} ${v.unit} — ${v.why.slice(0, 68)}...`);
+}
 
 check(OBSTACLE_KINDS.every((k) => DEFAULT_SCENE.some((o) => o.kind === k)),
   "the default scene exercises every obstacle kind", OBSTACLE_KINDS.join(", "));

@@ -51,6 +51,7 @@
    two independent methods reaching the same conclusion, which is worth
    more than either alone.
    ===================================================================== */
+import { signedDistance, contactNormal, reflectVelocity } from "./obstacles.js";
 import { effectivenessMatrix, torqueToThrustRatio } from "../../engine/controlauthority.js";
 
 export const G_NED = Object.freeze([0, 0, 9.80665]);   // z DOWN
@@ -470,6 +471,9 @@ export function buildModel({ sizing, airframe, declared }) {
 
   return {
     m: mass, J: inertia.J, Jinv: invert3(inertia.J), inertia,
+    /* The rotor-tip envelope, for contact. A multirotor strikes
+       things with its blades, not its hub. */
+    envelopeRadiusM: airframe.spanM / 2,
     rotors, geom, kMu, rho: sizing.rho,
     cBody: declared.bodyDragCoefficient, areaM2,
     motorTauS: declared.motorTimeConstantS,
@@ -483,11 +487,50 @@ export function buildModel({ sizing, airframe, declared }) {
    Integrates forward with the controller in the loop and the motors
    lagged. `failed` is a set of motor numbers whose thrust is forced to
    zero, which is the same eta = 0 ACAI uses. */
-export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002, failed = new Set() }) {
+/* The surface currently penetrated, or null. Works in NED, the frame the
+   state is in: `signedDistance` and `contactNormal` take an ALTITUDE, so
+   z is negated on the way in and the normal's z on the way out. The
+   ground is included as a surface rather than a special case, so a
+   landing and a wall strike go down the same path. */
+function nearestSurface(state, obstacles, envelopeR) {
+  const x = state[0], y = state[1], alt = -state[2];
+  let best = null;
+  for (const o of obstacles) {
+    const d = signedDistance(o, x, y, alt) - envelopeR;
+    if (d < 0 && (best === null || d < best.d)) {
+      const n = contactNormal(o, x, y, alt);
+      best = { d, depth: -d, name: o.name, nNed: [n[0], n[1], -n[2]] };
+    }
+  }
+  const groundDepth = envelopeR - alt;
+  if (groundDepth > 0 && (best === null || -groundDepth < best.d))
+    best = { d: -groundDepth, depth: groundDepth, name: "ground", nNed: [0, 0, -1] };
+  return best;
+}
+
+/* Which rotor took the blow: the one furthest along the contact normal,
+   i.e. nearest the surface. Body offsets are rotated into NED and
+   compared by their projection onto -n. */
+function nearestRotorIndex(model, state, nNed) {
+  const q = [state[6], state[7], state[8], state[9]];
+  let best = -1, bestProj = -Infinity;
+  /* geom carries rotor positions in POLAR form - {r, phi} - not x/y.
+     Reading g.x here gave undefined, every projection was NaN, the
+     comparison never matched and no blade ever broke. */
+  model.geom.forEach((g, i) => {
+    const w = qRotate(q, [g.r * Math.cos(g.phi), g.r * Math.sin(g.phi), 0]);
+    const proj = -(w[0] * nNed[0] + w[1] * nNed[1] + w[2] * nNed[2]);
+    if (proj > bestProj) { bestProj = proj; best = i; }
+  });
+  return best;
+}
+
+export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
+                           failed = new Set(), obstacles = [], impact = null }) {
   const ctl = makeController();
   const n = model.rotors.length;
   const geom = model.geom.map((g, i) => ({ ...g, eta: failed.has(model.rotors[i].motor) ? 0 : 1 }));
-  const mixer = buildMixer(geom, model.kMu);
+  let mixer = buildMixer(geom, model.kMu);
 
   let state = [
     0, 0, -(scenario.startAltitudeM ?? 2), 0, 0, 0,
@@ -498,6 +541,7 @@ export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
   const steps = Math.round(durationS / dt);
   const every = Math.max(1, Math.round(0.02 / dt));
   let allocationFailed = 0, axesDropped = [], hitGround = false, fullRankButUnattainable = false;
+  const impacts = [], broken = [];
 
   for (let s = 0; s <= steps; s++) {
     const t = s * dt;
@@ -543,7 +587,77 @@ export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
       });
     }
     state = rk4(state, model, thrusts, dt);
-    if (-state[2] < 0) { hitGround = true; break; }   // ground
+
+    /* ── CONTACT ──────────────────────────────────────────────────────
+       With no `impact` declared this is the original behaviour exactly:
+       the ground ends the flight. With one, the surface is resolved as
+       an impulse and the integration CONTINUES, so a bounce, a skid or
+       a tumble comes out of the same 6-DOF loop that produced the rest
+       of the flight rather than being drawn on afterwards.
+
+       Worked in NED throughout — the frame the state and the quaternion
+       are already in — so no axis is flipped twice between the normal,
+       the impulse and the body rates. */
+    if (!impact) {
+      if (-state[2] < 0) { hitGround = true; break; }   // ground
+    } else {
+      const hit = nearestSurface(state, obstacles, model.envelopeRadiusM ?? 0);
+      if (hit) {
+        const vIn = [state[3], state[4], state[5]];
+        const vOut = reflectVelocity(vIn, hit.nNed,
+          { restitution: impact.restitution, scrub: impact.tangentialScrub });
+        const closing = -(vIn[0] * hit.nNed[0] + vIn[1] * hit.nNed[1] + vIn[2] * hit.nNed[2]);
+
+        /* RESTING CONTACT IS NOT AN IMPACT. Once the aircraft is against a
+           surface, thrust and gravity push it a little way in on every
+           step, it is pushed back out, and treating each of those as a
+           strike logged 2,748 "impacts" at 0.0 m/s in a ten-second flight
+           and re-applied an angular impulse each time. Below a threshold
+           the contact is resolved silently: pushed out, normal velocity
+           removed, nothing recorded and no spin imparted. */
+        const RESTING_MPS = 0.15;
+        const isImpact = closing > RESTING_MPS;
+
+        /* Out of the surface first. Leaving the aircraft embedded would
+           re-trigger contact on the next step and pin it there. */
+        state[0] += hit.nNed[0] * hit.depth;
+        state[1] += hit.nNed[1] * hit.depth;
+        state[2] += hit.nNed[2] * hit.depth;
+        state[3] = vOut[0]; state[4] = vOut[1]; state[5] = vOut[2];
+
+        /* An off-centre blow spins it. The arm runs from the CG to the
+           contact, which is one envelope radius along -n, and the
+           impulse is the momentum the reflection removed. */
+        const m = model.m, R = model.envelopeRadiusM ?? 0;
+        const r = [-hit.nNed[0] * R, -hit.nNed[1] * R, -hit.nNed[2] * R];
+        const J = [m * (vOut[0] - vIn[0]), m * (vOut[1] - vIn[1]), m * (vOut[2] - vIn[2])];
+        const Lned = [r[1] * J[2] - r[2] * J[1], r[2] * J[0] - r[0] * J[2], r[0] * J[1] - r[1] * J[0]];
+        if (isImpact) {
+          const Lb = qRotate(qConj([state[6], state[7], state[8], state[9]]), Lned);
+          const dw = matVec(model.Jinv, Lb);
+          state[10] += dw[0]; state[11] += dw[1]; state[12] += dw[2];
+          impacts.push({ t, name: hit.name, closingMps: closing,
+                         speedMps: Math.hypot(...vIn), altitudeM: -state[2] });
+        }
+
+        /* Blades break above a DECLARED closing speed. The mixer is
+           rebuilt because a dead rotor changes what the allocator can
+           attain; leaving it stale would keep commanding thrust from a
+           motor that is gone. */
+        if (isImpact && closing > (impact.bladeBreakSpeedMps ?? Infinity)) {
+          const near = nearestRotorIndex(model, state, hit.nNed);
+          if (near >= 0 && geom[near].eta !== 0) {
+            geom[near] = { ...geom[near], eta: 0 };
+            broken.push({ t, motor: model.rotors[near].motor, closingMps: closing });
+            mixer = buildMixer(geom, model.kMu);
+          }
+        }
+        /* Settled on the ground ends the flight, as it did before: the
+           aircraft is down and nothing after that is modelled. A wall is
+           different - it can be slid along - so only the ground stops it. */
+        if (hit.name === "ground" && !isImpact) { hitGround = true; break; }
+      }
+    }
   }
 
   const last = trace[trace.length - 1];
@@ -559,6 +673,7 @@ export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
     /* Ground contact is detected by the integrator crossing zero, not by
        whether the last SAMPLED trace point happens to be low: the trace
        is recorded every 20 ms and the crossing can fall between samples. */
+    impacts, broken,
     crashed: hitGround,
     hitGroundAtS: hitGround ? last.t : null,
     maxTiltDeg: Math.max(...trace.map((r) => Math.hypot(r.rollDeg, r.pitchDeg))),

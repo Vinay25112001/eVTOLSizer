@@ -13,21 +13,27 @@
    intersects a solid, at what speed, at what time. That is geometry, and
    geometry is the one part of an impact this tool can state exactly.
 
-   It does NOT model what happens next. A real strike at 8 m/s shatters
-   a propeller, bends or breaks an arm, and the aircraft tumbles — and
-   every term in that sentence needs a number this project does not
-   have. `structureMassKg` is a DECLARED scalar (0.6 kg by default) with
-   no material, no wall thickness and no geometry; nothing in the
-   component survey publishes a propeller's impact strength; and no
-   source here gives a restitution coefficient against concrete, brick or
-   foliage. Inventing them would produce a confident tumble animation
-   that means nothing, which is the failure this codebase refuses
-   everywhere else — see CABIN-LAYOUT.md section 5, "Do not invent one."
+   What happens NEXT is split in two, and the split is the whole point.
+   The RESPONSE is computed - reflection about the true surface normal,
+   an angular impulse from the off-centre blow, a rotor destroyed above a
+   threshold - and the integration continues, so a bounce, a skid or a
+   tumble comes out of the same 6-DOF loop as the rest of the flight.
+   But the COEFFICIENTS that response needs are not sourced anywhere:
+   `structureMassKg` is a DECLARED scalar (0.6 kg by default) with no
+   material, no wall thickness and no geometry; nothing in the component
+   survey publishes a propeller's impact strength; and no source here
+   gives a restitution coefficient against concrete, brick or foliage.
 
-   So a strike ENDS the flight and is reported, exactly as ground contact
-   already does: `simulate()` breaks the integration the moment altitude
-   crosses zero and returns `crashed` with the time, rather than
-   modelling the landing. This is the same rule applied to walls.
+   So they are DECLARED INPUTS, carried exactly as `bodyDragCoefficient`
+   and `motorTimeConstantS` already are - the user's numbers, shown as
+   declared, never presented as measured. That keeps the response
+   falsifiable even though its constants are not: energy may not
+   increase, e = 0 must kill the normal velocity exactly, e = 1 must
+   reverse it exactly, and the normal must be a unit vector everywhere
+   including on a box corner. See validation/drone-obstacles.mjs.
+
+   With no `impact` declared, `simulate()` behaves exactly as before and
+   the ground simply ends the flight.
 
    THE ENVELOPE IS THE ROTOR DISC, NOT THE HUB. A multirotor strikes
    things with its propeller tips, which is why `spanM` (2*(armLength +
@@ -150,9 +156,95 @@ function contactAt(s, o, index) {
     speedMps: speed,
     horizontalMps: Math.hypot(s.vx ?? 0, s.vy ?? 0),
     verticalMps: Math.abs(s.vz ?? 0),
-    /* Stated so no reader mistakes the end of the trace for a model of
-       the crash. The flight stops here; what the airframe does next is
-       not computed, because nothing here can compute it. */
-    note: "contact ends the flight; post-impact behaviour is not modelled",
+    /* What this contact record is, and is not. The geometry here is
+       exact; whether anything happens AFTER it depends on whether the
+       caller declared impact coefficients. `firstContact` itself only
+       locates the strike. */
+    note: "contact located exactly; the response depends on declared coefficients",
   });
+}
+
+/* ── THE IMPACT ITSELF ────────────────────────────────────────────────
+   Everything above is geometry, and geometry is exact. Everything below
+   needs MATERIAL properties, and this project has none: `structureMassKg`
+   is a declared scalar with no material, wall thickness or geometry, the
+   component survey publishes no propeller impact strength, and nothing
+   here gives a restitution coefficient against concrete, brick or wood.
+
+   So the split is kept explicit. The CONTACT NORMAL and the IMPULSE ARM
+   are computed from the scene and are as exact as the contact point. The
+   RESTITUTION, the tangential scrub and the blade-break speed are
+   DECLARED inputs, carried the same way `bodyDragCoefficient` and
+   `motorTimeConstantS` already are — they are the user's numbers, shown
+   as declared, and never presented as measured.
+
+   What that buys is that the RESPONSE is still falsifiable even though
+   the coefficients are not sourced: energy may not increase, e = 0 must
+   kill the normal velocity exactly, e = 1 must reverse it exactly, and
+   the normal must be a unit vector everywhere including on a box corner.
+   Those are checked in validation/drone-obstacles.mjs. */
+
+export const DECLARED_IMPACT_INPUTS = Object.freeze({
+  restitution: {
+    value: 0.25, unit: "-", status: "declared",
+    why: "No source in this project gives a coefficient of restitution for a "
+       + "multirotor airframe against concrete, brick or foliage. 0.25 is a "
+       + "mostly-inelastic default; it is an input, not a measurement.",
+  },
+  tangentialScrub: {
+    value: 0.5, unit: "-", status: "declared",
+    why: "Fraction of velocity ALONG the surface retained after contact. "
+       + "Friction between a carbon airframe and a wall is not published here.",
+  },
+  bladeBreakSpeedMps: {
+    value: 3.0, unit: "m/s", status: "declared",
+    why: "Closing speed above which the struck rotor is taken as destroyed. "
+       + "No propeller in the component survey publishes an impact strength, "
+       + "so this threshold is declared and adjustable, never derived.",
+  },
+});
+
+/* Outward unit normal of the solid at a point, from the gradient of the
+   signed-distance field. Central differences rather than per-kind
+   analytic normals: one expression that cannot disagree with the
+   distance function that decides contact, and it is correct on corners
+   and on the tree's trunk/canopy union, where an analytic normal has to
+   pick a branch. */
+export function contactNormal(o, px, py, pz, h = 1e-4) {
+  const d = (x, y, z) => signedDistance(o, x, y, z);
+  let nx = d(px + h, py, pz) - d(px - h, py, pz);
+  let ny = d(px, py + h, pz) - d(px, py - h, pz);
+  let nz = d(px, py, pz + h) - d(px, py, pz - h);
+  const m = Math.hypot(nx, ny, nz);
+  if (!(m > 0)) return [0, 0, 1];          // degenerate: push straight up
+  return [nx / m, ny / m, nz / m];
+}
+
+/* Velocity after contact, in the same (x, y, up) frame as the input.
+
+   v' = v - (1 + e)(v.n)n            on the normal component
+        then the tangential part is scaled by `scrub`.
+
+   Only an APPROACHING contact is resolved: if v.n >= 0 the aircraft is
+   already separating and reflecting it again would inject energy and
+   trap it against the surface.
+
+   `scrub` therefore acts AT AN IMPACT, not continuously. A purely
+   tangential velocity is a slide, not a strike, and is returned
+   untouched - sliding friction is a force acting over time and would
+   need a coefficient and a normal load this project does not have.
+   Applying the scrub per integration step instead would erase the
+   velocity in milliseconds, which is not friction, it is a bug. */
+export function reflectVelocity(v, n, { restitution = 0, scrub = 1 } = {}) {
+  const vn = v[0] * n[0] + v[1] * n[1] + v[2] * n[2];
+  if (vn >= 0) return [...v];
+  const nrm = [vn * n[0], vn * n[1], vn * n[2]];
+  const tan = [v[0] - nrm[0], v[1] - nrm[1], v[2] - nrm[2]];
+  const e = Math.max(0, Math.min(1, restitution));
+  const k = Math.max(0, Math.min(1, scrub));
+  return [
+    tan[0] * k - nrm[0] * e,
+    tan[1] * k - nrm[1] * e,
+    tan[2] * k - nrm[2] * e,
+  ];
 }

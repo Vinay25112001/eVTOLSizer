@@ -32,7 +32,7 @@ import {
   makeScenario, SCENARIO_PRESETS, SCENARIO_LIMITS, tiltAccelerationMps2,
   qRotate, eulerToQ,
 } from "./dynamics.js";
-import { DEFAULT_SCENE, firstContact } from "./obstacles.js";
+import { DEFAULT_SCENE, firstContact, DECLARED_IMPACT_INPUTS } from "./obstacles.js";
 
 const num = (v, d = 1) => (v == null || !isFinite(v) ? "—" : v.toFixed(d));
 
@@ -174,6 +174,12 @@ export default function FlightPanel({ design, frame }) {
      wants the bare trajectory can have it, and nothing the sizing loop
      computes depends on them. */
   const [scenery, setScenery] = useState(true);
+  /* DECLARED, not sourced — the same status bodyDragCoefficient carries.
+     Exposed so the reader can move them and see that the response is
+     theirs, rather than a number this tool is pretending to know. */
+  const [bounce, setBounce] = useState(true);
+  const [restitution, setRestitution] = useState(DECLARED_IMPACT_INPUTS.restitution.value);
+  const [breakSpeed, setBreakSpeed] = useState(DECLARED_IMPACT_INPUTS.bladeBreakSpeedMps.value);
   const drag = useRef(null);
 
   const airframe = useMemo(() => {
@@ -223,10 +229,16 @@ export default function FlightPanel({ design, frame }) {
           model, scenario,
           declared: { motorTimeConstantS: motorTau, bodyDragCoefficient: cd },
           durationS: scenario.totalDurationS, failed,
+          obstacles: scenery ? DEFAULT_SCENE : [],
+          impact: scenery && bounce ? {
+            restitution,
+            tangentialScrub: DECLARED_IMPACT_INPUTS.tangentialScrub.value,
+            bladeBreakSpeedMps: breakSpeed,
+          } : null,
         }),
       };
     } catch (e) { return { error: e.message }; }
-  }, [ok, airframe, result, scenario, failedKey, motorTau, cd]);
+  }, [ok, airframe, result, scenario, failedKey, motorTau, cd, scenery, bounce, restitution, breakSpeed]);
 
   /* THE FLIGHT ENDS AT THE FIRST STRIKE.
 
@@ -241,8 +253,11 @@ export default function FlightPanel({ design, frame }) {
   const strike = useMemo(
     () => (scenery && airframe ? firstContact(fullTrace, DEFAULT_SCENE, airframe.spanM / 2) : null),
     [fullTrace, scenery, airframe]);
-  const trace = strike ? fullTrace.slice(0, Math.max(2, strike.index + 1)) : fullTrace;
-  useEffect(() => { setI(0); }, [scenario, failedKey, motorTau, cd]);
+  /* With an impact response declared the INTEGRATOR resolves contact and
+     keeps flying, so the trace is already correct and must not be cut.
+     Cutting is only right when nothing after the strike is modelled. */
+  const trace = (!bounce && strike) ? fullTrace.slice(0, Math.max(2, strike.index + 1)) : fullTrace;
+  useEffect(() => { setI(0); }, [scenario, failedKey, motorTau, cd, scenery, bounce, restitution, breakSpeed]);
 
   useEffect(() => {
     if (!playing || trace.length < 2) return;
@@ -462,6 +477,34 @@ export default function FlightPanel({ design, frame }) {
             <input type="checkbox" checked={scenery} onChange={(e) => setScenery(e.target.checked)} />
             obstacles
           </label>
+          {/* THE IMPACT COEFFICIENTS, shown as DECLARED. They are the
+              reader's numbers; nothing here sources them. */}
+          {scenery ? (
+            <label style={{ fontSize: T.label, color: SC.muted, display: "flex", alignItems: "center", gap: 4 }}>
+              <input type="checkbox" checked={bounce} onChange={(e) => setBounce(e.target.checked)} />
+              bounce
+              {bounce ? (
+                <>
+                  <span style={{ color: SC.dim, fontFamily: MONO }} title={DECLARED_IMPACT_INPUTS.restitution.why}>
+                    e
+                  </span>
+                  <input type="number" value={restitution} step={0.05} min={0} max={1}
+                    onChange={(ev) => setRestitution(Math.max(0, Math.min(1, +ev.target.value)))}
+                    style={{ width: 52, background: SC.bg, color: SC.text, border: `1px solid ${SC.border}`,
+                             borderRadius: 3, padding: "2px 4px", fontFamily: MONO }} />
+                  <span style={{ color: SC.dim, fontFamily: MONO }}
+                        title={DECLARED_IMPACT_INPUTS.bladeBreakSpeedMps.why}>
+                    blades break
+                  </span>
+                  <input type="number" value={breakSpeed} step={0.5} min={0}
+                    onChange={(ev) => setBreakSpeed(Math.max(0, +ev.target.value))}
+                    style={{ width: 56, background: SC.bg, color: SC.text, border: `1px solid ${SC.border}`,
+                             borderRadius: 3, padding: "2px 4px", fontFamily: MONO }} />
+                  <span style={{ color: SC.dim, fontFamily: MONO }}>m/s (declared)</span>
+                </>
+              ) : null}
+            </label>
+          ) : null}
           {/* THE CONTROL PAD. Each press appends a segment and the flight is
               re-integrated; nothing here moves the drawn aircraft directly. */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
@@ -904,7 +947,22 @@ export default function FlightPanel({ design, frame }) {
             </div>
             <table style={{ width: "100%", borderCollapse: "collapse", marginTop: S.sm }}>
               <tbody>
-                {strike ? (
+                {run.impacts?.length ? (
+                  <tr><td style={td()}>impacts</td>
+                      <td style={{ ...td(true), color: "#e0574a", fontWeight: 600 }}>
+                        {`${run.impacts.length} — ${run.impacts.slice(0, 4).map((z) => `${z.name} @ ${z.closingMps.toFixed(1)} m/s`).join(", ")}`}
+                        <div style={{ fontSize: 10, color: SC.muted, fontWeight: 400, marginTop: 2 }}>
+                          restitution, scrub and the blade-break speed are DECLARED inputs, not measurements
+                        </div>
+                      </td></tr>
+                ) : null}
+                {run.broken?.length ? (
+                  <tr><td style={td()}>rotors destroyed</td>
+                      <td style={{ ...td(true), color: "#e0574a", fontWeight: 600 }}>
+                        {run.broken.map((z) => `motor ${z.motor} at ${z.closingMps.toFixed(1)} m/s`).join(", ")}
+                      </td></tr>
+                ) : null}
+                {!bounce && strike ? (
                   <tr><td style={td()}>struck</td>
                       <td style={{ ...td(true), color: "#e0574a", fontWeight: 600 }}>
                         {`${strike.name} at ${strike.speedMps.toFixed(1)} m/s, t = ${strike.t.toFixed(2)} s`}

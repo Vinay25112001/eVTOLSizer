@@ -99,6 +99,68 @@ export default function FlightPanel({ design, frame }) {
     next.has(m) ? next.delete(m) : next.add(m);
     return next;
   });
+  /* ── FLYING IT BY HAND ────────────────────────────────────────────
+     A press does NOT nudge the drawn aircraft. It appends a segment to
+     the scenario and the whole flight is integrated again, so the panel's
+     one guarantee holds: every frame on screen is still a state the
+     6-DOF integrator produced. That is also why a command cannot be
+     undone mid-flight - there is no "now" to steer from, only a scenario
+     that is re-flown from t=0.
+
+     THE SIGNS ARE MEASURED, NOT ASSUMED. Running the integrator at a
+     held tilt gives, on the default quad from 5 m:
+
+        pitch +15 deg  ->  x = -19.56 m      (nose UP, thrust tilts aft)
+        pitch -15 deg  ->  x = +19.56 m
+        roll  +15 deg  ->  y = +19.56 m      (right wing down, goes right)
+
+     so FORWARD is a NEGATIVE pitch command. Labelling the buttons from
+     the sign convention rather than from the measurement is how a
+     "forward" button ends up flying backwards.
+
+     Commands are RELATIVE to the last segment, which is what a pilot
+     expects: pressing forward twice doubles the tilt rather than
+     re-issuing it. maxSegments (12) is a validated scenario limit, so
+     the pad disables itself at the cap instead of building a scenario
+     makeScenario would reject. */
+  const STEP_DEG = 10, STEP_YAW_DEG = 45, STEP_ALT_M = 1, STEP_S = 1;
+  const padFull = scen.segments.length >= SCENARIO_LIMITS.maxSegments;
+  const clampTilt = (d) => Math.max(-SCENARIO_LIMITS.maxTiltDeg,
+                                    Math.min(SCENARIO_LIMITS.maxTiltDeg, d));
+  const command = (mut) => setScen((st) => {
+    if (st.segments.length >= SCENARIO_LIMITS.maxSegments) return st;
+    const last = st.segments[st.segments.length - 1] ?? {};
+    const base = {
+      durationS: STEP_S,
+      rollDeg: Number(last.rollDeg) || 0,
+      pitchDeg: Number(last.pitchDeg) || 0,
+      yawDeg: Number(last.yawDeg) || 0,
+      altitudeM: Number(last.altitudeM) || Number(st.startAltitudeM) || 2,
+      altitudeRateMps: "",
+    };
+    return { ...st, label: "Flown by hand", segments: [...st.segments, mut(base)] };
+  });
+  const CONTROLS = [
+    { k: "fwd",  glyph: "▲", title: `forward — pitch ${-STEP_DEG}° for ${STEP_S}s (nose down)`,
+      go: () => command((b) => ({ ...b, pitchDeg: clampTilt(b.pitchDeg - STEP_DEG) })) },
+    { k: "back", glyph: "▼", title: `backward — pitch +${STEP_DEG}° for ${STEP_S}s`,
+      go: () => command((b) => ({ ...b, pitchDeg: clampTilt(b.pitchDeg + STEP_DEG) })) },
+    { k: "left", glyph: "◀", title: `left — roll ${-STEP_DEG}° for ${STEP_S}s`,
+      go: () => command((b) => ({ ...b, rollDeg: clampTilt(b.rollDeg - STEP_DEG) })) },
+    { k: "right",glyph: "▶", title: `right — roll +${STEP_DEG}° for ${STEP_S}s`,
+      go: () => command((b) => ({ ...b, rollDeg: clampTilt(b.rollDeg + STEP_DEG) })) },
+    { k: "yawL", glyph: "↺", title: `yaw left ${STEP_YAW_DEG}°`,
+      go: () => command((b) => ({ ...b, yawDeg: b.yawDeg - STEP_YAW_DEG })) },
+    { k: "yawR", glyph: "↻", title: `yaw right ${STEP_YAW_DEG}°`,
+      go: () => command((b) => ({ ...b, yawDeg: b.yawDeg + STEP_YAW_DEG })) },
+    { k: "up",   glyph: "↑", title: `climb ${STEP_ALT_M} m`,
+      go: () => command((b) => ({ ...b, altitudeM: Math.min(SCENARIO_LIMITS.maxAltitudeM, b.altitudeM + STEP_ALT_M) })) },
+    { k: "down", glyph: "↓", title: `descend ${STEP_ALT_M} m`,
+      go: () => command((b) => ({ ...b, altitudeM: Math.max(0, b.altitudeM - STEP_ALT_M) })) },
+    { k: "level",glyph: "⌂", title: "level — roll and pitch to zero, heading and altitude held",
+      go: () => command((b) => ({ ...b, rollDeg: 0, pitchDeg: 0 })) },
+  ];
+
   const [motorTau, setMotorTau] = useState(0.05);
   const [cd, setCd] = useState(1.0);
   const [view, setView] = useState({ yaw: 38, pitch: 26 });
@@ -270,6 +332,19 @@ export default function FlightPanel({ design, frame }) {
   const MAJOR_EVERY = 5;
   const travelledM = trace.length ? Math.hypot(now.x - trace[0].x, now.y - trace[0].y) : 0;
 
+  /* WHAT WAS ASKED FOR AT THIS INSTANT, to sit under what was achieved.
+     Walks the scenario's own segments by elapsed time rather than reading
+     a controller set-point, so the readout is the commanded scenario and
+     not a second copy of the state it produced. */
+  const cmdNow = (() => {
+    let t = now?.t ?? 0;
+    for (const sg of scenario.segments) {
+      if (t <= sg.durationS) return sg;
+      t -= sg.durationS;
+    }
+    return scenario.segments[scenario.segments.length - 1] ?? null;
+  })();
+
   /* Where each major grid line's number goes. The line is a segment in
      screen space; this clips it to the viewport (Liang-Barsky on the
      rectangle) and returns the visible end that sits LOWER on screen,
@@ -365,6 +440,25 @@ export default function FlightPanel({ design, frame }) {
                      borderRadius: 3, padding: "4px 10px", fontSize: T.label, cursor: "pointer", fontFamily: SANS }}>
             {editing ? "hide scenario" : `edit scenario (${scen.segments.length} segment${scen.segments.length === 1 ? "" : "s"})`}
           </button>
+          {/* THE CONTROL PAD. Each press appends a segment and the flight is
+              re-integrated; nothing here moves the drawn aircraft directly. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+            <span style={{ fontSize: T.label, color: SC.muted }}>fly</span>
+            {CONTROLS.map((c) => (
+              <button key={c.k} type="button" onClick={c.go} disabled={padFull} title={c.title}
+                style={{ background: SC.inset, color: padFull ? SC.dim : SC.text,
+                         border: `1px solid ${SC.caution}`, borderRadius: 3,
+                         padding: "3px 8px", fontSize: T.body, lineHeight: 1.1,
+                         cursor: padFull ? "not-allowed" : "pointer", fontFamily: SANS }}>
+                {c.glyph}
+              </button>
+            ))}
+            <span style={{ fontSize: T.label, color: padFull ? SC.caution : SC.dim, fontFamily: MONO }}>
+              {padFull
+                ? `${SCENARIO_LIMITS.maxSegments}-segment limit reached — edit or reset the scenario`
+                : `${SCENARIO_LIMITS.maxSegments - scen.segments.length} left`}
+            </span>
+          </div>
           {/* KILL ROTORS BY NAME HERE OR BY CLICKING THEM IN THE VIEW. One
               chip per motor, because the simulation takes a SET and the old
               single <select> could not express the multi-failure cases that
@@ -707,10 +801,18 @@ export default function FlightPanel({ design, frame }) {
 
           <div style={{ minWidth: 230, flex: 1 }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(96px, 1fr))", gap: S.sm }}>
-              <Kpi label="Altitude" value={num(now.altitudeM, 2)} unit="m" />
-              <Kpi label="Roll" value={num(now.rollDeg, 1)} unit="°" />
-              <Kpi label="Pitch" value={num(now.pitchDeg, 1)} unit="°" />
-              <Kpi label="Yaw" value={num(now.yawDeg, 1)} unit="°" />
+              {/* ACHIEVED, with COMMANDED beneath. The two differ whenever the
+                  controller is still catching up, and the gap is the only
+                  visible evidence that a command is being tracked rather
+                  than applied. */}
+              <Kpi label="Altitude" value={num(now.altitudeM, 2)} unit="m"
+                   sub={cmdNow ? `commanded ${num(cmdNow.altitudeM, 2)} m` : undefined} />
+              <Kpi label="Roll" value={num(now.rollDeg, 1)} unit="°"
+                   sub={cmdNow ? `commanded ${num(cmdNow.rollDeg, 1)}°` : undefined} />
+              <Kpi label="Pitch" value={num(now.pitchDeg, 1)} unit="°"
+                   sub={cmdNow ? `commanded ${num(cmdNow.pitchDeg, 1)}°` : undefined} />
+              <Kpi label="Yaw" value={num(now.yawDeg, 1)} unit="°"
+                   sub={cmdNow ? `commanded ${num(cmdNow.yawDeg, 1)}°` : undefined} />
               <Kpi label="Travelled" value={num(travelledM, 1)} unit="m"
                    sub="from the start point — no position loop holds station" />
             </div>

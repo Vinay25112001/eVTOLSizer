@@ -32,6 +32,7 @@ import {
   makeScenario, SCENARIO_PRESETS, SCENARIO_LIMITS, tiltAccelerationMps2,
   qRotate, eulerToQ,
 } from "./dynamics.js";
+import { DEFAULT_SCENE, firstContact } from "./obstacles.js";
 
 const num = (v, d = 1) => (v == null || !isFinite(v) ? "—" : v.toFixed(d));
 
@@ -169,6 +170,10 @@ export default function FlightPanel({ design, frame }) {
   const [speed, setSpeed] = useState(1);
   const [zoom, setZoom] = useState(2.4);
   const [camera, setCamera] = useState("auto");
+  /* Obstacles are scene furniture, so they are opt-out: a reader who
+     wants the bare trajectory can have it, and nothing the sizing loop
+     computes depends on them. */
+  const [scenery, setScenery] = useState(true);
   const drag = useRef(null);
 
   const airframe = useMemo(() => {
@@ -223,7 +228,20 @@ export default function FlightPanel({ design, frame }) {
     } catch (e) { return { error: e.message }; }
   }, [ok, airframe, result, scenario, failedKey, motorTau, cd]);
 
-  const trace = sim?.run?.trace ?? [];
+  /* THE FLIGHT ENDS AT THE FIRST STRIKE.
+
+     Detection runs over the finished trace rather than inside the
+     integrator, so the validated 6-DOF loop is untouched: the aircraft
+     is flown exactly as before and the trace is then cut at the contact.
+     Cutting is equivalent to stopping, because nothing after the strike
+     is modelled - the same treatment simulate() already gives the
+     ground, where it breaks on the zero crossing and reports `crashed`
+     rather than modelling the landing. */
+  const fullTrace = sim?.run?.trace ?? [];
+  const strike = useMemo(
+    () => (scenery && airframe ? firstContact(fullTrace, DEFAULT_SCENE, airframe.spanM / 2) : null),
+    [fullTrace, scenery, airframe]);
+  const trace = strike ? fullTrace.slice(0, Math.max(2, strike.index + 1)) : fullTrace;
   useEffect(() => { setI(0); }, [scenario, failedKey, motorTau, cd]);
 
   useEffect(() => {
@@ -440,6 +458,10 @@ export default function FlightPanel({ design, frame }) {
                      borderRadius: 3, padding: "4px 10px", fontSize: T.label, cursor: "pointer", fontFamily: SANS }}>
             {editing ? "hide scenario" : `edit scenario (${scen.segments.length} segment${scen.segments.length === 1 ? "" : "s"})`}
           </button>
+          <label style={{ fontSize: T.label, color: SC.muted, display: "flex", alignItems: "center", gap: 4 }}>
+            <input type="checkbox" checked={scenery} onChange={(e) => setScenery(e.target.checked)} />
+            obstacles
+          </label>
           {/* THE CONTROL PAD. Each press appends a segment and the flight is
               re-integrated; nothing here moves the drawn aircraft directly. */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
@@ -713,6 +735,70 @@ export default function FlightPanel({ design, frame }) {
               ))}
             </g>
 
+            {/* THE OBSTACLES. Drawn from their own dimensions and labelled
+                with them, so they read as scale references rather than as
+                scenery: a box captioned "hangar 14x10x8 m" tells you how far
+                the aircraft has travelled in a way a bare grid cannot. Sorted
+                back-to-front so nearer solids overlap farther ones. */}
+            {scenery ? (
+              <g>
+                {DEFAULT_SCENE.filter((o) => {
+                  /* CULLED TO THE VISIBLE WINDOW. A hover frames a few metres
+                     while the hangar is 14 m wide and 26 m away, so without
+                     this it is drawn at enormous scale, fills a quarter of the
+                     frame and pushes its own caption off screen. An obstacle
+                     appears when the aircraft is near enough for it to mean
+                     something, which is also when a strike is possible. */
+                  const rad = o.kind === "box" ? Math.hypot(o.wx, o.wy) / 2 : o.canopyR;
+                  const d = Math.hypot(o.x - followPt[0], o.y - followPt[1]) - rad;
+                  return d <= Math.max(world, 12);
+                }).map((o) => {
+                  const base = project([o.x, o.y, 0]);
+                  const strook = strike && strike.obstacle === o;
+                  const edge = strook ? "#e0574a" : "#6d8ea8";
+                  const face = strook ? "#3a1a17" : "#1b2733";
+                  if (o.kind === "box") {
+                    const cs = [[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b]) =>
+                      [o.x + a * o.wx / 2, o.y + b * o.wy / 2]);
+                    const foot = cs.map((c) => project([c[0], c[1], 0]));
+                    const roof = cs.map((c) => project([c[0], c[1], o.h]));
+                    const poly = (pts) => pts.map((q) => `${q.sx.toFixed(1)},${q.sy.toFixed(1)}`).join(" ");
+                    return (
+                      <g key={o.name} opacity="0.95">
+                        {cs.map((_, k) => {
+                          const n = (k + 1) % 4;
+                          return <polygon key={k} points={poly([foot[k], foot[n], roof[n], roof[k]])}
+                                          fill={face} stroke={edge} strokeWidth="1" opacity="0.9" />;
+                        })}
+                        <polygon points={poly(roof)} fill={strook ? "#5a2320" : "#243444"}
+                                 stroke={edge} strokeWidth="1.2" />
+                        <text x={base.sx} y={base.sy + 13} textAnchor="middle"
+                              fill={strook ? "#ffb4aa" : VIEW.muted} fontSize="9" fontFamily={MONO}>
+                          {`${o.name} ${o.wx}×${o.wy}×${o.h} m`}
+                        </text>
+                      </g>
+                    );
+                  }
+                  const cz = o.h - o.canopyR;
+                  const top = project([o.x, o.y, o.h]);
+                  const crown = project([o.x, o.y, cz]);
+                  const rpx = Math.abs(project([o.x + o.canopyR, o.y, cz]).sx - crown.sx);
+                  return (
+                    <g key={o.name} opacity="0.95">
+                      <line x1={base.sx} y1={base.sy} x2={top.sx} y2={top.sy}
+                            stroke={strook ? "#e0574a" : "#5a4632"} strokeWidth={Math.max(1.5, o.trunkR * 8)} />
+                      <circle cx={crown.sx} cy={crown.sy} r={Math.max(3, rpx)}
+                              fill={strook ? "#4a1f1c" : "#1d3326"} stroke={edge} strokeWidth="1" opacity="0.92" />
+                      <text x={base.sx} y={base.sy + 13} textAnchor="middle"
+                            fill={strook ? "#ffb4aa" : VIEW.muted} fontSize="9" fontFamily={MONO}>
+                        {`${o.name} ${o.h} m`}
+                      </text>
+                    </g>
+                  );
+                })}
+              </g>
+            ) : null}
+
             {/* shadow and the vertical drop line, so altitude is readable.
                 The shadow softens with height, which is what a shadow does
                 and also makes the altitude readable without the drop line. */}
@@ -818,6 +904,16 @@ export default function FlightPanel({ design, frame }) {
             </div>
             <table style={{ width: "100%", borderCollapse: "collapse", marginTop: S.sm }}>
               <tbody>
+                {strike ? (
+                  <tr><td style={td()}>struck</td>
+                      <td style={{ ...td(true), color: "#e0574a", fontWeight: 600 }}>
+                        {`${strike.name} at ${strike.speedMps.toFixed(1)} m/s, t = ${strike.t.toFixed(2)} s`}
+                        <div style={{ fontSize: 10, color: SC.muted, fontWeight: 400, marginTop: 2 }}>
+                          {`${strike.horizontalMps.toFixed(1)} m/s horizontal, ${strike.verticalMps.toFixed(1)} m/s vertical `}
+                          {`at ${strike.altitudeM.toFixed(1)} m — ${strike.note}`}
+                        </div>
+                      </td></tr>
+                ) : null}
                 <tr><td style={td()}>outcome</td>
                     <td style={{ ...td(true), color: run.crashed ? "#e0574a" : "#54c7a8", fontWeight: 600 }}>
                       {run.crashed ? `ground at ${num(run.hitGroundAtS, 2)} s` : "flew the scenario"}</td></tr>

@@ -15,6 +15,9 @@ import InputPanel, { InputRow } from "./InputPanel.jsx";
 import { appVersionLabel } from "../../lib/designfile.js";
 import DesignModeSwitch from "./DesignModeSwitch.jsx";
 import { SharedAuthBar } from "../../lib/auth-session.jsx";
+import { UnitToggle } from "../../lib/UnitToggle.jsx";
+import { useUnitSystem } from "../../lib/unit-system.jsx";
+import { convertLabelled } from "../../lib/units.js";
 import { AIRCRAFT_TYPES, TYPE_IDS, typeOf, designAircraft, METHOD_ACCURACY } from "./engine.js";
 import { uncertaintyOf } from "./uncertainty.js";
 import { REFERENCE_AIRCRAFT } from "./reference-aircraft.js";
@@ -51,6 +54,7 @@ export default function AircraftStudio({ initialType = "transport", requestedTyp
     : (window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true)));
   applyTheme(dark);   // the shared palette; applied on every render, as the eVTOL sizer does
 
+  const { system: unitSystem } = useUnitSystem();
   const [type, setType] = useState(TYPE_IDS.includes(initialType) ? initialType : "transport");
   const [job, setJob] = useState("size");
   const [tab, setTab] = useState(() => (ALL_TABS.some(([k]) => k === qs.get("atab")) ? qs.get("atab") : "overview"));
@@ -118,6 +122,7 @@ export default function AircraftStudio({ initialType = "transport", requestedTyp
           </nav>
           <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
             <button type="button" style={chip(false)} onClick={() => setTab("export")}>⤓ Export</button>
+            <UnitToggle style={chip(false)} />
             <button type="button" style={chip(false)} onClick={() => setDark((d) => !d)}>{dark ? "DAY" : "NIGHT"}</button>
             {/* The same session the eVTOL and drone studios show. */}
             <SharedAuthBar dark={dark} />
@@ -144,9 +149,12 @@ export default function AircraftStudio({ initialType = "transport", requestedTyp
               <div key={l} style={{ display: "flex", flexDirection: "column", gap: 1, flex: "0 0 auto" }}>
                 <span style={{ fontSize: 10, color: SC.muted, whiteSpace: "nowrap" }}>{l}</span>
                 <span style={{ display: "flex", alignItems: "baseline", gap: 5, whiteSpace: "nowrap" }}>
+                  {/* These are the most prominent numbers on the page and they
+                      carry their unit inside the string, so they convert here
+                      rather than through Kpi. */}
                   <b style={{ fontSize: 15, color: SC.primary, fontFamily: MONO, fontWeight: 600,
-                              fontVariantNumeric: "tabular-nums" }}>{v}</b>
-                  {sub && <span style={{ fontSize: 10, color: SC.subtle, fontFamily: MONO }}>{sub}</span>}
+                              fontVariantNumeric: "tabular-nums" }}>{convertLabelled(v, unitSystem)}</b>
+                  {sub && <span style={{ fontSize: 10, color: SC.subtle, fontFamily: MONO }}>{convertLabelled(sub, unitSystem)}</span>}
                 </span>
               </div>
             ))}

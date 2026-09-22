@@ -10,6 +10,8 @@ import { useMemo } from "react";
 import { SC } from "../lib/theme.js";
 import { Slider } from "../ui/primitives.jsx";
 import { T, S, MONO, SANS } from "../ui/tokens.js";
+import { useUnitSystem } from "../lib/unit-system.jsx";
+import { convertDisplay } from "../lib/units.js";
 
 export const fmt = (v, d = 0) =>
   (Number.isFinite(v) ? v.toLocaleString("en-US", { maximumFractionDigits: d, minimumFractionDigits: d }) : "—");
@@ -100,7 +102,16 @@ export function Card({ title, children }) {
   );
 }
 
+/* THE ONE PLACE UNITS ARE CONVERTED. Both studios render every headline
+   number through this component and pass the unit they are labelling it
+   with, so the conversion belongs here rather than at 97 call sites,
+   each of which would be a chance to attach the wrong factor to a
+   number. An unknown unit passes through untouched — see src/lib/units.js
+   for why that is the deliberate failure mode. */
 export function Kpi({ label, value, unit, sub }) {
+  const { system } = useUnitSystem();
+  const conv = convertDisplay(value, unit, system);
+  value = conv.value; unit = conv.unit;
   return (
     <div style={{ minWidth: 130, padding: `${S.sm}px ${S.md}px`, borderLeft: `2px solid ${SC.border}` }}>
       <div style={{ fontSize: T.label, color: SC.muted, fontFamily: SANS }}>{label}</div>

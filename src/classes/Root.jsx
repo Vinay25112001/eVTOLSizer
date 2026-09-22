@@ -24,6 +24,7 @@ import { CLASS_IDS } from "./registry.js";
 import { routeFromSearch, STUDIO_TYPES } from "./route.js";
 import { DESIGN_MODE_EVENT } from "./aircraft/DesignModeSwitch.jsx";
 import { AuthSessionProvider } from "../lib/auth-session.jsx";
+import { UnitSystemProvider } from "../lib/unit-system.jsx";
 
 const AircraftStudio = lazy(() => import("./aircraft/AircraftStudio.jsx"));
 const DroneStudio = lazy(() => import("./drone/DroneStudio.jsx"));
@@ -88,6 +89,7 @@ export default function Root() {
      rather than three copies that can disagree. */
   return (
     <AuthSessionProvider>
+      <UnitSystemProvider>
       {evtolMounted && (
         <div style={{ display: mode === "evtol" ? "contents" : "none" }}>
           <App />
@@ -103,6 +105,7 @@ export default function Root() {
           <Suspense fallback={loadingDrone}><DroneStudio /></Suspense>
         </div>
       )}
+      </UnitSystemProvider>
     </AuthSessionProvider>
   );
 }

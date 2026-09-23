@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { SC } from "../lib/theme.js";
 import { runSizing } from "../engine.js";
 
-import { GROQ_MODEL_FAST, describeModelError } from "../lib/ai-model.js";
+import { GROQ_MODEL_FAST, GROQ_MODEL_LABEL, describeModelError } from "../lib/ai-model.js";
 export function AIAssistantPanel({ params, SR, SC, onParamChange, user }) {
   const [mode,     setMode]     = useState('design'); // 'design' | 'chat'
   // Keep a ref to the latest SR so async callbacks always read the current value
@@ -425,7 +425,14 @@ export function AIAssistantPanel({ params, SR, SC, onParamChange, user }) {
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:10}}>
           <div>
             <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:'0.18em',marginBottom:4}}>
-              {mode==='design'?'DETERMINISTIC OPTIMIZER · ALL TABS UPDATE LIVE':'LLAMA 3 VIA GROQ · CONVERSATIONAL · CONTEXT-AWARE'}
+              {/* THE CAPTION NAMED A MODEL THAT NO LONGER EXISTS. This string
+                  was written out by hand and said LLAMA 3 while the two calls
+                  below sent GROQ_MODEL_FAST; Groq shut that model down on
+                  16 August 2026, so the label had been naming a decommissioned
+                  model rather than the one answering. ai-model.js keeps
+                  GROQ_MODEL_LABEL for exactly this — read the name from the
+                  same constant the request uses and the two cannot drift. */}
+              {mode==='design'?'DETERMINISTIC OPTIMIZER · ALL TABS UPDATE LIVE':`${GROQ_MODEL_LABEL[GROQ_MODEL_FAST].toUpperCase()} · CONVERSATIONAL · CONTEXT-AWARE`}
             </div>
             <div style={{fontSize:18,fontWeight:800,color:SC.text}}>
               <span style={{color:SC.purple}}>AI</span> {mode==='design'?'Design Assistant':'Chat Assistant'}

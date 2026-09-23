@@ -199,7 +199,16 @@ export default function FlightPanel({ design, frame }) {
      release segment that let it brake. See LOITER_WITHDRAWN. */
   const STEP_YAW_DEG = 45, STEP_ALT_M = 1;
   const MIN_HOLD_S = 0.4;                   // a tap is still a move
-  const padFull = scen.segments.length >= SCENARIO_LIMITS.maxSegments - 1;
+  /* THE RESERVED SLOT IS GONE BECAUSE THE SEGMENT IT HELD IS GONE. A
+     press used to append TWO segments, the move and a trailing release,
+     so the pad had to stop one short of the cap or the last press would
+     build a scenario makeScenario rejects. appendMove now appends ONE.
+     Reserving the slot therefore only stopped the pad at 11 while the
+     caption beside it named the cap as the reason, and the table's own
+     "add segment" button — which compares against the cap itself — could
+     still add the twelfth the pad had refused. Both comparisons now read
+     the same, and both match the > cap that dynamics.js throws on. */
+  const padFull = scen.segments.length >= SCENARIO_LIMITS.maxSegments;
 
   /* THE DURATION BUDGET, PRE-ANNOUNCED. The segment limit has always
      been visible before it bites — "3 left" beside the pad — while the
@@ -266,7 +275,7 @@ export default function FlightPanel({ design, frame }) {
   const held = useRef(null);
 
   const appendMove = (mut, holdS) => setScen((st) => {
-    if (st.segments.length >= SCENARIO_LIMITS.maxSegments - 1) return st;
+    if (st.segments.length >= SCENARIO_LIMITS.maxSegments) return st;
     const last = st.segments[st.segments.length - 1] ?? {};
     const alt = Number(last.altitudeM) || Number(st.startAltitudeM) || 2;
     const yaw = Number(last.yawDeg) || 0;

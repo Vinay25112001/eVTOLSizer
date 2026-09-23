@@ -159,6 +159,62 @@ check(Object.values(NO_CONVERT).every((why) => typeof why === "string" && why.le
 const overlap = Object.keys(UNIT_TABLE).filter((u) => u in NO_CONVERT);
 check(overlap.length === 0, "no unit is both convertible and not-converted", overlap.join(", ") || "disjoint");
 
+/* ── THE TABLE MUST BE A BIJECTION, AND NOTHING USED TO CHECK IT ───────
+   The round-trip test above converts a unit out and back through its OWN
+   pair, so it passes even when two different SI units both claim the same
+   imperial name — each round-trips fine on its own. That is exactly what
+   had happened: "lb/ft²" was the counterpart of N/m² (force per area),
+   and kg/m² (MASS per area, which differs by g) could not be converted at
+   all because the name it needed was taken. It sat in NO_CONVERT with an
+   honest note, so wing loading showed SI to an imperial reader.
+
+   Worse, while one name meant two things nothing could tell a correctly
+   labelled force from a mislabelled mass — and paintPerArea, a paint mass
+   per wetted area, was declared "lb/ft²" in two classes. Splitting the
+   name into lbf/ft² and lbm/ft² is what exposed it.
+
+   So: no two units may share a target. A name that means two quantities
+   is not a unit, and the table is the only place that can refuse it. */
+{
+  /* SHARING A TARGET IS LEGITIMATE ONLY BETWEEN DECIMAL PREFIXES. N and
+     kN both convert to lbf, W and kW both to hp, and N·m/kN·m/MN·m all to
+     lbf·ft — same quantity, different prefix, and their factors differ by
+     a power of ten. N/m² and kg/m² differed by 9.80665, which is not a
+     prefix: it is g, and it is the fingerprint of one name being used for
+     two different physical quantities. So the test is not "one source per
+     target" but "any two sources for a target differ by a power of ten". */
+  const byTarget = new Map();
+  for (const [unit, spec] of Object.entries(UNIT_TABLE)) {
+    if (!byTarget.has(spec.to)) byTarget.set(spec.to, []);
+    byTarget.get(spec.to).push([unit, spec.k]);
+  }
+  const isDecimal = (r) => {
+    const e = Math.log10(Math.abs(r));
+    return Math.abs(e - Math.round(e)) < 1e-9;
+  };
+  const collisions = [];
+  for (const [target, sources] of byTarget) {
+    for (let i = 1; i < sources.length; i++) {
+      const ratio = sources[i][1] / sources[0][1];
+      if (!isDecimal(ratio)) {
+        collisions.push(`${sources[0][0]} and ${sources[i][0]} both -> ${target}, `
+          + `factors differ by ${ratio.toPrecision(6)}, which is not a decimal prefix`);
+      }
+    }
+  }
+  check(collisions.length === 0,
+    "units sharing a counterpart differ only by a decimal prefix, never by a quantity",
+    collisions.join("; ")
+      || `${Object.keys(UNIT_TABLE).length} units over ${byTarget.size} targets, every collision a prefix`);
+
+  /* And every target is itself a key, or the round trip has nowhere to
+     land. A one-way entry would convert out and never come back. */
+  const orphans = Object.values(UNIT_TABLE).map((s) => s.to).filter((t) => !(t in UNIT_TABLE));
+  check(orphans.length === 0,
+    "and every counterpart is itself in the table, so the trip is closed",
+    orphans.join(", ") || "every target resolves");
+}
+
 /* ── 6. THE SECOND LINE OF A TILE IS A DISPLAY TOO ──────────────────── */
 console.log("\n-- no headline figure sits above a sub-line in the other system --");
 

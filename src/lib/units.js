@@ -61,13 +61,31 @@ export const UNIT_TABLE = Object.freeze({
   "N·m":     { system: "SI",  to: "lbf·ft", k: 1 / (4.4482216152605 * 0.3048) },
   "kN·m":    { system: "SI",  to: "lbf·ft", k: 1000 / (4.4482216152605 * 0.3048) },
   "MN·m":    { system: "SI",  to: "lbf·ft", k: 1e6 / (4.4482216152605 * 0.3048) },
-  "N/m²":    { system: "SI",  to: "lb/ft²", k: 0.09290304 / 4.4482216152605 },
+  /* ── areal loading: FORCE per area and MASS per area are different
+     quantities and now have different imperial names ──────────────────
+     "lb/ft²" used to be the imperial counterpart of N/m², while kg/m² was
+     left unconverted because a single "lb/ft²" key cannot mean both: the
+     two differ by g, so mapping both onto it would make the round-trip
+     come back a factor of 9.807 out. That was recorded honestly in
+     NO_CONVERT, but it left wing loading -- the aircraft classes' own
+     m/S, in kg/m² -- showing SI to an imperial reader.
+
+     The ambiguity is in the NAME, not in the arithmetic, so the fix is to
+     stop using one name for two quantities. "lbf/ft²" is force per area
+     and "lbm/ft²" is mass per area; both are standard, and with them the
+     table is a strict bijection again, which is what convertDisplay's
+     round-trip assumes. Anyone reading "lb/ft²" in aerospace normally
+     means lbf/ft², so that quantity keeps its factor unchanged and only
+     its label is made explicit. */
+  "N/m²":    { system: "SI",  to: "lbf/ft²", k: 0.09290304 / 4.4482216152605 },
+  "kg/m²":   { system: "SI",  to: "lbm/ft²", k: 0.09290304 / 0.45359237 },
   "MPa":     { system: "SI",  to: "ksi",    k: 1 / 6.894757293168361 },
   "kW":      { system: "SI",  to: "hp",     k: 1000 / 745.6998715822702 },
   "W":       { system: "SI",  to: "hp",     k: 1 / 745.6998715822702 },
   "lbf":     { system: "IMP", to: "N",      k: 4.4482216152605 },
   "lbf·ft":  { system: "IMP", to: "N·m",    k: 4.4482216152605 * 0.3048 },
-  "lb/ft²":  { system: "IMP", to: "N/m²",   k: 4.4482216152605 / 0.09290304 },
+  "lbf/ft²": { system: "IMP", to: "N/m²",   k: 4.4482216152605 / 0.09290304 },
+  "lbm/ft²": { system: "IMP", to: "kg/m²",  k: 0.45359237 / 0.09290304 },
   "ksi":     { system: "IMP", to: "MPa",    k: 6.894757293168361 },
   "hp":      { system: "IMP", to: "kW",     k: 745.6998715822702 / 1000 },
   /* ── specific energy ── */
@@ -104,16 +122,6 @@ export const NO_CONVERT = Object.freeze({
   "dBi": "antenna gain, a ratio",
   "MHz": "frequency",
   "mW": "electrical",
-  /* NOT CONVERTED, AND THE REASON IS AN AMBIGUITY RATHER THAN A CHOICE.
-     "lb/ft²" is used in this field for BOTH wing loading as a force per
-     area (the counterpart of N/m², already in the table) and as a mass
-     per area (the counterpart of kg/m²). The two differ by g, so a
-     single "lb/ft²" key cannot mean both: converting kg/m² into it
-     would make the round-trip come back a factor of 9.807 out, which is
-     the gate telling the truth about the unit string rather than about
-     the arithmetic. Left in SI, visibly, instead of being silently
-     converted into a label that could be read as either quantity. */
-  "kg/m²": "ambiguous in imperial: lb/ft² is used for both force/area and mass/area, which differ by g",
 });
 
 export const SYSTEMS = Object.freeze(["SI", "IMP"]);

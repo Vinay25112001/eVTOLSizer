@@ -425,7 +425,7 @@ export default function App(){
     area:    nd_((m2)  => +(m2 * 10.7639).toFixed(1)),  areaU: "ft²",
     len:     nd_((m)   => +(m  * 3.28084).toFixed(2)),  lenU:  "ft",
     sed:     nd_((whkg)=> +(whkg*0.453592).toFixed(1)), sedU: "Wh/lb",
-    wl:      nd_((npm2)=> +(npm2*0.020885).toFixed(2)), wlU:  "lb/ft²",
+    wl:      nd_((npm2)=> +(npm2*0.020885).toFixed(2)), wlU:  "lbf/ft²",
     energy:  (kwh) => kwh,                            energyU:"kWh",
     // dimensionless — no conversion
     nd:      (v)   => v,                              ndU:    "",

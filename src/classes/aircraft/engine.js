@@ -247,7 +247,7 @@ export function constraintDiagram(result) {
     const W = r.grossLb;
     const climb = xs.map((ws) => [ws, TP.climbPowerRequired({ weightLb: W, wingLoading: ws, rocFpm: p.rocFpm, altFt: 0, pol: polClimb, eta: p.etaClimb }) / W]);
     const cruise = xs.map((ws) => [ws, TP.levelFlight({ weightLb: W, wingAreaFt2: W / ws, vKt: p.cruiseKt, altFt: p.cruiseAltFt, pol, eta: p.etaCruise }).shaftHp / p.cruisePowerFrac / W]);
-    return { xLabel: "Wing loading W/S (lb/ft²)", yLabel: "Power loading P/W (hp/lb)",
+    return { xLabel: "Wing loading W/S (lbf/ft²)", yLabel: "Power loading P/W (hp/lb)",
              curves: [{ name: `Climb ${p.rocFpm} ft/min (Loftin 6.15)`, points: climb },
                       { name: `Cruise ${p.cruiseKt} kt at ${Math.round(p.cruisePowerFrac * 100)} % power`, points: cruise }],
              verticals: [{ name: `Stall ${p.stallKt} kt, CLmax ${p.clMaxLanding}`, x: wsDesign }],

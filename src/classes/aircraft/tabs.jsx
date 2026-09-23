@@ -77,7 +77,7 @@ export function OverviewTab({ type, mode, result }) {
           <Kpi label="Payload" value={fmt(R.payloadKg)} unit="kg" />
           <Kpi label={mode === "size" ? "Mission fuel" : "Fuel"} value={fmt(R.fuelKg)} unit="kg"
                sub={Number.isFinite(R.fuelCapacityKg) ? <>tanks <Q v={fmt(R.fuelCapacityKg)} u="kg" /></> : ""} />
-          <Kpi label="Wing" value={fmt(R.wingAreaM2, 1)} unit="m²" sub={<>span <Q v={fmt(R.spanM, 1)} u="m" /> · AR {fmt(R.aspectRatio, 1)} · {fmt(R.wingLoadingKgM2)} kg/m²</>} />
+          <Kpi label="Wing" value={fmt(R.wingAreaM2, 1)} unit="m²" sub={<>span <Q v={fmt(R.spanM, 1)} u="m" /> · AR {fmt(R.aspectRatio, 1)} · <Q v={fmt(R.wingLoadingKgM2)} u="kg/m²" /></>} />
           <Kpi label={pr.kind === "thrust" ? "Thrust per engine" : "Power per engine"} value={fmt(pr.perEngine, 1)} unit={pr.unit}
                sub={`${pr.engines} × · ${fmt(pr.perEngineImperial)} ${pr.unitImperial} · set by ${pr.governedBy}`} />
           <Kpi label="Cruise L/D" value={fmt(R.cruise.LD, 1)} unit="" sub={<>max {fmt(R.cruise.LDmax, 1)} · M {fmt(R.cruise.mach, 3)} · <Q v={fmt(R.cruise.altFt)} u="ft" /></>} />
@@ -225,7 +225,7 @@ export function StructureTab({ type, result }) {
                    sub={env.speeds.vcIsAssumed ? "at the 25.335(a)(2) minimum — not a real V_C" : "as entered"} />
               <Kpi label="V_B / V_A" value={fmt(env.speeds.vbOverVa, 3)} unit=""
                    sub={env.speeds.vbOverVa > 1 ? "above 1 — the gust case is closing in" : "below 1 — manoeuvre governs"} />
-              <Kpi label="Wing loading" value={fmt(env.wingLoadingLbFt2, 1)} unit="lb/ft²"
+              <Kpi label="Wing loading" value={fmt(env.wingLoadingLbFt2, 1)} unit="lbf/ft²"
                    sub="the gust case crosses over near 50" />
             </div>
             <Note>

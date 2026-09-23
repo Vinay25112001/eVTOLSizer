@@ -127,7 +127,7 @@ export const TRANSPORT_INPUTS = Object.freeze({
   mainGearOleoIn:  { value: 84, unit: "in", min: 20, max: 150, section: "Crew and structure", label: "Main gear oleo length", status: "sourced", source: DECK },
   noseGearOleoIn:  { value: 58.8, unit: "in", min: 10, max: 120, section: "Crew and structure", label: "Nose gear oleo length", status: "sourced", source: DECK },
   emptyMarginFraction: { value: 0.00514, unit: "", min: 0, max: 0.1, section: "Crew and structure", label: "Empty-weight margin", status: "sourced", source: DECK },
-  paintPerArea:    { value: 0.07, unit: "lb/ft²", min: 0, max: 0.2, section: "Crew and structure", label: "Paint per wetted area", status: "sourced", source: DECK },
+  paintPerArea:    { value: 0.07, unit: "lbm/ft²", min: 0, max: 0.2, section: "Crew and structure", label: "Paint per wetted area", status: "sourced", source: DECK },
   hydraulicPressure: { value: 3000, unit: "psi", min: 1000, max: 5000, section: "Crew and structure", label: "Hydraulic pressure", status: "sourced", source: "FLOPS Eq 104 default" },
 });
 

@@ -74,28 +74,32 @@ check("and the range is that track PLUS the reserve that is never flown",
 /* ── 2. THE RATES, RECOVERED FROM A PATH THAT NEVER USED THEM ───────── */
 console.log("\n-- the rates fall out of the path, and match the engine's own --");
 
-/* THE 1/cos GAP, MEASURED RATHER THAN HIDDEN.
-   The engine defines the climb rate ALONG THE FLIGHT PATH, RoC = Vcl
-   sin(gamma), but it computes the climb TIME as a ground distance over
-   a speed it treats as the ground speed: tcl = (h / tan gamma) / gsCl.
-   Those two cannot both be true. Dividing them, the height reached per
-   second of the sizing's own clock is RoC / cos(gamma), not RoC.
+/* THE 1/cos GAP, NOW CLOSED, AND THIS IS WHAT HOLDS IT CLOSED.
+   The engine used to divide a HORIZONTAL distance by an ALONG-PATH
+   airspeed: tcl = (h / tan gamma) / (Vcl - wind), where Vcl is defined
+   as RoC / sin(gamma). That made every climb and descent 1/cos(gamma)
+   too quick — 0.38% on the 5 degree climb, 0.60% on the descent. The
+   ground speed is now the horizontal component, Vcl cos(gamma) - wind,
+   and the climb time reduces to the textbook h / RoC.
 
-   It is 0.4% at the 5 degree climb and 0.6% at the descent, and it is
-   the SIZING's inconsistency, not the path's — the path only makes it
-   visible by asking the question. Closing it would change the phase
-   times, and therefore the energy, of every aircraft this tool has
-   produced, so this gate does what the OEI gate does with the same kind
-   of gap: it measures it and holds it where it is. If it ever moves,
-   something changed in the mission timing. */
-const clAngRad = (Number(p.climbAngle) || 0) * Math.PI / 180;
+   The check is a real cross-check rather than a restatement: the path
+   never uses a rate. It interpolates between heights and times the
+   sizing produced, so recovering a rate from it and finding rateOfClimb
+   is two separate calculations agreeing. */
 const climbRate = (topOfClimb.altitudeAglM - missionPathAt(r, p, r.tPhases[1]).altitudeAglM)
                 / (r.tPhases[2] - r.tPhases[1]);
-check("the climb rate implied by the sizing's own timing is RoC / cos(climb angle)",
-  near(climbRate, r.climbRateMS / Math.cos(clAngRad), 1e-3),
+check("the climb rate recovered from the path IS the rateOfClimb asked for",
+  near(climbRate, r.climbRateMS, 0.01),
   `${climbRate.toFixed(4)} m/s against rateOfClimb ${r.climbRateMS} m/s`
-  + ` — ${(100 * (climbRate / r.climbRateMS - 1)).toFixed(2)}% high, exactly 1/cos(${p.climbAngle} deg),`
-  + " because the rate is defined along the flight path and the time is computed from ground distance");
+  + ` — ${(100 * (climbRate / r.climbRateMS - 1)).toFixed(3)}% apart; it was 0.38% before the`
+  + " ground speed became the horizontal component of the airspeed");
+
+/* The identity the fix restores, stated as its own check so that a
+   regression names the thing that broke rather than a tolerance. */
+check("which is the same statement as: time to climb = height / rate of climb",
+  near(r.tcl, r.climbHeightM / r.climbRateMS, 0.1),
+  `tcl ${r.tcl} s against climbHeight/RoC ${(r.climbHeightM / r.climbRateMS).toFixed(2)} s`
+  + " — equal in still air, and this mission has no headwind");
 
 const toRate = missionPathAt(r, p, r.tPhases[1]).altitudeAglM / (r.tPhases[1] - r.tPhases[0]);
 check("the vertical take-off rate is NASA's 100 ft/min, not the trace's 0.5",
@@ -106,12 +110,29 @@ check("the vertical take-off rate is NASA's 100 ft/min, not the trace's 0.5",
 const descRate = (missionPathAt(r, p, r.tPhases[3]).altitudeAglM
                 - missionPathAt(r, p, r.tPhases[4]).altitudeAglM)
                 / (r.tPhases[4] - r.tPhases[3]);
-const desAngRad = (Number(r.descentAngleUsedDeg) || 0) * Math.PI / 180;
-check("and the descent rate carries the same 1/cos, from the same cause",
-  near(descRate, r.descentRateMS / Math.cos(desAngRad), 1e-3),
-  `${descRate.toFixed(4)} m/s against descentRateMS ${r.descentRateMS} m/s`
-  + ` — ${(100 * (descRate / r.descentRateMS - 1)).toFixed(2)}% high at`
-  + ` ${Number(r.descentAngleUsedDeg).toFixed(2)} deg, the converged glide angle`);
+check("and the descent rate recovered from the path IS descentRateMS",
+  near(descRate, r.descentRateMS, 0.01),
+  `${descRate.toFixed(4)} m/s against ${r.descentRateMS} m/s at`
+  + ` ${Number(r.descentAngleUsedDeg).toFixed(2)} deg, the converged glide angle`
+  + ` — ${(100 * (descRate / r.descentRateMS - 1)).toFixed(3)}% apart; it was 0.60% before`);
+
+/* THE HEADWIND CASE IS STILL INCONSISTENT, and saying so here keeps it
+   from being rediscovered as a surprise. The climb is defined by the
+   STILL-AIR ground distance ClimbR, so into a headwind the aircraft
+   takes longer to cover it and therefore climbs past the altitude it
+   was aiming at: measured, tcl/(h/RoC) is 1.00 with no wind, 1.09 at
+   10 kt and 1.21 at 20 kt. Terminating the climb on HEIGHT instead
+   would change ClimbR, and so CruiseRange and the range accounting.
+   That is a larger change and is not this one. */
+{
+  const pw = { ...DEFAULT_PARAMS, headwindMS: 5.144, cruiseAlt: 2500 };
+  const rw = runSizing(pw);
+  const ratio = rw.tcl / (rw.climbHeightM / rw.climbRateMS);
+  check("into a headwind the climb still overruns its height, and that is recorded",
+    ratio > 1.05 && ratio < 1.15,
+    `tcl/(h/RoC) = ${ratio.toFixed(3)} at 10 kt — the climb is defined by the still-air`
+    + " ground distance, so it flies longer and climbs higher than asked. Documented, not fixed");
+}
 
 /* ── 3. THE RESERVE IS HELD, NOT FLOWN ──────────────────────────────── */
 console.log("\n-- the reserve is energy, and the aircraft is on the ground --");

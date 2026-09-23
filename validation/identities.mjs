@@ -417,7 +417,7 @@ for (const p of all) {
    CAN be demanded is that the discrepancy be ACCOUNTED FOR — equal to the final
    residual, and published as `massBalanceGapKg` rather than left for a reader
    to discover by adding up the weight table. */
-let divChecked = 0, divFails = [];
+let divChecked = 0, divFails = [], divDiscs = [];
 for (const p of all) {
   let R; try { R = runSizing(p); } catch { continue; }
   if (!R || !R.r2Diverged || !isFinite(R.MTOW)) continue;
@@ -432,10 +432,32 @@ for (const p of all) {
      diverged lift+cruise those two paths part company by 0.06 kg, which is
      6e-6 of the aircraft. A whole missing iterate would show up here in the
      hundreds of kg, which is the failure this is built to catch. */
-  const roundingAllowance = Math.max(0.05, 1e-5*Math.abs(R.MTOW));
-  if (Math.abs(R.massBalanceGapKg - (lastMn - R.MTOW)) > roundingAllowance)
+  /* THE ALLOWANCE IS ABSOLUTE, BECAUSE THE ERROR IS. It used to read
+     max(0.05, 1e-5*MTOW), which grows with the aircraft — but the
+     discrepancy does not. It comes from three roundings the engine has
+     already applied, and every one of them is a fixed number of kg:
+
+       convData.MTOW      toFixed(1)   +/- 0.05
+       MTOW               toFixed(2)   +/- 0.005
+       massBalanceGapKg   toFixed(2)   +/- 0.005
+                          worst case     0.06 kg
+
+     Measured across every diverged point in this sweep, the discrepancy
+     is 0.04 to 0.06 kg on aircraft from 3,167 kg to 10,722 kg — flat, as
+     the derivation says it must be. The proportional term was doing the
+     work on the heavy cases and hiding a floor that was too tight for
+     the light ones; a 3,167 kg tiltrotor sat at 0.06 against a 0.05
+     floor and only surfaced when a 0.4% change to the climb time moved
+     it. Dropping the proportional term also makes this STRICTER where
+     it matters: a real 0.5 kg book-keeping error on a 10 t aircraft used
+     to be inside the allowance and is now caught. */
+  const roundingAllowance = 0.06 + 1e-9;
+  const disc = Math.abs(R.massBalanceGapKg - (lastMn - R.MTOW));
+  divDiscs.push({ MTOW:R.MTOW, disc, allowance:roundingAllowance });
+  if (disc > roundingAllowance)
     divFails.push({ cfg:R.configType, model:R.weightModel, MTOW:R.MTOW,
-                    gap:R.massBalanceGapKg, expected:+(lastMn-R.MTOW).toFixed(2) });
+                    gap:R.massBalanceGapKg, expected:+(lastMn-R.MTOW).toFixed(2),
+                    disc:+disc.toFixed(4), allowance:+roundingAllowance.toFixed(4) });
 }
 
 const bar = "═".repeat(76);
@@ -460,9 +482,20 @@ for (const c of results) {
 console.log(bar);
 console.log(`${divFails.length ? "FAIL" : " ok "}  ${"diverged: gap = unmet residual".padEnd(34)} ${String(divChecked).padStart(3)} pts`
   + (divFails.length ? `   ${divFails.length} fail` : "   (designs that do not close, checked rather than skipped)"));
+/* PRINT THE MARGIN, not just the verdict. The allowance is a rounding
+   bound, and a rounding bound that quietly runs at 100% of itself is one
+   change away from failing for no physical reason — which is exactly how
+   this check last failed. Showing the worst discrepancy against the bound
+   means the next reader sees the headroom before it runs out. */
+if (divDiscs.length) {
+  const worst = divDiscs.reduce((a, b) => (b.disc > a.disc ? b : a));
+  console.log(`        worst ${worst.disc.toFixed(4)} kg of ${worst.allowance.toFixed(2)} kg allowed`
+    + ` (${(100*worst.disc/worst.allowance).toFixed(0)}% of the rounding bound), on MTOW ${worst.MTOW.toFixed(0)} kg`);
+}
 if (divFails.length) {
   const w = divFails[0];
-  console.log(`        ${w.cfg}/${w.model} MTOW ${w.MTOW}  gap ${w.gap} kg  expected ${w.expected} kg`);
+  console.log(`        ${w.cfg}/${w.model} MTOW ${w.MTOW}  gap ${w.gap} kg  expected ${w.expected} kg`
+    + `  disc ${w.disc} > ${w.allowance}`);
 }
 console.log(bar);
 const anyBad = bad + (divFails.length ? 1 : 0);

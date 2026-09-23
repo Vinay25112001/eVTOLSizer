@@ -60,9 +60,9 @@ changes. For the NASA lift+cruise all-electric concept:
 
 | group scored | published | predicted | error | AFDD's own in-population error |
 |---|---|---|---|---|
-| **structures (aggregate, as usually reported)** | 1170.3 kg | 866.9 kg | **−25.9%** | 6.1% |
+| **structures (aggregate, as usually reported)** | 1170.3 kg | 867.4 kg | **−25.9%** | 6.1% |
 | ↳ rotor group (a component of the above) | 430.0 kg | 229.4 kg | **−46.7%** | 8.6% |
-| ↳ remaining structural groups (implied) | 740.3 kg | 637.5 kg | **−13.9%** | — |
+| ↳ remaining structural groups (implied) | 740.3 kg | 638.0 kg | **−13.8%** | — |
 
 **This row read −0.7% two revisions ago, and nothing in the structures model
 has changed since.** The rotor group has sat at −46.7% throughout. What moved,
@@ -112,7 +112,7 @@ Battery mass is sized as the heavier of two requirements — energy for the
 mission, and power to hover: `W_battery = max(W_E, W_P)`. Reporting that a tool
 applies "dual energy and power constraints" says nothing about which of them
 ever governs. Measured across all six configurations at the reference mission,
-**energy binds on every one**, with W_P/W_E between 0.236 and 0.793. The `max`
+**energy binds on every one**, with W_P/W_E between 0.236 and 0.792. The `max`
 never selects W_P, so no weight difference at that mission is attributable to
 the power constraint, however prominently the dual formulation is described.
 
@@ -121,11 +121,11 @@ mission variables, not one:
 
 | configuration | W_P/W_E at 161 km | crossover range | W_P/W_E at 10 km |
 |---|---|---|---|
-| lift+cruise | 0.748 | 114.6 km | 1.486 |
-| hybrid (tilt+lift) | 0.793 | 122.3 km | 1.440 |
-| hybrid pusher | 0.729 | 110.5 km | 1.324 |
-| tiltrotor | 0.761 | 114.3 km | 1.111 |
-| side-by-side | 0.329 | none in 2–161 km | 0.756 |
+| lift+cruise | 0.747 | 114.6 km | 1.485 |
+| hybrid (tilt+lift) | 0.792 | 122.0 km | 1.436 |
+| hybrid pusher | 0.727 | 110.5 km | 1.314 |
+| tiltrotor | 0.755 | 114.3 km | 1.110 |
+| side-by-side | 0.329 | none in 2–161 km | 0.755 |
 | multicopter | 0.236 | none in 2–161 km | 0.548 |
 
 Crossovers are located by bisection to 0.5 km. A coarse sweep over a fixed list
@@ -137,7 +137,7 @@ The second variable is the reserve, and it changes the answer qualitatively. A
 fixed 20-minute reserve is a large constant floor under mission energy: as range
 falls, E_total does not fall towards zero but towards the reserve. At a 10 km
 mission the two rotor-borne layouts are energy-governed at a 20-minute reserve
-(0.548 and 0.756) and **power-governed at five minutes** (1.061 and 1.437). So
+(0.548 and 0.755) and **power-governed at five minutes** (1.058 and 1.433). So
 "this configuration is never power-limited" is a statement about the assumed
 reserve, not about the configuration — and it is true or false depending on a
 parameter that is often not reported at all.

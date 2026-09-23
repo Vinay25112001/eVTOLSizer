@@ -996,10 +996,41 @@ function runSizingCore(p0) {
          "carrying six passengers over a 75 nm range (with 10 kt headwind), and
           20 min cruise reserve"
        At 83 kt cruise a 10 kt headwind is a ~14% cruise-energy penalty. */
+    /* ── THE CLIMB AND DESCENT GROUND SPEEDS ARE HORIZONTAL COMPONENTS ──
+       The principle above is right and was applied to the wrong number.
+       Vcl and Vdc are AIRSPEEDS ALONG THE FLIGHT PATH — Vcl is defined as
+       RoC/sin(gamma), which is the speed of an aircraft moving up the
+       slope. The distance ClimbR is HORIZONTAL. Dividing the one by the
+       other treated the along-path speed as though it were the ground
+       speed, which made every climb and descent 1/cos(gamma) too quick:
+       0.38% on the 5 degree climb and 0.60% on the descent.
+
+       The ground speed of a climbing aircraft is the horizontal
+       component of its airspeed, less the headwind.
+
+       THE TEST THAT SHOWS IT IS RIGHT is that the climb time now reduces
+       to the textbook result. With no wind,
+
+         tcl = ClimbR / (Vcl cos g)
+             = (h / tan g) / (Vcl cos g)
+             = h / (Vcl sin g)
+             = h / RoC
+
+       time to climb is height over rate of climb, which is what it
+       should always have been. Cruise is level, so cos(0) = 1 and the
+       cruise ground speed is unchanged.
+
+       WHAT THIS DOES NOT FIX, and it is a separate question: under a
+       headwind this model still defines the climb by the still-air
+       ground distance ClimbR, so the aircraft takes longer to cover it
+       and therefore climbs past the altitude it was aiming at. Making
+       the climb terminate on HEIGHT instead would change ClimbR, and so
+       change CruiseRange and the range accounting. That is a larger
+       change than this one and is not made here. */
     const vWind=Math.max(0,p.headwindMS??0);
     const gsCr=Math.max(1,p.vCruise-vWind);
-    const gsCl=Math.max(1,Vcl-vWind);
-    const gsDc=Math.max(1,Vdc-vWind);
+    const gsCl=Math.max(1,Vcl*Math.cos(clAng*Math.PI/180)-vWind);
+    const gsDc=Math.max(1,Vdc*Math.cos(desAng*Math.PI/180)-vWind);
     /* Every per-hop segment is charged `missionHops` times — see the note at
        the CruiseRange definition. Cruise is NOT multiplied: the total cruise
        distance is fixed and merely split between the hops. */

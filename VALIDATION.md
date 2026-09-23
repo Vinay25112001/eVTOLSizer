@@ -1,6 +1,6 @@
 # Validation Report — eVTOL Conceptual Sizing Tool
 
-**Generated 2026-09-23 18:07 UTC from commit `d78ba07` (WORKING TREE DIRTY — this report does not describe a committed state).**
+**Generated 2026-09-23 18:25 UTC from commit `a1a4ede` (WORKING TREE DIRTY — this report does not describe a committed state).**
 
 This document is produced by `validation/report.mjs`, which runs every
 harness and captures what each one printed. It is not written by hand. If
@@ -124,7 +124,7 @@ level 2 permanently, regardless of any further work on the code.**
 | `drone-trade.mjs` | The trade study, built so that the Pareto front is a fact and the ranking is an opinion. The front is checked exhaustively against the dominance definition in BOTH directions - nothing on it is dominated, everything off it is dominated by something - and it is recomputed under wildly different weightings and required to come back identical, because a front that shifted with preference would not be a front. The ranking is required to carry its normalisation, its caveat, and a sensitivity analysis showing how far each weight can move before the winner changes; weighting mass against endurance must select different designs, or the sensitivity is not doing anything. Also that a degenerate objective contributes zero rather than dividing by a zero span, that every rejected candidate keeps its reason, and that COST is absent because the catalogue holds no prices. | pass |
 | `drone-airframe.mjs` | Airframe geometry for the 3D view, where the load-bearing quantity is arm length. The tempting formula uses 2*pi/N for the angular spacing, which is correct only for an evenly spaced ring: 10 of 25 ArduPilot frames are not evenly spaced, and on those the even-ring formula returns a radius smaller than the discs need, so the view would draw overlapping propellers and call the number a clearance. The gate verifies no two discs overlap at the computed radius across every frame, that a 5 percent shorter arm DOES overlap so the bound is genuinely minimal, and that the declared tip gap is actually delivered. It also covers coaxial frames - every OCTAQUAD and DODECAHEXA stacks two motors per arm - which are positioned in z rather than spread around the ring, have disc area counted per ARM rather than per motor, and carry an explicit warning that their thrust is not supported by the measured data, since UIUC measured isolated rotors and the lower disc works in the upper wake. Finally that the view rotation preserves length, without which an orthographic view could not be measured off. | pass |
 | `drone-dynamics.mjs` | A 6-DOF multirotor simulation, and the reason it does not replace the controllability test it appears to supersede. Equations of motion from Bauersfeld and Scaramuzza Eqs. 1-3, control allocation from the same Du et al. effectiveness matrix ACAI uses, and controller gains transcribed from a shipped ArduPilot frame parameter file. Inertia is DERIVED from the sized design and labelled so, because no commercial multirotor in the survey publishes a tensor; motor time constant and airframe drag coefficient are declared, the latter because the literature archive states in writing that no usable value exists. Since there is no measured trajectory to score against, the gate checks what must hold of any rigid body: free fall is exactly g, angular momentum is conserved to 1e-13 under zero torque, the quaternion stays normalised, RK4 converges at fourth order (measured ratio 16.1 against a predicted 16), and the intermediate-axis instability appears with the perturbation growing 625x about the middle axis and not at all about the other two, which is the sharpest available test that the omega-cross-J-omega coupling is right. Then the part that is evidence rather than arithmetic: with one rotor dead, a sweep of 400 moment directions through the allocator reproduces ACAI exactly - the quadrotor blocks all 400 directions, the octorotor blocks none, and the PNPNPN hexacopter blocks exactly half while ACAI returns exactly zero, sitting on the controllability boundary. That is why the hexacopter flies every simulated scenario while remaining uncontrollable: a simulation samples only the directions its scenario demands. | pass |
-| `drone-playback.mjs` | The flight view looked like the aircraft was rolling unevenly and wiggling rather than flying steadily, and every physics gate passed because the physics was never wrong: a commanded-level hover holds attitude, thrust and position to within 1e-11 degrees, 1e-12 newtons and 1e-13 metres over thirty seconds, on both the quad and the hexa. The judder was in the playback. The animation advanced WHOLE trace samples and drew the nearest one raw; under 240 s the trace is 50 Hz, a display is typically 60 Hz, and 50 and 60 do not divide, so replaying that loop at 60 Hz and counting samples advanced per frame gives 0,1,1,1,1,0,1,1,1,1,1,0 -- one frozen frame in every six, for ever. It reads worst in ROLL because attitude moves most per sample, and a flight past 240 s decimates toward 5 Hz where a frame advances only once in twelve. Nothing that checks the trajectory could catch it, because the trajectory was correct at every sample: the defect lived BETWEEN the samples, in how they were drawn. The fix carries the sub-sample remainder to the renderer, which interpolates between sample i and sample i+1; measured on a 15 degree roll pulse this cuts the largest per-frame attitude step from 1.4634 to 0.2439 degrees, exactly the six times the cadence predicts. The gate holds the bound that makes it defensible -- across 2,400 interpolated poses not one falls outside the segment joining its two computed states, so the aircraft is never drawn anywhere the integrator did not pass through -- and it holds the split in the source: every NUMBER on the panel still reads the computed sample while only the drawn geometry reads the interpolated pose, and paused, scrubbed or on the last sample no interpolation happens at all. Angles take the shortest path, so a yaw crossing the +/-180 wrap interpolates through 180 rather than through zero, which a naive lerp would spin the long way round by 358 degrees in a single sample. Finally it refuses the quiet kind of wrong: the file used to claim that EVERY FRAME of the animation is a state the integrator produced, that claim is now false, and the gate fails if it is left standing rather than narrowed to what still holds. | pass |
+| `drone-playback.mjs` | The flight view looked like the aircraft was rolling unevenly and wiggling rather than flying steadily, and every physics gate passed because the physics was never wrong: a commanded-level hover holds attitude, thrust and position to within 1e-11 degrees, 1e-12 newtons and 1e-13 metres over thirty seconds, on both the quad and the hexa. The judder was in the playback. The animation advanced WHOLE trace samples and drew the nearest one raw; under 240 s the trace is 50 Hz, a display is typically 60 Hz, and 50 and 60 do not divide, so replaying that loop at 60 Hz and counting samples advanced per frame gives 0,1,1,1,1,0,1,1,1,1,1,0 -- one frozen frame in every six, for ever. It reads worst in ROLL because attitude moves most per sample, and a flight past 240 s decimates toward 5 Hz where a frame advances only once in twelve. Nothing that checks the trajectory could catch it, because the trajectory was correct at every sample: the defect lived BETWEEN the samples, in how they were drawn. The fix carries the sub-sample remainder to the renderer, which interpolates between sample i and sample i+1; measured on a 15 degree roll pulse this cuts the largest per-frame attitude step from 1.4634 to 0.2439 degrees, exactly the six times the cadence predicts. The gate holds the bound that makes it defensible -- across 2,400 interpolated poses not one falls outside the segment joining its two computed states, so the aircraft is never drawn anywhere the integrator did not pass through -- and it holds the split in the source: every NUMBER on the panel still reads the computed sample while only the drawn geometry reads the interpolated pose, and paused, scrubbed or on the last sample no interpolation happens at all. Angles take the shortest path, so a yaw crossing the +/-180 wrap interpolates through 180 rather than through zero, which a naive lerp would spin the long way round by 358 degrees in a single sample. Finally it refuses the quiet kind of wrong: the file used to claim that EVERY FRAME of the animation is a state the integrator produced, that claim is now false, and the gate fails if it is left standing rather than narrowed to what still holds. Two further defects found in the same view are held here too. A FLIGHT NOW ENDS RATHER THAN LOOPING: the index used to advance with (k + 1) % trace.length and nothing ever set playing false, so playback ran for ever and at the seam the aircraft teleported from wherever the flight finished back to the origin while the trail collapsed from full to empty -- measured on the roll pulse that jump is 24.91 m against a largest genuine step of 0.112 m, 223 times larger. Interpolation cannot soften it, because at the last sample there is no i+1 to interpolate toward. An endless loop also implies a steady state this aircraft does not have: in Stabilize there is no outer velocity loop, so a flight that ends translating is still translating, and looping showed that motion restarting rather than continuing. The loop now owns its index in a ref, because a first attempt raised the end-of-flight flag from inside a setI updater and an updater must be pure -- React calls it twice under StrictMode -- and the gate checks that every external seek writes the ref too, or the scrubber would appear to be ignored. THE ADDRESS BAR IS READ, NEVER MAINTAINED: Root and both studios used to replaceState their mode and tabs into the URL, so a refresh reopened whatever you were last looking at instead of the eVTOL overview, and returning to eVTOL could leave a stale ?mode= behind. The canonical address is now the bare one and nothing writes to it; the single remaining write CLEARS the routing params rather than setting them. Links are still read exactly as before, which is what aircraft-classes.mjs pins, so an address someone types or is sent still opens the right studio -- it is consumed rather than kept. The initial search is captured at module load because the studios are lazy and mount after Root clears the bar; a live read would find the params already gone and a deep link would lose its tab. The gate refuses a dormant syncUrl helper as well as an active one, since a writer left in place is a writer somebody re-enables. | pass |
 | `drone-risk.mjs` | The uncertainty statement, and the guard that keeps it from quietly growing. An exceedance curve looks like a confidence interval on the whole answer and a severity column looks like a scored assessment; neither is true here. The curve is order statistics of 3,621 leave-one-out predictions over the measured propeller database, so the gate requires it to be monotone, to start at essentially 100 percent and reach zero, to contain no distribution parameter anywhere, and to score only INTERPOLATED predictions - scoring the extrapolation the rotor module refuses to perform would flatter it. It covers the ROTOR layer only, and the register must lead with the fact that no whole-vehicle band exists because no aircraft has all its components in the measured databases. No entry may carry a likelihood, probability or score, since NASA publishes no five-by-five matrix and NASA/SP-20240014019 p. 74 states the qualitative form can no longer be considered valid; severity is three words used only for ordering. The register must also RESPOND to the design - a coaxial frame raises the coaxial finding and a planar one does not, a quadrotor raises the rotor-loss finding with its structural reason and an octorotor does not - and a voltage-field defect is graded by magnitude, since a charge limit in the nominal field is a different defect from a nominal printed coarser than its own energy figure implies. | pass |
 | `drone-avionics.mjs` | ESC and radio-link selection, both on published data only. The radio is the sharper case: Friis is not in doubt but EIRP is, because a vendor publishes max TX power without saying whether it is CONDUCTED at the connector or RADIATED by the antenna, and the two differ by the antenna gain - 5 dB is a factor of 1.8 in range. ONE of fifteen surveyed radios states which it means, and says so by giving the conversion formula and quoting the FCC EIRP ceiling separately. So range is COMPUTED for that one and BRACKETED for the rest, and the gate checks the bracket width is exactly the antenna gain expressed as range. Four products whose figure coincides with a regulatory limit expressed in radiated power are recorded as HINTS and never promoted to statements. Free space is treated as a CEILING rather than a prediction: it cannot model ground reflection, Fresnel obstruction or fade margin, so the gate uses it to FALSIFY - every published range is checked against its own ceiling, since a claim above free space would be provably impossible, and none of the seven checkable claims is. Bands are kept as regulatory variants rather than averaged, after a dual-band product would otherwise have reported 1650 MHz, a frequency it never transmits on; sensitivity published per packet rate is kept as a set, since range and latency trade on the same hardware. On the ESC side, an unpublished rating is never treated as headroom - including a part whose model name contains 45A while its page says only 45A designed - and 6 of 8 ESCs quoting a burst current state no duration for it. | pass |
 | `drone-autopilot.mjs` | What a sizing run may tell a flight controller, and what it must refuse to say. A parameter file is the only artefact this tool produces that an aircraft then flies on, so the gate is built around the refusals. The central one: this run computes a hover thrust fraction and ArduPilot has a parameter called MOT_THST_HOVER, but ArduPilot's own setup page says to set it to "0.25 or below the expected actual hover thrust percentage (lower is safe)" and let MOT_HOVER_LEARN find the real value, so the computed figure is emitted as a comment and never as that parameter. PX4's MPC_THR_HOVER is the SAME physical quantity with the OPPOSITE official advice - it seeds the hover-thrust estimator and the land detector - so it IS emitted, and the gate requires both directions of that asymmetry. A second refusal follows from it: thrust fraction is not control-signal fraction except when PX4's published model rel_thrust = factor * rel_signal^2 + (1 - factor) * rel_signal has factor 0, so THR_MDL_FAC is left at its default rather than translated from ArduPilot's MOT_THST_EXPO, an equivalence that exists only in ArduPilot source. Pack endpoints come from the selected cell's own datasheet rather than the 4.2/3.3 V LiPo rule, because the studio's default cell is Li-ion NMC whose published floor is 2.5 V; the gate also checks that the LiPo rule still reproduces ArduPilot's shipped Hexsoon-edu450.param exactly at 3S. The published propeller-size tables are interpolated between knots and CLAMPED outside them, never extended. Power-module calibration and rate-loop gains are refused as not being sizing outputs, and PX4 layouts with no generic airframe are refused rather than approximated with a neighbour. | pass |
@@ -421,7 +421,7 @@ Required by [M&S 49].
 
 Everything below is captured from the run that produced this document.
 
-<details><summary><code>scope-check.mjs</code> — exit 0, 2667 ms</summary>
+<details><summary><code>scope-check.mjs</code> — exit 0, 2426 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
@@ -433,7 +433,7 @@ PASS — every referenced identifier is imported, declared or a runtime global,
 
 </details>
 
-<details><summary><code>tab-registry.mjs</code> — exit 0, 183 ms</summary>
+<details><summary><code>tab-registry.mjs</code> — exit 0, 199 ms</summary>
 
 ```
 TAB REGISTRY GATE
@@ -451,7 +451,7 @@ TAB REGISTRY GATE PASSED
 
 </details>
 
-<details><summary><code>units.mjs</code> — exit 0, 168 ms</summary>
+<details><summary><code>units.mjs</code> — exit 0, 157 ms</summary>
 
 ```
 UNITS GATE
@@ -521,7 +521,7 @@ UNITS GATE PASSED (24 checks)
 
 </details>
 
-<details><summary><code>identities.mjs</code> — exit 0, 3609 ms</summary>
+<details><summary><code>identities.mjs</code> — exit 0, 3385 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -578,7 +578,7 @@ PASS — all 43 relations hold to 0.2%.
 
 </details>
 
-<details><summary><code>golden-master.mjs</code> — exit 0, 4464 ms</summary>
+<details><summary><code>golden-master.mjs</code> — exit 0, 3965 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -590,7 +590,7 @@ PASS — no output moved by more than 1e-6 relative.
 
 </details>
 
-<details><summary><code>components.mjs</code> — exit 0, 125 ms</summary>
+<details><summary><code>components.mjs</code> — exit 0, 111 ms</summary>
 
 ```
 ==============================================================================
@@ -738,7 +738,7 @@ regardless of what the loop happens to converge to.
 
 </details>
 
-<details><summary><code>database-report.mjs</code> — exit 0, 106 ms</summary>
+<details><summary><code>database-report.mjs</code> — exit 0, 95 ms</summary>
 
 ```
 ======================================================================================
@@ -844,7 +844,7 @@ NASA CONCEPT VEHICLES — the only full weight statements in the field
 
 </details>
 
-<details><summary><code>analysis-layers.mjs</code> — exit 0, 11860 ms</summary>
+<details><summary><code>analysis-layers.mjs</code> — exit 0, 10690 ms</summary>
 
 ```
 ANALYSIS-LAYER GATE
@@ -882,7 +882,7 @@ ANALYSIS-LAYER GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-models.mjs</code> — exit 0, 1952 ms</summary>
+<details><summary><code>vsp-models.mjs</code> — exit 0, 2243 ms</summary>
 
 ```
 NASA OpenVSP MODEL REPLICATION GATE
@@ -920,7 +920,7 @@ VSP GATE PASSED
 
 </details>
 
-<details><summary><code>geometry-export.mjs</code> — exit 0, 66748 ms</summary>
+<details><summary><code>geometry-export.mjs</code> — exit 0, 44187 ms</summary>
 
 ```
 GEOMETRY & EXPORT GATE
@@ -977,7 +977,7 @@ GEOMETRY & EXPORT GATE PASSED
 
 </details>
 
-<details><summary><code>fuselage-outline.mjs</code> — exit 0, 144 ms</summary>
+<details><summary><code>fuselage-outline.mjs</code> — exit 0, 257 ms</summary>
 
 ```
 FUSELAGE OUTLINE GATE
@@ -1081,7 +1081,7 @@ FUSELAGE OUTLINE GATE PASSED (50 checks)
 
 </details>
 
-<details><summary><code>nasa-configs.mjs</code> — exit 0, 186 ms</summary>
+<details><summary><code>nasa-configs.mjs</code> — exit 0, 334 ms</summary>
 
 ```
 ======================================================================================
@@ -1175,7 +1175,7 @@ PASS: 39 published comparisons, mean 14.5%, worst -46.7%
 
 </details>
 
-<details><summary><code>validate.mjs</code> — exit 0, 760 ms</summary>
+<details><summary><code>validate.mjs</code> — exit 0, 1113 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════════
@@ -1287,7 +1287,7 @@ PASS: within the 40% gate
 
 </details>
 
-<details><summary><code>tab-visibility.mjs</code> — exit 0, 999 ms</summary>
+<details><summary><code>tab-visibility.mjs</code> — exit 0, 1336 ms</summary>
 
 ```
 TAB VISIBILITY GATE
@@ -1313,7 +1313,7 @@ TAB VISIBILITY GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-run.mjs</code> — exit 0, 53385 ms</summary>
+<details><summary><code>vsp-run.mjs</code> — exit 0, 58376 ms</summary>
 
 ```
 OPENVSP SCRIPT-RUN GATE
@@ -1333,7 +1333,7 @@ OPENVSP SCRIPT-RUN GATE PASSED — every configuration builds in OpenVSP
 
 </details>
 
-<details><summary><code>vspaero.mjs</code> — exit 0, 15899 ms</summary>
+<details><summary><code>vspaero.mjs</code> — exit 0, 13648 ms</summary>
 
 ```
 VSPAERO GATE — vortex-lattice polar on the exported model
@@ -1371,7 +1371,7 @@ VSPAERO GATE PASSED
 
 </details>
 
-<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 60 ms</summary>
+<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 75 ms</summary>
 
 ```
 ROTORCRAFT TAIL GATE
@@ -1391,7 +1391,7 @@ ROTORCRAFT TAIL GATE PASSED
 
 </details>
 
-<details><summary><code>drive-failure.mjs</code> — exit 0, 59 ms</summary>
+<details><summary><code>drive-failure.mjs</code> — exit 0, 78 ms</summary>
 
 ```
 DRIVE-SYSTEM FAILURE GATE
@@ -1419,7 +1419,7 @@ DRIVE-SYSTEM FAILURE GATE PASSED
 
 </details>
 
-<details><summary><code>autorotation.mjs</code> — exit 0, 2039 ms</summary>
+<details><summary><code>autorotation.mjs</code> — exit 0, 2969 ms</summary>
 
 ```
 AUTOROTATION GATE
@@ -1462,7 +1462,7 @@ AUTOROTATION GATE PASSED
 
 </details>
 
-<details><summary><code>whirl-flutter.mjs</code> — exit 0, 2532 ms</summary>
+<details><summary><code>whirl-flutter.mjs</code> — exit 0, 3001 ms</summary>
 
 ```
 WHIRL-FLUTTER GATE
@@ -1508,7 +1508,7 @@ WHIRL-FLUTTER GATE PASSED
 
 </details>
 
-<details><summary><code>load-cases.mjs</code> — exit 0, 2527 ms</summary>
+<details><summary><code>load-cases.mjs</code> — exit 0, 2924 ms</summary>
 
 ```
 STRUCTURAL LOAD CASE GATE
@@ -1545,7 +1545,7 @@ STRUCTURAL LOAD CASE GATE PASSED
 
 </details>
 
-<details><summary><code>reg-applicability.mjs</code> — exit 0, 2579 ms</summary>
+<details><summary><code>reg-applicability.mjs</code> — exit 0, 2565 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -1684,7 +1684,7 @@ REGULATORY APPLICABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>blade-twist.mjs</code> — exit 0, 4326 ms</summary>
+<details><summary><code>blade-twist.mjs</code> — exit 0, 3123 ms</summary>
 
 ```
 BLADE TWIST GATE
@@ -1726,7 +1726,7 @@ BLADE TWIST GATE PASSED
 
 </details>
 
-<details><summary><code>control-authority.mjs</code> — exit 0, 3719 ms</summary>
+<details><summary><code>control-authority.mjs</code> — exit 0, 3305 ms</summary>
 
 ```
 FAILURE-MODE CONTROLLABILITY GATE
@@ -1766,7 +1766,7 @@ FAILURE-MODE CONTROLLABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>hover-dynamics.mjs</code> — exit 0, 2892 ms</summary>
+<details><summary><code>hover-dynamics.mjs</code> — exit 0, 1896 ms</summary>
 
 ```
 HOVER DYNAMICS GATE
@@ -1814,7 +1814,7 @@ HOVER DYNAMICS GATE PASSED
 
 </details>
 
-<details><summary><code>render-freeze.mjs</code> — exit 0, 10505 ms</summary>
+<details><summary><code>render-freeze.mjs</code> — exit 0, 8226 ms</summary>
 
 ```
 RENDER FREEZE GATE
@@ -1852,7 +1852,7 @@ PASS: all 27 views render exactly as committed
 
 </details>
 
-<details><summary><code>design-file.mjs</code> — exit 0, 3841 ms</summary>
+<details><summary><code>design-file.mjs</code> — exit 0, 3552 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -1934,7 +1934,7 @@ DESIGN FILE: 54 passed, 0 failed
 
 </details>
 
-<details><summary><code>validation-domain.mjs</code> — exit 0, 1660 ms</summary>
+<details><summary><code>validation-domain.mjs</code> — exit 0, 1527 ms</summary>
 
 ```
 VALIDATION DOMAIN GATE
@@ -1958,7 +1958,7 @@ PASS  the app's domain file matches the harnesses
 
 </details>
 
-<details><summary><code>result-warnings.mjs</code> — exit 0, 2432 ms</summary>
+<details><summary><code>result-warnings.mjs</code> — exit 0, 2168 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -2026,7 +2026,7 @@ RESULT WARNINGS: 41 passed, 0 failed
 
 </details>
 
-<details><summary><code>provenance-report.mjs</code> — exit 0, 1420 ms</summary>
+<details><summary><code>provenance-report.mjs</code> — exit 0, 1208 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
@@ -2060,7 +2060,7 @@ PROVENANCE GATE PASSED - every output any layout emits is classified.
 
 </details>
 
-<details><summary><code>api.mjs</code> — exit 0, 3939 ms</summary>
+<details><summary><code>api.mjs</code> — exit 0, 3953 ms</summary>
 
 ```
 ENGINE API GATE
@@ -2070,11 +2070,11 @@ ENGINE API GATE
   PASS  size() returns warnings and the domain with the numbers
   PASS  sizeMany() sizes each case
   PASS  a design that does not close reports converged: false
-  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"d78ba07accb8","dirty":true,"builtAt":null,"mode":"node-api"}
+  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"a1a4ede992a3","dirty":true,"builtAt":null,"mode":"node-api"}
   PASS  reopen() reproduces a record
   PASS  engineVersion() reports the package and format versions
   PASS  docs/API.md documents every export  — 19 exports
-  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit d78ba07accb8, uncommitted changes; API 1; design format 1)
+  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit a1a4ede992a3, uncommitted changes; API 1; design format 1)
   PASS  a clean design exits 0
   PASS  a design that does not close exits 1
   PASS  unreadable input exits 2
@@ -2088,7 +2088,7 @@ ENGINE API GATE PASSED (17 checks)
 
 </details>
 
-<details><summary><code>turboelectric.mjs</code> — exit 0, 2143 ms</summary>
+<details><summary><code>turboelectric.mjs</code> — exit 0, 2233 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -2147,7 +2147,7 @@ TURBOELECTRIC GATE PASSED (24 checks)
 
 </details>
 
-<details><summary><code>cpacs-export.mjs</code> — exit 0, 1645 ms</summary>
+<details><summary><code>cpacs-export.mjs</code> — exit 0, 1668 ms</summary>
 
 ```
 CPACS AND TRACEABILITY EXPORT GATE
@@ -2183,7 +2183,7 @@ EXPORT GATE PASSED (25 checks)
 
 </details>
 
-<details><summary><code>release.mjs</code> — exit 0, 167 ms</summary>
+<details><summary><code>release.mjs</code> — exit 0, 162 ms</summary>
 
 ```
 RELEASE GATE
@@ -2209,7 +2209,7 @@ RELEASE GATE PASSED (0.2.0-dev, in preparation)
 
 </details>
 
-<details><summary><code>aircraft-classes.mjs</code> — exit 0, 627 ms</summary>
+<details><summary><code>aircraft-classes.mjs</code> — exit 0, 651 ms</summary>
 
 ```
 AIRCRAFT-CLASS GATE
@@ -2248,7 +2248,7 @@ AIRCRAFT-CLASS GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>trainer.mjs</code> — exit 0, 159 ms</summary>
+<details><summary><code>trainer.mjs</code> — exit 0, 166 ms</summary>
 
 ```
 TRAINER GATE
@@ -2318,7 +2318,7 @@ TRAINER GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>transport.mjs</code> — exit 0, 1427 ms</summary>
+<details><summary><code>transport.mjs</code> — exit 0, 1323 ms</summary>
 
 ```
 TRANSPORT GATE
@@ -2402,7 +2402,7 @@ TRANSPORT GATE PASSED (60 checks)
 
 </details>
 
-<details><summary><code>transport-mission.mjs</code> — exit 0, 310 ms</summary>
+<details><summary><code>transport-mission.mjs</code> — exit 0, 280 ms</summary>
 
 ```
 TRANSPORT MISSION AND LAYOUT GATE
@@ -2465,7 +2465,7 @@ TRANSPORT MISSION GATE PASSED (44 checks)
 
 </details>
 
-<details><summary><code>transport-aero.mjs</code> — exit 0, 2502 ms</summary>
+<details><summary><code>transport-aero.mjs</code> — exit 0, 2594 ms</summary>
 
 ```
 TRANSPORT DRAG BUILD-UP GATE
@@ -2522,7 +2522,7 @@ TRANSPORT DRAG GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>bizjet.mjs</code> — exit 0, 489 ms</summary>
+<details><summary><code>bizjet.mjs</code> — exit 0, 553 ms</summary>
 
 ```
 BUSINESS-JET GATE
@@ -2556,7 +2556,7 @@ BUSINESS-JET GATE PASSED (15 checks)
 
 </details>
 
-<details><summary><code>aircraft-engine.mjs</code> — exit 0, 1551 ms</summary>
+<details><summary><code>aircraft-engine.mjs</code> — exit 0, 1694 ms</summary>
 
 ```
 AIRCRAFT ENGINE GATE
@@ -2766,7 +2766,7 @@ AIRCRAFT ENGINE GATE PASSED (165 checks)
 
 </details>
 
-<details><summary><code>turboprop.mjs</code> — exit 0, 175 ms</summary>
+<details><summary><code>turboprop.mjs</code> — exit 0, 188 ms</summary>
 
 ```
 TURBOPROP GATE
@@ -2851,7 +2851,7 @@ TURBOPROP GATE PASSED (59 checks)
 
 </details>
 
-<details><summary><code>paper-claims.mjs</code> — exit 0, 18259 ms</summary>
+<details><summary><code>paper-claims.mjs</code> — exit 0, 17766 ms</summary>
 
 ```
 PAPER CLAIM GATE
@@ -2896,7 +2896,7 @@ PASS: all 32 numeric claims in paper/ are reproduced by the harnesses
 
 </details>
 
-<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 2093 ms</summary>
+<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 2104 ms</summary>
 
 ```
 VTOL AUTOPILOT GATE
@@ -2954,7 +2954,7 @@ VTOL AUTOPILOT GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-frames.mjs</code> — exit 0, 88 ms</summary>
+<details><summary><code>drone-frames.mjs</code> — exit 0, 91 ms</summary>
 
 ```
 DRONE FRAME GATE
@@ -2977,7 +2977,7 @@ DRONE FRAME GATE PASSED (12 checks)
 
 </details>
 
-<details><summary><code>drone-components.mjs</code> — exit 0, 101 ms</summary>
+<details><summary><code>drone-components.mjs</code> — exit 0, 100 ms</summary>
 
 ```
 DRONE COMPONENT CATALOGUE GATE
@@ -3019,7 +3019,7 @@ DRONE COMPONENT CATALOGUE GATE PASSED (13 checks)
 
 </details>
 
-<details><summary><code>drone-rotor.mjs</code> — exit 0, 137 ms</summary>
+<details><summary><code>drone-rotor.mjs</code> — exit 0, 148 ms</summary>
 
 ```
 DRONE ROTOR GATE
@@ -3079,7 +3079,7 @@ DRONE ROTOR GATE PASSED (14 checks)
 
 </details>
 
-<details><summary><code>drone-motor.mjs</code> — exit 0, 103 ms</summary>
+<details><summary><code>drone-motor.mjs</code> — exit 0, 101 ms</summary>
 
 ```
 DRONE MOTOR GATE
@@ -3175,7 +3175,7 @@ DRONE MOTOR GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-esc.mjs</code> — exit 0, 110 ms</summary>
+<details><summary><code>drone-esc.mjs</code> — exit 0, 105 ms</summary>
 
 ```
 DRONE ESC GATE
@@ -3241,7 +3241,7 @@ DRONE ESC GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-battery.mjs</code> — exit 0, 107 ms</summary>
+<details><summary><code>drone-battery.mjs</code> — exit 0, 99 ms</summary>
 
 ```
 DRONE BATTERY GATE
@@ -3303,7 +3303,7 @@ DRONE BATTERY GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>drone-sizing.mjs</code> — exit 0, 120 ms</summary>
+<details><summary><code>drone-sizing.mjs</code> — exit 0, 126 ms</summary>
 
 ```
 DRONE SIZING GATE
@@ -3354,7 +3354,7 @@ DRONE SIZING GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-trade.mjs</code> — exit 0, 990 ms</summary>
+<details><summary><code>drone-trade.mjs</code> — exit 0, 938 ms</summary>
 
 ```
 DRONE TRADE GATE
@@ -3402,7 +3402,7 @@ DRONE TRADE GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-airframe.mjs</code> — exit 0, 109 ms</summary>
+<details><summary><code>drone-airframe.mjs</code> — exit 0, 101 ms</summary>
 
 ```
 DRONE AIRFRAME GATE
@@ -3460,7 +3460,7 @@ DRONE AIRFRAME GATE PASSED (33 checks)
 
 </details>
 
-<details><summary><code>drone-dynamics.mjs</code> — exit 0, 1552 ms</summary>
+<details><summary><code>drone-dynamics.mjs</code> — exit 0, 1545 ms</summary>
 
 ```
 DRONE DYNAMICS GATE
@@ -3529,7 +3529,7 @@ DRONE DYNAMICS GATE PASSED (38 checks)
 
 </details>
 
-<details><summary><code>drone-playback.mjs</code> — exit 0, 520 ms</summary>
+<details><summary><code>drone-playback.mjs</code> — exit 0, 605 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -3594,13 +3594,47 @@ DRONE PLAYBACK GATE — the aircraft was not wobbling, the animation was
   PASS  and the part that IS still true is kept
         nothing is keyframed: the pose is bounded by two computed states
 
+7. PLAYBACK STOPS ON THE LAST SAMPLE
+  PASS  the index no longer wraps with a modulo
+        `(k + 1) % trace.length` sent the last sample straight back to zero, teleporting the aircraft from where the flight ended to the origin
+  PASS  reaching the end stops playback instead of restarting it
+        nothing used to set playing=false, so a flight ran for ever
+  PASS  the loop owns its index in a ref rather than deciding inside an updater
+        a setI updater must be pure; React calls it twice under StrictMode
+  PASS  every place that moves the index writes the ref too
+        5 assignments: the loop, the resume effect, the invalidation reset, the scrubber and the replay button
+  PASS  and the button says replay once the flight has ended
+        pressing play at the end rewinds rather than doing nothing visible
+  PASS  the removed seam was a jump far larger than any real step
+        last sample to first is 24.91 m against a largest genuine step of 1.12e-1 m — 223x
+
+8. THE DEFAULT ADDRESS IS THE BARE ONE
+  PASS  Root.jsx no longer writes the address bar
+        switching studios or tabs used to rewrite it, so a refresh reopened whatever you were last looking at instead of the eVTOL overview
+  PASS  AircraftStudio.jsx no longer writes the address bar
+        switching studios or tabs used to rewrite it, so a refresh reopened whatever you were last looking at instead of the eVTOL overview
+  PASS  DroneStudio.jsx no longer writes the address bar
+        switching studios or tabs used to rewrite it, so a refresh reopened whatever you were last looking at instead of the eVTOL overview
+  PASS  route.js keeps the single write, which CLEARS rather than sets
+        clearRoutingParams() strips the params once so the bar ends up bare
+  PASS  both studios' syncUrl helpers are gone, not merely unused
+        a dormant writer is a writer somebody re-enables
+  PASS  links are still READ exactly as before
+        bare -> evtol, ?mode=drone -> drone, ?mode=aircraft&type=bizjet -> bizjet
+  PASS  the initial address is captured at module load for the lazy studios
+        ROUTING_PARAMS = mode, type, atab, class, dtab, frame — captured before any studio mounts, so clearing the bar cannot lose a deep link's tab
+  PASS  AircraftStudio.jsx reads the captured address, not the live one
+        Root clears the bar on mount and these are lazy, so a live read would find the params already gone
+  PASS  DroneStudio.jsx reads the captured address, not the live one
+        Root clears the bar on mount and these are lazy, so a live read would find the params already gone
+
 ════════════════════════════════════════════════════════════════════════════
 DRONE PLAYBACK GATE PASSED
 ```
 
 </details>
 
-<details><summary><code>drone-risk.mjs</code> — exit 0, 164 ms</summary>
+<details><summary><code>drone-risk.mjs</code> — exit 0, 166 ms</summary>
 
 ```
 DRONE RISK GATE
@@ -3653,7 +3687,7 @@ DRONE RISK GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-avionics.mjs</code> — exit 0, 123 ms</summary>
+<details><summary><code>drone-avionics.mjs</code> — exit 0, 118 ms</summary>
 
 ```
 DRONE AVIONICS GATE
@@ -3704,7 +3738,7 @@ DRONE AVIONICS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>drone-autopilot.mjs</code> — exit 0, 164 ms</summary>
+<details><summary><code>drone-autopilot.mjs</code> — exit 0, 170 ms</summary>
 
 ```
 DRONE AUTOPILOT GATE
@@ -3785,7 +3819,7 @@ DRONE AUTOPILOT GATE PASSED (52 checks)
 
 </details>
 
-<details><summary><code>drone-obstacles.mjs</code> — exit 0, 100 ms</summary>
+<details><summary><code>drone-obstacles.mjs</code> — exit 0, 94 ms</summary>
 
 ```
 DRONE OBSTACLE GATE
@@ -3875,7 +3909,7 @@ DRONE OBSTACLE GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 7799 ms</summary>
+<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 7559 ms</summary>
 
 ```
 DRONE FLIGHT ENERGY GATE
@@ -3923,7 +3957,7 @@ DRONE FLIGHT ENERGY GATE PASSED (29 checks)
 
 </details>
 
-<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 6843 ms</summary>
+<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 7925 ms</summary>
 
 ```
 DRONE FLIGHT WORKER GATE
@@ -3953,7 +3987,7 @@ DRONE FLIGHT WORKER GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-regulatory.mjs</code> — exit 0, 102 ms</summary>
+<details><summary><code>drone-regulatory.mjs</code> — exit 0, 171 ms</summary>
 
 ```
 DRONE REGULATORY GATE

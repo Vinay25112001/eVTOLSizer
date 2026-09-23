@@ -320,6 +320,10 @@ export default function FlightPanel({ design, frame }) {
      effect below: without it the drawn pose snapped to whole samples and
      the aircraft juddered. Numbers on screen still come from sample i. */
   const [frac, setFrac] = useState(0);
+  /* The playback loop's own copy of the index. See the loop below:
+     an updater must be pure, so the loop cannot decide it has reached
+     the end from inside setI. Every external seek writes this too. */
+  const iRef = useRef(0);
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [zoom, setZoom] = useState(2.4);
@@ -474,10 +478,11 @@ export default function FlightPanel({ design, frame }) {
     prevDuration.current = dur;
     if (!trace.length) return;
     const k = trace.findIndex((r) => r.t >= resumeAt);
-    setI(k < 0 ? 0 : k); setFrac(0);
+    const at = k < 0 ? 0 : k;
+    setI(at); iRef.current = at; setFrac(0);
     if (grew) setPlaying(true);
   }, [flight.run]);
-  useEffect(() => { setI(0); setFrac(0); }, [failedKey, motorTau, cd, scenery, bounce, restitution, breakSpeed]);
+  useEffect(() => { setI(0); iRef.current = 0; setFrac(0); }, [failedKey, motorTau, cd, scenery, bounce, restitution, breakSpeed]);
 
   /* ── THE TRACE RATE AND THE DISPLAY RATE DO NOT DIVIDE ──────────────
      THE DEFECT THIS FIXES. This loop advanced whole samples and the
@@ -508,7 +513,38 @@ export default function FlightPanel({ design, frame }) {
       const dt = (t - last) / 1000; last = t;
       acc += dt * speed;
       const sampleDt = trace[1].t - trace[0].t;
-      while (acc >= sampleDt) { acc -= sampleDt; setI((k) => (k + 1) % trace.length); }
+      /* ── A FLIGHT ENDS. IT DOES NOT LOOP ────────────────────────────
+         THIS USED TO BE `(k + 1) % trace.length`, and NOTHING ever set
+         `playing` false, so playback ran for ever. At the seam the index
+         went from the last sample straight back to zero: the aircraft
+         TELEPORTED from wherever the flight finished -- 76 m away on a
+         single roll pulse -- to the origin in one frame, and the trail
+         collapsed from its full length to empty at the same instant.
+         That discontinuity, once per loop, was a second and separate
+         defect from the sample-rate judder above, and interpolation
+         cannot soften it: at the last sample there is no i+1 to
+         interpolate toward, so the jump was always drawn raw.
+
+         An endless loop also implies a steady state this aircraft does
+         not have. In Stabilize there is no outer velocity loop, so a
+         flight that ends translating is still translating -- looping it
+         showed that motion restarting rather than continuing, which is a
+         false picture of the trajectory. Playback now stops on the last
+         sample and the aircraft stays where the flight put it; the play
+         button replays from the beginning.
+
+         THE INDEX IS CARRIED IN A REF, NOT READ BACK OUT OF STATE. A
+         first attempt raised the "reached the end" flag from inside a
+         setI updater, which is a side effect in a function React is
+         free to call twice (it does, under StrictMode) and to defer.
+         An updater must be pure, so the loop owns `iRef` and publishes
+         it; iRef is also written wherever i is set from outside. */
+      let k = iRef.current;
+      while (acc >= sampleDt && k < trace.length - 1) { acc -= sampleDt; k++; }
+      const atEnd = k >= trace.length - 1;
+      iRef.current = k;
+      setI(k);
+      if (atEnd) { setFrac(0); setPlaying(false); return; }
       /* acc is now the time elapsed PAST sample i, so this is where the
          frame falls between i and i+1. React batches it with the setI
          above into one render. */
@@ -993,10 +1029,20 @@ export default function FlightPanel({ design, frame }) {
               all live
             </button>
           </div>
-          <button onClick={() => setPlaying((p) => !p)}
+          {/* PRESSING PLAY AT THE END REPLAYS. Now that a flight stops on
+              its last sample rather than looping, "play" from there would
+              otherwise start the loop, meet the end on its first frame and
+              stop again -- a button that visibly does nothing. Rewinding
+              only when already at the end leaves pause/resume mid-flight
+              exactly as it was. */}
+          <button onClick={() => {
+            const atEnd = i >= trace.length - 1;
+            if (!playing && atEnd) { setI(0); iRef.current = 0; setFrac(0); }
+            setPlaying((p) => !p);
+          }}
             style={{ background: SC.teal, color: SC.bg, border: "none", borderRadius: 4,
                      padding: "4px 14px", fontSize: T.body, fontWeight: 600, cursor: "pointer" }}>
-            {playing ? "pause" : "play"}
+            {playing ? "pause" : i >= trace.length - 1 ? "replay" : "play"}
           </button>
           <label style={{ fontSize: T.label, color: SC.muted }}>speed{" "}
             <select value={speed} onChange={(e) => setSpeed(+e.target.value)}
@@ -1122,7 +1168,7 @@ export default function FlightPanel({ design, frame }) {
         ) : null}
 
         <input type="range" min={0} max={Math.max(0, trace.length - 1)} value={i}
-          onChange={(e) => { setPlaying(false); setI(+e.target.value); setFrac(0); }}
+          onChange={(e) => { const v = +e.target.value; setPlaying(false); setI(v); iRef.current = v; setFrac(0); }}
           style={{ width: "100%", marginBottom: S.sm }} />
 
         <div style={{ display: "flex", gap: S.md, flexWrap: "wrap" }}>

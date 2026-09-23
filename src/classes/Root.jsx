@@ -21,7 +21,7 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import App from "../App";
 import { CLASS_IDS } from "./registry.js";
-import { routeFromSearch, STUDIO_TYPES } from "./route.js";
+import { routeFromSearch, STUDIO_TYPES, INITIAL_SEARCH, clearRoutingParams } from "./route.js";
 import { DESIGN_MODE_EVENT } from "./aircraft/DesignModeSwitch.jsx";
 import { AuthSessionProvider } from "../lib/auth-session.jsx";
 import { UnitSystemProvider } from "../lib/unit-system.jsx";
@@ -42,40 +42,33 @@ function UnknownClass({ id }) {
 }
 
 export default function Root() {
-  const [initial] = useState(() => routeFromSearch(typeof window === "undefined" ? "" : window.location.search));
+  /* INITIAL_SEARCH, not window.location: Root clears the address on
+     mount and the lazy studios read the captured copy afterwards. */
+  const [initial] = useState(() => routeFromSearch(INITIAL_SEARCH));
   const [mode, setMode] = useState(initial.mode);
   const [type, setType] = useState(initial.type ?? "transport");
   const [evtolMounted, setEvtolMounted] = useState(initial.mode === "evtol");
   const [studioMounted, setStudioMounted] = useState(initial.mode === "aircraft");
   const [droneMounted, setDroneMounted] = useState(initial.mode === "drone");
 
+  /* The address has been read into `initial` above; clear it so the bar
+     is the bare one from here on and a refresh opens the eVTOL overview.
+     Runs once, after the captured copy exists. */
+  useEffect(() => { clearRoutingParams(); }, []);
+
   useEffect(() => {
     const on = (e) => {
       const asked = e.detail?.mode;
       const next = asked === "aircraft" ? "aircraft" : asked === "drone" ? "drone" : "evtol";
       if (e.detail?.type && STUDIO_TYPES.includes(e.detail.type)) setType(e.detail.type);
-      if (next === "evtol") {
-        setEvtolMounted(true);
-        const q = new URLSearchParams(window.location.search);
-        ["mode", "type", "atab", "class", "dtab", "frame"].forEach((k) => q.delete(k));
-        const s = q.toString();
-        window.history.replaceState(null, "", `${window.location.pathname}${s ? `?${s}` : ""}`);
-      }
-      if (next === "aircraft") {
-        setStudioMounted(true);
-        const q = new URLSearchParams(window.location.search);
-        ["dtab", "frame"].forEach((k) => q.delete(k));
-        q.set("mode", "aircraft");
-        if (e.detail?.type) q.set("type", e.detail.type);
-        window.history.replaceState(null, "", `${window.location.pathname}?${q.toString()}`);
-      }
-      if (next === "drone") {
-        setDroneMounted(true);
-        const q = new URLSearchParams(window.location.search);
-        ["type", "atab", "class"].forEach((k) => q.delete(k));
-        q.set("mode", "drone");
-        window.history.replaceState(null, "", `${window.location.pathname}?${q.toString()}`);
-      }
+      /* NO ADDRESS IS WRITTEN HERE ANY MORE. Each branch used to
+         replaceState its own mode and tabs into the bar, which is why a
+         refresh reopened the drone flight sim instead of the eVTOL
+         overview. See route.js: the address is read once and then left
+         bare. Mounting is all that happens now. */
+      if (next === "evtol") setEvtolMounted(true);
+      if (next === "aircraft") setStudioMounted(true);
+      if (next === "drone") setDroneMounted(true);
       setMode(next);
       window.scrollTo?.(0, 0);
     };

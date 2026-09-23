@@ -14,6 +14,7 @@ import { fmt, Card, StatusChip } from "../ui-kit.jsx";
 import InputPanel, { InputRow } from "./InputPanel.jsx";
 import { appVersionLabel } from "../../lib/designfile.js";
 import DesignModeSwitch from "./DesignModeSwitch.jsx";
+import { INITIAL_SEARCH } from "../route.js";
 import { SharedAuthBar } from "../../lib/auth-session.jsx";
 import { UnitToggle } from "../../lib/UnitToggle.jsx";
 import { useUnitSystem } from "../../lib/unit-system.jsx";
@@ -40,16 +41,14 @@ const ALL_TABS = STUDIO_GROUPS.flatMap((g) => g.tabs.map((t) => [...t, g.name]))
 const defaultsOf = (id) => ({ ...AIRCRAFT_TYPES[id].defaults });
 const analysisOf = (id) => Object.fromEntries(Object.entries(AIRCRAFT_TYPES[id].analysisInputs).map(([k, v]) => [k, v.value]));
 
-function syncUrl(type, tab) {
-  if (typeof window === "undefined") return;
-  const q = new URLSearchParams(window.location.search);
-  q.delete("class");
-  q.set("mode", "aircraft"); q.set("type", type); q.set("atab", tab);
-  window.history.replaceState(null, "", `${window.location.pathname}?${q.toString()}`);
-}
+/* THE ADDRESS IS NO LONGER WRITTEN. This used to replaceState
+   ?mode=aircraft&type=…&atab=… on every tab change, so a refresh
+   reopened the studio instead of the eVTOL overview. route.js explains
+   the rule: links are read, never maintained. Deep links still open the
+   right studio and tab -- that is INITIAL_SEARCH, read below. */
 
 export default function AircraftStudio({ initialType = "transport", requestedType }) {
-  const qs = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
+  const qs = new URLSearchParams(INITIAL_SEARCH);
   const [dark, setDark] = useState(() => (qs.get("theme") === "light" ? false : qs.get("theme") === "dark" ? true
     : (window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true)));
   applyTheme(dark);   // the shared palette; applied on every render, as the eVTOL sizer does
@@ -61,7 +60,6 @@ export default function AircraftStudio({ initialType = "transport", requestedTyp
   const [paramsBy, setParamsBy] = useState(() => Object.fromEntries(TYPE_IDS.map((id) => [id, defaultsOf(id)])));
   const [analysisBy, setAnalysisBy] = useState(() => Object.fromEntries(TYPE_IDS.map((id) => [id, analysisOf(id)])));
   useEffect(() => { if (requestedType && TYPE_IDS.includes(requestedType)) setType(requestedType); }, [requestedType]);
-  useEffect(() => syncUrl(type, tab), [type, tab]);
 
   const t = typeOf(type);
   const params = paramsBy[type], analysis = analysisBy[type];

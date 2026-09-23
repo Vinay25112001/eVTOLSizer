@@ -50,6 +50,14 @@ import { MODELLABLE_MOTORS, ESCS, BATTERIES } from "../src/data/drone-components
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PANEL = readFileSync(join(ROOT, "src/classes/drone/FlightPanel.jsx"), "utf8");
+/* CODE ONLY. This panel documents the defects it used to have, so the
+   banned shapes appear verbatim in its comments by design -- the same
+   trap citations.mjs solved by writing dead paragraph numbers bare.
+   Checks about what the panel DOES read PANEL_CODE; checks about what it
+   SAYS (section 6) read PANEL. */
+const PANEL_CODE = PANEL
+  .replace(/\/\*[\s\S]*?\*\//g, " ")
+  .replace(/^\s*\/\/.*$/gm, " ");
 
 let fails = 0;
 const check = (ok, what, detail) => {
@@ -247,6 +255,92 @@ console.log("\n6. THE FILE NO LONGER CLAIMS WHAT IS NO LONGER TRUE");
   check(/NOTHING HERE IS KEYFRAMED/.test(PANEL),
     "and the part that IS still true is kept",
     "nothing is keyframed: the pose is bounded by two computed states");
+}
+
+/* ── 7. A FLIGHT ENDS RATHER THAN LOOPING ────────────────────────────── */
+console.log("\n7. PLAYBACK STOPS ON THE LAST SAMPLE");
+{
+  check(!/% trace\.length/.test(PANEL_CODE),
+    "the index no longer wraps with a modulo",
+    "`(k + 1) % trace.length` sent the last sample straight back to zero, "
+      + "teleporting the aircraft from where the flight ended to the origin");
+  check(/if \(atEnd\) \{ setFrac\(0\); setPlaying\(false\); return; \}/.test(PANEL),
+    "reaching the end stops playback instead of restarting it",
+    "nothing used to set playing=false, so a flight ran for ever");
+  check(/let k = iRef\.current;/.test(PANEL) && /iRef\.current = k;/.test(PANEL),
+    "the loop owns its index in a ref rather than deciding inside an updater",
+    "a setI updater must be pure; React calls it twice under StrictMode");
+  /* Every external seek must keep the ref in step, or the loop resumes
+     from wherever it last was and the scrubber appears to be ignored. */
+  const seeks = (PANEL.match(/iRef\.current = /g) ?? []).length;
+  check(seeks >= 5,
+    "every place that moves the index writes the ref too",
+    `${seeks} assignments: the loop, the resume effect, the invalidation `
+      + `reset, the scrubber and the replay button`);
+  check(/i >= trace\.length - 1 \? "replay" : "play"/.test(PANEL),
+    "and the button says replay once the flight has ended",
+    "pressing play at the end rewinds rather than doing nothing visible");
+
+  /* The seam this removes was real and worth measuring: on the roll
+     pulse the loop jumped the aircraft back across the whole flight. */
+  const model = modelFor("QUAD", "X");
+  const tr = simulate({
+    model,
+    scenario: makeScenario({ label: "roll pulse", startAltitudeM: 10,
+      segments: [{ durationS: 2, rollDeg: 0 }, { durationS: 2, rollDeg: 15 },
+                 { durationS: 4, rollDeg: 0 }] }),
+    declared: DD, durationS: 8, dt: 0.002,
+  }).trace;
+  const seam = Math.hypot(tr.at(-1).x - tr[0].x, tr.at(-1).y - tr[0].y);
+  const typical = Math.max(...tr.slice(1).map((s, i) =>
+    Math.hypot(s.x - tr[i].x, s.y - tr[i].y)));
+  check(seam > 100 * typical,
+    "the removed seam was a jump far larger than any real step",
+    `last sample to first is ${seam.toFixed(2)} m against a largest genuine `
+      + `step of ${typical.toExponential(2)} m — ${(seam / typical).toFixed(0)}x`);
+}
+
+/* ── 8. THE ADDRESS IS READ, NEVER MAINTAINED ────────────────────────── */
+console.log("\n8. THE DEFAULT ADDRESS IS THE BARE ONE");
+{
+  const route = readFileSync(join(ROOT, "src/classes/route.js"), "utf8");
+  const root = readFileSync(join(ROOT, "src/classes/Root.jsx"), "utf8");
+  const air = readFileSync(join(ROOT, "src/classes/aircraft/AircraftStudio.jsx"), "utf8");
+  const drone = readFileSync(join(ROOT, "src/classes/drone/DroneStudio.jsx"), "utf8");
+  const strip = (x) => x.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+
+  for (const [name, src] of [["Root.jsx", root], ["AircraftStudio.jsx", air],
+                             ["DroneStudio.jsx", drone]])
+    check(!/replaceState/.test(strip(src)),
+      `${name} no longer writes the address bar`,
+      "switching studios or tabs used to rewrite it, so a refresh reopened "
+        + "whatever you were last looking at instead of the eVTOL overview");
+
+  check(/replaceState/.test(strip(route)),
+    "route.js keeps the single write, which CLEARS rather than sets",
+    "clearRoutingParams() strips the params once so the bar ends up bare");
+  check(!/syncUrl/.test(strip(air)) && !/syncUrl/.test(strip(drone)),
+    "both studios' syncUrl helpers are gone, not merely unused",
+    "a dormant writer is a writer somebody re-enables");
+
+  /* Reading must be untouched: a link someone is sent still has to work,
+     and validation/aircraft-classes.mjs already pins that behaviour. */
+  const R = await import("../src/classes/route.js");
+  check(R.routeFromSearch("").mode === "evtol"
+     && R.routeFromSearch("?mode=drone").mode === "drone"
+     && R.routeFromSearch("?mode=aircraft&type=bizjet").type === "bizjet",
+    "links are still READ exactly as before",
+    "bare -> evtol, ?mode=drone -> drone, ?mode=aircraft&type=bizjet -> bizjet");
+  check(typeof R.INITIAL_SEARCH === "string" && Array.isArray([...R.ROUTING_PARAMS]),
+    "the initial address is captured at module load for the lazy studios",
+    `ROUTING_PARAMS = ${[...R.ROUTING_PARAMS].join(", ")} — captured before `
+      + "any studio mounts, so clearing the bar cannot lose a deep link's tab");
+  for (const [name, src] of [["AircraftStudio.jsx", air], ["DroneStudio.jsx", drone]])
+    check(/new URLSearchParams\(INITIAL_SEARCH\)/.test(src)
+       && !/new URLSearchParams\(window\.location\.search\)/.test(strip(src)),
+      `${name} reads the captured address, not the live one`,
+      "Root clears the bar on mount and these are lazy, so a live read "
+        + "would find the params already gone");
 }
 
 console.log("\n" + bar);

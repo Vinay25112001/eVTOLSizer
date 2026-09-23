@@ -35,6 +35,7 @@ import { T, S, MONO, SANS } from "../../ui/tokens.js";
 import { Card, th, td } from "../ui-kit.jsx";
 import { appVersionLabel } from "../../lib/designfile.js";
 import DesignModeSwitch from "../aircraft/DesignModeSwitch.jsx";
+import { INITIAL_SEARCH } from "../route.js";
 import { SharedAuthBar } from "../../lib/auth-session.jsx";
 import { UnitToggle } from "../../lib/UnitToggle.jsx";
 import { FRAMES, FRAME_CLASSES, FRAME_SOURCE, FRAMES_OMITTED, framesOfClass } from "../../data/drone-frames.js";
@@ -103,14 +104,11 @@ const TABS = Object.freeze([
   ["accuracy", "Accuracy & sources"],
 ]);
 
-function syncUrl(tab, frameClass, frameType) {
-  if (typeof window === "undefined") return;
-  const q = new URLSearchParams(window.location.search);
-  q.delete("class"); q.delete("type"); q.delete("atab");
-  q.set("mode", "drone"); q.set("dtab", tab);
-  q.set("frame", `${frameClass}/${frameType}`);
-  window.history.replaceState(null, "", `${window.location.pathname}?${q.toString()}`);
-}
+/* THE ADDRESS IS NO LONGER WRITTEN. This used to replaceState
+   ?mode=drone&dtab=…&frame=… on every tab change, which is why a refresh
+   reopened the drone flight sim instead of the eVTOL overview. route.js
+   explains the rule: links are read, never maintained. A deep link still
+   opens the right tab and frame -- that is INITIAL_SEARCH, read below. */
 
 /* A tab that has not been built yet. It states what will go in it and what
    has to be true before it can — never a placeholder number. */
@@ -130,7 +128,7 @@ function NotBuilt({ title, needs, children }) {
 
 export default function DroneStudio() {
   const design = useDroneDesign();
-  const qs = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
+  const qs = new URLSearchParams(INITIAL_SEARCH);
   const [dark, setDark] = useState(() => (qs.get("theme") === "light" ? false : qs.get("theme") === "dark" ? true
     : (typeof window !== "undefined" ? (window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true) : true)));
   applyTheme(dark);
@@ -150,7 +148,6 @@ export default function DroneStudio() {
     () => FRAMES.find((f) => f.frameClass === frameClass && f.frameType === frameType) ?? types[0] ?? null,
     [frameClass, frameType, types]);
 
-  if (typeof window !== "undefined" && frame) syncUrl(tab, frame.frameClass, frame.frameType);
 
   const pickClass = (c) => {
     setFrameClass(c);

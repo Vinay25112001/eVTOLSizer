@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SC } from "../../lib/theme.js";
 import { T, S, MONO, SANS } from "../../ui/tokens.js";
-import { fmt, Card, Kpi, th, td, Warnings } from "../ui-kit.jsx";
+import { fmt, Card, Kpi, Q, th, td, Warnings } from "../ui-kit.jsx";
 import {
   typeOf, TYPE_IDS, constraintDiagram, payloadRange, polarCurve, sensitivityCases, evaluateCase,
   numericInputs, tradeGrid, compareTypes, realityCheck, typeWarnings, typeValidation, METHOD_ACCURACY,
@@ -76,11 +76,11 @@ export function OverviewTab({ type, mode, result }) {
           <Kpi label="Operating empty mass" value={fmt(R.oewKg)} unit="kg" sub={`${fmt(100 * R.oewKg / R.mtowKg, 1)} % of take-off`} />
           <Kpi label="Payload" value={fmt(R.payloadKg)} unit="kg" />
           <Kpi label={mode === "size" ? "Mission fuel" : "Fuel"} value={fmt(R.fuelKg)} unit="kg"
-               sub={Number.isFinite(R.fuelCapacityKg) ? `tanks ${fmt(R.fuelCapacityKg)} kg` : ""} />
-          <Kpi label="Wing" value={fmt(R.wingAreaM2, 1)} unit="m²" sub={`span ${fmt(R.spanM, 1)} m · AR ${fmt(R.aspectRatio, 1)} · ${fmt(R.wingLoadingKgM2)} kg/m²`} />
+               sub={Number.isFinite(R.fuelCapacityKg) ? <>tanks <Q v={fmt(R.fuelCapacityKg)} u="kg" /></> : ""} />
+          <Kpi label="Wing" value={fmt(R.wingAreaM2, 1)} unit="m²" sub={<>span <Q v={fmt(R.spanM, 1)} u="m" /> · AR {fmt(R.aspectRatio, 1)} · {fmt(R.wingLoadingKgM2)} kg/m²</>} />
           <Kpi label={pr.kind === "thrust" ? "Thrust per engine" : "Power per engine"} value={fmt(pr.perEngine, 1)} unit={pr.unit}
                sub={`${pr.engines} × · ${fmt(pr.perEngineImperial)} ${pr.unitImperial} · set by ${pr.governedBy}`} />
-          <Kpi label="Cruise L/D" value={fmt(R.cruise.LD, 1)} unit="" sub={`max ${fmt(R.cruise.LDmax, 1)} · M ${fmt(R.cruise.mach, 3)} · ${fmt(R.cruise.altFt)} ft`} />
+          <Kpi label="Cruise L/D" value={fmt(R.cruise.LD, 1)} unit="" sub={<>max {fmt(R.cruise.LDmax, 1)} · M {fmt(R.cruise.mach, 3)} · <Q v={fmt(R.cruise.altFt)} u="ft" /></>} />
           {Number.isFinite(R.rangeNm) && <Kpi label={mode === "size" ? "Design range" : "Range at this mass"} value={fmt(R.rangeNm)} unit="nm" />}
         </div>
         <Note>
@@ -263,7 +263,7 @@ export function StructureTab({ type, result }) {
         <div style={{ display: "flex", flexWrap: "wrap", gap: S.md }}>
           <Kpi label="Root bending moment" value={fmt(R.momentNm / 1e6, 2)} unit="MN·m"
                sub={`at ${box.loadFactor.ultimate} g ultimate`} />
-          <Kpi label="Root shear" value={fmt(R.shearN / 1e3)} unit="kN" sub={`torsion ${fmt(R.torsionNm / 1e3)} kN·m`} />
+          <Kpi label="Root shear" value={fmt(R.shearN / 1e3)} unit="kN" sub={<>torsion <Q v={fmt(R.torsionNm / 1e3)} u="kN·m" /></>} />
           <Kpi label="Cap stress" value={fmt(R.sigmaUltPa / 1e6)} unit="MPa"
                sub={`${fmt(R.strainUlt * 1e6)} µε · ${R.governedBy}`} />
           <Kpi label="Cover thickness" value={mm(R.capThickM)} unit=""
@@ -375,11 +375,11 @@ export function BalanceTab({ type, result }) {
           <Kpi label="Wing root leading edge" value={fmt(bal.xWingRootLE, 2)} unit="m"
                sub={`${fmt(100 * bal.xWingRootLE / bal.fuselageLengthM, 1)} % of fuselage length — solved, not drawn`} />
           <Kpi label="LEMAC" value={fmt(bal.xLemac, 2)} unit="m"
-               sub={`MAC ${fmt(bal.mac, 2)} m at y = ${fmt(bal.yMac, 2)} m`} />
+               sub={<>MAC <Q v={fmt(bal.mac, 2)} u="m" /> at y = <Q v={fmt(bal.yMac, 2)} u="m" /></>} />
           <Kpi label="Operating empty CG" value={fmt(100 * bal.oew.pctMac, 1)} unit="% MAC"
-               sub={`${fmt(bal.oew.massKg)} kg at ${fmt(bal.oew.xM, 2)} m`} />
+               sub={<><Q v={fmt(bal.oew.massKg)} u="kg" /> at <Q v={fmt(bal.oew.xM, 2)} u="m" /></>} />
           <Kpi label="Take-off CG" value={fmt(100 * bal.takeoff.pctMac, 1)} unit="% MAC"
-               sub={`${fmt(bal.takeoff.massKg)} kg — payload at the cabin centroid, fuel at the wing box`} />
+               sub={<><Q v={fmt(bal.takeoff.massKg)} u="kg" /> — payload at the cabin centroid, fuel at the wing box</>} />
           <Kpi label="CG range, unrestricted" value={fmt(bal.envelope.rangePctMac, 1)} unit="% MAC"
                sub={`${fmt(100 * bal.envelope.fwd.pctMac, 1)} % to ${fmt(100 * bal.envelope.aft.pctMac, 1)} %`} />
           <Kpi label="Leading-edge sweep" value={fmt(bal.leSweepDeg, 2)} unit="°"
@@ -414,7 +414,7 @@ export function BalanceTab({ type, result }) {
           {np.withFuselage && <Kpi label="With slender-body fuselage" value={fmt(100 * np.withFuselage.pctMac, 1)} unit="% MAC"
                sub={`static margin ${pct(np.withFuselage.staticMargin)} — pessimistic`} />}
           <Kpi label="Tail effectiveness dCLh/dCL" value={fmt(np.dClhDcl, 3)} unit=""
-               sub={`downwash dε/dα = ${BALANCE_DEFAULTS.downwashDepsDa}, tail arm ${fmt(np.lH, 2)} m`} />
+               sub={<>downwash dε/dα = {BALANCE_DEFAULTS.downwashDepsDa}, tail arm <Q v={fmt(np.lH, 2)} u="m" /></>} />
           <Kpi label="Minimum required" value={fmt(100 * np.marginMin, 0)} unit="% MAC"
                sub="737.tas line 243, SMmin" />
         </div>
@@ -434,13 +434,13 @@ export function BalanceTab({ type, result }) {
           <>
             <div style={{ display: "flex", flexWrap: "wrap", gap: S.md }}>
               <Kpi label="Fin area required" value={fmt(y.svRequiredM2, 1)} unit="m²"
-                   sub={`against ${fmt(y.svActualM2, 1)} m² from the area ratio — ${y.ratio <= 1 ? "adequate" : "short"} by ${fmt(Math.abs(100 * (y.ratio - 1)), 0)} %`} />
+                   sub={<>against <Q v={fmt(y.svActualM2, 1)} u="m²" /> from the area ratio — {y.ratio <= 1 ? "adequate" : "short"} by {fmt(Math.abs(100 * (y.ratio - 1)), 0)} %</>} />
               <Kpi label="Tail volume V_v" value={fmt(y.vvRequired, 3)} unit=""
                    sub={`required, against ${fmt(y.vvActual, 3)} fitted`} />
               <Kpi label="Yawing moment" value={fmt(y.yawMomentNm / 1e3)} unit="kN·m"
-                   sub={`thrust ${fmt(y.thrustN / 1e3)} kN + windmilling ${fmt(y.windmillDragN / 1e3, 1)} kN at ${fmt(y.yEng, 2)} m`} />
+                   sub={<>thrust <Q v={fmt(y.thrustN / 1e3)} u="kN" /> + windmilling <Q v={fmt(y.windmillDragN / 1e3, 1)} u="kN" /> at <Q v={fmt(y.yEng, 2)} u="m" /></>} />
               <Kpi label="Control speed used" value={fmt(y.vMc, 0)} unit="m/s"
-                   sub={`${fmt(y.vMc / 0.5144, 0)} kt — 25.149(c) ceiling, ${fmt(BALANCE_DEFAULTS.vmcOverVsr, 2)} × V_SR`} />
+                   sub={<><Q v={fmt(y.vMc / 0.5144, 0)} u="kt" /> — 25.149(c) ceiling, {fmt(BALANCE_DEFAULTS.vmcOverVsr, 2)} × V_SR</>} />
             </div>
             <Note>{y.vMcBasis}</Note>
             <Note>{y.note} Thrust from {y.thrustFrom}.</Note>
@@ -570,12 +570,12 @@ export function FuselageTab({ type, result }) {
           <Kpi label="Length" value={fmt(f.shell.lengthM, 2)} unit="m"
                sub={`fineness ${fmt(f.shell.fineness, 2)} · ${f.shell.lengthSized ? "sized" : "not sized"}`} />
           <Kpi label="Cross-section" value={fmt(f.shell.crossSectionFt2, 1)} unit="ft²"
-               sub={`${fmt(f.shell.widthM, 2)} × ${fmt(f.shell.heightM, 2)} m · equivalent diameter ${fmt(f.shell.equivDiaM, 2)} m`} />
+               sub={<><Q v={fmt(f.shell.widthM, 2)} u="m" /> × <Q v={fmt(f.shell.heightM, 2)} u="m" /> · equivalent diameter <Q v={fmt(f.shell.equivDiaM, 2)} u="m" /></>} />
           <Kpi label="Frames" value={f.frames.drawn ? f.frames.count : "—"} unit=""
                sub={f.frames.drawn ? `at ${inches(f.frames.pitchM)}${f.frames.inBand ? ", inside the sourced band" : ", outside the sourced band"}`
                                    : "no published pitch for this class"} />
           <Kpi label="Stringers" value={f.stringers.count} unit=""
-               sub={`at ${inches(f.stringers.pitchM)} around ${fmt(f.stringers.perimeterM, 2)} m`} />
+               sub={<>at {inches(f.stringers.pitchM)} around <Q v={fmt(f.stringers.perimeterM, 2)} u="m" /></>} />
           {f.panel && <Kpi label="Skin panel" value={`${fmt(f.panel.lengthM * 1e3, 0)} × ${fmt(f.panel.widthM * 1e3, 0)}`} unit="mm"
                sub={`aspect ${fmt(f.panel.aspect, 2)} · ${fmt(f.panel.count)} panels in the shell`} />}
           {p.applies && <Kpi label="Decompression opening H₀" value={fmt(p.vent.hoFt2, 2)} unit="ft²"
@@ -862,7 +862,7 @@ export function ComplianceTab({ type, result }) {
       <Card title={`Requirement status — ${m.counts.pass} pass, ${m.counts.fail} fail, ${m.counts.notEvaluated} not evaluated`}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: S.md, marginBottom: S.md }}>
           {m.code && <Kpi label="Aerodrome reference code" value={m.code.code} unit=""
-                          sub={`field ${fmt(m.code.arflM)} m · span ${fmt(m.code.spanM, 1)} m`} />}
+                          sub={<>field <Q v={fmt(m.code.arflM)} u="m" /> · span <Q v={fmt(m.code.spanM, 1)} u="m" /></>} />}
           <Kpi label="Passing" value={m.counts.pass} unit="" sub="of the rows this tool can feed" />
           <Kpi label="Not evaluated" value={m.counts.notEvaluated} unit="" sub="not a pass" />
         </div>

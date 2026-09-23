@@ -108,6 +108,30 @@ export function Card({ title, children }) {
    each of which would be a chance to attach the wrong factor to a
    number. An unknown unit passes through untouched — see src/lib/units.js
    for why that is the deliberate failure mode. */
+/* A QUANTITY INSIDE RUNNING TEXT, converted like a headline figure.
+
+   Kpi converts its own `value`/`unit` pair, which is why the SI/IMP
+   toggle needed no changes at the call sites. Its `sub` line had no such
+   route: it is free text, so a span written as `${fmt(spanM, 1)} m` kept
+   saying metres while the figure above it switched to feet. The tile
+   then read "6.56 ft" over "commanded 2.00 m", which is worse than
+   showing one system badly — it invites the reader to compare two
+   numbers that are not in the same units.
+
+   The fix has to be EXPLICIT rather than a pass over the finished text.
+   A converter that rewrote display strings would find the `g` in "at
+   3.75 g ultimate" (tabs.jsx) — a LOAD FACTOR, not a mass — and turn it
+   into ounces. Only the call site knows which `g` it wrote, so the call
+   site names the unit and this component does the conversion.
+
+   `v` is already formatted, as Kpi's `value` is, so the decimals the
+   author chose survive the conversion. */
+export function Q({ v, u }) {
+  const { system } = useUnitSystem();
+  const c = convertDisplay(v, u, system);
+  return <>{c.value} {c.unit}</>;
+}
+
 export function Kpi({ label, value, unit, sub }) {
   const { system } = useUnitSystem();
   const conv = convertDisplay(value, unit, system);

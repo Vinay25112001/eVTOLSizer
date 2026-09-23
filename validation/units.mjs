@@ -159,6 +159,69 @@ check(Object.values(NO_CONVERT).every((why) => typeof why === "string" && why.le
 const overlap = Object.keys(UNIT_TABLE).filter((u) => u in NO_CONVERT);
 check(overlap.length === 0, "no unit is both convertible and not-converted", overlap.join(", ") || "disjoint");
 
+/* ── 6. THE SECOND LINE OF A TILE IS A DISPLAY TOO ──────────────────── */
+console.log("\n-- no headline figure sits above a sub-line in the other system --");
+
+/* Kpi converts its own value/unit pair, so the toggle needed no change
+   at the call sites. Its `sub` line had no such route: it is free text,
+   and a span written as `${fmt(spanM, 1)} m` went on saying metres while
+   the figure above it switched to feet. The tile then read "6.56 ft"
+   over "commanded 2.00 m" — two numbers side by side in two systems,
+   which is worse than showing one system badly.
+
+   This scans for the SHAPE of that bug: an interpolated value followed
+   immediately by a convertible unit, inside a `sub` template literal.
+   The fix is the Q component, which converts like Kpi does.
+
+   WHY THIS IS A SOURCE SCAN AND NOT A CONVERTER. A pass over the
+   finished text would find the `g` in "at 3.75 g ultimate" — a LOAD
+   FACTOR, not a mass — and turn it into ounces. Only the call site knows
+   which `g` it wrote, so the exemptions below are named, with the reason,
+   exactly as NO_CONVERT names its own. */
+const SUB_EXEMPT = [
+  { needle: "g ultimate",
+    why: "load factor in g, not grams — converting it to ounces would be nonsense" },
+  { needle: 'in "',
+    why: 'the English preposition in `the N in "stratum"`, not inches' },
+];
+
+/* Longest token first, so "m/s" is not read as "m" and "kg/m²" is not
+   read as "kg". A unit followed by / · or a superscript is part of a
+   larger unit that this table does not convert, so it is not the bug. */
+const TOKENS = Object.keys(UNIT_TABLE).sort((a, b) => b.length - a.length)
+  .map((u) => u.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+const RAW_IN_SUB = new RegExp(`\\}\\s*(?:${TOKENS})(?![A-Za-z0-9/·²³])`, "g");
+
+const offenders = [];
+const scanSubs = (dir) => {
+  for (const e of readdirSync(dir)) {
+    const p = join(dir, e);
+    if (statSync(p).isDirectory()) { scanSubs(p); continue; }
+    if (!/\.jsx$/.test(e)) continue;
+    const src = readFileSync(p, "utf8");
+    src.split("\n").forEach((line, i) => {
+      if (!/sub=\{/.test(line)) return;
+      for (const lit of line.matchAll(/`[^`]*`/g)) {
+        const text = lit[0];
+        if (SUB_EXEMPT.some((x) => text.includes(x.needle))) continue;
+        const hit = text.match(RAW_IN_SUB);
+        if (hit) offenders.push(`${p}:${i + 1} ${hit[0].trim()}`);
+      }
+    });
+  }
+};
+for (const r of roots) { try { scanSubs(r); } catch { /* absent in some builds */ } }
+
+check(offenders.length === 0,
+  "every quantity in a Kpi sub-line converts with the toggle, or is exempt with a reason",
+  offenders.length ? offenders.slice(0, 5).join(" | ")
+    : `${SUB_EXEMPT.length} named exemptions — ${SUB_EXEMPT.map((x) => x.why).join("; ")}`);
+
+const kit = readFileSync("src/classes/ui-kit.jsx", "utf8");
+check(/export function Q\(/.test(kit) && /convertDisplay\(v, u, system\)/.test(kit),
+  "and the component they use converts through the same table as Kpi",
+  "Q takes an already-formatted value and a named unit, so the author's decimals survive");
+
 console.log("");
 console.log(fails.length ? `UNITS GATE FAILED: ${fails.length} check(s)`
                          : `UNITS GATE PASSED (${passes} checks)`);

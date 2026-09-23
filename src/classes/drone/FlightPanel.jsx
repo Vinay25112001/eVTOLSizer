@@ -25,7 +25,7 @@ import {
 } from "recharts";
 import { SC } from "../../lib/theme.js";
 import { T, S, MONO, SANS } from "../../ui/tokens.js";
-import { Card, Kpi, th, td } from "../ui-kit.jsx";
+import { Card, Kpi, Q, th, td } from "../ui-kit.jsx";
 import { buildAirframe, DEG } from "./geometry3d.js";
 import {
   buildModel, simulate, DECLARED_DYNAMICS_INPUTS, ARDUPILOT_GAINS,
@@ -979,7 +979,7 @@ export default function FlightPanel({ design, frame }) {
                   visible evidence that a command is being tracked rather
                   than applied. */}
               <Kpi label="Altitude" value={num(now.altitudeM, 2)} unit="m"
-                   sub={cmdNow ? `commanded ${num(cmdNow.altitudeM, 2)} m` : undefined} />
+                   sub={cmdNow ? <>commanded <Q v={num(cmdNow.altitudeM, 2)} u="m" /></> : undefined} />
               <Kpi label="Roll" value={num(now.rollDeg, 1)} unit="°"
                    sub={cmdNow ? `commanded ${num(cmdNow.rollDeg, 1)}°` : undefined} />
               <Kpi label="Pitch" value={num(now.pitchDeg, 1)} unit="°"

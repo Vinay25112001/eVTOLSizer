@@ -62,12 +62,17 @@ Below are the regulatory thresholds I have stored for EASA SC-VTOL and FAA AC 21
 
 ${rulesText}
 
-Based on your knowledge of these regulations up to your training cutoff:
-1. Have any of these specific threshold VALUES changed from what I have stored?
-2. Are there any NEW requirements I am missing that would affect an eVTOL with: MTOW=${SR?.MTOW||2177}kg, nProp=${params.nPropHover}, range=${params.range}km?
-3. What are the top 3 certification risks for this specific design?
+START your reply with one line in exactly this form, and nothing before it:
+TRAINING CUTOFF: <the month and year your knowledge ends>
 
-Respond in plain text, clearly structured. Be specific about rule IDs and numerical values. If you are uncertain about a specific value, say so.`;
+Then answer only what you can actually answer from that knowledge:
+1. For each threshold above, does it MATCH what you recall of the published rule, or differ? Where it differs, give the value you recall and the rule ID. Where you do not know the paragraph, say you do not know it rather than naming one.
+2. For an eVTOL with MTOW=${SR?.MTOW||2177}kg, nProp=${params.nPropHover}, range=${params.range}km, which requirements in these specifications are likely to bind hardest? Name the paragraph only if you are confident it exists.
+3. The top 3 certification risks for this configuration.
+
+DO NOT claim a threshold has "changed" or is "current" or "unchanged as of" any date. You cannot see anything after your cutoff, so a threshold stored later than your cutoff is one you cannot comment on: say exactly that. Prefer "I do not know" over a paragraph number you are not sure of -- a wrong citation is worse than none, because a reader cannot tell the difference without the document in front of them.
+
+Respond in plain text, clearly structured.`;
 
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -77,7 +82,11 @@ Respond in plain text, clearly structured. Be specific about rule IDs and numeri
         },
         body: JSON.stringify({
           model: GROQ_MODEL_FAST,
-          max_tokens: 600,
+          /* 600 CUT THE ANSWER OFF MID-TABLE. The prompt asks for a
+             per-rule comparison plus three risks, which does not fit;
+             the reply ended inside a table cell, and a truncated
+             regulatory answer reads as a complete one. */
+          max_tokens: 2000,
           messages: [{ role: "user", content: prompt }]
         })
       });
@@ -99,12 +108,12 @@ Respond in plain text, clearly structured. Be specific about rule IDs and numeri
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Header */}
       <div style={{ background: `linear-gradient(135deg,${SC.bg},#1a1200)`, border: `1px solid ${SC.amber}44`, borderRadius: 10, padding: '16px 20px' }}>
-        <div style={{ fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", letterSpacing: '0.18em', marginBottom: 4 }}>EASA SC-VTOL · FAA AC 21-17-4 · AI-POWERED UPDATE CHECK</div>
+        <div style={{ fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", letterSpacing: '0.18em', marginBottom: 4 }}>EASA SC-VTOL · FAA AC 21-17-4 · THRESHOLDS READ FROM THE SPECIFICATIONS</div>
         <div style={{ fontSize: 18, fontWeight: 800, color: SC.text, marginBottom: 6 }}>
-          <span style={{ color: SC.amber }}>Regulatory</span> Change Tracker
+          <span style={{ color: SC.amber }}>Regulatory</span> Compliance Tracker
         </div>
         <div style={{ fontSize: 11, color: SC.muted, lineHeight: 1.7, maxWidth: 760 }}>
-          Evaluates your current design against stored EASA SC-VTOL and FAA AC 21-17-4 thresholds in real time. "Check for Updates" asks a language model ({GROQ_MODEL_LABEL[GROQ_MODEL_FAST]}) to identify any threshold changes and certification risks specific to your design configuration.
+          Evaluates your current design against EASA SC-VTOL and FAA AC 21-17-4 thresholds read from the specifications, in real time. Every row says whether its threshold is a verified regulation or this tool&apos;s own rule, and <code>validation/citations.mjs</code> re-confirms each paragraph number on every run. Nothing on this page monitors the regulators for changes &mdash; the thresholds move when someone reads the documents again and edits them.
         </div>
       </div>
 
@@ -116,7 +125,7 @@ Respond in plain text, clearly structured. Be specific about rule IDs and numeri
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', cursor: 'pointer', background: SC.bg, borderBottom: `1px solid ${SC.border}` }}>
             <div>
               <span style={{ fontSize: 12, fontWeight: 700, color: SC.text, fontFamily: "'DM Mono',monospace" }}>{regName}</span>
-              <span style={{ fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", marginLeft: 12 }}>Last checked: {regInfo.lastChecked}</span>
+              <span style={{ fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", marginLeft: 12 }} title={regInfo.source}>Thresholds read from the documents: {regInfo.lastChecked}</span>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {(() => {
@@ -166,21 +175,59 @@ Respond in plain text, clearly structured. Be specific about rule IDs and numeri
         </div>
       ))}
 
-      {/* AI Update Check */}
+      {/* ── WHAT A LANGUAGE MODEL CAN AND CANNOT BE ASKED HERE ─────────
+             This was labelled an "AI-powered update check", and it asked
+             the model whether thresholds stored in early 2025 had
+             changed. The model answers from frozen weights: no
+             retrieval, no web access, no sight of any document. The one
+             it calls replied that its knowledge ends in 2021 — so the
+             question was unanswerable by construction, and every "no
+             change known" it returned was an absence of knowledge
+             rendered as reassurance.
+
+             A certification threshold is the worst place in this tool to
+             let that stand. regdb.js exists BECAUSE eleven engineering
+             numbers once wore invented paragraph numbers, and its
+             post-mortem states the rule this section now follows: a
+             wrong citation "is worse than no citation at all, because a
+             reader cannot tell the difference without the document in
+             front of them."
+
+             The feature is not removed — a model's recollection is
+             genuinely useful for finding which requirements bind a
+             configuration hardest — but it is labelled as recollection,
+             made to print its own cutoff, and told not to assert
+             currency it cannot have. The table above is the part that
+             computes something. */}
       <div style={{ background: SC.panel, border: `1px solid ${SC.amber}33`, borderRadius: 8, padding: '14px 16px' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: SC.amber, fontFamily: "'DM Mono',monospace", marginBottom: 10 }}>AI Regulatory Update Check</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: SC.amber, fontFamily: "'DM Mono',monospace", marginBottom: 10 }}>Ask a language model what it recalls of these rules</div>
         <div style={{ fontSize: 10, color: SC.muted, fontFamily: "'DM Mono',monospace", marginBottom: 12, lineHeight: 1.7 }}>
-          Asks {GROQ_MODEL_LABEL[GROQ_MODEL_FAST]} to identify: (1) threshold changes from stored values, (2) new requirements for your specific design, (3) top 3 certification risks.
+          Asks {GROQ_MODEL_LABEL[GROQ_MODEL_FAST]} for: (1) where its recollection of each threshold differs from the value stored here, (2) which requirements are likely to bind this configuration hardest, (3) the top 3 certification risks.
+          {' '}<strong style={{ color: SC.amber }}>This is not an update check.</strong> The model has no retrieval and cannot see any document or anything published after its training cutoff, which it is asked to state on the first line of its answer. Treat what it returns as a prompt to go and read the specification, never as the specification.
         </div>
         <button onClick={checkUpdates} disabled={checking} type="button"
           style={{ padding: '9px 24px', background: checking ? 'transparent' : `linear-gradient(135deg,#1c1000,${SC.amber}88)`, border: `2px solid ${SC.amber}`, borderRadius: 7, color: checking ? SC.muted : SC.amber, fontSize: 11, fontWeight: 800, cursor: checking ? 'not-allowed' : 'pointer', fontFamily: "'DM Mono',monospace" }}>
-          {checking ? '⟳ Checking with the model…' : 'Check for Regulatory Updates'}
+          {checking ? '⟳ Asking the model…' : 'Ask the model'}
         </button>
         {aiErr && <div style={{ marginTop: 10, padding: '8px 12px', background: `${SC.red}11`, border: `1px solid ${SC.red}44`, borderRadius: 6, fontSize: 10, color: SC.red, fontFamily: "'DM Mono',monospace" }}>{aiErr}</div>}
         {aiReport && (
-          <div style={{ marginTop: 12, padding: '14px 16px', background: SC.bg, border: `1px solid ${SC.border}`, borderRadius: 8, fontSize: 10, color: SC.text, fontFamily: "'DM Mono',monospace", lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
-            {aiReport}
-          </div>
+          <>
+            {/* THE CAVEAT TRAVELS WITH THE ANSWER, not just with the
+                button. The answer is what gets read, screenshotted and
+                pasted into a document; a disclaimer that sits above the
+                control the reader already clicked does not follow it
+                there. Same reasoning as the assumptions printed beside
+                the flight's state of charge. */}
+            <div style={{ marginTop: 12, padding: '8px 12px', background: `${SC.amber}11`, border: `1px solid ${SC.amber}44`, borderRadius: 6, fontSize: 9, color: SC.amber, fontFamily: "'DM Mono',monospace", lineHeight: 1.6 }}>
+              Recalled by {GROQ_MODEL_LABEL[GROQ_MODEL_FAST]} from training data, not read from any document. It
+              cannot see anything after its stated cutoff, so it cannot tell you whether a threshold is current.
+              Paragraph numbers below are unverified — the ones in the table above are checked on every run by
+              validation/citations.mjs; these are not. Verify against SC-VTOL-02 Issue 2 before relying on anything here.
+            </div>
+            <div style={{ marginTop: 8, padding: '14px 16px', background: SC.bg, border: `1px solid ${SC.border}`, borderRadius: 8, fontSize: 10, color: SC.text, fontFamily: "'DM Mono',monospace", lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
+              {aiReport}
+            </div>
+          </>
         )}
       </div>
     </div>

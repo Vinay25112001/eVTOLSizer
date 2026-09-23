@@ -52,6 +52,7 @@
    more than either alone.
    ===================================================================== */
 import { signedDistance, contactNormal, reflectVelocity } from "./obstacles.js";
+import { packPoint } from "./flight-energy.js";
 import { effectivenessMatrix, torqueToThrustRatio } from "../../engine/controlauthority.js";
 
 export const G_NED = Object.freeze([0, 0, 9.80665]);   // z DOWN
@@ -670,7 +671,8 @@ function nearestRotorIndex(model, state, nNed) {
 }
 
 export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
-                           failed = new Set(), obstacles = [], impact = null }) {
+                           failed = new Set(), obstacles = [], impact = null,
+                           energy = null }) {
   const ctl = makeController();
   const n = model.rotors.length;
   const geom = model.geom.map((g, i) => ({ ...g, eta: failed.has(model.rotors[i].motor) ? 0 : 1 }));
@@ -683,11 +685,46 @@ export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
   let thrusts = new Array(n).fill(model.hoverThrustPerRotorN);
   const trace = [];
   const steps = Math.round(durationS / dt);
-  const every = Math.max(1, Math.round(0.02 / dt));
+  /* ── HOW OFTEN THE TRACE IS RECORDED ────────────────────────────────
+     20 ms, as it always was, until a flight is long enough that 20 ms
+     would produce a trace nobody can hold. A battery-limited hover on
+     the reference hexacopter runs 29 minutes; at 20 ms that is 87,000
+     samples and about 46 MB of run crossing the worker boundary on
+     every edit. Past MAX_TRACE_SAMPLES the interval stretches so the
+     count holds instead.
+
+     The threshold is 240 s, so every flight shorter than that records
+     exactly as it did before and the comparisons that pin this
+     module keep their meaning. The energy integral follows the same
+     interval, which costs it nothing: it is a sum of P*dt either way,
+     and exact for a steady power at any interval. */
+  const MAX_TRACE_SAMPLES = 12000;
+  const every = Math.max(1, Math.round(
+    Math.max(0.02, durationS / MAX_TRACE_SAMPLES) / dt));
   let allocationFailed = 0, axesDropped = [], hitGround = false, fullRankButUnattainable = false;
   const impacts = [], broken = [];
   const loiter = { ax: 0, ay: 0, idleS: 0 };
   let brakingS = 0;
+
+  /* ── STATE OF CHARGE, WHEN AN ENERGY MODEL IS GIVEN ─────────────────
+     Opt-in, and absent by default: with no `energy` the loop, the trace
+     and the returned run are exactly what they were, which is what lets
+     the validation harnesses and the golden comparisons keep their
+     meaning. flight-energy.js explains the model and its limits.
+
+     The integral runs at the TRACE interval, not the integration step.
+     One evaluation of the thrust -> rpm -> motor -> ESC chain costs
+     about 9 us because `rpmForThrust` inverts the measured curve by
+     bisection; doing it every 2 ms step would cost 28 ms per second of
+     flight, six times the trajectory itself, while doing it every 20 ms
+     costs 2.8 ms. Power is a smooth function of a lagged thrust, so the
+     20 ms rectangle is not where this model's error lives — and for a
+     steady hover the sum is exact, which is the identity the gate uses
+     to check this against enduranceMin(). */
+  const traceIntervalS = every * dt;
+  let energyWh = 0, unaccountedMaxWh = 0, batteryEmpty = false, emptyAtS = null;
+  let subFloorSamples = 0, refusedSamples = 0, clampedSamples = 0, rotorSamples = 0;
+  let peakPackPowerW = 0, peakPackCurrentA = 0;
 
   for (let s = 0; s <= steps; s++) {
     const t = s * dt;
@@ -744,7 +781,7 @@ export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
     thrusts = thrusts.map((x, i) => x + (cmd[i] - x) * Math.min(1, dt / model.motorTauS));
 
     if (s % every === 0) {
-      trace.push({
+      const row = {
         t, x: state[0], y: state[1], altitudeM: -state[2],
         vx: state[3], vy: state[4], vz: -state[5],
         rollDeg: e.rollRad * 180 / Math.PI, pitchDeg: e.pitchRad * 180 / Math.PI,
@@ -752,7 +789,48 @@ export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
         p: rates[0], q: rates[1], r: rates[2],
         thrusts: [...thrusts], collective,
         yawErrDeg: angErr[2] * 180 / Math.PI,
-      });
+      };
+
+      if (energy) {
+        /* A failed motor is not being driven, so it is handed zero
+           rather than its lagged thrust: eta = 0 in the allocator and no
+           pack current are the same statement about the same motor. */
+        const driven = thrusts.map((x, i) => (geom[i].eta === 0 ? 0 : x));
+        const pp = packPoint(energy, driven);
+        rotorSamples += driven.length;
+        subFloorSamples += pp.subFloor;
+        refusedSamples += pp.refused;
+        clampedSamples += pp.clamped;
+        if (pp.packPowerW > peakPackPowerW) peakPackPowerW = pp.packPowerW;
+        if (pp.packCurrentA > peakPackCurrentA) peakPackCurrentA = pp.packCurrentA;
+
+        /* Energy accrues over the interval that has just ELAPSED, so the
+           sample at t = 0 costs nothing. With constant power over T
+           seconds the intervals sum to exactly P*T, which is what makes
+           the hover identity against enduranceMin() hold. */
+        if (s > 0) {
+          energyWh += pp.packPowerW * traceIntervalS / 3600;
+          unaccountedMaxWh += pp.unaccountedMaxW * traceIntervalS / 3600;
+        }
+        row.packPowerW = pp.packPowerW;
+        row.packCurrentA = pp.packCurrentA;
+        row.energyWh = energyWh;
+        /* Fraction of the DECLARED usable energy, not of the pack. */
+        row.soc = Math.max(0, 1 - energyWh / energy.usableWh);
+
+        if (energyWh >= energy.usableWh) {
+          /* THE PACK IS THE THING THAT ENDED THE FLIGHT. Same treatment
+             the ground already gets: the run stops and says so, rather
+             than modelling what happens to an aircraft with no power. */
+          batteryEmpty = true;
+          emptyAtS = t;
+        }
+      }
+      trace.push(row);
+      /* Breaking AFTER the push keeps the exhausted state in the trace.
+         Breaking here rather than inside the branch above leaves the
+         integration and the contact handling below untouched. */
+      if (batteryEmpty) break;
     }
     state = rk4(state, model, thrusts, dt);
 
@@ -844,6 +922,33 @@ export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
     impacts, broken, brakingS,
     crashed: hitGround,
     hitGroundAtS: hitGround ? last.t : null,
+    /* ENERGY, only when an energy model was given. `null` is the honest
+       value otherwise: the loop did not compute it, so it must not
+       report a zero that reads like a measurement. The interval
+       [energyWh, energyWh + unaccountedMaxWh] is where the true figure
+       lies — see flight-energy.js on why the gap is bounded, not
+       filled — and `assumes` travels with the number so no reader
+       inherits the four simplifications silently. */
+    energy: energy ? Object.freeze({
+      usableWh: energy.usableWh,
+      totalWh: energy.totalWh,
+      usableFraction: energy.usableFraction,
+      energyWh,
+      unaccountedMaxWh,
+      soc: Math.max(0, 1 - energyWh / energy.usableWh),
+      socIsFractionOf: energy.socMeaning.isFractionOf,
+      batteryEmpty, emptyAtS,
+      peakPackPowerW, peakPackCurrentA,
+      meanPackPowerW: last.t > 0 ? energyWh * 3600 / last.t : null,
+      rotorSamples, subFloorSamples, refusedSamples, clampedSamples,
+      subFloorFraction: rotorSamples ? subFloorSamples / rotorSamples : 0,
+      /* A thrust above the measured ceiling cannot be bounded from
+         inside the data, so it makes the whole figure unusable rather
+         than quietly biasing it low. */
+      available: refusedSamples === 0,
+      measuredThrustRangeN: energy.measuredThrustRangeN,
+      assumes: energy.assumes,
+    }) : null,
     maxTiltDeg: Math.max(...trace.map((r) => Math.hypot(r.rollDeg, r.pitchDeg))),
     yawDriftDeg: Math.abs(last.yawDeg - trace[0].yawDeg),
     inertia: model.inertia,
@@ -903,10 +1008,35 @@ export const SCENARIOS = Object.freeze({
    that lets anyone command a held tilt has to report it rather than let
    the view quietly zoom out until the aircraft is a speck. */
 
+/* THE DURATION CAP IS A COMPUTE BUDGET, AND IT IS NO LONGER WHAT ENDS A
+   LONG FLIGHT. Given an energy model, the loop integrates state of
+   charge and stops when the declared usable energy is gone — see
+   flight-energy.js — so the PACK is the binding limit on any scenario
+   that runs long enough to matter. The reference hexacopter empties in
+   about 29 minutes, and the cap is set above that on purpose, so that
+   what ends the flight is the battery rather than the clock.
+
+   The cap still exists, because the cost of a run is real. `simulate`
+   integrates at dt = 2 ms: measured on the development machine, 2.4 ms
+   per second of flight for a healthy quad and 4.5 ms with a rotor dead
+   and the scene and impact response on, the allocator adding a bisection
+   per step when a rotor is out. The energy chain adds about 0.7 s over a
+   full-length flight, held down by the adaptive trace interval above.
+   So 2400 s is roughly 11 s of worst-case work in the worker.
+
+   ITS HISTORY, BECAUSE THE NUMBER LOOKS ARBITRARY AND IS NOT. It was
+   120 s while the integration ran on the main thread, inside the render
+   body of FlightPanel, where every keystroke in the editor paid the
+   whole cost with the browser blocked — so the cap was really a limit on
+   how long a tab could freeze. Moving the run into flight-worker.js
+   removed that, and 300 s was then a pure compute budget. Integrating
+   the pack removed the reason to guess at all: the aircraft now flies
+   until it runs out of energy, and this number only has to stay out of
+   the way while it does. */
 export const SCENARIO_LIMITS = Object.freeze({
   maxSegments: 12,
-  maxSegmentDurationS: 120,
-  maxTotalDurationS: 120,
+  maxSegmentDurationS: 2400,
+  maxTotalDurationS: 2400,
   maxTiltDeg: 60,
   maxAltitudeM: 400,
 });
@@ -1038,4 +1168,25 @@ export const SCENARIO_PRESETS = Object.freeze({
     segments: [{ durationS: 10, rollDeg: 0, pitchDeg: 0, yawDeg: 0, altitudeM: 3 }] },
   descent: { label: "Controlled descent", startAltitudeM: 6, initialAttitude: {},
     segments: [{ durationS: 10, rollDeg: 0, pitchDeg: 0, yawDeg: 0, altitudeM: 0.2, altitudeRateMps: 1.0 }] },
+
+  /* THE ONE PRESET THAT IS NOT A MANOEUVRE, and the reason it exists.
+     The six above are ten-second attitude demonstrations — an upset, a
+     pulse, a turn, a descent — which is exactly what they are for. None
+     of them flies long enough for the pack to matter, so the flight this
+     tool's whole energy chain is about was not reachable from the menu
+     at all: a reader had to know to open the editor and type a
+     four-digit duration into a field whose limit had until recently been
+     120. Every preset being 10 s read as though 10 s were the tool's
+     natural scale.
+
+     This one holds a hover for the entire budget and lets the BATTERY
+     end the flight. On the reference hexacopter that happens at about 29
+     minutes, well inside the cap, so what stops it is the energy running
+     out rather than the clock — which is the point of integrating it.
+     It costs a few seconds in the worker, so it is a choice on the menu
+     and deliberately not the default. */
+  endurance: { label: "Endurance — hover until the pack is empty",
+    startAltitudeM: 4, initialAttitude: {},
+    segments: [{ durationS: SCENARIO_LIMITS.maxTotalDurationS,
+                 rollDeg: 0, pitchDeg: 0, yawDeg: 0, altitudeM: 4 }] },
 });

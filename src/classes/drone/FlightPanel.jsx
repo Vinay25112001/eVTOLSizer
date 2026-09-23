@@ -28,11 +28,12 @@ import { T, S, MONO, SANS } from "../../ui/tokens.js";
 import { Card, Kpi, Q, th, td } from "../ui-kit.jsx";
 import { buildAirframe, DEG } from "./geometry3d.js";
 import {
-  buildModel, simulate, DECLARED_DYNAMICS_INPUTS, ARDUPILOT_GAINS,
+  buildModel, DECLARED_DYNAMICS_INPUTS, ARDUPILOT_GAINS,
   makeScenario, SCENARIO_PRESETS, SCENARIO_LIMITS, tiltAccelerationMps2,
   qRotate, eulerToQ,
 } from "./dynamics.js";
 import { DEFAULT_SCENE, firstContact, DECLARED_IMPACT_INPUTS } from "./obstacles.js";
+import { buildEnergyModel } from "./flight-energy.js";
 
 const num = (v, d = 1) => (v == null || !isFinite(v) ? "—" : v.toFixed(d));
 
@@ -64,6 +65,38 @@ function presetToState(p) {
   };
 }
 
+/* THE PLAIN ARGUMENTS `makeScenario` TAKES. Both threads build a
+   scenario from this one definition: the main thread to validate the
+   edit and report what is wrong, the worker to get the target FUNCTION a
+   scenario actually is. A function cannot be structured-cloned, so the
+   built scenario itself can never cross — only these arguments. */
+function scenarioArgs(scen) {
+  return {
+    label: scen.label,
+    startAltitudeM: Number(scen.startAltitudeM),
+    initialAttitude: {
+      rollRad: (Number(scen.initialRollDeg) || 0) * DEG,
+      pitchRad: (Number(scen.initialPitchDeg) || 0) * DEG,
+      yawRad: (Number(scen.initialYawDeg) || 0) * DEG,
+    },
+    segments: scen.segments,
+  };
+}
+
+/* TYPING IS NOT A REQUEST TO INTEGRATE. Each keystroke in the editor
+   changes the scenario, and integrating a 300 s flight takes about a
+   second; a run per character would queue a second of work per keystroke
+   on the worker's core for a scenario the user is still in the middle of
+   describing. Edits inside this window coalesce into one run, which is
+   short enough that a finished edit still feels immediate. */
+const REQUEST_DEBOUNCE_MS = 180;
+
+/* The most points the drawn trail may contain, whatever the flight's
+   length. The trace is sampled every 20 ms, so the old stride of 2
+   reaches this budget after 60 s of flight; beyond that the stride
+   grows and the point count holds. */
+const TRAIL_POINTS = 1500;
+
 /* World -> screen. Orthographic, z DOWN, so a positive z is lower on
    screen. The camera orbits the FOLLOW POINT rather than the origin, so
    the aircraft stays in frame as it moves. */
@@ -82,7 +115,7 @@ function makeView({ yaw, pitch, scale, cx, cy, follow }) {
 }
 
 export default function FlightPanel({ design, frame }) {
-  const { built, result, ok, v } = design;
+  const { built, result, ok, v, selection, declared: sizingDeclared } = design;
   const [preset, setPreset] = useState("disturbance");
   const [scen, setScen] = useState(() => presetToState(SCENARIO_PRESETS.disturbance));
   const [editing, setEditing] = useState(false);
@@ -138,6 +171,69 @@ export default function FlightPanel({ design, frame }) {
   const RELEASE_S = 4;                      // long enough to brake and settle
   const MIN_HOLD_S = 0.4;                   // a tap is still a move
   const padFull = scen.segments.length >= SCENARIO_LIMITS.maxSegments - 1;
+
+  /* THE DURATION BUDGET, PRE-ANNOUNCED. The segment limit has always
+     been visible before it bites — "3 left" beside the pad — while the
+     duration cap was invisible until it was exceeded, at which point
+     makeScenario threw and the panel showed an error for something the
+     editor had given no warning about. Both budgets now read the same
+     way. The total is summed from what is TYPED rather than from the
+     built scenario, so it still counts up while the edit is invalid,
+     which is exactly when the reader needs to see it. */
+  const typedTotalS = scen.segments.reduce((a, s) => a + (Number(s.durationS) || 0), 0);
+  const durationFull = typedTotalS >= SCENARIO_LIMITS.maxTotalDurationS;
+
+  /* SETTING THE TOTAL FROM THE FRONT ROW. The last segment absorbs the
+     change, so the manoeuvre ahead of it is untouched — which also means
+     the flight cannot be shorter than the segments preceding the last
+     one, plus the smallest segment this editor recognises. Clamped in
+     both directions rather than refused, because this is a spinner a
+     reader drags: an out-of-range keystroke should land on the limit and
+     be visible there, not throw the scenario away. */
+  const leadingS = scen.segments.slice(0, -1)
+    .reduce((a, s) => a + (Number(s.durationS) || 0), 0);
+  const minTotalS = +(leadingS + MIN_HOLD_S).toFixed(3);
+
+  /* WHAT THE FIELD SHOWS WHILE IT IS BEING TYPED IN.
+     The flight time is DERIVED from the segments, so a controlled input
+     bound straight to it cannot hold an intermediate state: clearing the
+     field parsed as 0, clamped to the minimum, and wrote 0.4 back into
+     the box before the next digit could be typed. The field could only
+     be driven upwards, one keystroke at a time.
+
+     So a draft holds the raw text while the field has focus, and the
+     derived total is shown whenever it does not — the same rule the
+     scenario editor already follows, where "a half-typed number is not
+     an error worth blanking the view for". A blank field, a lone minus
+     or a trailing decimal point is a keystroke on the way to a number
+     and changes no scenario; anything that parses is applied live. */
+  const [timeDraft, setTimeDraft] = useState(null);
+  const setTotalDuration = (wanted) => {
+    setScen((st) => {
+      if (!st.segments.length) return st;
+      const lead = st.segments.slice(0, -1)
+        .reduce((a, s) => a + (Number(s.durationS) || 0), 0);
+      const total = Math.min(SCENARIO_LIMITS.maxTotalDurationS,
+                             Math.max(lead + MIN_HOLD_S, Number(wanted) || 0));
+      const segments = st.segments.slice();
+      segments[segments.length - 1] = {
+        ...segments[segments.length - 1],
+        durationS: +(total - lead).toFixed(3),
+      };
+      return { ...st, segments };
+    });
+  };
+  /* A SCENARIO CAN OUTRUN THE AIRCRAFT'S OWN ENDURANCE, and the
+     integrator has no way to know: it closes attitude and altitude loops
+     and carries no state of charge, so it will hover a design for five
+     minutes whose pack is computed to last three. That is reported here
+     rather than enforced in makeScenario — the trajectory is still the
+     one the equations produce, and the endurance is a computed quantity
+     from another chain (battery.js, via the Endurance tab) with its own
+     P10/P90 band. Refusing the scenario would be the tool pretending to
+     a coupling it does not model. */
+  const enduranceS = (result?.endurance?.minutes ?? 0) * 60;
+  const outrunsEndurance = enduranceS > 0 && typedTotalS > enduranceS;
   const held = useRef(null);
 
   const appendMove = (mut, holdS) => setScen((st) => {
@@ -219,20 +315,11 @@ export default function FlightPanel({ design, frame }) {
   /* The scenario the user is describing. A half-typed number is not an
      error worth blanking the view for, so an invalid edit keeps flying
      the last valid scenario and shows what is wrong. */
+  const args = useMemo(() => scenarioArgs(scen), [scen]);
   const scenarioBuild = useMemo(() => {
-    try {
-      return { ok: makeScenario({
-        label: scen.label,
-        startAltitudeM: Number(scen.startAltitudeM),
-        initialAttitude: {
-          rollRad: (Number(scen.initialRollDeg) || 0) * DEG,
-          pitchRad: (Number(scen.initialPitchDeg) || 0) * DEG,
-          yawRad: (Number(scen.initialYawDeg) || 0) * DEG,
-        },
-        segments: scen.segments,
-      }) };
-    } catch (e) { return { error: e.message }; }
-  }, [scen]);
+    try { return { ok: makeScenario(args) }; }
+    catch (e) { return { error: e.message }; }
+  }, [args]);
 
   useEffect(() => {
     if (scenarioBuild.ok) lastGoodScenario.current = scenarioBuild.ok;
@@ -240,30 +327,82 @@ export default function FlightPanel({ design, frame }) {
   const scenario = scenarioBuild.ok ?? lastGoodScenario.current
     ?? makeScenario(SCENARIO_PRESETS.hover);
 
-  const sim = useMemo(() => {
+  /* THE MODEL IS BUILT HERE, THE FLIGHT IS NOT. `buildModel` is algebra
+     — an inertia tensor and a mixer — and the panel needs its
+     `maxThrustPerRotorN` synchronously to scale the thrust cones, so it
+     stays on this thread. `simulate` integrates 60,000 steps and does
+     not: it runs in flight-worker.js, and that file explains why. */
+  const declared = useMemo(
+    () => ({ motorTimeConstantS: motorTau, bodyDragCoefficient: cd }),
+    [motorTau, cd]);
+  const modelBuild = useMemo(() => {
     if (!ok || !airframe) return null;
-    try {
-      const model = buildModel({
-        sizing: result, airframe,
-        declared: { motorTimeConstantS: motorTau, bodyDragCoefficient: cd },
+    try { return { ok: buildModel({ sizing: result, airframe, declared }) }; }
+    catch (e) { return { error: e.message }; }
+  }, [ok, airframe, result, declared]);
+  const model = modelBuild?.ok ?? null;
+
+  const impact = useMemo(() => (scenery && bounce ? {
+    restitution,
+    tangentialScrub: DECLARED_IMPACT_INPUTS.tangentialScrub.value,
+    bladeBreakSpeedMps: breakSpeed,
+  } : null), [scenery, bounce, restitution, breakSpeed]);
+
+  /* THE PACK, SO THE FLIGHT CAN RUN IT DOWN. Opt-out, because a reader
+     may want the trajectory without the energy accounting, and because
+     the loop's behaviour with no energy model is the one every
+     validation harness pins. flight-energy.js carries the model's
+     limits; they are printed beside the readout, not buried here. */
+  const [trackEnergy, setTrackEnergy] = useState(true);
+  const energyBuild = useMemo(() => {
+    if (!trackEnergy || !ok || !selection) return null;
+    try { return { ok: buildEnergyModel({ selection, declared: sizingDeclared, sizing: result }) }; }
+    catch (e) { return { error: e.message }; }
+  }, [trackEnergy, ok, selection, sizingDeclared, result]);
+  const energyModel = energyBuild?.ok ?? null;
+
+  /* THE FLIGHT, AS IT ARRIVES. `run` holds the last trace the worker
+     returned and is deliberately NOT cleared while the next one is
+     computing: the animation keeps flying the flight it has, the way an
+     invalid edit keeps flying the last valid scenario, so a keystroke
+     never blanks the viewport. `pending` only lights an indicator. */
+  const [flight, setFlight] = useState({ run: null, error: null, pending: true });
+  const worker = useRef(null);
+  const reqId = useRef(0);
+
+  useEffect(() => {
+    const w = new Worker(new URL("./flight-worker.js", import.meta.url), { type: "module" });
+    worker.current = w;
+    w.onmessage = (e) => {
+      /* ONLY THE NEWEST ANSWER IS WANTED. Runs are not cancellable once
+         started — `simulate` is a synchronous loop — so a superseded run
+         finishes and its reply is dropped on arrival rather than being
+         allowed to overwrite a newer trace. */
+      if (e.data.id !== reqId.current) return;
+      setFlight(e.data.error
+        ? { run: null, error: e.data.error, pending: false }
+        : { run: e.data.run, error: null, pending: false });
+    };
+    /* A worker outlives a render but not the panel. */
+    return () => { w.terminate(); worker.current = null; };
+  }, []);
+
+  useEffect(() => {
+    /* An invalid edit asks for nothing: scenarioBuild already says what
+       is wrong and the previous flight stays on screen. */
+    if (!model || !scenarioBuild.ok || !worker.current) return;
+    const id = ++reqId.current;
+    setFlight((f) => ({ ...f, pending: true }));
+    const t = setTimeout(() => {
+      worker.current?.postMessage({
+        id, model, scenarioArgs: args, declared,
+        failed: [...failedMotors], scenery, impact, energy: energyModel,
       });
-      const failed = new Set(failedMotors);
-      return {
-        model,
-        run: simulate({
-          model, scenario,
-          declared: { motorTimeConstantS: motorTau, bodyDragCoefficient: cd },
-          durationS: scenario.totalDurationS, failed,
-          obstacles: scenery ? DEFAULT_SCENE : [],
-          impact: scenery && bounce ? {
-            restitution,
-            tangentialScrub: DECLARED_IMPACT_INPUTS.tangentialScrub.value,
-            bladeBreakSpeedMps: breakSpeed,
-          } : null,
-        }),
-      };
-    } catch (e) { return { error: e.message }; }
-  }, [ok, airframe, result, scenario, failedKey, motorTau, cd, scenery, bounce, restitution, breakSpeed]);
+    }, REQUEST_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [model, args, scenarioBuild.ok, failedKey, scenery, impact, declared, energyModel]);
+
+  const sim = model ? { model, run: flight.run } : null;
 
   /* THE FLIGHT ENDS AT THE FIRST STRIKE.
 
@@ -288,9 +427,15 @@ export default function FlightPanel({ design, frame }) {
      moving at all. A command now resumes at the moment the NEW segment
      begins, and only a change that invalidates the whole flight
      (a different aircraft, a dead rotor, new impact physics) restarts it. */
+  /* THIS RUNS WHEN THE TRACE ARRIVES, not when the scenario changes.
+     The two used to be the same moment. Now the scenario updates on the
+     keystroke and the trace follows a debounce later, so keying this on
+     the scenario would seek inside the PREVIOUS flight — and `durationS`
+     is read off the run, which is the duration actually integrated. */
   const prevDuration = useRef(0);
   useEffect(() => {
-    const dur = scenario.totalDurationS;
+    if (!flight.run) return;
+    const dur = flight.run.durationS;
     const grew = dur > prevDuration.current + 1e-9;
     const resumeAt = grew ? prevDuration.current : 0;
     prevDuration.current = dur;
@@ -298,7 +443,7 @@ export default function FlightPanel({ design, frame }) {
     const k = trace.findIndex((r) => r.t >= resumeAt);
     setI(k < 0 ? 0 : k);
     if (grew) setPlaying(true);
-  }, [scenario]);
+  }, [flight.run]);
   useEffect(() => { setI(0); }, [failedKey, motorTau, cd, scenery, bounce, restitution, breakSpeed]);
 
   useEffect(() => {
@@ -315,20 +460,19 @@ export default function FlightPanel({ design, frame }) {
     return () => cancelAnimationFrame(raf);
   }, [playing, speed, trace.length]);
 
-  if (!ok) {
-    return <Card title="Flight"><div style={{ fontSize: T.label, color: SC.muted }}>
-      The design has not converged, so there is nothing to fly. Fix the Sizing tab first.
-    </div></Card>;
-  }
-  if (sim?.error) {
-    return <Card title="Flight"><div style={{ fontSize: T.label, color: SC.muted }}>{sim.error}</div></Card>;
-  }
+  /* ── EVERY HOOK IS ABOVE EVERY RETURN, and must stay that way ───────
+     `span` and `ext` used to sit below the early returns, which was
+     survivable while those returns fired only for a design that had not
+     converged. It stopped being survivable when a return was added for
+     "the first trace has not arrived yet": that one is TRUE on the first
+     render and FALSE once the worker answers, so `ext` was skipped on
+     one render and called on the next, React counted a different number
+     of hooks and threw — the panel did not load at all.
 
-  /* `now` is the state being drawn. The airframe FRAME is a prop, so this
-     cannot be called `frame`. */
-  const now = trace[Math.min(i, trace.length - 1)] ?? trace[0];
-  const W = 760, H = 460;
-  const span = airframe.spanM;
+     `airframe` can still be null here, so `span` no longer reads through
+     it. `ext`'s value is only ever consumed below the returns, where the
+     airframe is known to exist. */
+  const span = airframe?.spanM ?? 0;
 
   /* FIT THE WHOLE FLIGHT, rather than chasing the aircraft.
 
@@ -339,22 +483,58 @@ export default function FlightPanel({ design, frame }) {
      motion readable. `zoom` then lets a close look happen on demand. */
   const ext = useMemo(() => {
     if (!trace.length) return { cx: 0, cy: 0, cz: 0, world: span * 4 };
-    const xs = trace.map((r) => r.x), ys = trace.map((r) => r.y), as = trace.map((r) => r.altitudeM);
-    const xMid = (Math.max(...xs) + Math.min(...xs)) / 2;
-    const yMid = (Math.max(...ys) + Math.min(...ys)) / 2;
-    const aMax = Math.max(...as), aMin = Math.min(...as);
+    /* ONE PASS, AND NO SPREAD. `Math.max(...xs)` builds an ARGUMENT LIST
+       as long as the trace. At the old 120 s cap that was 6,001 entries
+       and safe; the cap is now 300 s, so it would be 15,001, heading for
+       the engine's argument limit as the cap rises. A scan has no such
+       ceiling and walks the trace once instead of six times. */
+    let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity,
+        aMin = Infinity, aMax = -Infinity;
+    for (const r of trace) {
+      if (r.x < xMin) xMin = r.x;
+      if (r.x > xMax) xMax = r.x;
+      if (r.y < yMin) yMin = r.y;
+      if (r.y > yMax) yMax = r.y;
+      if (r.altitudeM < aMin) aMin = r.altitudeM;
+      if (r.altitudeM > aMax) aMax = r.altitudeM;
+    }
+    const xMid = (xMax + xMin) / 2;
+    const yMid = (yMax + yMin) / 2;
     /* Frame what MOVES, not where the aircraft happens to be. A hover
        recovery at 3 m has almost no translation, so fitting the absolute
        altitude shrank the aircraft to a speck in an empty box; its
        altitude is already on the KPI and the trace. A descent, which
        does change altitude, still gets framed wide by the same rule. */
     const world = Math.max(
-      Math.max(...xs) - Math.min(...xs),
-      Math.max(...ys) - Math.min(...ys),
+      xMax - xMin,
+      yMax - yMin,
       (aMax - aMin) * 1.3,
       span * 2.1);
     return { cx: xMid, cy: yMid, cz: -(aMax + aMin) / 2, world };
   }, [trace, span]);
+
+  if (!ok) {
+    return <Card title="Flight"><div style={{ fontSize: T.label, color: SC.muted }}>
+      The design has not converged, so there is nothing to fly. Fix the Sizing tab first.
+    </div></Card>;
+  }
+  const failure = modelBuild?.error ?? energyBuild?.error ?? flight.error;
+  if (failure) {
+    return <Card title="Flight"><div style={{ fontSize: T.label, color: SC.muted }}>{failure}</div></Card>;
+  }
+  /* THE FIRST FLIGHT HAS NOT ARRIVED YET. This state did not exist while
+     the integration ran in the render body — there was always a trace by
+     the time anything drew. It lasts one debounce plus the run itself. */
+  if (!sim?.run || !trace.length) {
+    return <Card title="Flight"><div style={{ fontSize: T.label, color: SC.muted }}>
+      Integrating the flight…
+    </div></Card>;
+  }
+
+  /* `now` is the state being drawn. The airframe FRAME is a prop, so this
+     cannot be called `frame`. */
+  const now = trace[Math.min(i, trace.length - 1)] ?? trace[0];
+  const W = 760, H = 460;
 
   /* FITTING THE FLIGHT STOPS WORKING WHEN THE FLIGHT RUNS AWAY.
      Fit framing is right for a manoeuvre that stays put: a hover, a yaw,
@@ -481,8 +661,31 @@ export default function FlightPanel({ design, frame }) {
     return { ...r, p, thrust, tipTop, dead: failedMotors.has(r.motor), depth: p.depth, world };
   }).sort((a, b) => a.depth - b.depth);
 
-  const trail = trace.slice(0, i + 1).filter((_, k) => k % 2 === 0)
-    .map((r) => project([r.x, r.y, -r.altitudeM]));
+  /* THE TRAIL IS REDRAWN EVERY FRAME, so its cost must not grow with the
+     length of the flight. It used to be every second sample of
+     everything flown so far: 3,000 projections per frame at the end of a
+     120 s flight, fifty frames a second, and linear in the cap. Raising
+     the cap would have moved the freeze out of the editor and into the
+     animation.
+
+     The stride is now chosen so the drawn polyline never exceeds
+     TRAIL_POINTS. Short flights are untouched — the stride stays 2 until
+     2*TRAIL_POINTS samples have been flown, which is the old behaviour
+     exactly — and everything longer is bounded.
+
+     DECIMATING THE LINE DISCARDS NO COMPUTED STATE. Every point plotted
+     is still a state the integrator produced, which is the rule this
+     panel's header states; the KPIs, the readouts and the traces below
+     all read the full trace. Only the drawn polyline is thinned. */
+  const flown = Math.min(i, trace.length - 1) + 1;
+  const stride = Math.max(2, Math.ceil(flown / TRAIL_POINTS));
+  const trail = [];
+  for (let k = 0; k < flown; k += stride)
+    trail.push(project([trace[k].x, trace[k].y, -trace[k].altitudeM]));
+  /* The aircraft's own position ends the trail, so the line meets it
+     however the stride happens to fall. */
+  if ((flown - 1) % stride !== 0)
+    trail.push(project([now.x, now.y, -now.altitudeM]));
   const shadow = project([now.x, now.y, 0]);
 
   const axis = { stroke: SC.muted, fontSize: 11, fontFamily: MONO };
@@ -504,12 +707,68 @@ export default function FlightPanel({ design, frame }) {
             <select value={preset} onChange={(e) => {
                 setPreset(e.target.value);
                 setScen(presetToState(SCENARIO_PRESETS[e.target.value]));
+                /* A draft left in the flight-time box would otherwise
+                   show the old preset's length over the new one. */
+                setTimeDraft(null);
               }}
               style={{ background: SC.bg, color: SC.text, border: `1px solid ${SC.border}`,
                        borderRadius: 4, padding: "3px 6px", fontFamily: SANS }}>
               {Object.entries(SCENARIO_PRESETS).map(([k, s]) => <option key={k} value={k}>{s.label}</option>)}
             </select>
           </label>
+          {/* HOW LONG THE FLIGHT IS, ON THE FRONT ROW.
+              The duration was always editable — one number per segment,
+              inside the scenario editor — but the editor is behind a
+              button, so the only time visible without opening it was the
+              scrubber's `t = 0.00 s`, which is a readout of where
+              playback has got to and not something anyone can type in.
+              Every preset being 10 s then made 10 s look like the tool's
+              scale rather than the preset's length.
+
+              Typing here changes the LAST segment by the difference, so
+              whatever manoeuvre precedes it is left alone: stretching a
+              yaw turn from 10 s to 10 minutes should hold the new
+              heading for ten minutes, not spend five of them rolling
+              into it. That also sets the floor — the flight cannot be
+              made shorter than the segments ahead of the last one. */}
+          <label style={{ fontSize: T.label, color: SC.muted, display: "flex", alignItems: "center", gap: 4 }}
+                 title={`how long the flight runs, up to the ${SCENARIO_LIMITS.maxTotalDurationS} s budget. `
+                      + `Changes the last segment, leaving the rest of the scenario as it is.`}>
+            flight time
+            <input type="number" value={timeDraft ?? typedTotalS}
+              min={minTotalS} max={SCENARIO_LIMITS.maxTotalDurationS} step={1}
+              onChange={(ev) => {
+                const raw = ev.target.value;
+                setTimeDraft(raw);
+                /* Only a value that is actually a number reaches the
+                   scenario. The draft keeps the box showing what was
+                   typed either way, so the field can be cleared. */
+                if (raw.trim() !== "" && Number.isFinite(Number(raw)))
+                  setTotalDuration(Number(raw));
+              }}
+              /* On the way out, show the duration the scenario really
+                 has — which is where a clamped entry becomes visible. */
+              onBlur={() => setTimeDraft(null)}
+              style={{ width: 72, background: SC.bg, color: SC.text,
+                       border: `1px solid ${durationFull ? SC.caution : SC.border}`,
+                       borderRadius: 3, padding: "3px 5px", fontFamily: MONO }} />
+            s
+          </label>
+          {/* The named lengths a reader would otherwise have to work out:
+              the pack's own endurance is the one that matters here, and
+              it is computed, not typed. */}
+          {enduranceS > 0 ? (
+            <button type="button"
+              onClick={() => { setTotalDuration(SCENARIO_LIMITS.maxTotalDurationS); setTimeDraft(null); }}
+              title={`hold until the pack is empty — this design's computed hover endurance is `
+                   + `${(enduranceS / 60).toFixed(1)} min, and with the battery box ticked the flight `
+                   + `ends when the energy does rather than when the clock does`}
+              style={{ background: SC.inset, color: SC.text, border: `1px solid ${SC.border}`,
+                       borderRadius: 3, padding: "3px 8px", fontSize: T.label, cursor: "pointer",
+                       fontFamily: SANS }}>
+              fly until empty (~{(enduranceS / 60).toFixed(0)} min)
+            </button>
+          ) : null}
           <button onClick={() => setEditing((e) => !e)}
             style={{ background: SC.inset, color: SC.text, border: `1px solid ${SC.caution}`,
                      borderRadius: 3, padding: "4px 10px", fontSize: T.label, cursor: "pointer", fontFamily: SANS }}>
@@ -518,6 +777,16 @@ export default function FlightPanel({ design, frame }) {
           <label style={{ fontSize: T.label, color: SC.muted, display: "flex", alignItems: "center", gap: 4 }}>
             <input type="checkbox" checked={scenery} onChange={(e) => setScenery(e.target.checked)} />
             obstacles
+          </label>
+          {/* THE PACK IS OPT-OUT, like the obstacles. Turning it off
+              gives the bare trajectory and the loop the validation
+              harnesses pin; turning it on lets the flight END on an
+              empty pack instead of on the clock. */}
+          <label style={{ fontSize: T.label, color: SC.muted, display: "flex", alignItems: "center", gap: 4 }}
+                 title="integrate state of charge through the flight and stop when the declared usable energy is gone">
+            <input type="checkbox" checked={trackEnergy}
+                   onChange={(e) => setTrackEnergy(e.target.checked)} />
+            battery
           </label>
           {/* THE IMPACT COEFFICIENTS, shown as DECLARED. They are the
               reader's numbers; nothing here sources them. */}
@@ -567,7 +836,29 @@ export default function FlightPanel({ design, frame }) {
                 ? `${SCENARIO_LIMITS.maxSegments}-segment limit reached — edit or reset the scenario`
                 : `${SCENARIO_LIMITS.maxSegments - scen.segments.length} left`}
             </span>
+            <span style={{ fontSize: T.label, color: durationFull ? SC.caution : SC.dim,
+                           fontFamily: MONO }}
+                  title="a compute budget, not a physical limit — one run is about 2.4 ms per second of flight, 4.5 ms with a rotor dead">
+              {`· ${typedTotalS.toFixed(1)} s of ${SCENARIO_LIMITS.maxTotalDurationS} s`}
+            </span>
+            {flight.pending ? (
+              <span style={{ fontSize: T.label, color: SC.muted, fontFamily: MONO }}
+                    title="the flight is being integrated off the main thread; the view keeps flying the last trace until it arrives">
+                · integrating…
+              </span>
+            ) : null}
           </div>
+          {/* THE SCENARIO OUTRUNS THE PACK. Reported, not refused: see
+              `outrunsEndurance` above for why this is not makeScenario's
+              business. */}
+          {outrunsEndurance && !energyModel ? (
+            <div style={{ fontSize: T.label, color: SC.caution, fontFamily: MONO }}>
+              this scenario runs {typedTotalS.toFixed(0)} s; the pack is computed to
+              last {(enduranceS / 60).toFixed(1)} min of hover. With the battery box
+              unticked the integrator carries no state of charge, so it flies the whole
+              scenario regardless — tick it and the flight ends when the pack does.
+            </div>
+          ) : null}
           {/* KILL ROTORS BY NAME HERE OR BY CLICKING THEM IN THE VIEW. One
               chip per motor, because the simulation takes a SET and the old
               single <select> could not express the multi-failure cases that
@@ -988,7 +1279,57 @@ export default function FlightPanel({ design, frame }) {
                    sub={cmdNow ? `commanded ${num(cmdNow.yawDeg, 1)}°` : undefined} />
               <Kpi label="Travelled" value={num(travelledM, 1)} unit="m"
                    sub="from the start point — no position loop holds station" />
+              {/* THE PACK, WHILE IT LASTS. `now.soc` is a fraction of the
+                  DECLARED usable energy, not of the pack's published
+                  energy — at usableFraction 0.85 an exhausted flight
+                  still has 15 % in it, behind the cut-off the user
+                  declared. The sub-line says which. Power is converted
+                  through Q because W has an imperial counterpart and a
+                  sub-line that stayed metric under a converted headline
+                  is the exact bug the units gate now scans for. */}
+              {run.energy ? (
+                <>
+                  <Kpi label="Charge" value={num(100 * (now.soc ?? 0), 1)} unit="%"
+                       sub={`${num(run.energy.energyWh, 1)} of ${num(run.energy.usableWh, 0)} Wh usable`} />
+                  <Kpi label="Pack draw" value={num(now.packPowerW, 0)} unit="W"
+                       sub={<>{num(now.packCurrentA, 1)} A · peak <Q v={num(run.energy.peakPackPowerW, 0)} u="W" /></>} />
+                </>
+              ) : null}
             </div>
+            {/* WHAT ENDED THE FLIGHT, WHEN IT WAS THE PACK. The same
+                treatment ground contact gets: said plainly, with the
+                four assumptions the figure rests on, because this is an
+                energy integral at a constant published voltage and not
+                a measurement of a battery. */}
+            {run.energy?.batteryEmpty ? (
+              <div style={{ fontSize: T.label, color: SC.caution, fontFamily: MONO, marginTop: S.sm }}>
+                the pack reached its declared cut-off at {num(run.energy.emptyAtS / 60, 2)} min
+                ({num(run.energy.energyWh, 1)} Wh of {num(run.energy.usableWh, 0)} Wh usable, at
+                a mean {num(run.energy.meanPackPowerW, 0)} W) and the flight ends there — nothing
+                after that is modelled. Assumes: {run.energy.assumes.join("; ")}.
+              </div>
+            ) : null}
+            {/* THE ONE GAP, REPORTED RATHER THAN FILLED. A rotor below
+                the propeller's measured thrust floor has no rpm the data
+                can name, and extrapolating is refused, so its energy is
+                carried as an upper bound instead. */}
+            {run.energy && run.energy.subFloorSamples > 0 ? (
+              <div style={{ fontSize: T.micro, color: SC.subtle, fontFamily: MONO }}>
+                {num(100 * run.energy.subFloorFraction, 1)} % of rotor samples fell below the
+                propeller's measured thrust floor of {num(run.energy.measuredThrustRangeN[0], 3)} N,
+                where no rpm can be read off the measured curve. Their draw is bounded, not
+                guessed: the energy used lies in [{num(run.energy.energyWh, 2)},
+                {" "}{num(run.energy.energyWh + run.energy.unaccountedMaxWh, 2)}] Wh.
+              </div>
+            ) : null}
+            {run.energy && !run.energy.available ? (
+              <div style={{ fontSize: T.label, color: SC.caution, fontFamily: MONO }}>
+                {run.energy.refusedSamples} rotor samples asked for more thrust than the
+                propeller's measured ceiling of {num(run.energy.measuredThrustRangeN[1], 2)} N.
+                That cannot be bounded from inside the data, so the charge figure above is
+                not usable for this flight.
+              </div>
+            ) : null}
             <table style={{ width: "100%", borderCollapse: "collapse", marginTop: S.sm }}>
               <tbody>
                 {run.impacts?.length ? (

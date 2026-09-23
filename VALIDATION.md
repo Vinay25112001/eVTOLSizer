@@ -1,6 +1,6 @@
 # Validation Report — eVTOL Conceptual Sizing Tool
 
-**Generated 2026-09-23 01:47 UTC from commit `09b1205` (WORKING TREE DIRTY — this report does not describe a committed state).**
+**Generated 2026-09-23 14:57 UTC from commit `b29cba4` (WORKING TREE DIRTY — this report does not describe a committed state).**
 
 This document is produced by `validation/report.mjs`, which runs every
 harness and captures what each one printed. It is not written by hand. If
@@ -66,11 +66,11 @@ level 2 permanently, regardless of any further work on the code.**
 
 ## 3. Verification
 
-58 harnesses, all gated in `npm test` and run in CI on every push.
+60 harnesses, all gated in `npm test` and run in CI on every push.
 
 | harness | what it proves | result |
 |---|---|---|
-| `scope-check.mjs` | Every referenced identifier is imported, declared or a runtime global. Catches a whole class of silent breakage that a browser would only reveal on the code path a user happens to take. | pass |
+| `scope-check.mjs` | Every referenced identifier is imported, declared or a runtime global, and no component calls a React hook below an early return. Both catch silent breakage that a browser would only reveal on the code path a user happens to take, and that a bundler cannot see: a build resolves no free variables and counts no hooks. The hook rule was added after a conditional hook stopped a tab loading entirely while the production build and every other gate passed -- React requires the same number of hooks on every render, so a hook below an early return is called or skipped as that return's condition flips, and the component renders perfectly right up until it does. One pre-existing instance was found and fixed when the rule was introduced. | pass |
 | `tab-registry.mjs` | Every UI tab is reachable, labelled, and has a render branch. Added after five of nine diagrams in a sister project turned out to be unreachable behind a tab bar. | pass |
 | `units.mjs` | One unit table, applied in one place, with every factor checked against the DEFINITION of the unit rather than against another factor. A converter is the easiest place in a tool like this to be confidently wrong: the number changes, the label changes, and nothing looks broken. The pound, foot, inch and nautical mile are all DEFINED in SI terms - 0.45359237 kg, 0.3048 m, 25.4 mm, 1852 m - so every conversion closes to machine precision and is checked to 1e-12; a tolerance of about a percent would hide a transposed digit. Each pair must round-trip, k(a->b) * k(b->a) = 1, which a reciprocal used the wrong way round cannot survive, and the prefix pairs that deliberately do not round-trip - kN to lbf returns to N, since the imperial side has no kilo-prefix in use - must differ from unity by an exact power of ten rather than by anything else. Conversion runs in ONE place, the Kpi component both studios render their headline numbers through, rather than at the 97 call sites that would each be a chance to attach the wrong factor to a number. It converts in BOTH directions because this interface already mixes systems: the aircraft studio publishes wing loading in lb/ft2, speeds in knots and range in nautical miles because its sources are imperial, so a switch that only went SI to imperial would leave a sheet half in each. The failure mode is deliberate and checked: an unknown unit, a non-numeric placeholder or a unit already in the requested system passes through untouched, because a value that does not convert is a small annoyance while one converted wrongly and labelled as correct is the defect this tool exists to prevent. Finally the gate walks the studios and requires every literal unit string they display to be either in the table or listed in NO_CONVERT with a stated reason - which is how a label padded to " kg" was found silently declining to convert. | pass |
 | `identities.mjs` | Relations the engine must satisfy BY DEFINITION -- unit closure, energy identities, mass sums -- hold to 0.2%. These are not accuracy tests; a failure means the code contradicts itself. | pass |
@@ -127,6 +127,8 @@ level 2 permanently, regardless of any further work on the code.**
 | `drone-avionics.mjs` | ESC and radio-link selection, both on published data only. The radio is the sharper case: Friis is not in doubt but EIRP is, because a vendor publishes max TX power without saying whether it is CONDUCTED at the connector or RADIATED by the antenna, and the two differ by the antenna gain - 5 dB is a factor of 1.8 in range. ONE of fifteen surveyed radios states which it means, and says so by giving the conversion formula and quoting the FCC EIRP ceiling separately. So range is COMPUTED for that one and BRACKETED for the rest, and the gate checks the bracket width is exactly the antenna gain expressed as range. Four products whose figure coincides with a regulatory limit expressed in radiated power are recorded as HINTS and never promoted to statements. Free space is treated as a CEILING rather than a prediction: it cannot model ground reflection, Fresnel obstruction or fade margin, so the gate uses it to FALSIFY - every published range is checked against its own ceiling, since a claim above free space would be provably impossible, and none of the seven checkable claims is. Bands are kept as regulatory variants rather than averaged, after a dual-band product would otherwise have reported 1650 MHz, a frequency it never transmits on; sensitivity published per packet rate is kept as a set, since range and latency trade on the same hardware. On the ESC side, an unpublished rating is never treated as headroom - including a part whose model name contains 45A while its page says only 45A designed - and 6 of 8 ESCs quoting a burst current state no duration for it. | pass |
 | `drone-autopilot.mjs` | What a sizing run may tell a flight controller, and what it must refuse to say. A parameter file is the only artefact this tool produces that an aircraft then flies on, so the gate is built around the refusals. The central one: this run computes a hover thrust fraction and ArduPilot has a parameter called MOT_THST_HOVER, but ArduPilot's own setup page says to set it to "0.25 or below the expected actual hover thrust percentage (lower is safe)" and let MOT_HOVER_LEARN find the real value, so the computed figure is emitted as a comment and never as that parameter. PX4's MPC_THR_HOVER is the SAME physical quantity with the OPPOSITE official advice - it seeds the hover-thrust estimator and the land detector - so it IS emitted, and the gate requires both directions of that asymmetry. A second refusal follows from it: thrust fraction is not control-signal fraction except when PX4's published model rel_thrust = factor * rel_signal^2 + (1 - factor) * rel_signal has factor 0, so THR_MDL_FAC is left at its default rather than translated from ArduPilot's MOT_THST_EXPO, an equivalence that exists only in ArduPilot source. Pack endpoints come from the selected cell's own datasheet rather than the 4.2/3.3 V LiPo rule, because the studio's default cell is Li-ion NMC whose published floor is 2.5 V; the gate also checks that the LiPo rule still reproduces ArduPilot's shipped Hexsoon-edu450.param exactly at 3S. The published propeller-size tables are interpolated between knots and CLAMPED outside them, never extended. Power-module calibration and rate-loop gains are refused as not being sizing outputs, and PX4 layouts with no generic airframe are refused rather than approximated with a neighbour. | pass |
 | `drone-obstacles.mjs` | Things to fly into, and the exact limit of what a strike may claim. Contact is the one part of an impact this tool can state precisely, so it is stated precisely and nothing beyond it is offered. The envelope is the ROTOR DISC, spanM/2, not the hub: a multirotor strikes things with its propeller tips, and a centre-point test reports a clean pass for a flight that took the blades off -- the gate flies a track 200 mm outside a wall and requires the hub test to miss while the disc test strikes. Contact is found by a SIGNED DISTANCE and a bisection rather than a per-sample boolean, because the trace is sampled every 20 ms and at 10 m/s the aircraft moves 200 mm between samples, so a boolean test reports the strike up to a fifth of a metre late and can pass through a thin wall entirely; the gate requires the located contact to be finer than a twentieth of that sample travel, and it lands exact. Every distance checked is a length someone can measure off the scene: zero on a face, positive by the gap outside, negative by the depth inside, the true corner distance on a diagonal, and for a tree the minimum of trunk and canopy so the trunk governs below the crown. WHAT IS NOT MODELLED IS ASSERTED SO IT CANNOT QUIETLY APPEAR: a strike ENDS the flight, with no bounce, no tumble and no broken arm, because structureMassKg is a declared scalar carrying no material or geometry, nothing in the component survey publishes a propeller's impact strength, and no source here gives a restitution coefficient against concrete or foliage. Each contact carries that sentence with it, and the gate fails if any post-impact quantity is ever attached. This is the same rule simulate() already applies at the ground, where it breaks the integration on the zero crossing and reports crashed rather than modelling the landing. | pass |
+| `drone-flight-energy.mjs` | The flight integrates STATE OF CHARGE and ends when the declared usable energy is gone, the way it already ends on ground contact -- so what limits a long flight is the pack, not a duration cap someone chose. The claim this gate defends is that no new physics was added to do it: the per-timestep chain is the one sizing.js walks for the hover point, and two exact identities pin it. Evaluated at sizing.hover.thrustPerRotorN it reproduces sizing.hover.busPowerW TO THE BIT, along with the same rpm, shaft power and per-rotor bus power, so a second power model cannot grow here unnoticed; and over a window where thrust is held steady the accumulated energy equals P*t to 1e-13, so the figure is an integral of that chain rather than a fresh estimate of endurance. Turning the energy model off leaves the trajectory byte-identical, which is what lets every other drone harness keep its meaning. What the gate deliberately does NOT assert is that a simulated hover empties the pack at enduranceMin(): it does not, because enduranceMin divides energy by a STEADY hover power while the simulation closes no position loop, so the aircraft drifts, leans, and spreads its per-rotor thrusts -- and power being convex in thrust, a spread costs more than a uniform thrust of the same mean. Measured on the reference hexacopter: steady at 451.6 W for the first 290 s, rising past 537 W, emptying at 29.0 min against the idealised 31.5. The gate pins that as a direction rather than a tuned number, requiring the drifted flight to cost MORE and never less. The one data gap is bounded rather than filled: a rotor below the propeller's measured thrust floor has no rpm the measured curve can name and rotor.js refuses to extrapolate, so -- shaft power being monotonic in thrust across the whole measured range -- such a sample contributes its floor value to an upper BOUND and nothing to the figure, leaving the true energy in a stated interval that the gate requires to stay under 1 % wide. With one rotor of a hexacopter dead that is 16.6 % of rotor samples and 0.53 % of the energy, because the allocator idles the rotor opposite the failure. A thrust above the measured ceiling cannot be bounded from inside the data and invalidates the figure instead of biasing it low. Nothing here invents a discharge curve, an internal resistance, a voltage sag, a Peukert exponent or a temperature derating -- battery.js states that no surveyed pack publishes any of them and that modelling them would mean inventing the curve -- so the state of charge is an energy fraction of the DECLARED usable energy at the pack's published nominal voltage, and it carries the same four assumptions enduranceMin() already carries wherever it is shown. There is no low-battery threshold, reserve or failsafe either: autopilot.js refuses PX4's SoC thresholds because guessing them would set a failsafe the user believes was computed, and the flight here ends at the usableFraction the user declared and at no other point. | pass |
+| `drone-flight-worker.mjs` | The 6-DOF integration runs in a worker rather than in the Flight panel's render body, and this proves that moving it changed nothing: the run computed across the message boundary is compared to the run computed inline and must be identical BYTE FOR BYTE -- every sample, every per-rotor thrust, every reported flag -- on a scenario with a stepped altitude, a rate-approached altitude, a held tilt, an initial roll upset and a dead rotor, so the comparison runs through the allocator's degraded path and the contact logic rather than a hover where every sample is the same number. A tolerance would be the wrong instrument here: relocating a computation must not perturb it at all. The boundary itself is checked, because it is what makes the equivalence possible: a scenario is a TARGET FUNCTION and postMessage carries data, so the panel sends the arguments makeScenario takes and the worker rebuilds the scenario -- and the gate asserts that a built scenario genuinely CANNOT be structured-cloned, so that if it ever can the rebuild is removed deliberately instead of being carried forward unexamined. The worker must also survive a half-typed scenario, since one worker serves the panel's whole lifetime and an escaping throw would take every later flight with it: an over-cap scenario comes back as makeScenario's own message and the worker still answers afterwards. The duration cap was 120 s only because the integration blocked the browser -- measured at 2.4 ms per second of flight, 4.5 ms with a rotor dead -- and a full-length 250 s flight is required to cross the boundary whole, all 12,501 samples of it. Finally the cap is held to being what it is, a compute budget and not a physical limit: the integrator carries no state of charge, which is why a scenario outrunning the design's computed endurance is REPORTED by the panel rather than refused here. | pass |
 | `drone-regulatory.mjs` | Mass thresholds carry the document and clause that set them, and the confusions found in the primary texts are refused: 25 kg is not 55 lb (52 g apart, both strict, so a 25.000 kg design fails both), 250 g is not 0.55 lb, and the US 0.55 lb rule gates REGISTRATION for RECREATIONAL flight only. Also that mass alone is not always the trigger, and that the tool's sizing envelope is a separate question from the law. | pass |
 
 ---
@@ -417,18 +419,19 @@ Required by [M&S 49].
 
 Everything below is captured from the run that produced this document.
 
-<details><summary><code>scope-check.mjs</code> — exit 0, 2458 ms</summary>
+<details><summary><code>scope-check.mjs</code> — exit 0, 2589 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
-SCOPE CHECK — 227 file(s) parsed
+SCOPE CHECK — 229 file(s) parsed
 ══════════════════════════════════════════════════════════════════════════
-PASS — every referenced identifier is imported, declared or a runtime global.
+PASS — every referenced identifier is imported, declared or a runtime global,
+       and no component calls a hook below an early return.
 ```
 
 </details>
 
-<details><summary><code>tab-registry.mjs</code> — exit 0, 207 ms</summary>
+<details><summary><code>tab-registry.mjs</code> — exit 0, 173 ms</summary>
 
 ```
 TAB REGISTRY GATE
@@ -446,7 +449,7 @@ TAB REGISTRY GATE PASSED
 
 </details>
 
-<details><summary><code>units.mjs</code> — exit 0, 176 ms</summary>
+<details><summary><code>units.mjs</code> — exit 0, 161 ms</summary>
 
 ```
 UNITS GATE
@@ -516,7 +519,7 @@ UNITS GATE PASSED (24 checks)
 
 </details>
 
-<details><summary><code>identities.mjs</code> — exit 0, 3702 ms</summary>
+<details><summary><code>identities.mjs</code> — exit 0, 3731 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -573,7 +576,7 @@ PASS — all 43 relations hold to 0.2%.
 
 </details>
 
-<details><summary><code>golden-master.mjs</code> — exit 0, 3227 ms</summary>
+<details><summary><code>golden-master.mjs</code> — exit 0, 4336 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -585,7 +588,7 @@ PASS — no output moved by more than 1e-6 relative.
 
 </details>
 
-<details><summary><code>components.mjs</code> — exit 0, 71 ms</summary>
+<details><summary><code>components.mjs</code> — exit 0, 113 ms</summary>
 
 ```
 ==============================================================================
@@ -733,7 +736,7 @@ regardless of what the loop happens to converge to.
 
 </details>
 
-<details><summary><code>database-report.mjs</code> — exit 0, 64 ms</summary>
+<details><summary><code>database-report.mjs</code> — exit 0, 93 ms</summary>
 
 ```
 ======================================================================================
@@ -839,7 +842,7 @@ NASA CONCEPT VEHICLES — the only full weight statements in the field
 
 </details>
 
-<details><summary><code>analysis-layers.mjs</code> — exit 0, 8511 ms</summary>
+<details><summary><code>analysis-layers.mjs</code> — exit 0, 11315 ms</summary>
 
 ```
 ANALYSIS-LAYER GATE
@@ -877,7 +880,7 @@ ANALYSIS-LAYER GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-models.mjs</code> — exit 0, 1543 ms</summary>
+<details><summary><code>vsp-models.mjs</code> — exit 0, 2371 ms</summary>
 
 ```
 NASA OpenVSP MODEL REPLICATION GATE
@@ -915,7 +918,7 @@ VSP GATE PASSED
 
 </details>
 
-<details><summary><code>geometry-export.mjs</code> — exit 0, 31772 ms</summary>
+<details><summary><code>geometry-export.mjs</code> — exit 0, 44883 ms</summary>
 
 ```
 GEOMETRY & EXPORT GATE
@@ -972,7 +975,7 @@ GEOMETRY & EXPORT GATE PASSED
 
 </details>
 
-<details><summary><code>fuselage-outline.mjs</code> — exit 0, 165 ms</summary>
+<details><summary><code>fuselage-outline.mjs</code> — exit 0, 229 ms</summary>
 
 ```
 FUSELAGE OUTLINE GATE
@@ -1076,7 +1079,7 @@ FUSELAGE OUTLINE GATE PASSED (50 checks)
 
 </details>
 
-<details><summary><code>nasa-configs.mjs</code> — exit 0, 207 ms</summary>
+<details><summary><code>nasa-configs.mjs</code> — exit 0, 297 ms</summary>
 
 ```
 ======================================================================================
@@ -1170,7 +1173,7 @@ PASS: 39 published comparisons, mean 14.5%, worst -46.7%
 
 </details>
 
-<details><summary><code>validate.mjs</code> — exit 0, 746 ms</summary>
+<details><summary><code>validate.mjs</code> — exit 0, 1119 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════════
@@ -1282,7 +1285,7 @@ PASS: within the 40% gate
 
 </details>
 
-<details><summary><code>tab-visibility.mjs</code> — exit 0, 919 ms</summary>
+<details><summary><code>tab-visibility.mjs</code> — exit 0, 1392 ms</summary>
 
 ```
 TAB VISIBILITY GATE
@@ -1308,7 +1311,7 @@ TAB VISIBILITY GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-run.mjs</code> — exit 0, 40566 ms</summary>
+<details><summary><code>vsp-run.mjs</code> — exit 0, 60856 ms</summary>
 
 ```
 OPENVSP SCRIPT-RUN GATE
@@ -1328,7 +1331,7 @@ OPENVSP SCRIPT-RUN GATE PASSED — every configuration builds in OpenVSP
 
 </details>
 
-<details><summary><code>vspaero.mjs</code> — exit 0, 11538 ms</summary>
+<details><summary><code>vspaero.mjs</code> — exit 0, 15611 ms</summary>
 
 ```
 VSPAERO GATE — vortex-lattice polar on the exported model
@@ -1366,7 +1369,7 @@ VSPAERO GATE PASSED
 
 </details>
 
-<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 65 ms</summary>
+<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 73 ms</summary>
 
 ```
 ROTORCRAFT TAIL GATE
@@ -1386,7 +1389,7 @@ ROTORCRAFT TAIL GATE PASSED
 
 </details>
 
-<details><summary><code>drive-failure.mjs</code> — exit 0, 66 ms</summary>
+<details><summary><code>drive-failure.mjs</code> — exit 0, 76 ms</summary>
 
 ```
 DRIVE-SYSTEM FAILURE GATE
@@ -1414,7 +1417,7 @@ DRIVE-SYSTEM FAILURE GATE PASSED
 
 </details>
 
-<details><summary><code>autorotation.mjs</code> — exit 0, 2142 ms</summary>
+<details><summary><code>autorotation.mjs</code> — exit 0, 2913 ms</summary>
 
 ```
 AUTOROTATION GATE
@@ -1457,7 +1460,7 @@ AUTOROTATION GATE PASSED
 
 </details>
 
-<details><summary><code>whirl-flutter.mjs</code> — exit 0, 2266 ms</summary>
+<details><summary><code>whirl-flutter.mjs</code> — exit 0, 3268 ms</summary>
 
 ```
 WHIRL-FLUTTER GATE
@@ -1503,7 +1506,7 @@ WHIRL-FLUTTER GATE PASSED
 
 </details>
 
-<details><summary><code>load-cases.mjs</code> — exit 0, 2018 ms</summary>
+<details><summary><code>load-cases.mjs</code> — exit 0, 2671 ms</summary>
 
 ```
 STRUCTURAL LOAD CASE GATE
@@ -1540,7 +1543,7 @@ STRUCTURAL LOAD CASE GATE PASSED
 
 </details>
 
-<details><summary><code>blade-twist.mjs</code> — exit 0, 2582 ms</summary>
+<details><summary><code>blade-twist.mjs</code> — exit 0, 3169 ms</summary>
 
 ```
 BLADE TWIST GATE
@@ -1582,7 +1585,7 @@ BLADE TWIST GATE PASSED
 
 </details>
 
-<details><summary><code>control-authority.mjs</code> — exit 0, 2672 ms</summary>
+<details><summary><code>control-authority.mjs</code> — exit 0, 3430 ms</summary>
 
 ```
 FAILURE-MODE CONTROLLABILITY GATE
@@ -1622,7 +1625,7 @@ FAILURE-MODE CONTROLLABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>hover-dynamics.mjs</code> — exit 0, 1374 ms</summary>
+<details><summary><code>hover-dynamics.mjs</code> — exit 0, 1995 ms</summary>
 
 ```
 HOVER DYNAMICS GATE
@@ -1670,7 +1673,7 @@ HOVER DYNAMICS GATE PASSED
 
 </details>
 
-<details><summary><code>render-freeze.mjs</code> — exit 0, 5857 ms</summary>
+<details><summary><code>render-freeze.mjs</code> — exit 0, 8790 ms</summary>
 
 ```
 RENDER FREEZE GATE
@@ -1708,7 +1711,7 @@ PASS: all 27 views render exactly as committed
 
 </details>
 
-<details><summary><code>design-file.mjs</code> — exit 0, 2597 ms</summary>
+<details><summary><code>design-file.mjs</code> — exit 0, 3875 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -1790,7 +1793,7 @@ DESIGN FILE: 54 passed, 0 failed
 
 </details>
 
-<details><summary><code>validation-domain.mjs</code> — exit 0, 1125 ms</summary>
+<details><summary><code>validation-domain.mjs</code> — exit 0, 1705 ms</summary>
 
 ```
 VALIDATION DOMAIN GATE
@@ -1814,7 +1817,7 @@ PASS  the app's domain file matches the harnesses
 
 </details>
 
-<details><summary><code>result-warnings.mjs</code> — exit 0, 1724 ms</summary>
+<details><summary><code>result-warnings.mjs</code> — exit 0, 2369 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -1882,7 +1885,7 @@ RESULT WARNINGS: 41 passed, 0 failed
 
 </details>
 
-<details><summary><code>provenance-report.mjs</code> — exit 0, 1008 ms</summary>
+<details><summary><code>provenance-report.mjs</code> — exit 0, 1387 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
@@ -1916,7 +1919,7 @@ PROVENANCE GATE PASSED - every output any layout emits is classified.
 
 </details>
 
-<details><summary><code>api.mjs</code> — exit 0, 3801 ms</summary>
+<details><summary><code>api.mjs</code> — exit 0, 4229 ms</summary>
 
 ```
 ENGINE API GATE
@@ -1926,11 +1929,11 @@ ENGINE API GATE
   PASS  size() returns warnings and the domain with the numbers
   PASS  sizeMany() sizes each case
   PASS  a design that does not close reports converged: false
-  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"09b1205f4c93","dirty":true,"builtAt":null,"mode":"node-api"}
+  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"b29cba4b7118","dirty":true,"builtAt":null,"mode":"node-api"}
   PASS  reopen() reproduces a record
   PASS  engineVersion() reports the package and format versions
   PASS  docs/API.md documents every export  — 19 exports
-  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit 09b1205f4c93, uncommitted changes; API 1; design format 1)
+  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit b29cba4b7118, uncommitted changes; API 1; design format 1)
   PASS  a clean design exits 0
   PASS  a design that does not close exits 1
   PASS  unreadable input exits 2
@@ -1944,7 +1947,7 @@ ENGINE API GATE PASSED (17 checks)
 
 </details>
 
-<details><summary><code>turboelectric.mjs</code> — exit 0, 1592 ms</summary>
+<details><summary><code>turboelectric.mjs</code> — exit 0, 2414 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -2003,7 +2006,7 @@ TURBOELECTRIC GATE PASSED (24 checks)
 
 </details>
 
-<details><summary><code>cpacs-export.mjs</code> — exit 0, 1287 ms</summary>
+<details><summary><code>cpacs-export.mjs</code> — exit 0, 1732 ms</summary>
 
 ```
 CPACS AND TRACEABILITY EXPORT GATE
@@ -2039,7 +2042,7 @@ EXPORT GATE PASSED (25 checks)
 
 </details>
 
-<details><summary><code>release.mjs</code> — exit 0, 128 ms</summary>
+<details><summary><code>release.mjs</code> — exit 0, 172 ms</summary>
 
 ```
 RELEASE GATE
@@ -2065,7 +2068,7 @@ RELEASE GATE PASSED (0.2.0-dev, in preparation)
 
 </details>
 
-<details><summary><code>aircraft-classes.mjs</code> — exit 0, 500 ms</summary>
+<details><summary><code>aircraft-classes.mjs</code> — exit 0, 671 ms</summary>
 
 ```
 AIRCRAFT-CLASS GATE
@@ -2104,7 +2107,7 @@ AIRCRAFT-CLASS GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>trainer.mjs</code> — exit 0, 113 ms</summary>
+<details><summary><code>trainer.mjs</code> — exit 0, 170 ms</summary>
 
 ```
 TRAINER GATE
@@ -2174,7 +2177,7 @@ TRAINER GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>transport.mjs</code> — exit 0, 987 ms</summary>
+<details><summary><code>transport.mjs</code> — exit 0, 1464 ms</summary>
 
 ```
 TRANSPORT GATE
@@ -2258,7 +2261,7 @@ TRANSPORT GATE PASSED (60 checks)
 
 </details>
 
-<details><summary><code>transport-mission.mjs</code> — exit 0, 254 ms</summary>
+<details><summary><code>transport-mission.mjs</code> — exit 0, 304 ms</summary>
 
 ```
 TRANSPORT MISSION AND LAYOUT GATE
@@ -2321,7 +2324,7 @@ TRANSPORT MISSION GATE PASSED (44 checks)
 
 </details>
 
-<details><summary><code>transport-aero.mjs</code> — exit 0, 2228 ms</summary>
+<details><summary><code>transport-aero.mjs</code> — exit 0, 2724 ms</summary>
 
 ```
 TRANSPORT DRAG BUILD-UP GATE
@@ -2378,7 +2381,7 @@ TRANSPORT DRAG GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>bizjet.mjs</code> — exit 0, 408 ms</summary>
+<details><summary><code>bizjet.mjs</code> — exit 0, 559 ms</summary>
 
 ```
 BUSINESS-JET GATE
@@ -2412,7 +2415,7 @@ BUSINESS-JET GATE PASSED (15 checks)
 
 </details>
 
-<details><summary><code>aircraft-engine.mjs</code> — exit 0, 1255 ms</summary>
+<details><summary><code>aircraft-engine.mjs</code> — exit 0, 1646 ms</summary>
 
 ```
 AIRCRAFT ENGINE GATE
@@ -2622,7 +2625,7 @@ AIRCRAFT ENGINE GATE PASSED (165 checks)
 
 </details>
 
-<details><summary><code>turboprop.mjs</code> — exit 0, 153 ms</summary>
+<details><summary><code>turboprop.mjs</code> — exit 0, 182 ms</summary>
 
 ```
 TURBOPROP GATE
@@ -2707,7 +2710,7 @@ TURBOPROP GATE PASSED (59 checks)
 
 </details>
 
-<details><summary><code>paper-claims.mjs</code> — exit 0, 14182 ms</summary>
+<details><summary><code>paper-claims.mjs</code> — exit 0, 19588 ms</summary>
 
 ```
 PAPER CLAIM GATE
@@ -2752,7 +2755,7 @@ PASS: all 32 numeric claims in paper/ are reproduced by the harnesses
 
 </details>
 
-<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 1389 ms</summary>
+<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 2031 ms</summary>
 
 ```
 VTOL AUTOPILOT GATE
@@ -2810,7 +2813,7 @@ VTOL AUTOPILOT GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-frames.mjs</code> — exit 0, 70 ms</summary>
+<details><summary><code>drone-frames.mjs</code> — exit 0, 89 ms</summary>
 
 ```
 DRONE FRAME GATE
@@ -2833,7 +2836,7 @@ DRONE FRAME GATE PASSED (12 checks)
 
 </details>
 
-<details><summary><code>drone-components.mjs</code> — exit 0, 73 ms</summary>
+<details><summary><code>drone-components.mjs</code> — exit 0, 97 ms</summary>
 
 ```
 DRONE COMPONENT CATALOGUE GATE
@@ -2875,7 +2878,7 @@ DRONE COMPONENT CATALOGUE GATE PASSED (13 checks)
 
 </details>
 
-<details><summary><code>drone-rotor.mjs</code> — exit 0, 100 ms</summary>
+<details><summary><code>drone-rotor.mjs</code> — exit 0, 141 ms</summary>
 
 ```
 DRONE ROTOR GATE
@@ -2935,7 +2938,7 @@ DRONE ROTOR GATE PASSED (14 checks)
 
 </details>
 
-<details><summary><code>drone-motor.mjs</code> — exit 0, 77 ms</summary>
+<details><summary><code>drone-motor.mjs</code> — exit 0, 107 ms</summary>
 
 ```
 DRONE MOTOR GATE
@@ -3031,7 +3034,7 @@ DRONE MOTOR GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-esc.mjs</code> — exit 0, 82 ms</summary>
+<details><summary><code>drone-esc.mjs</code> — exit 0, 107 ms</summary>
 
 ```
 DRONE ESC GATE
@@ -3097,7 +3100,7 @@ DRONE ESC GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-battery.mjs</code> — exit 0, 73 ms</summary>
+<details><summary><code>drone-battery.mjs</code> — exit 0, 103 ms</summary>
 
 ```
 DRONE BATTERY GATE
@@ -3159,7 +3162,7 @@ DRONE BATTERY GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>drone-sizing.mjs</code> — exit 0, 90 ms</summary>
+<details><summary><code>drone-sizing.mjs</code> — exit 0, 130 ms</summary>
 
 ```
 DRONE SIZING GATE
@@ -3210,7 +3213,7 @@ DRONE SIZING GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-trade.mjs</code> — exit 0, 679 ms</summary>
+<details><summary><code>drone-trade.mjs</code> — exit 0, 1020 ms</summary>
 
 ```
 DRONE TRADE GATE
@@ -3258,7 +3261,7 @@ DRONE TRADE GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-airframe.mjs</code> — exit 0, 81 ms</summary>
+<details><summary><code>drone-airframe.mjs</code> — exit 0, 107 ms</summary>
 
 ```
 DRONE AIRFRAME GATE
@@ -3316,7 +3319,7 @@ DRONE AIRFRAME GATE PASSED (33 checks)
 
 </details>
 
-<details><summary><code>drone-dynamics.mjs</code> — exit 0, 898 ms</summary>
+<details><summary><code>drone-dynamics.mjs</code> — exit 0, 1196 ms</summary>
 
 ```
 DRONE DYNAMICS GATE
@@ -3362,7 +3365,7 @@ DRONE DYNAMICS GATE
 
   SCENARIOS THE USER BUILDS
   PASS  a held tilt accelerates at g*tan(theta)  — 15° gives 2.628 m/s², unopposed by anything but drag
-  PASS  every shipped preset builds, and its segments sum to its duration  — 6 presets, each editable from the panel
+  PASS  every shipped preset builds, and its segments sum to its duration  — 7 presets, each editable from the panel
   PASS  segments are held in order, and the last one holds to the end  — a scrubber past the end must not fall off the last segment
   PASS  an altitude rate ramps, where a bare altitude steps  — descend at 1 m/s is a different command from go to 1 m
   PASS  a scenario that runs away says so, with the acceleration it implies  — the panel shows this instead of the view silently zooming out to fit 91.6 m
@@ -3385,7 +3388,7 @@ DRONE DYNAMICS GATE PASSED (38 checks)
 
 </details>
 
-<details><summary><code>drone-risk.mjs</code> — exit 0, 144 ms</summary>
+<details><summary><code>drone-risk.mjs</code> — exit 0, 172 ms</summary>
 
 ```
 DRONE RISK GATE
@@ -3438,7 +3441,7 @@ DRONE RISK GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-avionics.mjs</code> — exit 0, 98 ms</summary>
+<details><summary><code>drone-avionics.mjs</code> — exit 0, 124 ms</summary>
 
 ```
 DRONE AVIONICS GATE
@@ -3489,7 +3492,7 @@ DRONE AVIONICS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>drone-autopilot.mjs</code> — exit 0, 142 ms</summary>
+<details><summary><code>drone-autopilot.mjs</code> — exit 0, 173 ms</summary>
 
 ```
 DRONE AUTOPILOT GATE
@@ -3570,7 +3573,7 @@ DRONE AUTOPILOT GATE PASSED (52 checks)
 
 </details>
 
-<details><summary><code>drone-obstacles.mjs</code> — exit 0, 87 ms</summary>
+<details><summary><code>drone-obstacles.mjs</code> — exit 0, 103 ms</summary>
 
 ```
 DRONE OBSTACLE GATE
@@ -3660,7 +3663,85 @@ DRONE OBSTACLE GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-regulatory.mjs</code> — exit 0, 78 ms</summary>
+<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 8434 ms</summary>
+
+```
+DRONE FLIGHT ENERGY GATE
+==============================================================================
+------------------------------------------------------------------------------
+  PASS  one rotor at the hover thrust reproduces the sizing hover's rpm  — 3905.1754763116624 rpm, both
+  PASS  and its shaft power, to the bit  — 55.05593792345063 W, both
+  PASS  and its per-rotor bus power, to the bit  — 73.9368126463225 W, both
+  PASS  the whole aircraft at hover reproduces sizing.hover.busPowerW EXACTLY  — 451.62087587793496 W — N x bus + declared avionics, the sizing.js:222 convention
+  PASS  no rotor sample was out of range or clamped at the hover point
+------------------------------------------------------------------------------
+  PASS  the aircraft held the hover thrust steady for this window  — 7.8240722583333335 N on every rotor, worst deviation 5.30e-13 relative
+  PASS  energy accumulated over a steady window equals P*t to floating point  — 7.527014598 Wh vs 7.527014598 Wh, rel err 4.24e-14
+------------------------------------------------------------------------------
+  PASS  a run with no energy model reports energy: null, not a zero  — the loop did not compute it, so it does not claim it
+  PASS  and no energy field appears anywhere in its trace
+  PASS  the TRAJECTORY is identical with and without the energy model  — integrating state of charge does not perturb the flight it measures
+------------------------------------------------------------------------------
+  PASS  a flight long enough to empty the pack ends on the pack, not the clock  — empty at 29.05 min, of a 40 min scenario
+  PASS  it stopped because the DECLARED usable energy was gone  — 237.16 Wh of 237.15 Wh usable
+  PASS  state of charge reaches zero and never rises anywhere in the flight  — monotone non-increasing, by construction
+  PASS  state of charge is a fraction of the DECLARED usable energy, not the pack  — at usableFraction 0.85 an empty flight leaves 15 % of published energy unreachable
+------------------------------------------------------------------------------
+  PASS  a drifting hover costs MORE than the idealised steady hover, never less  — 489.8 W mean vs 451.6 W steady; 29.05 min vs 31.51 min — no position loop, so nothing arrests the drift
+  PASS  the peak draw is recorded, and exceeds the steady hover  — peak 568 W, 26.3 A at the pack
+------------------------------------------------------------------------------
+  PASS  the measured thrust range comes from the propeller, not a literal  — 0.386..30.543 N, floor costs 2.81 W at the bus
+  PASS  a thrust below the measured floor is refused, not extrapolated
+  PASS  a thrust above the measured ceiling is refused AND flagged as such  — it cannot be bounded from inside the data, so it invalidates the figure
+  PASS  with a rotor dead, sub-floor samples occur and are COUNTED  — 5993 of 36006 rotor-samples (16.6 %) below 0.386 N
+  PASS  their energy is carried as an upper BOUND, never added to the figure  — true energy lies in [17.734, 17.828] Wh
+  PASS  and that bound is a small fraction of the figure, so the interval is tight  — 0.5266 % of the energy consumed
+  PASS  a run with no out-of-ceiling sample reports the figure as available
+------------------------------------------------------------------------------
+  PASS  every run carries the four assumptions the endurance figure carries  — constant published voltage, fresh pack, room temperature, no Peukert
+  PASS  the constant-voltage assumption is stated first and explains itself
+  PASS  no Peukert derating is claimed, matching battery.js's refusal
+  PASS  an undeclared usableFraction is refused rather than defaulted  — no manufacturer in the survey publishes a cut-off criterion
+  PASS  an undeclared avionics draw is refused rather than defaulted  — it is a DECLARED_INPUTS entry, not a property of the airframe
+------------------------------------------------------------------------------
+  PASS  the energy model is structured-cloneable, because the flight runs in a worker  — propeller, motor constants, ESC entry and pack are all plain data
+==============================================================================
+DRONE FLIGHT ENERGY GATE PASSED (29 checks)
+```
+
+</details>
+
+<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 7576 ms</summary>
+
+```
+DRONE FLIGHT WORKER GATE
+==============================================================================
+  PASS  every value the panel sends survives structuredClone  — id, model, scenarioArgs, declared, failed, scenery, impact
+  PASS  a BUILT scenario cannot cross the boundary, because it carries target()  — which is why the worker rebuilds it from the arguments rather than receiving it
+  PASS  the worker registered a message handler on import
+  PASS  the worker replies with the id it was given  — id 1
+  PASS  the worker returns a run, not an error  — no error
+  PASS  the trace has the same number of samples  — 419 vs 419
+  PASS  the run computed through the worker is IDENTICAL to the inline run, byte for byte  — 226 kB of run, identical
+  PASS  the run carries the duration the scenario asked for  — 15 s over 3 segments
+  PASS  and the degraded allocator path was actually exercised  — motor 2 dead through the boundary as a Set again
+  PASS  a SEGMENT over the cap replies with makeScenario's message  — segment 1: duration is capped at 2400 s
+  PASS  a TOTAL over the cap replies with makeScenario's message  — the scenario runs 3600.0 s; the cap is 2400 s
+  PASS  and the worker still answers after an invalid request  — one worker serves the panel's whole lifetime
+  PASS  the cap admits a 250 s scenario at all  — cap is 2400 s, and was 120 s while this ran on the main thread
+  PASS  a 250 s flight comes back whole — every sample, across the boundary  — 12501 samples (expected 12501), crashed false
+  PASS  an energy model posted to the worker comes back as an integrated run  — 237.2 Wh consumed
+  PASS  and the PACK ends the flight, not the duration cap  — empty at 29.05 min, inside a 40 min scenario — the cap is set above the pack on purpose
+  PASS  a full-length flight's trace stays bounded despite its length  — 8716 samples over 1743 s — the recording interval stretches past 240 s so the trace cannot grow without limit
+  PASS  the aircraft's own endurance is a computed quantity the panel can report against  — 31.5 min of hover computed, P10 28.8 / P90 33.3
+  PASS  and the integrator carries no state of charge, so it cannot enforce it  — the run reports no energy consumed — that chain is battery.js, via the Endurance tab
+==============================================================================
+DRONE FLIGHT WORKER GATE PASSED (19 checks)
+```
+
+</details>
+
+<details><summary><code>drone-regulatory.mjs</code> — exit 0, 101 ms</summary>
 
 ```
 DRONE REGULATORY GATE

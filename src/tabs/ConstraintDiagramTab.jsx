@@ -27,10 +27,18 @@ export function ConstraintDiagramTab(ctx) {
     });
   }, [SR, params]);
 
-  if (!SR || !D) return <div style={{ color: SC.muted }}>Size a design first.</div>;
+  /* Recharts wants one row per x with a column per series.
 
-  /* Recharts wants one row per x with a column per series. */
+     THIS SITS ABOVE THE EARLY RETURN DELIBERATELY. It used to sit below
+     it, which meant this component called one fewer hook while the
+     design was unsized than it did once `SR` and `D` arrived — React
+     counts hooks per render and throws when the count changes, so
+     sizing a design while this tab was open crashed it. The same defect
+     stopped the drone Flight tab loading, and validation/scope-check.mjs
+     now refuses both. `D` is still null on those early renders, so the
+     guard moved inside. */
   const data = useMemo(() => {
+    if (!D) return [];
     const xs = D.curves[0]?.points.map(p => p.WS) ?? [];
     return xs.map((WS, i) => {
       const row = { WS: +WS.toFixed(0) };
@@ -42,6 +50,8 @@ export function ConstraintDiagramTab(ctx) {
       return row;
     });
   }, [D]);
+
+  if (!SR || !D) return <div style={{ color: SC.muted }}>Size a design first.</div>;
 
   const COL = { cruise: SC.advisory, climb: SC.caution, turn: SC.purple, hover: SC.warning };
   const dp  = D.designPoint;

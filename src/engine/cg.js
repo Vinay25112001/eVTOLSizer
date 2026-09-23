@@ -254,6 +254,22 @@ export function componentCG(p, geom, groups) {
     hoverFwdThrustShare: fwdShare,
     hoverLoadedRotorRatio: loadedRotorRatio,
     cgWithinRotorArray: xCGtotal > xRotFwd && xCGtotal < xRotAft,
+    /* WHAT THE ABOVE IS STANDING ON, BECAUSE IT DECIDES WHETHER IT IS A
+       MEASUREMENT. With no explicit stations and the derivation held back
+       (see the header: it is opt-in because the derived forward disc walks
+       into the wing on some layouts), the array falls back to 10 % and 80 %
+       of fuselage length -- 0.721 m and 5.768 m on the default body, and
+       IDENTICAL for every configuration, tiltrotor and multicopter alike,
+       because nothing about the rotors enters it. xCGtotal is around 3 m in
+       every design this engine produces, so the test cannot come out false.
+       A check that cannot fail is not a check, and it was being surfaced as
+       a feasibility item and as the ONLY stability criterion a rotor-borne
+       aircraft was given. It is reported here as advisory so a caller can
+       tell a measurement from a placeholder. */
+    rotorStationBasis: (p.rotorFwdFrac != null || p.rotorAftFrac != null) ? "input"
+                     : derived ? "derived from rotor diameter"
+                     : "fallback fractions (10 %, 80 % of fuselage) — not a measurement",
+    rotorStationsAreMeasured: !!derived || p.rotorFwdFrac != null || p.rotorAftFrac != null,
   };
 }
 

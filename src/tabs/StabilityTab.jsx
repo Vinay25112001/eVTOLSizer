@@ -19,6 +19,7 @@ import {
 import { KPI, Panel } from "../ui/primitives.jsx";
 import { SC } from "../lib/theme.js";
 import { capabilitiesFor } from "../engine/configuration.js";
+import { staticMarginCriterion } from "../engine/cg.js";
 import { MTOWPie } from "../panels/charts.jsx";
 
 /* Tab 6 — Stability.
@@ -52,6 +53,17 @@ export function StabilityTab(ctx) {
      not show them. Wiring hoverqualities.js into the pipeline is the fix for
      that; inventing a display without the engine behind it would be worse. */
   const hasWing = capabilitiesFor(params.configType, params.nPropHover).hasWing !== false;
+  /* THE BAND IS THE ENGINE'S, NOT A PAIR OF LITERALS. This tab graded the
+     static margin against a hardcoded 5-25 % in three places, the same band
+     the W&B panel attributed to "EASA SC-VTOL 2540-2541" -- a paragraph that
+     is marked "(reserved)" and a paragraph that does not exist (regdb.js).
+     staticMarginCriterion() resolves to the full-authority fly-by-wire
+     criterion, whose floor is -10 % and which is ADVISORY, because SC-VTOL
+     compliance is by MHQRM handling qualities rather than static stability.
+     Against the literals every winged configuration this tool sizes failed. */
+  const smCrit = staticMarginCriterion(params);
+  const smOK = (sm) => Number.isFinite(sm) && sm >= smCrit.smMin && sm <= smCrit.smMax;
+  const smBand = `${(smCrit.smMin*100).toFixed(0)}-${(smCrit.smMax*100).toFixed(0)}%`;
   return (
 
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
@@ -59,7 +71,7 @@ export function StabilityTab(ctx) {
                   <KPI label="CG (MTOW)" value={U.len(SR.xCGtotal)} unit={`${U.lenU} from nose`}/>
                   {hasWing ? <>
                     <KPI label="Neutral Point" value={U.len(SR.xNP)} unit={`${U.lenU} from nose`}/>
-                    <KPI label="Static Margin" value={(SR.SM*100).toFixed(1)} unit="% MAC" color={SR.SM>=0.05&&SR.SM<=0.25?SC.green:SC.red}/>
+                    <KPI label="Static Margin" value={(SR.SM*100).toFixed(1)} unit="% MAC" color={smOK(SR.SM)?SC.green:SC.red}/>
                     <KPI label="MAC" value={U.len(SR.MAC)} unit={U.lenU}/>
                   </> : <>
                     <KPI label="CG inside rotor array" value={SR.cgWithinRotorArray ? "yes" : "no"} unit=""
@@ -98,7 +110,7 @@ export function StabilityTab(ctx) {
                     </div>
                     {(hasWing?[["CG (MTOW)",`${U.len(SR.xCGtotal)} ${U.lenU}`],["Wing AC",`${U.len(SR.xACwing)} ${U.lenU}`],
                       ["Neutral Point",`${U.len(SR.xNP)} ${U.lenU}`],["Static Margin",`${(SR.SM*100).toFixed(1)}% MAC`],
-                      ["MAC",`${U.len(SR.MAC)} ${U.lenU}`],["Status",SR.SM>=0.05&&SR.SM<=0.25?"OK (5–25%)":SR.SM<0.05?"⚠ Too small":"⚠ Too large"]]
+                      ["MAC",`${U.len(SR.MAC)} ${U.lenU}`],["Status",smOK(SR.SM)?`OK (${smBand})`:SR.SM<smCrit.smMin?"⚠ Too small":"⚠ Too large"],["Criterion",`${smCrit.label}${smCrit.advisory?" — advisory":""}`]]
                       :[["CG (MTOW)",`${U.len(SR.xCGtotal)} ${U.lenU}`],
                         ["Neutral point","n/a — rotor-borne, no wing"],
                         ["Static margin","n/a — requires a wing"],
@@ -127,20 +139,42 @@ export function StabilityTab(ctx) {
                   </Panel>
                 </div>
                 {/* CG Travel Range */}
-                <Panel title="CG Travel Range — OEW → MTOW (loading envelope)" onSave={true}>
+                <Panel title="CG Travel Range — OEW → MTOW (two loading orders)" onSave={true}>
                   {(()=>{
-                    // Build CG sweep: from OEW (no payload, no battery) → MTOW
-                    // Intermediate: add battery first, then payload (worst-case forward/aft)
+                    /* THIS WAS CALLED A LOADING ENVELOPE AND WAS NOT ONE. The
+                       comment promised "add battery first, then payload
+                       (worst-case forward/aft)"; the code blended both at once
+                       -- Wb = Wbat*frac AND Wp = payload*frac on the same frac
+                       -- which is a single monotone line between two fixed
+                       endpoints. One curve between the two points every
+                       ordering shares cannot show a worst case, because the
+                       spread between orderings IS the worst case. A real
+                       envelope needs at least two branches, so both documented
+                       orderings are now walked: battery first, then payload,
+                       and payload first, then battery. They meet at OEW and at
+                       MTOW and bound the CG travel between them.
+
+                       Fuel rides at the battery station on a turboelectric
+                       design (engine.js passes Wbat + WfuelOut into
+                       componentCG), so it is carried on that branch. */
                     const fLeff=Number(SR?.fusLen)||Number(params.fusLen);
                     const xCGbat=fLeff*(params.batStationFrac??0.38), xCGpay=fLeff*(params.payStationFrac??0.40);
-                    const pts=Array.from({length:51},(_,i)=>{
-                      const frac=i/50;
-                      // Linear blend: OEW → full battery → full payload
-                      const Wb=SR.Wbat*frac, Wp=params.payload*frac;
-                      const W=SR.Wempty+Wb+Wp;
-                      const cg=(SR.Wempty*SR.xCGempty+Wb*xCGbat+Wp*xCGpay)/W;
-                      return{mass:+W.toFixed(1),cg:+cg.toFixed(4),sm:+((SR.xNP-cg)/SR.MAC*100).toFixed(2)};
+                    const Wbat=SR.Wbat+(Number(SR.fuelMassKg)||0), Wpay=Number(params.payload)||0;
+                    /* Each branch loads `first` to full, then `second`. */
+                    const branch=(wA,xA,wB,xB)=>Array.from({length:51},(_,i)=>{
+                      const t=(i/50)*(wA+wB);                 // mass loaded so far
+                      const a=Math.min(t,wA), b=Math.max(0,t-wA);
+                      const W=SR.Wempty+a+b;
+                      const cg=(SR.Wempty*SR.xCGempty+a*xA+b*xB)/W;
+                      return{mass:+W.toFixed(1),cg:+cg.toFixed(4),
+                             sm:SR.MAC>0?+((SR.xNP-cg)/SR.MAC*100).toFixed(2):null};
                     });
+                    const batFirst=branch(Wbat,xCGbat,Wpay,xCGpay);
+                    const payFirst=branch(Wpay,xCGpay,Wbat,xCGbat);
+                    /* The chart series stays `pts` so the existing plot is
+                       unchanged in shape; the second branch is drawn beside
+                       it and the spread between them is the travel. */
+                    const pts=batFirst.map((p,i)=>({...p,cgAlt:payFirst[i].cg}));
                     return(
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                       {/* CG vs Mass chart */}
@@ -149,7 +183,7 @@ export function StabilityTab(ctx) {
                           CG position ({U.lenU} from nose) vs Aircraft Mass ({U.massU})
                         </div>
                         <ResponsiveContainer width="100%" height={175}>
-                          <LineChart data={pts.map(p=>({...p,mass:U.mass(p.mass),cg:U.len(p.cg)}))} margin={{top:4,right:12,left:-15,bottom:14}}>
+                          <LineChart data={pts.map(p=>({...p,mass:U.mass(p.mass),cg:U.len(p.cg),cgAlt:U.len(p.cgAlt)}))} margin={{top:4,right:12,left:-15,bottom:14}}>
                             <CartesianGrid {...chartGrid()}/>
                             <XAxis dataKey="mass" tick={{fontSize:10,fill:SC.muted}}
                               label={{value:`Mass (${U.massU})`,position:"insideBottom",offset:-6,fontSize:10,fill:SC.muted}} {...chartAxis()}/>
@@ -162,14 +196,15 @@ export function StabilityTab(ctx) {
                               label={{value:"OEW",fill:SC.muted,fontSize:9,position:"right"}}/>
                             <ReferenceLine y={U.len(SR.xCGtotal)} stroke={SC.amber} strokeDasharray="3 2"
                               label={{value:"MTOW",fill:SC.amber,fontSize:9,position:"right"}}/>
-                            <Line isAnimationActive={false} type="monotone" dataKey="cg" stroke={SC.green} strokeWidth={2} dot={false} name={`xCG (${U.lenU})`}/>
+                            <Line isAnimationActive={false} type="monotone" dataKey="cg" stroke={SC.green} strokeWidth={2} dot={false} name={`battery first (${U.lenU})`}/>
+                            <Line isAnimationActive={false} type="monotone" dataKey="cgAlt" stroke={SC.amber} strokeWidth={2} strokeDasharray="4 2" dot={false} name={`payload first (${U.lenU})`}/>
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
                       {/* SM vs Mass chart */}
                       <div>
                         <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>
-                          Static Margin (% MAC) vs Aircraft Mass — must stay 5–25%
+                          Static Margin (% MAC) vs Aircraft Mass — band from the engine criterion, advisory
                         </div>
                         <ResponsiveContainer width="100%" height={175}>
                           <AreaChart data={pts.map(p=>({...p,mass:U.mass(p.mass)}))} margin={{top:4,right:12,left:-12,bottom:14}}>

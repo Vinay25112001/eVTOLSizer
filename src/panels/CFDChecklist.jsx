@@ -150,10 +150,21 @@ export function CFDChecklist({ params, SR, SC, U }) {
     { cat:'Stability',
       label: hasWing ? 'Static margin positive (aircraft flyable)'
                      : 'CG inside the rotor array (hover trim)',
-      ok: hasWing ? (SM != null && SM > 0.02) : SR?.cgWithinRotorArray === true,
+      /* A PLACEHOLDER IS NOT A PASS. For a rotor-borne layout this was the
+         ONLY stability item on the checklist, and it rested on
+         cgWithinRotorArray — which, with the rotor stations falling back to
+         10 % and 80 % of fuselage length, is true for every design this
+         engine can produce. Combined with the W&B envelope's own false PASS
+         on the same layouts, a multicopter had no working stability check
+         anywhere in the tool. Until the stations are measured the item is
+         reported as unresolved rather than satisfied. */
+      ok: hasWing ? (SM != null && SM > 0.02)
+                  : (SR?.rotorStationsAreMeasured === true && SR?.cgWithinRotorArray === true),
       detail: hasWing ? (SM == null ? 'static margin not resolved'
                                     : `SM=${(SM*100).toFixed(1)}% MAC (min 2%)`)
             : SR?.cgWithinRotorArray == null ? 'hover trim not evaluated'
+            : SR?.rotorStationsAreMeasured !== true
+              ? `not established — rotor stations are ${SR?.rotorStationBasis ?? 'not measured'}, so this test cannot come out false`
             : SR.cgWithinRotorArray ? 'CG within the rotor polygon — the rotor-borne trim condition'
                                     : 'CG outside the rotor polygon — cannot trim in hover' },
     { cat:'Stability', label:'CG forward of NP',

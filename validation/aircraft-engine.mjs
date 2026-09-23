@@ -671,10 +671,49 @@ console.log("\n12. Balance, wing placement and the neutral point");
      engine-out yaw demands. That exercises the whole chain at once — wing
      placement, tail arm, engine station, thrust and yaw balance — so it is
      asserted rather than admired. */
-  check("the engine-out fin area reproduces the 737-class fin the area ratio gives",
-        Math.abs(bal.yaw.ratio - 1) < 0.06,
+  /* THIS ASSERTION USED TO DEMAND THE TWO AGREE WITHIN 6 %, AND THAT
+     AGREEMENT WAS AN ARTEFACT. balance.js placed both tail aerodynamic
+     centres at rootLE + 0.25*mac — the quarter chord of the ROOT — while
+     the wing was placed correctly at the quarter chord of its MAC. On a
+     swept surface the MAC leading edge lies aft of the root leading edge
+     by yMac*tan(sweep_LE), and geometry.js sweeps the fin 12 deg MORE than
+     the wing, so the fin's AC was 1.61 m too far forward and lV was short
+     by the same amount. svRequired = yawMoment/(qMin*clvYaw*lV) is
+     inversely proportional to lV, so a short arm inflated the requirement
+     until it happened to land on the fitted area.
+
+     WHAT THE GROUND TRUTH SAYS. The tail ratios in transport/defaults.js
+     are derived from the NASA Aviary large_single_aisle_2 FLOPS deck, a
+     737-800 model: vertical tail 284.5 ft² = 26.43 m². Against that real
+     fin the OLD requirement of about 27.7 m² was 4.8 % LARGER than the
+     aeroplane's actual fin — i.e. it claimed a certified 737-800 cannot
+     meet 25.149. The corrected requirement is 24.4 m², which leaves the
+     real fin 8.5 % of margin over its engine-out minimum. That is the
+     expected relationship: V_MC is one of several cases that size a fin,
+     alongside directional stability, crosswind and spin recovery, so the
+     minimum must sit BELOW the fitted area, not on top of it.
+
+     So the assertion is no longer "these two numbers are equal" — they
+     were never meant to be — but the physical statement: the engine-out
+     requirement is a MINIMUM the fitted fin clears, by a margin small
+     enough that the fin is not absurdly oversized. The chain this was
+     written to exercise (wing placement, tail arm, engine station, thrust
+     and yaw balance) is exercised exactly as before. */
+  check("the engine-out fin requirement is a minimum the fitted fin clears",
+        bal.yaw.ratio < 1 && bal.yaw.ratio > 0.75,
         `required ${bal.yaw.svRequiredM2.toFixed(1)} m² against ${bal.yaw.svActualM2.toFixed(1)} m² fitted `
-        + `— ${(100 * (bal.yaw.ratio - 1)).toFixed(1)} %`);
+        + `— fin has ${(100 * (1 / bal.yaw.ratio - 1)).toFixed(1)} % margin over V_MC`);
+
+  /* The same comparison against the REAL aeroplane rather than this tool's
+     own fitted fin, so the check does not grade itself. */
+  {
+    const SV_737_M2 = 284.5 * 0.3048 * 0.3048;          // FLOPS deck, 26.43 m²
+    const margin = SV_737_M2 / bal.yaw.svRequiredM2 - 1;
+    check("and the real 737-800 fin clears it too, which is how we know it is a minimum",
+          margin > 0 && margin < 0.35,
+          `deck fin 284.5 ft² = ${SV_737_M2.toFixed(2)} m² against a ${bal.yaw.svRequiredM2.toFixed(1)} m² `
+          + `requirement — ${(100 * margin).toFixed(1)} % margin (was NEGATIVE before the tail-AC fix)`);
+  }
 }
 
 console.log("\n13. Flight envelope: V-n, gust, and which case governs");

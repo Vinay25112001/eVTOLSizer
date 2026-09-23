@@ -250,7 +250,23 @@ export function balanceOf(result, opts = {}) {
   /* Wing aerodynamic centre at the quarter chord of the MAC — subsonic thin
      aerofoil, and the assumption every conceptual method here makes. */
   const xAcWing = xLemac + 0.25 * m.mac;
-  const xAcTail = ga.ht.rootLE + 0.25 * ga.ht.mac;
+  /* THE TAILS ARE SWEPT AND THIS PUT THEIR MAC AT THE ROOT. The wing is
+     placed correctly a few lines up -- xWingRootLE = xLemac -
+     m.xLeMacFromRootLE -- because on a swept surface the leading edge of the
+     mean aerodynamic chord lies AFT of the root leading edge by
+     yMac * tan(sweep_LE). The tails skipped that step and took
+     rootLE + 0.25*mac, which is the quarter chord of the ROOT.
+     geometry.js sweeps them MORE than the wing (+4 deg on the tailplane,
+     +12 deg on the fin), so the error is larger there, not smaller: the
+     tail arm lH comes out short, the neutral point is understated and the
+     static margin is quoted conservatively, while svRequired =
+     yawMoment/(qMin*clvYaw*lV) oversizes the fin for the same reason.
+     macOf() already computes the offset; the tails simply were not asked.
+     Their taper is recovered from the chords the arrangement carries. */
+  const macOfSurface = (area, span, root, tip, sweepDeg) =>
+    macOf({ area, span, taper: root > 0 ? tip / root : 1, sweepC4Deg: val(sweepDeg) });
+  const htMac = macOfSurface(ga.ht.area, ga.ht.span, ga.ht.root, ga.ht.tip, ga.ht.sweepDeg);
+  const xAcTail = ga.ht.rootLE + htMac.xLeMacFromRootLE + 0.25 * ga.ht.mac;
   const lH = xAcTail - xAcWing;
   const xNpTailOnly = xAcWing + dClhDcl * (htArea / S) * lH;
 
@@ -313,7 +329,11 @@ export function balanceOf(result, opts = {}) {
     }
     if (fEngN) {
       const yawMoment = (fEngN + qMin * o.cdEngWindmill * aEng) * yEng;
-      const xAcVt = ga.vt.rootLE + 0.25 * ga.vt.mac;
+      /* As the tailplane above: the fin is the most swept surface on the
+         aeroplane, so its MAC leading edge is furthest aft of its root. A
+         fin's "span" is its height, its area counted once. */
+      const vtMac = macOfSurface(ga.vt.area, ga.vt.height, ga.vt.root, ga.vt.tip, ga.vt.sweepDeg);
+      const xAcVt = ga.vt.rootLE + vtMac.xLeMacFromRootLE + 0.25 * ga.vt.mac;
       const lV = xAcVt - xAcWing;
       const svRequired = yawMoment / (qMin * o.clvYaw * lV);
       yaw = {

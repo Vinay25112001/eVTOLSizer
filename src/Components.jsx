@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 
 import { GROQ_MODEL_LARGE } from "./lib/ai-model.js";
 import { staticMarginCriterion } from "./engine/cg.js";
+import { OCCUPANT_MASS_KG } from "./engine/cabin.js";
 /* ═══════════════════════════════════════════════════════════════════════
    VERIFIED COMPONENT DATABASE — specs from official datasheets
    Sources: EMRAX datasheets (2024), H3X Technologies (Oct 2024),
@@ -256,7 +257,13 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
   const Cr        = SR.Cr_;
   const Ct        = SR.Ct_;
   const sweep_rad = SR.sweep * Math.PI / 180;
-  const xWingLE   = fL * 0.2589;
+  /* THE WING WAS DRAWN AT A FIXED STATION WHILE THE ENGINE SOLVED FOR IT.
+     wingLEfrac is a live parameter -- wingPosition.js re-solves it between
+     0.06 and 0.65 when auto-positioning is on -- so a hardcoded 0.2589 put
+     the drawn wing, and the wing batteries and tip rotors hung off it, in a
+     different place from the stations the CG markers use. geometry.js reads
+     it the right way round in both of its call sites. */
+  const xWingLE   = fL * (Number(SR.wingLEfrac) || 0.2589);
   const xTipLE    = xWingLE + bHalf * Math.tan(sweep_rad);
 
   // Boom/rotor layout (matches VSP generator)
@@ -735,12 +742,36 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
           </thead>
           <tbody>
             {(()=>{
-              const We=SR.Wempty, Wb=SR.Wbat;
+              /* FUEL RIDES WITH THE BATTERY, AND THIS ROW USED TO LOSE IT.
+                 engine.js passes `Wbat: Wbat + WfuelOut` into componentCG, so
+                 on a turboelectric or hybrid design the station the engine
+                 balanced on carries the fuel too. Reading SR.Wbat alone left
+                 that mass out of the sweep, so the curve did not close on the
+                 xCGtotal printed beneath it. (CG travel as the fuel BURNS is
+                 still not modelled here — the footnote now says so rather
+                 than asserting it cannot happen.) */
+              const We=SR.Wempty, Wb=SR.Wbat+(Number(SR.fuelMassKg)||0);
               const cgOEW=(We*SR.xCGempty+Wb*xBatPhys)/(We+Wb);
+              /* THE OCCUPANTS WERE 90 kg EACH AND THERE WERE ALWAYS THREE OF
+                 THEM. Both were hardcoded: 90 is not the engine's occupant
+                 mass (cabin.js OCCUPANT_MASS_KG = 90.718, i.e. 200 lb), and
+                 the fixed 90/270 kg meant the two intermediate rows described
+                 an aeroplane carrying 270 kg no matter what the payload
+                 slider said, while the last row jumped to the real MTOW. At
+                 900 kg of payload the table walked two thirds of the way up
+                 and then teleported. The rows are now a real loading order
+                 out of the actual payload, so all four sit on one curve, and
+                 any remainder rides at the payload station the engine uses. */
+              const pay=Math.max(0,Number(params.payload)||0);
+              const mOcc=OCCUPANT_MASS_KG;
+              const wPilot=Math.min(pay,mOcc);
+              const wRow1=Math.min(Math.max(0,pay-wPilot),2*mOcc);
+              const mom=(...pairs)=>pairs.reduce((a,[w,x])=>a+w*x,0);
+              const r1=We+Wb+wPilot, r2=r1+wRow1;
               return [
-                ['OEW + Battery',          We+Wb,     cgOEW],
-                ['+ Pilot',                We+Wb+90,  ((We+Wb)*cgOEW+90*xPilot)/(We+Wb+90)],
-                ['+ PAX 1&2 (fwd Row 1)',  We+Wb+270, ((We+Wb)*cgOEW+90*xPilot+180*xRow1)/(We+Wb+270)],
+                ['OEW + Battery',          We+Wb, cgOEW],
+                ['+ Pilot',                r1,    ((We+Wb)*cgOEW+mom([wPilot,xPilot]))/r1],
+                ['+ PAX 1&2 (fwd Row 1)',  r2,    ((We+Wb)*cgOEW+mom([wPilot,xPilot],[wRow1,xRow1]))/r2],
                 ['MTOW (all pax)',          SR.MTOW,   xCGtotal],
               ].map(([lbl,W,xCG],i)=>{
                 /* WITHOUT A MAC THERE IS NO PERCENTAGE. This divided by a

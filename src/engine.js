@@ -2548,7 +2548,9 @@ function runSizingCore(p0) {
        loaded rotor pair needs extra installed thrust. The old code could not
        detect this because it placed the motors at the CG by construction. */
     {label:"Hover trim: CG inside rotor array",ok:cg.cgWithinRotorArray,
-     val:`xCG ${cg.xCGtotal.toFixed(2)} m in [${cg.xRotFwd.toFixed(2)}, ${cg.xRotAft.toFixed(2)}] m`},
+     advisory:!cg.rotorStationsAreMeasured,
+     val:`xCG ${cg.xCGtotal.toFixed(2)} m in [${cg.xRotFwd.toFixed(2)}, ${cg.xRotAft.toFixed(2)}] m`
+          +(cg.rotorStationsAreMeasured?"":` — ${cg.rotorStationBasis}`)},
     {label:"Hover thrust split within T/W",ok:TW>=cg.hoverLoadedRotorRatio,
      val:`loaded pair ${(cg.hoverLoadedRotorRatio).toFixed(2)}× even split (fwd ${(cg.hoverFwdThrustShare*100).toFixed(0)}%), T/W ${TW.toFixed(2)}`},
     {label:"Tip Mach < 0.70",ok:TipMach<0.70,val:`M${TipMach.toFixed(3)}`},
@@ -3574,6 +3576,8 @@ function runSizingCore(p0) {
     hoverFwdThrustShare:+cg.hoverFwdThrustShare.toFixed(4),
     hoverLoadedRotorRatio:+cg.hoverLoadedRotorRatio.toFixed(4),
     cgWithinRotorArray:cg.cgWithinRotorArray,
+    rotorStationBasis:cg.rotorStationBasis,
+    rotorStationsAreMeasured:cg.rotorStationsAreMeasured,
     // Static-margin criterion (augmentation-dependent)
     smCriterion:smCrit.key, smCriterionLabel:smCrit.label,
     smMin:smCrit.smMin, smMax:smCrit.smMax, smAdvisory:smCrit.advisory,

@@ -1655,7 +1655,16 @@ function runSizingCore(p0) {
     const cg_=componentCG({...p,__caps:cfgOut?.capabilities,hasBoomsResolved:cfgOut?.hasBooms},{fL,MAC,wingLEfrac:frac,MTOW,Wempty,Wbat:Wbat+WfuelOut},weightGroups);
     const xCGt=cg_.xCGtotal;
     const lh_=fL*0.88-xACw;
-    const xnp=xACw+(Sh/Swing)*tailSlopeRatio*etaH*(1-dw)*lh_;
+    /* dxNPfus WAS MISSING HERE AND IS NOT A SMALL TERM. The neutral point a
+       few lines above is xACwing + tail term + dxNPfus; this scan computed
+       the first two and dropped the third, while provenance.js advertises
+       what it produces as "the SM the solved wing station actually delivers".
+       The fuselage's destabilising pitching moment moves the neutral point
+       FORWARD, so omitting it overstated the margin: on the lift+cruise
+       buildup dxNPfus is -0.1415 m on a 1.779 m MAC, i.e. -7.95 % MAC, and
+       the reported 15.1 % was really about 7.1 %. More than half the margin
+       being reported was the term that was not in the sum. */
+    const xnp=xACw+(Sh/Swing)*tailSlopeRatio*etaH*(1-dw)*lh_+dxNPfus;
     return {sm:(xnp-xCGt)/MAC, xCG:xCGt, xNP:xnp, lh:lh_};
   };
   const targetSM=p.targetSM??0.15;

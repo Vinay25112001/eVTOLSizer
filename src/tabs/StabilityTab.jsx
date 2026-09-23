@@ -78,14 +78,14 @@ export function StabilityTab(ctx) {
                       {/* nose */}
                       <div style={{position:"absolute",left:"6%",top:"41%",width:0,height:0,borderTop:"5px solid transparent",borderBottom:"5px solid transparent",borderLeft:`9px solid ${SC.muted}`}}/>
                       {/* length label */}
-                      <div style={{position:"absolute",right:"2%",bottom:4,fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{params.fusLen} m</div>
+                      <div style={{position:"absolute",right:"2%",bottom:4,fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{(Number(SR?.fusLen)||Number(params.fusLen)).toFixed(2)} m</div>
                       {/* scale ticks */}
                       {[0.25,0.5,0.75,1.0].map(frac=>(
                         <div key={frac} style={{position:"absolute",left:`${10+frac*82}%`,top:"55%",width:1,height:12,background:"#1e2a3a"}}/>
                       ))}
-                      {(hasWing?[[SR.xCGtotal,SC.amber,"CG"],[SR.xNP,SC.blue,"NP"],[1.45+SR.Xac,SC.green,"AC"]]
+                      {(hasWing?[[SR.xCGtotal,SC.amber,"CG"],[SR.xNP,SC.blue,"NP"],[SR.xACwing,SC.green,"AC"]]
                         :[[SR.xCGtotal,SC.amber,"CG"]]).map(([x,col,lbl])=>{
-                        const pct=Math.min(92,Math.max(10,(x/params.fusLen)*82+10));
+                        const pct=Math.min(92,Math.max(10,(x/(Number(SR?.fusLen)||Number(params.fusLen)))*82+10));
                         return(<div key={lbl} style={{position:"absolute",left:`${pct}%`,top:0,bottom:0,transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
                           <div style={{fontSize:10,color:col,fontFamily:"'DM Mono',monospace",fontWeight:700,
                             writingMode:"vertical-rl",textOrientation:"mixed",transform:"rotate(180deg)",
@@ -96,7 +96,7 @@ export function StabilityTab(ctx) {
                         </div>);
                       })}
                     </div>
-                    {(hasWing?[["CG (MTOW)",`${U.len(SR.xCGtotal)} ${U.lenU}`],["Wing AC",`${U.len(1.45+SR.Xac)} ${U.lenU}`],
+                    {(hasWing?[["CG (MTOW)",`${U.len(SR.xCGtotal)} ${U.lenU}`],["Wing AC",`${U.len(SR.xACwing)} ${U.lenU}`],
                       ["Neutral Point",`${U.len(SR.xNP)} ${U.lenU}`],["Static Margin",`${(SR.SM*100).toFixed(1)}% MAC`],
                       ["MAC",`${U.len(SR.MAC)} ${U.lenU}`],["Status",SR.SM>=0.05&&SR.SM<=0.25?"OK (5–25%)":SR.SM<0.05?"⚠ Too small":"⚠ Too large"]]
                       :[["CG (MTOW)",`${U.len(SR.xCGtotal)} ${U.lenU}`],
@@ -131,7 +131,8 @@ export function StabilityTab(ctx) {
                   {(()=>{
                     // Build CG sweep: from OEW (no payload, no battery) → MTOW
                     // Intermediate: add battery first, then payload (worst-case forward/aft)
-                    const xCGbat=params.fusLen*0.38, xCGpay=params.fusLen*0.40;
+                    const fLeff=Number(SR?.fusLen)||Number(params.fusLen);
+                    const xCGbat=fLeff*(params.batStationFrac??0.38), xCGpay=fLeff*(params.payStationFrac??0.40);
                     const pts=Array.from({length:51},(_,i)=>{
                       const frac=i/50;
                       // Linear blend: OEW → full battery → full payload

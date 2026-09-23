@@ -82,7 +82,23 @@ const FABRICATED = [
 
 /* Families we can actually check, and the corpus file that decides. */
 const VERIFIABLE = [
+  /* THE NOTATION WAS THE HOLE. This gate walks src/, so it READ the line in
+     Components.jsx that cited "EASA SC-VTOL §2540–2541" for the W&B envelope's
+     CG band -- and matched nothing, because /\bVTOL\.\d{3,4}/ wants the
+     "VTOL." prefix and that line writes a section sign instead. VTOL.2540 is
+     "(reserved)", an empty paragraph, and VTOL.2541 does not exist; both are
+     recorded as fabricated in regdb.js, the tracker was corrected, and this
+     citation survived in a panel for exactly as long as the regex could not
+     see it. A gate that checks one spelling of a reference checks the
+     spelling, not the reference. Both forms are normalised to VTOL.NNNN
+     before the corpus lookup, so §2540 is now chased like any other.
+
+     Anchored on the document name so a bare "§25.109" (a CFR part, a
+     different scheme entirely) is not swept in. */
   { name: "EASA SC-VTOL / MOC", pattern: /\bVTOL\.\d{3,4}/g },
+  { name: "EASA SC-VTOL / MOC (§ spelling)",
+    pattern: /SC-VTOL[^\n]{0,24}?§\s?(\d{3,4})(?:\s?[–—-]\s?(\d{3,4}))?/g,
+    normalise: (m) => (m[2] ? ["VTOL." + m[1], "VTOL." + m[2]] : ["VTOL." + m[1]]) },
   /* FAA powered-lift airworthiness criteria, AC 21.17-4 appendix A. Added
      2026-09-15 with the AC itself: the issued version (07/18/2025) is now in
      the corpus as AC-21.17-4_2025-07-18.txt, so PL.NNNN moved out of the
@@ -186,8 +202,15 @@ if (!corpusOK) {
     for (const f of files) {
       readFileSync(f, "utf8").split("\n").forEach((ln, i) => {
         for (const m of ln.matchAll(fam.pattern)) {
-          if (!cited.has(m[0])) cited.set(m[0], []);
-          cited.get(m[0]).push(relative(ROOT, f) + ":" + (i + 1));
+          /* A family may spell its references more than one way. `normalise`
+             turns a match into the canonical ref(s) the corpus is searched
+             for, so "SC-VTOL §2540–2541" is chased as VTOL.2540 AND
+             VTOL.2541 rather than as a string no document will ever hold. */
+          const refs = fam.normalise ? fam.normalise(m) : [m[0]];
+          for (const ref of refs) {
+            if (!cited.has(ref)) cited.set(ref, []);
+            cited.get(ref).push(relative(ROOT, f) + ":" + (i + 1));
+          }
         }
       });
     }

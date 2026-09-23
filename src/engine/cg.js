@@ -165,16 +165,43 @@ export function componentCG(p, geom, groups) {
     ecs:            fL * S.ecs.frac,
     avionics:       fL * S.avionics.frac,
     furnishings:    fL * S.furnishings.frac,
+    /* THREE GROUPS USED TO FALL THROUGH THE LOOP BELOW AND VANISH. weights.js
+       builds seventeen groups; this table had fourteen, and `continue` dropped
+       nacelle, driveSys and packSystems out of BOTH the numerator and the
+       denominator, so they did not even dilute the mean — they were simply
+       not part of the aircraft. The justification written under this table,
+       that a mass-weighted mean is insensitive to a uniform scale factor, is
+       true for a uniform scale and says nothing about removing three specific
+       masses at three specific stations.
+
+       Nacelles and the drive system are rotor-group hardware and ride at the
+       rotor centroid with the motors and inverters they belong to. Pack
+       systems (BMS, contactors, thermal) ride with the battery, which is
+       exactly the convention inertia.js already uses -- its AT_CG set is
+       ["packSystems","bms","thermal"]. */
+    nacelle:        xRotCentroid,
+    driveSys:       xRotCentroid,
+    packSystems:    xBat,
   };
 
   let xCGempty, itemised = null, basis;
+  const unplaced = [];
   if (groups && Object.keys(groups).length) {
     /* Buildup model — use the masses that actually sized the aircraft. */
     let m = 0, mx = 0;
     itemised = [];
+    /* A MASS WITH NO STATION IS REPORTED, NOT SWALLOWED. This loop used to
+       `continue` past any group missing from stationOf, which took the mass
+       out of the numerator AND the denominator -- it left the aircraft
+       entirely, silently, and three groups did exactly that for as long as
+       the table was short. inertia.js has always recorded its unplaced
+       groups, "because a mass that vanishes from the tensor understates
+       inertia"; the same argument applies to a mass that vanishes from a
+       centroid, so the same record is kept here. */
     for (const [k, w] of Object.entries(groups)) {
       const x = stationOf[k];
-      if (x == null || !isFinite(w) || w <= 0) continue;
+      if (!isFinite(w) || w <= 0) continue;          // no mass to place
+      if (x == null) { unplaced.push({ group: k, mass: +w.toFixed(1) }); continue; }
       m += w; mx += w * x;
       itemised.push({ group: k, mass: +w.toFixed(1), station: +x.toFixed(3),
                       moment: +(w * x).toFixed(1) });
@@ -223,7 +250,7 @@ export function componentCG(p, geom, groups) {
 
   return {
     xCGempty, xCGtotal, xRotFwd, xRotAft, xRotCentroid,
-    xWing, xBat, xPay, stationOf, itemised, basis,
+    xWing, xBat, xPay, stationOf, itemised, basis, unplaced,
     hoverFwdThrustShare: fwdShare,
     hoverLoadedRotorRatio: loadedRotorRatio,
     cgWithinRotorArray: xCGtotal > xRotFwd && xCGtotal < xRotAft,

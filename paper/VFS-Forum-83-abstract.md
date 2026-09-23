@@ -60,9 +60,9 @@ changes. For the NASA lift+cruise all-electric concept:
 
 | group scored | published | predicted | error | AFDD's own in-population error |
 |---|---|---|---|---|
-| **structures (aggregate, as usually reported)** | 1170.3 kg | 867.4 kg | **−25.9%** | 6.1% |
+| **structures (aggregate, as usually reported)** | 1170.3 kg | 867.6 kg | **−25.9%** | 6.1% |
 | ↳ rotor group (a component of the above) | 430.0 kg | 229.4 kg | **−46.7%** | 8.6% |
-| ↳ remaining structural groups (implied) | 740.3 kg | 638.0 kg | **−13.8%** | — |
+| ↳ remaining structural groups (implied) | 740.3 kg | 638.2 kg | **−13.8%** | — |
 
 **This row read −0.7% two revisions ago, and nothing in the structures model
 has changed since.** The rotor group has sat at −46.7% throughout. What moved,
@@ -305,7 +305,7 @@ these are not marginal differences. Two results follow that no absolute value
 was needed to obtain:
 
 - a **side-by-side layout has almost no rotor-derived pitch damping**
-  (M_q = −0.42 against L_p = −5.39), because two rotors abreast have no
+  (M_q = −0.43 against L_p = −5.39), because two rotors abreast have no
   fore-aft separation. It falls out of the geometry; nothing was assumed.
 - the damping and agility rankings are **strongly inverted** across the six
   layouts (Spearman ρ = −0.94), which is the stability-versus-manoeuvrability

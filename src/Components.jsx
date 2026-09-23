@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 
 import { GROQ_MODEL_LARGE } from "./lib/ai-model.js";
+import { staticMarginCriterion } from "./engine/cg.js";
 /* ═══════════════════════════════════════════════════════════════════════
    VERIFIED COMPONENT DATABASE — specs from official datasheets
    Sources: EMRAX datasheets (2024), H3X Technologies (Oct 2024),
@@ -192,17 +193,63 @@ const DB = {
    ═══════════════════════════════════════════════════════════ */
 export function WBEnvelopePanel({ params, SR, SC, U }) {
   const uc = U || {len:v=>+v.toFixed(3),lenU:"m",mass:v=>+v.toFixed(1),massU:"kg"};
-  const fL  = params.fusLen;
+  /* THE ENGINE'S FUSELAGE LENGTH, NOT THE SLIDER'S. Every station the engine
+     computes -- xCGempty, xCGtotal, xACwing, xNP, xNP_vt -- is measured on
+     fusLenEff (engine.js), which is params.fusLen scaled by the cube root of
+     the payload ratio. Reading params.fusLen here put the drawing, the seat
+     and battery stations and the loading table on a DIFFERENT length from the
+     CG markers laid over them: the loading table's own OEW row summed
+     SR.xCGempty (an arm on fusLenEff) with a battery arm on params.fusLen,
+     which is two datums in one moment. At the shipped 455 kg payload the two
+     lengths differ by 0.15 %, so it hid; move the payload slider and they
+     diverge, and in the sweep cases the marker can leave the drawn body
+     altogether. geometry.js:686 already reads it the right way round. */
+  const fL  = Number(SR?.fusLen) || Number(params.fusLen);
   const fD  = params.fusDiam;
   const MAC = SR.MAC;
 
-  // Stability
-  const xNP_vt   = SR.xCGtotal + SR.SM_vt * MAC;
-  const xCG_fwd  = xNP_vt - 0.25 * MAC;
-  const xCG_aft  = xNP_vt - 0.05 * MAC;
+  /* ── STABILITY ─────────────────────────────────────────────────────────
+     WINGLESS LAYOUTS HAVE NO MARGIN TO REPORT, AND THIS USED TO SAY PASS.
+     With no wing, Swing and bWing are 0, so MAC and SM_vt are computed 0/0
+     = NaN, and sanitiseWingless (engine.js) rewrites every non-finite number
+     to null before the UI sees it. In JavaScript `null * null` is 0 and
+     `0.25 * null` is 0, so the whole envelope collapsed onto the CG:
+         xNP_vt = xCGtotal + 0,  xCG_fwd = xCG_aft = xCGtotal
+         inEnv  = (x >= x && x <= x)  ->  TRUE, unconditionally
+     and a multicopter got a green "CG within safe limits" banner, a
+     zero-width safe zone and margins of 0.0 cm. A verdict that cannot come
+     out any other way is not a check. Now the panel says it has nothing to
+     report, which is the truth. */
+  const hasMargin = Number.isFinite(MAC) && MAC > 0 && Number.isFinite(SR.SM_vt);
+
+  /* THE BAND COMES FROM THE ENGINE, NOT FROM A HARDCODED PAIR. This panel
+     graded every design against 5-25 % MAC and cited "EASA SC-VTOL
+     2540-2541" for it. regdb.js records what those paragraphs actually are:
+     VTOL.2540 is marked "(reserved)" -- an empty paragraph -- and VTOL.2541
+     does not exist at all. The regulatory tracker was corrected; this panel
+     was missed. staticMarginCriterion() is the engine's own answer and it
+     resolves to the full-authority fly-by-wire band, whose floor is -10 %
+     and which is ADVISORY: SC-VTOL compliance is by MHQRM handling
+     qualities, not by static stability. Against the old band every winged
+     configuration in this tool failed. */
+  const crit     = staticMarginCriterion(params);
+  /* Metres in, a CG margin out, in the unit the reader is already using for
+     lengths. Inches below a foot, because that is how a W&B margin is read. */
+  const cgMargin = (m) => {
+    if (!Number.isFinite(m)) return "—";
+    if (uc.lenU === "ft") {
+      const inches = m * 39.3701;
+      return Math.abs(inches) < 12 ? inches.toFixed(1) + " in"
+                                   : (inches / 12).toFixed(2) + " ft";
+    }
+    return (m * 100).toFixed(1) + " cm";
+  };
+  const xNP_vt   = hasMargin ? SR.xCGtotal + SR.SM_vt * MAC : null;
+  const xCG_fwd  = hasMargin ? xNP_vt - crit.smMax * MAC : null;
+  const xCG_aft  = hasMargin ? xNP_vt - crit.smMin * MAC : null;
   const xACwing  = SR.xACwing;
   const xCGtotal = SR.xCGtotal;
-  const inEnv    = xCGtotal >= xCG_fwd && xCGtotal <= xCG_aft;
+  const inEnv    = hasMargin ? (xCGtotal >= xCG_fwd && xCGtotal <= xCG_aft) : null;
 
   // Wing geometry — same values as Wing & Aero tab
   const bHalf     = SR.bWing / 2;
@@ -227,7 +274,11 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
   // ── SINGLE UNIFORM SCALE — VERTICAL LAYOUT (Nose UP, Tail DOWN) ─────────
   // Pick the tighter scale so aircraft fills the canvas without clipping
   const MARG   = 48;
-  const scaleW = (820 / 2 - MARG) / bHalf;   // wingspan-constrained
+  /* A WINGLESS LAYOUT HAS bHalf = 0, AND THIS DIVIDED BY IT. scaleW came out
+     Infinity, Math.min picked it only if scaleH was larger, and the canvas
+     collapsed to the margins. Falling back to the height constraint alone is
+     what "no span to fit" means. */
+  const scaleW = bHalf > 1e-9 ? (820 / 2 - MARG) / bHalf : Infinity;   // wingspan-constrained
   const scaleH = (820   - MARG*2) / fL;       // fuselage-length-constrained
   const scale  = Math.min(scaleW, scaleH);
 
@@ -344,11 +395,11 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
       {/* ── Info boxes ── */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:8}}>
         {[
-          ['FWD CG Limit', uc.len(xCG_fwd)+' '+uc.lenU, 'SM = 25% MAC',  SC.red,   '#ef444420'],
-          ['Wing AC',      uc.len(xACwing)+' '+uc.lenU,  'Aero centre',   SC.green, '#22c55e20'],
-          ['CG at MTOW',  uc.len(xCGtotal)+' '+uc.lenU, `SM = ${(SR.SM_vt*100).toFixed(1)}%`, inEnv?SC.amber:SC.red, inEnv?'#f59e0b20':'#ef444420'],
-          ['AFT CG Limit', uc.len(xCG_aft)+' '+uc.lenU, 'SM = 5% MAC',   SC.red,   '#ef444420'],
-          ['Neutral Point',uc.len(xNP_vt)+' '+uc.lenU,   'V-tail corrected', SC.blue,'#3b82f620'],
+          ['FWD CG Limit', hasMargin?uc.len(xCG_fwd)+' '+uc.lenU:'—', `SM = ${(crit.smMax*100).toFixed(0)}% MAC`,  SC.red,   '#ef444420'],
+          ['Wing AC',      hasMargin?uc.len(xACwing)+' '+uc.lenU:'—',  'Aero centre',   SC.green, '#22c55e20'],
+          ['CG at MTOW',  uc.len(xCGtotal)+' '+uc.lenU, hasMargin?`SM = ${(SR.SM_vt*100).toFixed(1)}%`:'no MAC', inEnv?SC.amber:SC.red, inEnv?'#f59e0b20':'#ef444420'],
+          ['AFT CG Limit', hasMargin?uc.len(xCG_aft)+' '+uc.lenU:'—', `SM = ${(crit.smMin*100).toFixed(0)}% MAC`,   SC.red,   '#ef444420'],
+          ['Neutral Point',hasMargin?uc.len(xNP_vt)+' '+uc.lenU:'—',   'V-tail corrected', SC.blue,'#3b82f620'],
         ].map(([lbl,val,sub,col,bg])=>(
           <div key={lbl} style={{background:bg,border:`1px solid ${col}44`,borderRadius:7,
             padding:'8px 10px',borderTop:`3px solid ${col}`}}>
@@ -361,17 +412,40 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
       </div>
 
       {/* ── Status ── */}
+      {!hasMargin ? (
+        /* NO WING, NO MARGIN, NO VERDICT. Stated rather than passed. */
+        <div style={{padding:'7px 14px',background:`${SC.muted}12`,
+          border:`1px solid ${SC.border}`,borderRadius:6,
+          display:'flex',alignItems:'center',gap:10,marginTop:8}}>
+          <span style={{fontSize:18,color:SC.muted}}>—</span>
+          <div style={{fontSize:11,fontWeight:700,color:SC.muted,fontFamily:'system-ui,sans-serif'}}>
+            No longitudinal envelope for this configuration
+            <div style={{fontSize:9,fontWeight:400,color:SC.subtle,marginTop:2,fontFamily:"'DM Mono',monospace"}}>
+              This layout has no wing, so there is no mean aerodynamic chord to measure a static
+              margin against and no neutral point to place limits around. A rotor-borne aircraft is
+              balanced by differential rotor thrust, which is reported as the hover thrust split —
+              not by a CG band. Nothing here passed or failed; there was nothing to test.
+            </div>
+          </div>
+        </div>
+      ) : (
       <div style={{padding:'7px 14px',background:inEnv?`${SC.green}12`:`${SC.red}12`,
         border:`1px solid ${inEnv?SC.green:SC.red}44`,borderRadius:6,
         display:'flex',alignItems:'center',gap:10}}>
         <span style={{fontSize:18}}>{inEnv?'✓':'⚠'}</span>
         <div style={{fontSize:11,fontWeight:700,color:inEnv?SC.green:SC.red,fontFamily:'system-ui,sans-serif'}}>
           {inEnv?'CG within safe limits at MTOW':'CG outside safe limits — adjust battery or seat positions'}
+          {/* A LENGTH WAS FORMATTED BY THE MASS UNIT, AND THE IMPERIAL BRANCH
+              INVENTED ONE. It read metres x 3.28084 x 100 and labelled the
+              result "ft·%", which is not a unit: 0.53 ft printed as
+              "53.0 ft·%". Feet and inches are what an imperial reader wants
+              for a CG margin, and the LENGTH unit decides, not the mass. */}
           <span style={{fontSize:10,fontWeight:400,color:SC.muted,marginLeft:10,fontFamily:"'DM Mono',monospace"}}>
-            Fwd margin: {uc.massU==="lb" ? ((xCGtotal-xCG_fwd)*3.28084*100).toFixed(1)+" ft·%" : ((xCGtotal-xCG_fwd)*100).toFixed(1)+" cm"} · Aft margin: {uc.massU==="lb" ? ((xCG_aft-xCGtotal)*3.28084*100).toFixed(1)+" ft·%" : ((xCG_aft-xCGtotal)*100).toFixed(1)+" cm"}
+            Fwd margin: {cgMargin(xCGtotal-xCG_fwd)} · Aft margin: {cgMargin(xCG_aft-xCGtotal)}
           </span>
         </div>
       </div>
+      )}
 
       {/* ── GA diagram ── */}
       <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'14px'}}>
@@ -669,14 +743,18 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
                 ['+ PAX 1&2 (fwd Row 1)',  We+Wb+270, ((We+Wb)*cgOEW+90*xPilot+180*xRow1)/(We+Wb+270)],
                 ['MTOW (all pax)',          SR.MTOW,   xCGtotal],
               ].map(([lbl,W,xCG],i)=>{
-                const sm=(xNP_vt-xCG)/MAC*100, ok=sm>=5&&sm<=25;
+                /* WITHOUT A MAC THERE IS NO PERCENTAGE. This divided by a
+                   null MAC and printed Infinity% on the first three rows and
+                   NaN% on the last. A dash is the honest cell. */
+                const sm=hasMargin?(xNP_vt-xCG)/MAC*100:null;
+                const ok=hasMargin&&sm>=crit.smMin*100&&sm<=crit.smMax*100;
                 return(
                   <tr key={i} style={{background:i%2===0?SC.bg:'transparent',borderTop:`1px solid ${SC.border}22`}}>
                     <td style={{fontSize:10,color:SC.text,padding:'4px 8px',fontFamily:"'DM Mono',monospace"}}>{lbl}</td>
                     <td style={{fontSize:10,color:SC.amber,padding:'4px 8px',fontFamily:"'DM Mono',monospace"}}>{uc.mass(W)}</td>
                     <td style={{fontSize:10,color:SC.teal,padding:'4px 8px',fontFamily:"'DM Mono',monospace"}}>{uc.len(xCG)}</td>
-                    <td style={{fontSize:10,color:ok?SC.green:SC.red,padding:'4px 8px',fontFamily:"'DM Mono',monospace",fontWeight:700}}>{sm.toFixed(1)}%</td>
-                    <td style={{fontSize:12,padding:'4px 8px'}}>{ok?'✓':'⚠'}</td>
+                    <td style={{fontSize:10,color:hasMargin?(ok?SC.green:SC.red):SC.muted,padding:'4px 8px',fontFamily:"'DM Mono',monospace",fontWeight:700}}>{hasMargin?sm.toFixed(1)+'%':'—'}</td>
+                    <td style={{fontSize:12,padding:'4px 8px'}}>{hasMargin?(ok?'✓':'⚠'):'—'}</td>
                   </tr>
                 );
               });
@@ -689,10 +767,19 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
       <div style={{padding:'7px 12px',background:`${SC.blue}0d`,border:`1px solid ${SC.blue}22`,
         borderRadius:5,fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",lineHeight:1.6}}>
         <span style={{color:SC.blue,fontWeight:700}}>ⓘ </span>
-        Battery mass is constant throughout flight (electric — no fuel burn).
+        Battery mass is constant throughout flight on the all-electric paths; a turboelectric or
+        hybrid design burns fuel and its CG moves, which this panel does not yet model.
         Wing bat: root → {uc.len(yBatEnd)} {uc.lenU} lateral (0.5 m clear of boom at ±{uc.len(yBoom)} {uc.lenU}).
         Tip rotors at wing tips ±{uc.len(bHalf)} {uc.lenU}. Diagram is to uniform scale — true aircraft proportions.
-        CG limits: EASA SC-VTOL §2540–2541 (SM 5–25% MAC).
+        {/* THE CITATION THAT USED TO SIT HERE NAMED A PARAGRAPH THAT DOES NOT
+            EXIST. It read "EASA SC-VTOL 2540-2541 (SM 5-25% MAC)". VTOL.2540
+            is marked "(reserved)" in the specification and has no content;
+            VTOL.2541 is not in the numbering scheme at all. regdb.js carries
+            the post-mortem and re-labelled both thresholds basis:"tool" --
+            ours, not EASA's -- but only in the regulatory tracker. The band
+            is the engine's, so it is attributed to the engine. */}
+        CG limits: {crit.label} band, {(crit.smMin*100).toFixed(0)}–{(crit.smMax*100).toFixed(0)}% MAC — this tool&apos;s own
+        engineering criterion, NOT a certification limit.{crit.advisory ? ` Advisory: ${crit.governingCriterion}.` : ''}
       </div>
     </div>
   );

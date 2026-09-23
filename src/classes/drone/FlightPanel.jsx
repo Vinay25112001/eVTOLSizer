@@ -167,8 +167,10 @@ export default function FlightPanel({ design, frame }) {
 
      Still not keyframed: each press rewrites the scenario and the whole
      flight is integrated again. */
-  const STEP_MPS = 3, STEP_YAW_DEG = 45, STEP_ALT_M = 1;
-  const RELEASE_S = 4;                      // long enough to brake and settle
+  /* STEP_MPS and RELEASE_S went with the translation buttons: one was a
+     commanded SPEED, which only Loiter could hold, and the other was the
+     release segment that let it brake. See LOITER_WITHDRAWN. */
+  const STEP_YAW_DEG = 45, STEP_ALT_M = 1;
   const MIN_HOLD_S = 0.4;                   // a tap is still a move
   const padFull = scen.segments.length >= SCENARIO_LIMITS.maxSegments - 1;
 
@@ -241,18 +243,20 @@ export default function FlightPanel({ design, frame }) {
     const last = st.segments[st.segments.length - 1] ?? {};
     const alt = Number(last.altitudeM) || Number(st.startAltitudeM) || 2;
     const yaw = Number(last.yawDeg) || 0;
-    const base = { mode: "loiter", durationS: Math.max(MIN_HOLD_S, holdS),
+    /* STABILIZE, BECAUSE LOITER IS WITHDRAWN. The pad used to emit
+       loiter segments with a commanded velocity, and a trailing release
+       segment so the aircraft would brake and hold. Neither survives:
+       dynamics.js LOITER_WITHDRAWN records why the velocity-and-position
+       cascade cannot do it, and makeScenario now refuses the mode. What
+       is left commands a yaw and an altitude, which Stabilize holds
+       honestly — and the four translation buttons are gone with it,
+       because a translation this simulation can command is a HELD TILT
+       with no equilibrium, not a speed. */
+    const base = { durationS: Math.max(MIN_HOLD_S, holdS),
                    rollDeg: 0, pitchDeg: 0, yawDeg: yaw, altitudeM: alt,
-                   vxMps: 0, vyMps: 0, altitudeRateMps: "" };
+                   altitudeRateMps: "" };
     const move = mut(base);
-    /* Drop a previous trailing release: holding forward, releasing, then
-       holding again should read as two moves, not move-stop-move-stop. */
-    const segs = [...st.segments];
-    const prev = segs[segs.length - 1];
-    if (prev && prev.mode === "loiter" && !prev.vxMps && !prev.vyMps && prev.isRelease) segs.pop();
-    return { ...st, label: "Flown by hand", segments: [...segs, move,
-      { ...base, durationS: RELEASE_S, vxMps: 0, vyMps: 0, isRelease: true,
-        yawDeg: move.yawDeg, altitudeM: move.altitudeM }] };
+    return { ...st, label: "Flown by hand", segments: [...st.segments, move] };
   });
 
   const startHold = (mut) => { held.current = { mut, at: performance.now() }; };
@@ -262,15 +266,13 @@ export default function FlightPanel({ design, frame }) {
     appendMove(h.mut, (performance.now() - h.at) / 1000);
   };
 
+  /* NO TRANSLATION BUTTONS. They commanded a VELOCITY, which only
+     Loiter can hold, and Loiter is withdrawn — see LOITER_WITHDRAWN in
+     dynamics.js. Offering them as a tilt instead would be worse than
+     offering nothing: a held tilt accelerates for as long as it is held
+     and the aircraft flies away, which is the one thing the scenario
+     editor's own header says has to be reported rather than hidden. */
   const CONTROLS = [
-    { k: "fwd",  glyph: "▲", title: `forward at ${STEP_MPS} m/s while held — release and it brakes to a hover`,
-      mut: (b) => ({ ...b, vxMps: STEP_MPS }) },
-    { k: "back", glyph: "▼", title: `backward at ${STEP_MPS} m/s while held`,
-      mut: (b) => ({ ...b, vxMps: -STEP_MPS }) },
-    { k: "left", glyph: "◀", title: `left at ${STEP_MPS} m/s while held`,
-      mut: (b) => ({ ...b, vyMps: -STEP_MPS }) },
-    { k: "right",glyph: "▶", title: `right at ${STEP_MPS} m/s while held`,
-      mut: (b) => ({ ...b, vyMps: STEP_MPS }) },
     { k: "yawL", glyph: "↺", title: `yaw left ${STEP_YAW_DEG}°`,
       mut: (b) => ({ ...b, yawDeg: b.yawDeg - STEP_YAW_DEG }) },
     { k: "yawR", glyph: "↻", title: `yaw right ${STEP_YAW_DEG}°`,

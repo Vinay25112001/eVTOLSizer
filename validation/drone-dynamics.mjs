@@ -47,6 +47,7 @@ import {
   eulerToQ, qToEuler, qRotate, buildMixer, allocate, allocateDegraded,
   ARDUPILOT_GAINS, DECLARED_DYNAMICS_INPUTS, G_NED,
   makeScenario, SCENARIO_PRESETS, SCENARIO_LIMITS, tiltAccelerationMps2, ARDUPILOT_LOITER,
+  LOITER_WITHDRAWN,
 } from "../src/classes/drone/dynamics.js";
 import { buildAirframe } from "../src/classes/drone/geometry3d.js";
 import { sizeDrone } from "../src/classes/drone/sizing.js";
@@ -482,29 +483,56 @@ console.log("\n-- Stabilize coasts; Loiter stops. The trajectory must show it --
     `still ${spd(last(stab)).toFixed(2)} m/s six seconds after levelling, `
     + `${Math.abs(last(stab).x).toFixed(1)} m downrange`);
 
-  const loit = flyIt([{ durationS: 4, mode: "loiter", vxMps: 5, altitudeM: 5 },
-                      { durationS: 10, mode: "loiter", vxMps: 0, altitudeM: 5 }]);
-  const settled = loit.trace.filter((r) => r.t >= 10);
-  const range = Math.max(...settled.map((r) => r.x)) - Math.min(...settled.map((r) => r.x));
-  check("LOITER: releasing the stick brakes it to a stop",
-    Math.max(...settled.map(spd)) < 2,
-    `peak ${Math.max(...settled.map(spd)).toFixed(2)} m/s once settled, against `
-    + `${spd(last(stab)).toFixed(2)} m/s for the same manoeuvre in Stabilize`);
-  check("and then HOLDS the spot it stopped on", range < 1.5,
-    `position wanders ${range.toFixed(2)} m over the last four seconds`);
+  /* ── LOITER IS WITHDRAWN, AND THESE CHECKS PIN WHY ────────────────
+     What stood here asserted that releasing the stick braked the
+     aircraft to a stop and held the spot. Those checks PASSED, and the
+     behaviour they described was not real: they flew QUAD/X, the most
+     forgiving frame in the set, for 14 seconds, and examined the last
+     four. The instability needs about 27 seconds to rise out of
+     floating-point noise, so a 14-second window on one airframe could
+     not see it. That is the more useful lesson than the bug — a check
+     whose horizon is shorter than the phenomenon will pass for ever.
 
-  const held = flyIt([{ durationS: 8, mode: "loiter", vxMps: 5, altitudeM: 5 }]);
-  check("a HELD command keeps flying at the speed asked for, not an ever-growing tilt",
-    Math.abs(spd(last(held)) - 5) < 1.5,
-    `${spd(last(held)).toFixed(2)} m/s against 5 commanded`);
+     These replace them. They require the divergence to still be there,
+     over a horizon long enough to show it, so that any future
+     implementation has to demonstrably change this rather than re-pass
+     a short test. LOITER_WITHDRAWN carries the full measurements. */
+  let refusedLoiter = false;
+  try { makeScenario({ segments: [{ durationS: 4, mode: "loiter", vxMps: 5, altitudeM: 5 }] }); }
+  catch (e) { refusedLoiter = /loiter is withdrawn/.test(e.message); }
+  check("a user-built scenario cannot ask for LOITER at all",
+    refusedLoiter, "makeScenario refuses it rather than downgrading it to a coast");
 
-  const there = flyIt([{ durationS: 4, mode: "loiter", vxMps: 5, altitudeM: 5 },
-                       { durationS: 4, mode: "loiter", vxMps: 0, altitudeM: 5 },
-                       { durationS: 4, mode: "loiter", vxMps: -5, altitudeM: 5 }]);
-  const turn = Math.max(...there.trace.map((r) => r.x));
-  check("and a reverse command flies back from WHERE IT STOPPED",
-    last(there).x < turn - 5,
-    `out to ${turn.toFixed(1)} m, back to ${last(there).x.toFixed(1)} m`);
+  check("and the withdrawal records what was measured, not just that it failed",
+    LOITER_WITHDRAWN.divergesAfterS > 0 && LOITER_WITHDRAWN.stableScale < 1
+      && LOITER_WITHDRAWN.divergentScale > LOITER_WITHDRAWN.stableScale
+      && /0f43be3/.test(LOITER_WITHDRAWN.claimRetracted)
+      && /sqrt_controller/.test(LOITER_WITHDRAWN.missing),
+    `holds ${LOITER_WITHDRAWN.divergesAfterS} s then diverges; stable only at `
+    + `k <= ${LOITER_WITHDRAWN.stableScale} of ArduPilot's gain, which cannot track`);
+
+  /* The defect itself, reachable only the way a harness reaches it: a
+     raw target function, bypassing makeScenario's refusal. */
+  const rawLoiter = {
+    startAltitudeM: 5, initialAttitude: {},
+    target: () => ({ rollRad: 0, pitchRad: 0, yawRad: 0, altitudeM: 5,
+                     mode: "loiter", vxMps: 0, vyMps: 0 }),
+  };
+  const div = simulate({ model: quad.model, scenario: rawLoiter, declared: DD,
+                         durationS: 150, failed: new Set() });
+  const worstTilt = Math.max(...div.trace.map((r) => Math.hypot(r.rollDeg, r.pitchDeg)));
+  const worstSpeed = Math.max(...div.trace.map(spd));
+  /* Bounded well below what QUAD/X actually reaches (29° and 1.3 m/s),
+     because the divergence is milder on a quad than on the hexacopter
+     the LOITER_WITHDRAWN figures were measured on — the point is that a
+     standing hover does not stay standing, not the size it grows to. */
+  check("a released stick in LOITER still diverges over 150 s, as recorded",
+    worstTilt > 10 && worstSpeed > 0.5,
+    `reaches ${worstTilt.toFixed(0)}° of tilt and ${worstSpeed.toFixed(1)} m/s from a standing `
+    + `hover on QUAD/X — an unstable cascade amplifying numerical noise, not a disturbance`);
+  check("and it is quiet for long enough that a short test would pass",
+    div.trace.filter((r) => r.t < 10).every((r) => Math.hypot(r.vx, r.vy) < 0.01),
+    "under 0.01 m/s for the first 10 s, which is why the 14 s checks this replaces passed");
 
   check("the braking numbers are ArduPilot's, not chosen here",
     ARDUPILOT_LOITER.brakeDelayS === 1.0 && ARDUPILOT_LOITER.brakeAccelMps2 === 2.5,

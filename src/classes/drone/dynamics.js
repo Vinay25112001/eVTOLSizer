@@ -403,6 +403,60 @@ export const ARDUPILOT_LOITER = Object.freeze({
   posP: 1.0,
 });
 
+/* ── LOITER IS WITHDRAWN, AND THIS IS WHY ────────────────────────────
+   The gains above are transcribed correctly. The cascade they drive is
+   UNSTABLE on this simulation's aircraft, and no rescaling of published
+   values makes it work, so the mode is no longer offered: `makeScenario`
+   refuses it and the control pad no longer emits it. `loiterStep` and
+   the branch in `simulate` are kept so the defect stays reproducible —
+   a harness can still reach them through a raw target function — but
+   nothing a user can build will fly it.
+
+   WHAT WAS MEASURED, on the reference 6S hexacopter unless stated.
+   A released stick at the published gains holds position EXACTLY for
+   about 27 seconds and then diverges: an unstable mode with a growth
+   time near one second amplifies floating-point noise until roll is
+   swinging plus or minus 50 degrees and the aircraft is doing 10 m/s.
+   Scaling the whole velocity-and-position cascade by k, the hold is
+   stable at k <= 0.1 and divergent at k >= 0.125 — a tenth of
+   ArduPilot's gain. But a gain low enough to hold cannot do the job:
+
+     frame        k     commanded 3 m/s gave   residual after 20 s
+     HEXA/X      0.10          3.44 m/s              2.95 m/s
+     HEXA/X      0.05          3.36 m/s              2.86 m/s
+     QUAD/X      0.10          4.24 m/s              1.37 m/s
+     OCTA/PLUS   0.10          6.70 m/s             18.85 m/s
+
+   So it does not track the commanded velocity, it never comes to rest,
+   and the gain it needs is airframe-dependent — OCTA/PLUS diverges
+   where QUAD/X is stable. One number cannot cover the range.
+
+   WHY THE GATE DID NOT CATCH IT. The checks that passed flew QUAD/X,
+   the most forgiving frame in the set, for 14 seconds, and examined the
+   last four. The divergence needs about 27 seconds to rise out of
+   noise. A 14-second window on one airframe cannot see it, and the
+   checks in validation/drone-dynamics.mjs now assert the divergence
+   over 150 seconds instead, so a future implementation has to
+   demonstrably change this rather than merely re-pass a short test.
+
+   WHAT IS ACTUALLY MISSING is structural, not a number. AC_PosControl
+   is not a proportional position gain feeding a velocity PID: it limits
+   the velocity demand by stopping distance through `sqrt_controller`,
+   shapes the input through `input_vel_accel_xy`, and runs the position,
+   velocity and attitude loops at separated rates. This implementation
+   collapses all of that into one cascade at one rate. Restoring Loiter
+   means implementing that law against the ArduPilot source, not
+   choosing a gain here. */
+export const LOITER_WITHDRAWN = Object.freeze({
+  reason: "the velocity-and-position cascade is unstable on this aircraft at ArduPilot's published gains, and no scaling of them both holds station and tracks a commanded velocity",
+  divergesAfterS: 27,
+  stableScale: 0.1,
+  divergentScale: 0.125,
+  scaleIsAirframeDependent: true,
+  claimRetracted: "release the stick and it brakes and holds (commit 0f43be3)",
+  missing: "AC_PosControl's sqrt_controller position law, input shaping, and separated loop rates",
+});
+
 /* The horizontal lean a velocity-hold loop asks for.
 
    `vel` and `target` are world-frame horizontal velocities. Returns the
@@ -744,7 +798,8 @@ export function simulate({ model, scenario, declared, durationS = 8, dt = 0.002,
       const wantX = target.vxMps * c - target.vyMps * sn;
       const wantY = target.vxMps * sn + target.vyMps * c;
       const a = loiterStep(loiter, { vel: [state[3], state[4]], target: [wantX, wantY],
-                                    pos: [state[0], state[1]], dt });
+                                    pos: [state[0], state[1]], dt,
+                                    cfg: model.__loiterCfg ?? ARDUPILOT_LOITER });
       /* World acceleration back into body axes, then into lean angles.
          Forward is a NEGATIVE pitch: nose down tilts the thrust ahead. */
       const aFwd = a.ax * c + a.ay * sn;
@@ -1097,7 +1152,14 @@ export function makeScenario({
        commands a VELOCITY and lets the outer loop choose the attitude,
        which is what Loiter and PX4 Position do — and the only mode in
        which releasing the stick brings the aircraft to a stop. */
-    const mode = s.mode === "loiter" ? "loiter" : "stabilize";
+    /* LOITER IS REFUSED HERE, which is what withdraws it: this is the
+       only path a user-built scenario takes. See LOITER_WITHDRAWN above
+       for the measurements. Refusing rather than silently downgrading to
+       stabilize, because a scenario that asked to hold station and got a
+       coasting aircraft instead would be the quiet kind of wrong. */
+    if (s.mode === "loiter")
+      throw new Error(`segment ${n}: loiter is withdrawn — ${LOITER_WITHDRAWN.reason}`);
+    const mode = "stabilize";
     const vxMps = Number(s.vxMps ?? 0) || 0;
     const vyMps = Number(s.vyMps ?? 0) || 0;
     const seg = {

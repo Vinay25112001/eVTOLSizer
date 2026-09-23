@@ -8,6 +8,7 @@ import { generateVSP3File } from "../export/vsp3.js";
 import { aircraftGeometry } from "../engine/geometry.js";
 import { Aircraft3D } from "../panels/Aircraft3D.jsx";
 import { Aircraft3DView } from "../panels/Aircraft3DView.jsx";
+import { MissionAnimation } from "../panels/MissionAnimation.jsx";
 
 /* Tab 15 — OpenVSP.
    Extracted from App.jsx. Receives the App context as a single `ctx`
@@ -37,6 +38,11 @@ export function OpenVSPTab(ctx) {
                 <Panel title="Aircraft layout — interactive 3D" onSave={false}>
                   <Aircraft3DView params={params} SR={SR}/>
                 </Panel>
+                {/* The layout above is the aircraft standing still. This is
+                    the same aircraft flying the mission it was sized for,
+                    positioned by engine/mission-path.js rather than by any
+                    motion invented here. */}
+                <MissionAnimation params={params} SR={SR}/>
                 {/* The old orthographic four-up is kept: it is the view an
                     engineer checks proportions in, and it prints cleanly. */}
                 <Panel title="Orthographic four-up (Top / Front / Side / Iso)" onSave={false}>

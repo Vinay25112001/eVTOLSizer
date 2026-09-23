@@ -29,7 +29,7 @@ export const INPUTS = {
   range:          { status:"sourced", src:"Cruise range BEFORE the reserve allowance. DEFAULT 100 km — Archer Midnight's published range, matching the reference aircraft this configuration is anchored to (12 rotors, 150 mph). Sizes to 4,032 kg against Archer's published 3,175 kg: the model's known over-prediction, left visible. Earlier defaults: 190 km was UNSOURCED and DID NOT CONVERGE (5,825 kg); 65 km was chosen against an MCTOM of 3,175 kg that SC-VTOL Issue 2 has since superseded with 5,700 kg" },
   vCruise:        { status:"unverified", note:"user requirement" },
   cruiseAlt:      { status:"unverified", note:"user requirement" },
-  hoverHeight:    { status:"unverified", note:"drives hover TIME as h/0.5 m/s — an assumed 0.5 m/s vertical rate, unsourced" },
+  hoverHeight:    { status:"unverified", note:"the height the vertical leg reaches, so it sets where the CLIMB starts (climbHeight = cruiseAlt - fieldElev - hoverHeight) and the hover air density. It no longer drives hover TIME: that is tto, the sourced 30 s. This note previously said 'drives hover TIME as h/0.5 m/s', which the engine stopped doing when tto became sourced. NOTE FOR REVIEW: the 15.24 m default is exactly 50 ft, which is the 6,000 -> 6,050 ft transition of the same NASA Table 1 that sources tto, and 50 ft in 30 s is its stated 100 ft/min. That correspondence looks like a source rather than an assumption, but promoting the status is a research decision, not an editing one" },
   reserveMinutes: { status:"sourced", src:"Energy reserve held at the end of the mission. DEFAULT 20 min. CURRENT ON BOTH SIDES OF THE ATLANTIC: the FAA powered-lift SFAR (Integration of Powered-Lift, final rule Oct 2024, operations/training final April 2025) requires 20 minutes reserve for VFR and 30 for IFR — reduced from the 30/45 of the 2023 proposal — and permits powered-lift to use HELICOPTER VFR/IFR minima where the aircraft can perform a vertical landing at any point on the route. EASA SC-VTOL VTOL.2430(b)(4) requires a sufficient reserve but states NO number (MOC SC-VTOL Issue 2 p.5 refers only to 'the sufficient reserve accepted for compliance with VTOL.2430(b)(4)'); 14 CFR 91.151(b) gives 20 min VFR for rotorcraft. The 20 min DEFAULT is NASA's sizing convention, Johnson & Silva 2022: 'reserve minimum of 10% of mission or 20-min flight at best-endurance speed (Vbe)'. Set 30 for an IFR mission" },
   fieldElev:      { status:"sourced",    src:"NASA sizes UAM concepts at 5,000 ft — Johnson & Silva 2022 Table 2" },
   deltaISA:       { status:"sourced",    src:"ICAO Doc 7488; NASA sizing day is ISA+20" },
@@ -263,12 +263,24 @@ export const OUTPUTS = {
   Pcr:         { status:"sourced", src:"P = W·V/((L/D)·etaSys) on the converged LDact, which IS validated for the NASA case" },
   Pdc:         { status:"sourced", src:"same form as climb, with the descent angle re-derived from the converged L/D" },
   Pres:        { status:"sourced", src:"reserve flown at 0.76·Vcruise as a best-endurance proxy for an electric aircraft; the 0.76 factor is NOT sourced" },
-  tto:         { status:"sourced", src:"120 s hover OGE for takeoff — Johnson & Silva 2022 §5 UAM primary sizing mission. Was 30.5 s (an assumed 0.5 m/s vertical transit), i.e. 3.9x short" },
-  tld:         { status:"sourced", src:"120 s hover OGE for landing — same source" },
+  tto:         { status:"sourced", src:"30 s hover for takeoff — NASA/TM-20210017971 Table 1, the 75 nm UAM sizing mission's own vertical transition (6,000 -> 6,050 ft at 100 ft/min, Time row 30 s). This entry previously read 120 s citing Johnson & Silva §5: that is their INITIAL AIR-TAXI mission, a different mission from the one this basis is named for. Measured on Archer's published mission, 120 s gives MTOW +27% and 30 s gives -4%. See the derivation at engine/mission.js" },
+  tld:         { status:"sourced", src:"30 s hover for landing — same source and the same correction as tto" },
   tcl:         { status:"derived", note:"climb distance / ground speed; ground speed carries the headwind" },
   tcr:         { status:"derived", note:"cruise distance / ground speed" },
   tdc:         { status:"derived", note:"descent distance / ground speed" },
   Tend:        { status:"derived", note:"sum of the phase times; the mission-profile x-axis" },
+  /* THE MISSION AS A PATH. These were all computed in the sizing loop and
+     simply not returned. They exist so that anything drawing the mission
+     reads the sizing's own geometry instead of re-deriving it from the
+     cruise altitude and the angles, which is how a drawing and a sizing
+     start disagreeing while both look right. */
+  climbHeightM:     { status:"derived", note:"cruiseAlt - fieldElev - hoverHeight, clamped at zero so a cruise altitude below the field cannot give a negative climb" },
+  climbRunM:        { status:"derived", note:"climbHeight / tan(climbAngle) — ground distance covered while climbing" },
+  descentRunM:      { status:"derived", note:"climbHeight / tan(descentAngle), measured above the FIELD; descentAngle defaults to the converged glide angle atan(1/LD)" },
+  cruiseRunM:       { status:"derived", note:"range - hops x (climbRun + descentRun) - reserve distance. THE CRUISE LEG IS NOT THE RANGE: the reserve is flown at 0.76 x vCruise and its distance is charged against the range" },
+  climbSpeedMS:     { status:"derived", note:"rateOfClimb / sin(climbAngle) — the airspeed implied by the two climb inputs, both of which are themselves unverified" },
+  climbRateMS:      { status:"unverified", note:"the rateOfClimb input, echoed onto the result so a mission drawing reads the value the sizing used rather than the raw parameter" },
+  hoverClimbRateMS: { status:"sourced", src:"hoverHeight / tto = 15.24 m / 30 s = 0.508 m/s, which is the 100 ft/min of NASA/TM-20210017971 Table 1's 6,000 -> 6,050 ft vertical transition. The 200-sample trace still uses a bare 0.5 m/s for its vertical legs; that literal is the approximation, not this" },
   Eto:         { status:"derived" }, Ecl:{ status:"derived" }, Ecr:{ status:"derived" },
   Edc:         { status:"derived" }, Eld:{ status:"derived" },
   Eres:        { status:"sourced", src:"the LARGER of the 20-min time criterion and 10% of mission energy — Johnson & Silva 2022 §5 states the reserve as a minimum of the two; only the time form existed before" },

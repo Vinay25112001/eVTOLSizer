@@ -3356,6 +3356,25 @@ function runSizingCore(p0) {
     Phov:+Phov.toFixed(2),Pcl:+Pcl.toFixed(2),Pcr:+Pcr.toFixed(2),Pdc:+Pdc.toFixed(2),Pres:+Pres.toFixed(2),
     tto:+tto.toFixed(1),tcl:+tcl.toFixed(1),tcr:+tcr.toFixed(1),tdc:+tdc.toFixed(1),tld:+tld.toFixed(1),tres:+tres.toFixed(1),
     Tend:+Tend.toFixed(1),
+    /* THE MISSION AS A PATH, not just as durations and powers.
+       Every one of these is already computed above and was simply not
+       reaching the result. Anything that draws the mission needs them,
+       and a second module that re-derived them from cruiseAlt and the
+       angles would be the two-implementations failure profile.js:23-30
+       warns about: the drawing and the sizing would drift apart and
+       both would look right.
+
+       hoverClimbRateMS IS THE ONE THAT MATTERS. The 200-sample trace
+       below uses a bare 0.5 m/s for the vertical legs, but the sizing
+       has not charged energy at that rate since tto became the sourced
+       30 s (see the note at the tto assignment). The rate the aircraft
+       ACTUALLY flies is the hover height divided by that time, and a
+       drawing that used 0.5 would show an aircraft reaching hover
+       height at a moment its own energy budget disagrees with. */
+    climbHeightM:+climbHeight.toFixed(2),climbRunM:+ClimbR.toFixed(1),
+    descentRunM:+DescR.toFixed(1),cruiseRunM:+CruiseRange.toFixed(1),
+    climbSpeedMS:+Vcl.toFixed(2),climbRateMS:+RoC.toFixed(3),
+    hoverClimbRateMS:+(hvtol/(p.hoverTimeTakeoffS??HOVER_S_DEFAULT)).toFixed(4),
     Eto:+Eto.toFixed(3),Ecl:+Ecl.toFixed(3),Ecr:+Ecr.toFixed(3),Edc:+Edc.toFixed(3),Eld:+Eld.toFixed(3),Eres:+Eres.toFixed(3),Etot:+Etot.toFixed(3),
     Swing:rn(Swing,2),WL:rn(WL,1),bWing:rn(bWing,2),Cr_:rn(Cr_,3),Ct_:rn(Ct_,3),
     MAC:+MAC.toFixed(3),Ymac:+Ymac.toFixed(3),Xac:+Xac.toFixed(3),sweep:+sweep.toFixed(2),Re_:+Re_.toFixed(0),Mach:+Mach.toFixed(4),

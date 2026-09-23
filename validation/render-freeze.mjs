@@ -50,6 +50,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { render, VIEWS, CONFIGS } from "../tools/render3d.mjs";
 import { renderDrone, DRONE_CONFIGS } from "../tools/render-drone.mjs";
+import { renderMission, MISSION_FRAMES } from "../tools/render-mission.mjs";
 
 const REF = "validation/renders";
 const VIEW_SET = ["iso", "top"];        // one shape view, one planform view
@@ -90,6 +91,20 @@ for (const va of VARIANTS) for (const v of VIEW_SET)
    PNG because it reaches the drawing. */
 for (const cfg of DRONE_CONFIGS)
   jobs.push({ name: `drone-${cfg.key}.png`, draw: (out) => renderDrone(cfg, 720, 540, out) });
+
+/* THE MISSION ANIMATION, frozen as frames at DECLARED TIMES. An
+   animation cannot be frozen while a clock decides what it shows, which
+   is why buildMissionScene takes `t` as an argument and never reads
+   one: ask for the same instant and the same pixels come back.
+
+   One frame per phase, because each phase is a different drawing — a
+   vertical leg, a slope, a level cruise — plus the wingless and
+   tiltrotor layouts, where the aircraft on the path changes and the
+   path must not. This is the view that found SIDE and FRONT swapped in
+   the projection table, by drawing an aircraft that should have been in
+   profile and was nose-on instead. */
+for (const f of MISSION_FRAMES)
+  jobs.push({ name: `mission-${f.key}.png`, draw: (out) => renderMission(f, 900, 340, out) });
 
 {
   for (const job of jobs) {

@@ -97,6 +97,28 @@ export const DEFAULT_PARAMS = {
        cabin check honours the integer instead -- and the regulatory panel
        can complete its applicability test, which it cannot do otherwise. */
     nSeats:null,
+    /* VNO IS DECLARED, NOT COMPUTED, AND THE DOCUMENT SAYS SO. MOC-1
+       SC-VTOL Issue 2 (c) Design Airspeeds, verbatim: "Velocity of Normal
+       Operations, VNO is the maximum structural cruising speed. VNO should
+       be defined by the applicant and should be less than or equal to VH
+       and VNE". No equation in the corpus produces it, so this engine does
+       not derive one -- an applicant states it, and the tool then checks it.
+       Inventing a VNO would be the tool asserting a certification figure
+       nobody declared, which is exactly what STRUCTURAL-LAYOUT.md 4.5
+       refuses.
+
+       KNOTS CAS, because that is the unit the paragraph limits it in.
+       VTOL.2000(d) admits only aircraft with VNO at most 250 KCAS, and
+       until this existed that gate could never be decided: cruise speed
+       bounds VNO from BELOW, so a low cruise speed proved nothing. See
+       regdb.js, the APPLICABILITY header.
+
+       DEFAULTED TO null ON PURPOSE, for the same reason nSeats is, and
+       with the same consequence: nothing downstream reads it except the
+       applicability gate, no sized result moves, and the golden master is
+       byte-identical. Unstated, the gate reports NOT DECIDABLE and says a
+       declaration would close it, rather than reading a pass into silence. */
+    vno:null,
     /* Reserve is set by TIME by default, because that is how the rule is
        written: FAA powered-lift SFAR (final rule Oct 2024, operations Apr 2025)
        20 min VFR / 30 min IFR — reduced from 30/45 in the 2023 proposal — and

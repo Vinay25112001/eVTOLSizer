@@ -50,7 +50,15 @@ import { AIRCRAFT_CLASSES, CLASS_IDS, DEFAULT_CLASS, classOf, sizeDesign, classF
    the fractional occupancy it had. Verified, not assumed: golden-master
    is byte-identical across all 277 cases, and reg-applicability.mjs
    check 7 asserts that null and absent size to the same kilogram. */
-const PINNED_DEFAULTS_HASH = "062924df5fdaa0";
+/* MOVED AGAIN FOR `vno`, AND FOR THE SAME REASON, WITH THE SAME PROOF.
+   VTOL.2000(d) admits only aircraft with VNO at most 250 KCAS, and MOC-1
+   SC-VTOL (c) says VNO "should be defined by the applicant" — no equation
+   in the corpus yields one, so it is declared, not derived. It defaults to
+   null, nothing downstream reads it except the applicability gate, and
+   reg-applicability.mjs section 2b asserts that runSizing with and without
+   a declared VNO is identical character for character. The hash moved
+   because a key was added; no sized result did. */
+const PINNED_DEFAULTS_HASH = "01a6293d5a8d1c";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 let pass = 0, fail = 0;

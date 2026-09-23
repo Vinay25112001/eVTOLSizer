@@ -1890,6 +1890,40 @@ export default function App(){
                 </div>
               );
             })()}
+            {/* VNO IS DECLARED BY THE APPLICANT, WHICH IS WHY IT IS TYPED
+                AND NOT DERIVED. MOC-1 SC-VTOL (c): "VNO should be defined
+                by the applicant". No equation in the corpus produces one,
+                so the tool asks. VTOL.2000(d) admits only aircraft at or
+                below 250 KCAS, and cruise speed bounds VNO from BELOW
+                only — which is why a blank here left that gate permanently
+                undecidable, not merely unanswered. */}
+            {(()=>{
+              const raw=params.vno, stated=Number.isFinite(Number(raw))&&Number(raw)>0;
+              const cruiseKt=Number(params.vCruise)/(1852/3600);
+              return(
+                <div style={{padding:"4px 0 6px",borderBottom:`1px solid ${SC.border}22`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                    <span style={{fontSize:10,color:SC.muted,fontFamily:"system-ui,sans-serif"}}>V<sub>NO</sub></span>
+                    <div style={{display:"flex",gap:5,alignItems:"center"}}>
+                      <input type="number" min={1} max={400} step={1}
+                        value={stated?Number(raw):""} placeholder="not stated"
+                        onChange={(e)=>{const v=e.target.value.trim();set("vno")(v===""?null:Math.max(1,Number(v)||0)||null);}}
+                        style={{width:64,padding:"2px 6px",background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:4,color:stated?SC.amber:SC.subtle,fontSize:11,fontWeight:700,fontFamily:"'DM Mono',monospace",textAlign:"right"}}/>
+                      <span style={{fontSize:9,color:SC.subtle,fontFamily:"'DM Mono',monospace"}}>KCAS</span>
+                      {stated&&(
+                        <button type="button" onClick={()=>set("vno")(null)} title="clear — leave VNO undeclared"
+                          style={{padding:"2px 7px",background:"transparent",border:`1px solid ${SC.border}`,borderRadius:4,color:SC.muted,fontSize:9,cursor:"pointer",fontFamily:"'DM Mono',monospace"}}>clear</button>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{fontSize:9,color:SC.subtle,fontFamily:"system-ui,sans-serif",lineHeight:1.5}}>
+                    Maximum structural cruising speed, declared not computed. Sets the applicability gate on the Regulatory tab{stated?"":"; blank leaves it undecided"}.
+                    {stated&&Number(raw)>250&&<span style={{color:SC.red}}> Above SC-VTOL&apos;s limit of 250 KCAS.</span>}
+                    {stated&&Number.isFinite(cruiseKt)&&cruiseKt>Number(raw)&&<span style={{color:SC.amber}}> Below this design&apos;s cruise of {cruiseKt.toFixed(0)} kt.</span>}
+                  </div>
+                </div>
+              );
+            })()}
             <Slider label="Mission Range" unit="km" value={params.range} min={50} max={250} step={5} onChange={set("range")} note="Excludes reserve · total = mission + reserve"/>
             {/* Reserve: TIME or DISTANCE. The regulation is written in time
                 (FAA powered-lift SFAR 20 min VFR / 30 IFR; EASA VTOL.2430(b)(4) requires a reserve, states no number;

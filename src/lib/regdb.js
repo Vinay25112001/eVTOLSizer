@@ -206,17 +206,31 @@ export const REG_DB = {
 
      VTOL.2000(a)  person-carrying VTOL, small category   ASSUMED
      VTOL.2000(c)  not pressurised                        STRUCTURAL
-     VTOL.2000(d)  VNO <= 250 KCAS                        BOUNDED
+     VTOL.2000(d)  VNO <= 250 KCAS                        NEEDS vno
      VTOL.2005(a)  <= 9 passenger seats                   NEEDS nSeats
      VTOL.2005(a)  MCTOM <= 5 700 kg                      COMPUTED
 
-   VTOL.2000(d) is a ONE-SIDED test and is implemented as one. MOC
-   VTOL.2200(c) defines VNO as "the maximum structural cruising speed",
-   so VNO >= the design cruise speed always. A cruise speed above
-   250 kt therefore puts VNO above 250 kt and the aircraft out of scope,
-   decisively. A cruise speed below it decides NOTHING, because VNO is
-   not modelled anywhere in this engine. The panel reports exactly that
-   asymmetry rather than reading a pass into it.
+   VTOL.2000(d) IS DECIDED BY A DECLARATION, NOT BY A CALCULATION. MOC-1
+   SC-VTOL Issue 2 (c) states it outright: "VNO should be defined by the
+   applicant". No equation in the corpus produces a VNO, so this tool
+   asks for one instead of inventing one, and checks it once given.
+
+   WITHOUT A DECLARED VNO the old one-sided bound still stands and is
+   still implemented. MOC-1 (c) defines VNO as "the maximum structural
+   cruising speed", so VNO >= the design cruise speed always. A cruise
+   speed above 250 kt therefore puts VNO above 250 kt and the aircraft
+   out of scope decisively, whatever is later declared. A cruise speed
+   below it decides NOTHING, because the bound is from below. The panel
+   reports that asymmetry rather than reading a pass into it.
+
+   THE OPERATOR IN VTOL.2000(d) WAS RECOVERED, NOT ASSUMED. The extracted
+   text of SC-VTOL-02 reads "a VNO  250 knots calibrated airspeed" — the
+   glyph is GONE, and the file contains no "<=" character anywhere, so the
+   direction of the test is not recoverable from it. It is fixed here by
+   complementarity: the X-57 Airworthiness Validation Plan quotes the same
+   Part 23 split, where the mangled low-speed branch pairs with an intact
+   "High speed--for airplanes with a VNO or VMO > 250 KCAS". The two
+   branches are exhaustive, so the low-speed one is "<=".
 
    The speed is compared in EAS, not CAS. The paragraph says KCAS; this
    engine carries true airspeed at cruise density and no compressibility
@@ -272,20 +286,27 @@ export const GATE = { IN: "in", OUT: "out", UNKNOWN: "unknown" };
  * @param p   the parameter set (needs nSeats, vCruise, cruiseAlt)
  * @param sr  the sizing result (needs MTOW)
  * @param eas cruise equivalent airspeed in m/s, or null if not computable
- * TWO KINDS OF "NOT DECIDABLE", AND THEY MUST NOT BE CONFLATED. The seat
- * gate is undecided because nobody typed a number, and one keystroke
- * closes it. VTOL.2000(d) is undecided because this engine has no VNO at
- * all, and NOTHING the user types closes it. Reporting both as one
- * "incomplete" flag made the flag permanent and therefore meaningless —
- * a warning that is always on is not a warning. So `fixable` marks the
- * ones a user can close, and the panel asks for those and merely states
- * the others.
+ * "NOT DECIDABLE" MUST SAY WHETHER ANYTHING CAN BE DONE ABOUT IT, which
+ * is what `fixable` marks: the panel ASKS for those and merely states the
+ * rest. Reporting every kind of undecided as one "incomplete" flag made
+ * the flag permanent and therefore meaningless — a warning that is always
+ * on is not a warning.
+ *
+ * VTOL.2000(d) USED TO BE THE PERMANENT ONE and no longer is. It was
+ * undecidable because the engine had no VNO and cruise speed bounds VNO
+ * only from BELOW, so nothing a user typed could close it. VNO is now a
+ * declared parameter — MOC-1 (c) says it "should be defined by the
+ * applicant", so declaring it is the correct way to obtain one and
+ * computing it would have been wrong. Both undecided gates are therefore
+ * fixable now, and `complete` is reachable for the first time.
  *
  * @returns {{gates, applies, undecided, fixable, complete}}
  */
 export function scVtolApplicability(p, sr, eas) {
   const seats = Number(p?.nSeats);
   const hasSeats = Number.isFinite(seats) && seats > 0;
+  const vno = Number(p?.vno);
+  const hasVno = Number.isFinite(vno) && vno > 0;
   const mtow = Number(sr?.MTOW);
   const easKt = Number.isFinite(eas) ? eas / MS_PER_KT : null;
 
@@ -307,24 +328,62 @@ export function scVtolApplicability(p, sr, eas) {
           + "with dP = 0). Pressurisation exists only in AIRCRAFT mode.",
     },
     (() => {
-      /* ONE-SIDED. Above the line it decides; below it, it does not. */
+      /* DECLARED FIRST, BOUNDED SECOND. A stated VNO decides this gate
+         outright, in the unit the paragraph uses. With none stated the
+         old one-sided bound still applies: cruise speed bounds VNO from
+         BELOW, so above the line it decides and below it does not. */
+      if (hasVno) {
+        const over = vno > EASA_VNO_LIMIT_KT;
+        /* THE DECLARATION CAN CONTRADICT THE DESIGN, and the tool must
+           not quietly prefer one. VNO is the maximum structural cruising
+           speed, so a design that cruises faster than its own declared
+           VNO cruises outside normal operations. That is not a scope
+           verdict -- the paragraph limits VNO and nothing else -- so the
+           gate still answers on the declared number and the conflict is
+           reported beside it. */
+        const conflict = easKt !== null && easKt > vno;
+        return {
+          para: "VTOL.2000(d)",
+          name: "VNO at most 250 KCAS",
+          state: over ? GATE.OUT : GATE.IN,
+          shown: vno.toFixed(1) + " kt declared",
+          conflict: conflict
+            ? "Declared VNO is below this design's cruise speed of "
+            + easKt.toFixed(1) + " kt. VNO is the maximum structural "
+            + "cruising speed (MOC-1 (c)), so the aircraft would cruise "
+            + "above it. One of the two is wrong; the tool will not "
+            + "choose."
+            : undefined,
+          note: "Declared by the applicant, as MOC-1 (c) requires: VNO "
+              + "\"should be defined by the applicant\". Not computed "
+              + "here, because no equation in the corpus produces one."
+              + (over
+                  ? " Above 250 KCAS the Special Condition does not apply."
+                  : " MOC-1 (c) also requires VNO <= VH and VNO <= VNE; "
+                  + "this engine computes neither, so those two are NOT "
+                  + "checked."),
+        };
+      }
       if (easKt === null) return {
         para: "VTOL.2000(d)", name: "VNO at most 250 KCAS",
-        state: GATE.UNKNOWN, shown: "cruise speed unavailable",
-        note: "No cruise speed to bound VNO with.",
+        state: GATE.UNKNOWN, fixable: true, shown: "not stated",
+        note: "No VNO declared and no cruise speed to bound one with.",
       };
       const over = easKt > EASA_VNO_LIMIT_KT;
       return {
         para: "VTOL.2000(d)",
         name: "VNO at most 250 KCAS",
         state: over ? GATE.OUT : GATE.UNKNOWN,
-        shown: easKt.toFixed(1) + " kt EAS at cruise",
+        fixable: over ? undefined : true,
+        shown: easKt.toFixed(1) + " kt EAS at cruise, VNO not stated",
         note: over
           ? "VNO is the maximum structural cruising speed (MOC VTOL.2200(c)), "
-          + "so VNO >= this. Above 250 kt the aircraft is out of scope."
-          : "Cruise is below the line, which decides NOTHING: VNO is not "
-          + "modelled in this engine, and only VNO is what the paragraph "
-          + "limits. Compared in EAS; the paragraph says KCAS.",
+          + "so VNO >= this. Above 250 kt the aircraft is out of scope, "
+          + "whatever VNO is declared to be."
+          : "Cruise is below the line, which decides NOTHING: cruise speed "
+          + "bounds VNO from BELOW, and only VNO is what the paragraph "
+          + "limits. Declare a VNO to close this gate. Compared in EAS; "
+          + "the paragraph says KCAS.",
       };
     })(),
     {
@@ -359,10 +418,10 @@ export function scVtolApplicability(p, sr, eas) {
     applies:   !gates.some((g) => g.state === GATE.OUT),
     undecided,
     fixable:   undecided.filter((g) => g.fixable === true),
-    /* True only if every gate is decided. With no VNO in the engine this
-       is presently unreachable, and saying so is the point: the
-       applicability test against SC-VTOL-02 cannot be completed by this
-       tool as it stands. Give the engine a VNO and it becomes reachable. */
+    /* True only if every gate is decided. REACHABLE SINCE VNO BECAME A
+       DECLARED PARAMETER: state a seat count and a VNO and the
+       applicability test against SC-VTOL-02 completes. It was previously
+       unreachable by construction, and this field existed to say so. */
     complete:  undecided.length === 0,
   };
 }

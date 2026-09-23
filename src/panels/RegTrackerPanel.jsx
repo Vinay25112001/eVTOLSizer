@@ -244,20 +244,39 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
             The {basis.total} rules below are <strong>withdrawn, not failed</strong>. A threshold from a document that does not govern this aircraft has no verdict to give, and a PASS badge on one would be worse than showing nothing. A certification basis for this design would be another specification entirely &mdash; CS-29, or a special condition written for it.
           </div>
         )}
-        {/* TWO DIFFERENT SILENCES. One the reader can close by typing a
-            number; one no keystroke closes, because the engine has no
-            VNO. Reporting them as a single "incomplete" flag left the
-            flag permanently on, and a warning that is always on stops
-            being read. So the fixable ones are ASKED FOR and the
-            structural one is merely STATED. */}
+        {/* A SILENCE THE READER CAN CLOSE IS ASKED ABOUT; one no keystroke
+            closes is merely STATED. Reporting both as a single
+            "incomplete" flag left the flag permanently on, and a warning
+            that is always on stops being read.
+            VTOL.2000(d) MOVED FROM THE SECOND GROUP TO THE FIRST when VNO
+            became a declared parameter, which is how MOC-1 (c) says a VNO
+            is obtained in the first place. What remains permanently
+            unchecked is narrower and is stated below: VH and VNE. */}
         {scope.easa.applies && scope.easa.fixable.length > 0 && (
           <div style={{ marginTop: 10, padding: '10px 12px', background: `${SC.amber}11`, border: `1px solid ${SC.amber}44`, borderRadius: 6, fontSize: 10, color: SC.amber, fontFamily: "'DM Mono',monospace", lineHeight: 1.7 }}>
             Nothing above puts this design <em>out</em> of scope, but {scope.easa.fixable.length === 1 ? "one gate is" : `${scope.easa.fixable.length} gates are`} undecided and <strong>you can close {scope.easa.fixable.length === 1 ? "it" : "them"}</strong>: {scope.easa.fixable.map((g) => g.para).join(", ")}. The rules below are shown on the assumption {scope.easa.fixable.length === 1 ? "it holds" : "they hold"}.
           </div>
         )}
+        {/* A DECLARATION THAT CONTRADICTS THE DESIGN IS NOT A SCOPE
+            VERDICT, so it is reported here rather than folded into a
+            gate's badge. The paragraph limits VNO and nothing else. */}
+        {scope.easa.gates.filter((g) => g.conflict).map((g) => (
+          <div key={`conflict-${g.para}`} style={{ marginTop: 10, padding: '10px 12px', background: `${SC.amber}11`, border: `1px solid ${SC.amber}44`, borderRadius: 6, fontSize: 10, color: SC.amber, fontFamily: "'DM Mono',monospace", lineHeight: 1.7 }}>
+            <strong>{g.para} &mdash; the declaration disagrees with the design.</strong> {g.conflict}
+          </div>
+        ))}
         {scope.easa.applies && scope.easa.undecided.length > scope.easa.fixable.length && (
           <div style={{ marginTop: 10, padding: '10px 12px', background: `${SC.muted}11`, border: `1px solid ${SC.border}`, borderRadius: 6, fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", lineHeight: 1.7 }}>
-            VTOL.2000(d) cannot be decided by this tool at all, at any setting: the paragraph limits V<sub>NO</sub> to {EASA_VNO_LIMIT_KT} KCAS and this engine computes no V<sub>NO</sub>, V<sub>NE</sub> or V<sub>H</sub>. A cruise speed <em>below</em> the line decides nothing. The applicability test against SC-VTOL-02 is therefore never complete here &mdash; it is only never contradicted.
+            {scope.easa.undecided.filter((g) => !g.fixable).map((g) => g.para).join(", ")} cannot be decided by this tool at any setting.
+          </div>
+        )}
+        {/* WHAT A DECLARED VNO DOES NOT BUY. MOC-1 (c) bounds VNO by two
+            further speeds, and this engine computes neither, so a declared
+            VNO is checked against the 250 KCAS limit ONLY. Stating the
+            half that is not checked is the whole point of the panel. */}
+        {scope.easa.applies && Number(params?.vno) > 0 && (
+          <div style={{ marginTop: 10, padding: '10px 12px', background: `${SC.muted}11`, border: `1px solid ${SC.border}`, borderRadius: 6, fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", lineHeight: 1.7 }}>
+            V<sub>NO</sub> is checked against VTOL.2000(d)&apos;s {EASA_VNO_LIMIT_KT} KCAS and <em>nothing else</em>. MOC-1 (c) also requires V<sub>NO</sub> &le; V<sub>H</sub> and V<sub>NO</sub> &le; V<sub>NE</sub>; this engine computes no V<sub>H</sub>, V<sub>NE</sub> or V<sub>D</sub>, so those two bounds are unchecked here and remain the applicant&apos;s to show. The declared value is compared as stated in KCAS; the cruise figure beside it is EAS.
           </div>
         )}
 

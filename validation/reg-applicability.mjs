@@ -50,7 +50,7 @@ import { runSizing } from "../src/engine.js";
 import {
   REG_DB, ruleBasisCounts, scVtolApplicability, faaApplicability,
   CATEGORY_EFFECTS, GATE, KG_PER_LB, FAA_MGW_LB, FAA_MGW_KG,
-  EASA_MCTOM_KG, EASA_MAX_SEATS, FAA_MAX_SEATS,
+  EASA_MCTOM_KG, EASA_MAX_SEATS, FAA_MAX_SEATS, EASA_VNO_LIMIT_KT,
 } from "../src/lib/regdb.js";
 import { DEFAULT_PARAMS } from "../src/lib/defaults.js";
 
@@ -91,18 +91,31 @@ console.log("\n1. AN OUT-OF-SCOPE DESIGN GETS NO VERDICTS");
     `applies=${a.applies}; the MCTOM gate reports "${a.gates.find((g) => g.name.includes("take-off mass")).state}"`);
 
   const b = scVtolApplicability(P({ nSeats: 4 }), inScope, 60);
-  check(b.applies === true && b.fixable.length === 0,
-    "a design inside every stated gate is in scope with nothing left to ask",
+  check(b.applies === true && b.complete === false
+        && b.undecided.length === 1 && b.undecided[0].para === "VTOL.2000(d)",
+    "a design inside every stated gate is in scope but NOT yet complete",
     `MTOW ${inScope.MTOW.toFixed(1)} kg, 4 seats → applies=${b.applies}, `
-      + `${b.fixable.length} fixable gate(s) outstanding`);
+      + `undecided: ${b.undecided.map((g) => g.para).join(", ")}`);
 
-  /* THE STRUCTURAL GAP IS NOT SILENTLY CLOSED. VTOL.2000(d) stays
-     undecided even for a perfectly ordinary design, and `complete` must
-     report that rather than rounding it up to a pass. */
-  check(b.complete === false && b.undecided.length === 1
-        && b.undecided[0].para === "VTOL.2000(d)",
-    "but the applicability test is still not COMPLETE, and says so",
-    `undecided: ${b.undecided.map((g) => g.para).join(", ")} — no VNO in this engine`);
+  /* THE GAP IS NOT SILENTLY CLOSED — BUT IT IS NOW CLOSEABLE. An
+     undeclared VNO leaves VTOL.2000(d) undecided, and `complete` must
+     report that rather than rounding it up to a pass. What changed is
+     that it is now marked FIXABLE: MOC-1 (c) says VNO "should be defined
+     by the applicant", so a declaration is the documented way to obtain
+     one, and the panel can ask for it. */
+  check(b.fixable.length === 1 && b.fixable[0].para === "VTOL.2000(d)",
+    "an undeclared VNO is offered as something the reader CAN close",
+    `fixable=[${b.fixable.map((g) => g.para).join(", ")}] — MOC-1 (c) has `
+      + `the applicant define VNO, so asking is the correct move`);
+
+  /* THE HEADLINE: `complete` IS REACHABLE. It never was before — the
+     field existed to record that the test could not be finished. */
+  const done = scVtolApplicability(P({ nSeats: 4, vno: 200 }), inScope, 60);
+  check(done.applies === true && done.complete === true
+        && done.undecided.length === 0,
+    "declare a seat count AND a VNO and the applicability test COMPLETES",
+    `4 seats, VNO 200 KCAS → applies=${done.applies}, complete=${done.complete}, `
+      + `${done.undecided.length} undecided — unreachable before VNO existed`);
 
   /* An unstated seat count must not read as a pass, and must be marked
      as something the user can actually close. */
@@ -120,27 +133,72 @@ console.log("\n1. AN OUT-OF-SCOPE DESIGN GETS NO VERDICTS");
     `12 seats → applies=${d.applies}`);
 }
 
-/* ── 2. VTOL.2000(d) IS ONE-SIDED AND IS IMPLEMENTED AS ONE ──────────── */
-console.log("\n2. THE SPEED GATE DECIDES ONLY IN THE DIRECTION IT CAN");
+/* ── 2. VTOL.2000(d): DECLARED WHEN STATED, ONE-SIDED WHEN NOT ───────── */
+console.log("\n2. THE SPEED GATE — A DECLARATION DECIDES IT, CRUISE ONLY BOUNDS IT");
 {
   const sr = sizeOf({});
   const MS_PER_KT = 1852 / 3600;
-  const fast = scVtolApplicability(P({ nSeats: 4 }), sr, 300 * MS_PER_KT);
-  const slow = scVtolApplicability(P({ nSeats: 4 }), sr, 120 * MS_PER_KT);
-  const gf = fast.gates.find((g) => g.para === "VTOL.2000(d)");
-  const gs = slow.gates.find((g) => g.para === "VTOL.2000(d)");
-  check(gs.fixable !== true,
-    "and the speed gate is NOT offered as something the user can close",
-    "no seat-count-style prompt for a quantity the engine cannot compute");
+  const G = (over, easKt) =>
+    scVtolApplicability(P({ nSeats: 4, ...over }), sr, easKt * MS_PER_KT)
+      .gates.find((g) => g.para === "VTOL.2000(d)");
+
+  /* WITH NO DECLARATION the old asymmetry stands, unchanged. */
+  const gf = G({}, 300), gs = G({}, 120);
   check(gf.state === GATE.OUT,
-    "a cruise speed above 250 kt puts VNO above it, decisively",
-    `300 kt EAS → "${gf.state}" (VNO ≥ cruise speed, MOC VTOL.2200(c))`);
+    "undeclared: a cruise speed above 250 kt puts VNO above it, decisively",
+    `300 kt EAS → "${gf.state}" (VNO ≥ cruise speed, MOC-1 (c))`);
   check(gs.state === GATE.UNKNOWN,
-    "a cruise speed BELOW 250 kt decides nothing, because VNO is not modelled",
-    `120 kt EAS → "${gs.state}", not "in": the paragraph limits VNO, not cruise`);
-  check(!/\bVNO\b/.test(read("src/engine.js")) || true,
-    "and the engine genuinely has no VNO to test instead",
-    "VNE/VNO/VH appear in engine.js only inside the quoted MOC VTOL.2215(f) text");
+    "undeclared: a cruise speed BELOW 250 kt decides nothing",
+    `120 kt EAS → "${gs.state}", not "in": cruise bounds VNO from below only`);
+  check(gs.fixable === true && gf.fixable !== true,
+    "the undecided direction is fixable; the decided one has nothing to ask",
+    `below the line fixable=${gs.fixable}, above it fixable=${gf.fixable}`);
+
+  /* WITH A DECLARATION the gate answers outright, in the paragraph's
+     own unit, and stops deferring to a cruise speed it never limited. */
+  const under = G({ vno: 200 }, 120), over = G({ vno: 260 }, 120);
+  check(under.state === GATE.IN,
+    "declared at or below 250 KCAS puts the aircraft IN scope outright",
+    `VNO 200 KCAS → "${under.state}", shown as "${under.shown}"`);
+  check(over.state === GATE.OUT,
+    "declared above 250 KCAS puts it OUT, and VTOL.2000(d) is the reason",
+    `VNO 260 KCAS → "${over.state}"`);
+  check(G({ vno: EASA_VNO_LIMIT_KT }, 120).state === GATE.IN,
+    `the limit itself is INSIDE the gate — the paragraph says "at most"`,
+    `VNO exactly ${EASA_VNO_LIMIT_KT} KCAS → "${G({ vno: EASA_VNO_LIMIT_KT }, 120).state}", `
+      + `recovered from the X-57 plan's intact "> 250 KCAS" complement`);
+
+  /* A DECLARATION THAT CONTRADICTS THE DESIGN IS REPORTED, NOT RESOLVED. */
+  const clash = G({ vno: 100 }, 200);
+  check(typeof clash.conflict === "string" && clash.conflict.length > 0,
+    "a VNO below the design's own cruise speed is flagged as a conflict",
+    `VNO 100 KCAS with 200 kt cruise → conflict reported`);
+  check(clash.state === GATE.IN,
+    "but the conflict is NOT a scope verdict — the paragraph limits VNO only",
+    `still "${clash.state}": the tool reports the disagreement, it does not pick a side`);
+  check(G({ vno: 200 }, 120).conflict === undefined,
+    "and a consistent declaration raises no conflict",
+    "VNO 200 KCAS with 120 kt cruise → no conflict");
+}
+
+/* ── 2b. VNO IS DECLARED, NEVER DERIVED, AND MOVES NO SIZED RESULT ───── */
+console.log("\n2b. THE DECLARATION IS INERT — it gates, it does not size");
+{
+  /* WHY THIS MATTERS BEYOND TIDINESS: it is the reason this change needs
+     none of the four re-records (golden:record, render:record,
+     domain:record, paper/). Same guarantee nSeats relies on, same proof. */
+  const base = JSON.stringify(sizeOf({}));
+  const withVno = JSON.stringify(sizeOf({ vno: 250 }));
+  check(base === withVno,
+    "declaring a VNO changes no sized result, byte for byte",
+    `runSizing with and without VNO 250 KCAS → identical (${base.length} chars)`);
+
+  /* NOTHING MAY COMPUTE A VNO. MOC-1 (c) assigns it to the applicant and
+     no equation in the corpus produces one, so a derived VNO would be the
+     tool asserting a certification figure nobody declared. */
+  check(!/\bvno\s*[:=]\s*(?!null)/i.test(read("src/engine.js")),
+    "the engine derives no VNO of its own",
+    "src/engine.js assigns no VNO — it is read from the parameters or absent");
 }
 
 /* ── 3. NO RULE MAY BE CONSTANT ACROSS THE DESIGN SWEEP ──────────────── */
@@ -372,12 +430,41 @@ console.log("\n9. SERVER-RENDER — nothing else in this repo renders this panel
       noSeats:  render({ nSeats: null }, inScopeSR),
       outScope: render({ payload: 900, nSeats: 4 }, outScopeSR),
       unsized:  render({ nSeats: 4 }, null),
+      /* THE TWO BRANCHES A DECLARED VNO OPENS. Both are conditional
+         subtrees that nothing else in the repo renders, which is the
+         shape that reached production once before. vCruise defaults to
+         67 m/s ≈ 130 kt, so VNO 100 KCAS is below the design's own
+         cruise and raises the conflict notice. */
+      declared: render({ nSeats: 4, vno: 200 }, inScopeSR),
+      conflict: render({ nSeats: 4, vno: 100 }, inScopeSR),
     };
   } catch (e) { threw = e; }
 
   check(threw === null && markup !== null,
     "the panel renders at every scope state without throwing",
-    threw ? `threw: ${threw.message}` : "in scope, seats unstated, out of scope, and unsized");
+    threw ? `threw: ${threw.message}`
+          : "in scope, seats unstated, out of scope, unsized, VNO declared, VNO in conflict");
+
+  if (markup) {
+    /* ASSERT ON WHAT THE READER IS TOLD, not on the presence of a value.
+       The point of declaring a VNO is that the panel stops saying the
+       gate can never be closed and starts saying what it did and did
+       NOT check — VH and VNE are still nobody's business but the
+       applicant's. */
+    check(/nothing else/i.test(markup.declared)
+          && /V<sub>H<\/sub>/.test(markup.declared),
+      "a declared VNO makes the panel state what it did NOT check",
+      "the 250 KCAS limit only; VH and VNE remain the applicant's to show");
+    check(!/cannot be decided by this tool at any setting/i.test(markup.declared),
+      "and the permanent never-decidable notice is gone once VNO is declared",
+      "that notice was the thing this change retired");
+    check(/disagrees with the design/i.test(markup.conflict),
+      "a VNO below the design's own cruise speed is shown as a conflict",
+      "VNO 100 KCAS against a 130 kt cruise renders the notice");
+    check(!/disagrees with the design/i.test(markup.declared),
+      "and a consistent declaration shows no such notice",
+      "VNO 200 KCAS renders no conflict");
+  }
 
   if (markup) {
     /* MATCH ON THE ROW, NOT THE NAME. "Maximum certificated take-off

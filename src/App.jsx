@@ -1856,6 +1856,40 @@ export default function App(){
           </Acc>
           <Acc title="Mission Requirements" icon="">
             <Slider label="Payload" unit="kg" value={params.payload} min={100} max={900} step={5} onChange={set("payload")} note="Passengers + cargo"/>
+            {/* SEATS ARE A CERTIFICATION GATE, NOT A SLIDER, and they are
+                allowed to be UNSTATED. SC-VTOL-02 VTOL.2005(a) applies only
+                at 9 seats or fewer and FAA AC 21.17-4 PL.2000(a) at six, so
+                the number decides which document governs the design — but
+                payload cannot supply it, because an occupant and a sack of
+                cargo are the same kilogrammes to this engine. Left blank,
+                the Regulatory tab reports that gate as NOT DECIDABLE rather
+                than assuming a pass, and the cabin check keeps deriving
+                occupancy from payload exactly as before. */}
+            {(()=>{
+              const raw=params.nSeats, stated=Number.isFinite(Number(raw))&&Number(raw)>0;
+              return(
+                <div style={{padding:"4px 0 6px",borderBottom:`1px solid ${SC.border}22`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                    <span style={{fontSize:10,color:SC.muted,fontFamily:"system-ui,sans-serif"}}>Seats</span>
+                    <div style={{display:"flex",gap:5,alignItems:"center"}}>
+                      <input type="number" min={1} max={19} step={1}
+                        value={stated?Number(raw):""} placeholder="not stated"
+                        onChange={(e)=>{const v=e.target.value.trim();set("nSeats")(v===""?null:Math.max(1,Math.round(Number(v)||0))||null);}}
+                        style={{width:64,padding:"2px 6px",background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:4,color:stated?SC.amber:SC.subtle,fontSize:11,fontWeight:700,fontFamily:"'DM Mono',monospace",textAlign:"right"}}/>
+                      {stated&&(
+                        <button type="button" onClick={()=>set("nSeats")(null)} title="clear — leave the seat count unstated"
+                          style={{padding:"2px 7px",background:"transparent",border:`1px solid ${SC.border}`,borderRadius:4,color:SC.muted,fontSize:9,cursor:"pointer",fontFamily:"'DM Mono',monospace"}}>clear</button>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{fontSize:9,color:SC.subtle,fontFamily:"system-ui,sans-serif",lineHeight:1.5}}>
+                    Occupants including crew. Sets the applicability gate on the Regulatory tab{stated?"":"; blank leaves it undecided"}.
+                    {stated&&Number(raw)>9&&<span style={{color:SC.red}}> Above SC-VTOL&apos;s limit of 9.</span>}
+                    {stated&&Number(raw)>6&&Number(raw)<=9&&<span style={{color:SC.amber}}> Above the FAA&apos;s limit of 6.</span>}
+                  </div>
+                </div>
+              );
+            })()}
             <Slider label="Mission Range" unit="km" value={params.range} min={50} max={250} step={5} onChange={set("range")} note="Excludes reserve · total = mission + reserve"/>
             {/* Reserve: TIME or DISTANCE. The regulation is written in time
                 (FAA powered-lift SFAR 20 min VFR / 30 IFR; EASA VTOL.2430(b)(4) requires a reserve, states no number;

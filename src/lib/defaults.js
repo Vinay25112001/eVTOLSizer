@@ -80,6 +80,23 @@ export const DEFAULT_PARAMS = {
        geometry fitted an MCTOM of 3,175 kg. That ceiling was superseded, so
        that reasoning is recorded only to explain why it is gone. */
     payload:455,range:100,vCruise:67,cruiseAlt:1000,hoverHeight:15.24,
+    /* SEAT COUNT IS A CERTIFICATION-BASIS DISCRIMINATOR, NOT A DERIVED
+       QUANTITY. SC-VTOL-02 VTOL.2005(a) applies only to "a passenger
+       seating configuration of 9 or less"; FAA AC 21.17-4 PL.2000(a) says
+       six or less; and VTOL.2250(f) changes the bird-strike objective at
+       seven or more. None of those is inferable from payload, because to
+       this engine an occupant and a sack of cargo are the same kilogrammes.
+
+       DEFAULTED TO null ON PURPOSE, and it is the reason nothing about
+       this change moves a sized result. engine.js passes
+       `nOccupants: p.nOccupants ?? p.nSeats` into cabinAdequacy(), which
+       falls back to occupantsFromPayload() for any value that is not a
+       positive finite number. null takes that fallback, so every existing
+       design keeps the fractional occupancy it had (455 kg -> 5.0155) and
+       the golden master is byte-identical. State a seat count and the
+       cabin check honours the integer instead -- and the regulatory panel
+       can complete its applicability test, which it cannot do otherwise. */
+    nSeats:null,
     /* Reserve is set by TIME by default, because that is how the rule is
        written: FAA powered-lift SFAR (final rule Oct 2024, operations Apr 2025)
        20 min VFR / 30 min IFR — reduced from 30/45 in the 2023 proposal — and

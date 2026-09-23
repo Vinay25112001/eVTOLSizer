@@ -2956,7 +2956,13 @@ function runSizingCore(p0) {
        payload needs is the missing constraint. See engine/cabin.js. */
     (() => {
       const ca = cabinAdequacy({ fusLen: fusLenEff, fusDiam: p.fusDiam,
-                                 payload: p.payload, nOccupants: p.nOccupants });
+                                 payload: p.payload,
+                                 /* nSeats is the UI-facing certification input
+                                    (lib/defaults.js); nOccupants stays the
+                                    engine-internal name it has always had.
+                                    Both default to absent, so the payload
+                                    derivation below is unchanged. */
+                                 nOccupants: p.nOccupants ?? p.nSeats });
       /* THE ENTERED LENGTH IS NOT THE LENGTH USED. fusLen is multiplied by
          cbrt(payload/453) above, so the slider is honoured only near Joby's
          453 kg payload; at a two-occupant payload an entered 2.2 m becomes

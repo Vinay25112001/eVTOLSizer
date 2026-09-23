@@ -32,7 +32,25 @@ import { engineInputs, hashText, canonicalJSON } from "../src/lib/designfile.js"
 import { fingerprint } from "../src/lib/fingerprint.js";
 import { AIRCRAFT_CLASSES, CLASS_IDS, DEFAULT_CLASS, classOf, sizeDesign, classFromSearch } from "../src/classes/registry.js";
 
-const PINNED_DEFAULTS_HASH = "0c8b69e4b4ddec";
+/* 0c8b69e4b4ddec -> 062924df5fdaa0 on adding `nSeats: null`.
+   WHY, AND WHY IT SIZES NOTHING. SC-VTOL-02 VTOL.2005(a) applies only to a
+   passenger seating configuration of 9 or fewer and FAA AC 21.17-4
+   PL.2000(a) to six or fewer, so a seat count decides WHICH DOCUMENT
+   governs a design. It is not derivable from payload — an occupant and a
+   sack of cargo are the same kilogrammes to this engine — so the
+   Regulatory tab could not decide that gate at all, and used to render
+   the MCTOM limit as an ordinary PASS/FAIL row instead. See
+   validation/reg-applicability.mjs.
+
+   The value is null, not a number, and that is the whole reason this is
+   a hash change and not a re-record. engine.js passes
+   `nOccupants: p.nOccupants ?? p.nSeats` to cabinAdequacy(), which falls
+   back to occupantsFromPayload() for anything that is not a positive
+   finite number. null takes that fallback, so every existing design keeps
+   the fractional occupancy it had. Verified, not assumed: golden-master
+   is byte-identical across all 277 cases, and reg-applicability.mjs
+   check 7 asserts that null and absent size to the same kilogram. */
+const PINNED_DEFAULTS_HASH = "062924df5fdaa0";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 let pass = 0, fail = 0;

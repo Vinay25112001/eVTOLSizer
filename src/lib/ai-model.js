@@ -45,6 +45,25 @@ export const GROQ_MODEL_LABEL = {
   [GROQ_MODEL_LARGE]: "GPT-OSS 120B via Groq",
 };
 
+/* ── A MODEL CANNOT BE ASKED WHEN ITS OWN KNOWLEDGE ENDS ───────────────
+   The regulatory panel used to instruct the model to print its training
+   cutoff on the first line, so a reader could judge what the answer was
+   worth. THE MODEL CONFABULATES THE CUTOFF TOO. Asked twice, gpt-oss-20b
+   answered "2021" once and "September 2026" once -- the second being the
+   month it was asked, which would mean it knew about its own conversation.
+
+   OpenAI's model card for gpt-oss-120b and gpt-oss-20b (5 August 2025)
+   states the cutoff, so it is written here as a fact about the model
+   rather than requested from it. The whole point of printing a cutoff is
+   to bound what the answer can be trusted for; a bound the model invents
+   bounds nothing.
+
+   These dates move only when the model id above moves. */
+export const GROQ_MODEL_CUTOFF = {
+  [GROQ_MODEL_FAST]: "30 June 2024",
+  [GROQ_MODEL_LARGE]: "30 June 2024",
+};
+
 export const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODELS_ENDPOINT = "https://api.groq.com/openai/v1/models";
 

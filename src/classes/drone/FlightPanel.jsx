@@ -2,14 +2,40 @@
    FLIGHT — the integrated trajectory, played back
    =====================================================================
    The airframe tab draws a stationary aircraft with its rotors turning.
-   This one flies it: every frame of this animation is a state the 6-DOF
-   integrator produced, played back at the rate it was computed.
+   This one flies it: everything on screen comes out of the 6-DOF
+   integrator's trace, played back at the rate it was computed.
 
    NOTHING HERE IS KEYFRAMED. The path, the attitude and the per-rotor
    thrusts are read out of the simulation trace. If the aircraft tumbles,
    it is because the equations tumbled it. The scrubber moves through
    computed states, not through a drawn animation, which is why the
    traces underneath stay locked to the picture.
+
+   ── ONE THING IS INTERPOLATED, AND IT IS SAID HERE RATHER THAN QUIETLY ──
+   This file used to claim that EVERY FRAME of the animation is a state
+   the integrator produced. That was true and it was the reason the
+   aircraft juddered: the trace is 50 Hz under 240 s, a display is
+   typically 60 Hz, 50 and 60 do not divide, and drawing the nearest
+   whole sample froze one frame in every six. It read as the aircraft
+   wobbling, worst in roll, and it was the playback rather than the
+   physics -- a commanded-level hover is steady to 0.0000 deg peak to
+   peak with 0.000000 N of thrust spread.
+
+   So the DRAWN POSE is now linearly interpolated between sample i and
+   sample i+1, and the claim is narrowed to what is still true:
+
+     - every NUMBER on the panel -- the KPIs, the traces, the scrubber,
+       distance travelled -- is read from a computed sample, untouched;
+     - every point of the drawn TRAIL is a computed sample;
+     - the drawn pose lies ON THE SEGMENT between two adjacent computed
+       states and never outside it, so the aircraft is never drawn
+       anywhere the integrator did not pass through;
+     - paused, scrubbed, or on the last sample, no interpolation happens
+       at all and the pose IS the sample.
+
+   That is a weaker guarantee than the one it replaces. It is stated in
+   full because a reader who trusted the old sentence is entitled to know
+   exactly which part of it no longer holds.
 
    WHAT THE PICTURE CANNOT TELL YOU, and the panel says so beside it: a
    scenario that flies proves nothing about controllability. The
@@ -136,8 +162,9 @@ export default function FlightPanel({ design, frame }) {
   /* ── FLYING IT BY HAND ────────────────────────────────────────────
      A press does NOT nudge the drawn aircraft. It appends a segment to
      the scenario and the whole flight is integrated again, so the panel's
-     one guarantee holds: every frame on screen is still a state the
-     6-DOF integrator produced. That is also why a command cannot be
+     one guarantee holds: nothing on screen is drawn from anywhere but the
+     integrator's own trace -- see the interpolation note at the top of
+     this file for the single, bounded exception. That is also why a command cannot be
      undone mid-flight - there is no "now" to steer from, only a scenario
      that is re-flown from t=0.
 
@@ -289,6 +316,10 @@ export default function FlightPanel({ design, frame }) {
   const [cd, setCd] = useState(1.0);
   const [view, setView] = useState({ yaw: 38, pitch: 26 });
   const [i, setI] = useState(0);
+  /* HOW FAR PAST SAMPLE i THIS FRAME FALLS, in [0,1). See the playback
+     effect below: without it the drawn pose snapped to whole samples and
+     the aircraft juddered. Numbers on screen still come from sample i. */
+  const [frac, setFrac] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [zoom, setZoom] = useState(2.4);
@@ -443,11 +474,33 @@ export default function FlightPanel({ design, frame }) {
     prevDuration.current = dur;
     if (!trace.length) return;
     const k = trace.findIndex((r) => r.t >= resumeAt);
-    setI(k < 0 ? 0 : k);
+    setI(k < 0 ? 0 : k); setFrac(0);
     if (grew) setPlaying(true);
   }, [flight.run]);
-  useEffect(() => { setI(0); }, [failedKey, motorTau, cd, scenery, bounce, restitution, breakSpeed]);
+  useEffect(() => { setI(0); setFrac(0); }, [failedKey, motorTau, cd, scenery, bounce, restitution, breakSpeed]);
 
+  /* ── THE TRACE RATE AND THE DISPLAY RATE DO NOT DIVIDE ──────────────
+     THE DEFECT THIS FIXES. This loop advanced whole samples and the
+     renderer drew `trace[i]` raw, so the aircraft's pose snapped from
+     sample to sample. Under 240 s the trace is 50 Hz; a display is
+     typically 60 Hz; 50 and 60 do not divide. Replicating this loop at
+     60 Hz and counting samples advanced per frame gives
+
+       1x    0 1 1 1 1 0 1 1 1 1 1 0 1 1 1 1 1 0 ...
+       2x    1 2 1 2 2 1 2 2 1 2 2 1 ...
+       0.5x  0 0 1 0 1 0 0 1 0 1 0 0 ...
+
+     -- one frozen frame in every six at 1x, for ever. That repeating
+     stutter is what reads as the aircraft wobbling, and it is worst in
+     ROLL because that is when attitude moves most per sample. Past 240 s
+     the trace decimates toward 5 Hz and a frame advances only once in
+     twelve, which is far more visible again.
+
+     The fix is to carry the SUB-SAMPLE REMAINDER to the renderer, which
+     interpolates between sample i and i+1. Nothing is keyframed and no
+     pose outside the segment joining two computed states is ever drawn;
+     see the note at the top of this file, which is worded to say exactly
+     what is and is not a state the integrator produced. */
   useEffect(() => {
     if (!playing || trace.length < 2) return;
     let raf, last = performance.now(), acc = 0;
@@ -456,6 +509,10 @@ export default function FlightPanel({ design, frame }) {
       acc += dt * speed;
       const sampleDt = trace[1].t - trace[0].t;
       while (acc >= sampleDt) { acc -= sampleDt; setI((k) => (k + 1) % trace.length); }
+      /* acc is now the time elapsed PAST sample i, so this is where the
+         frame falls between i and i+1. React batches it with the setI
+         above into one render. */
+      setFrac(acc / sampleDt);
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
@@ -536,6 +593,47 @@ export default function FlightPanel({ design, frame }) {
   /* `now` is the state being drawn. The airframe FRAME is a prop, so this
      cannot be called `frame`. */
   const now = trace[Math.min(i, trace.length - 1)] ?? trace[0];
+
+  /* ── THE DRAWN POSE, BETWEEN TWO COMPUTED STATES ────────────────────
+     `now` stays the sample itself and every NUMBER on the panel is read
+     from it. Only the pose DRAWN in the 3D view is interpolated, and
+     only between sample i and the one after it, so the aircraft is never
+     drawn anywhere the integrator did not pass through.
+
+     Three cases take no interpolation and fall back to `now` exactly:
+     paused (a held frame should be a computed state), the last sample
+     (i+1 wraps to t=0 and would teleport the aircraft), and a scrubbed
+     position (the user is asking for one specific sample).
+
+     ANGLES TAKE THE SHORTEST PATH. Yaw is reported on (-180, 180], so a
+     turn across the wrap -- 179 deg to -179 deg, two degrees apart --
+     would interpolate the long way round and spin the aircraft through
+     358 deg in a single sample. Roll and pitch are bounded well inside
+     the wrap by SCENARIO_LIMITS.maxTiltDeg and cannot reach it, but they
+     go through the same helper rather than resting on that staying true.
+
+     EVERYTHING THAT MUST TRACK THE AIRCRAFT READS `pose`: the follow
+     camera, the trail's last point and the ground shadow. Mixing the two
+     would put a smooth aircraft inside a juddering camera, which looks
+     worse than the judder it replaced. */
+  const nextI = Math.min(i + 1, trace.length - 1);
+  const nxt = trace[nextI] ?? now;
+  const f = playing && nextI !== i ? Math.min(1, Math.max(0, frac)) : 0;
+  const lerp = (a, b) => a + (b - a) * f;
+  const lerpAngleDeg = (a, b) => {
+    let d = b - a;
+    while (d > 180) d -= 360;
+    while (d < -180) d += 360;
+    return a + d * f;
+  };
+  const pose = {
+    x: lerp(now.x, nxt.x),
+    y: lerp(now.y, nxt.y),
+    altitudeM: lerp(now.altitudeM, nxt.altitudeM),
+    rollDeg: lerpAngleDeg(now.rollDeg, nxt.rollDeg),
+    pitchDeg: lerpAngleDeg(now.pitchDeg, nxt.pitchDeg),
+    yawDeg: lerpAngleDeg(now.yawDeg, nxt.yawDeg),
+  };
   const W = 760, H = 460;
 
   /* FITTING THE FLIGHT STOPS WORKING WHEN THE FLIGHT RUNS AWAY.
@@ -556,7 +654,7 @@ export default function FlightPanel({ design, frame }) {
   const mode = camera === "auto" ? (fitShare < READABLE_MIN ? "follow" : "fit") : camera;
   const world = mode === "follow" ? span * FOLLOW_WORLD_SPANS : ext.world;
   const followPt = mode === "follow"
-    ? [now.x, now.y, -now.altitudeM]
+    ? [pose.x, pose.y, -pose.altitudeM]
     : [ext.cx, ext.cy, ext.cz];
 
   const scale = (Math.min(W, H) * 0.42 * zoom) / world;
@@ -584,8 +682,8 @@ export default function FlightPanel({ design, frame }) {
      still ambiguous at its own period: only a number distinguishes 20 m
      from 30 m. */
   const gridHalfSpan = 10 * gridStep;
-  const gridAnchorX = Math.round((mode === "follow" ? now.x : ext.cx) / gridStep) * gridStep;
-  const gridAnchorY = Math.round((mode === "follow" ? now.y : ext.cy) / gridStep) * gridStep;
+  const gridAnchorX = Math.round((mode === "follow" ? pose.x : ext.cx) / gridStep) * gridStep;
+  const gridAnchorY = Math.round((mode === "follow" ? pose.y : ext.cy) / gridStep) * gridStep;
   const MAJOR_EVERY = 5;
   const travelledM = trace.length ? Math.hypot(now.x - trace[0].x, now.y - trace[0].y) : 0;
 
@@ -648,11 +746,11 @@ export default function FlightPanel({ design, frame }) {
 
   /* The aircraft, at this frame's attitude and position. */
   const q = eulerToQ({
-    rollRad: now.rollDeg * DEG, pitchRad: now.pitchDeg * DEG, yawRad: now.yawDeg * DEG,
+    rollRad: pose.rollDeg * DEG, pitchRad: pose.pitchDeg * DEG, yawRad: pose.yawDeg * DEG,
   });
   const bodyToWorld = (b) => {
     const r = qRotate(q, b);
-    return [now.x + r[0], now.y + r[1], -now.altitudeM + r[2]];
+    return [pose.x + r[0], pose.y + r[1], -pose.altitudeM + r[2]];
   };
   const centre = project(bodyToWorld([0, 0, 0]));
   const rotors = airframe.rotors.map((r, k) => {
@@ -687,8 +785,8 @@ export default function FlightPanel({ design, frame }) {
   /* The aircraft's own position ends the trail, so the line meets it
      however the stride happens to fall. */
   if ((flown - 1) % stride !== 0)
-    trail.push(project([now.x, now.y, -now.altitudeM]));
-  const shadow = project([now.x, now.y, 0]);
+    trail.push(project([pose.x, pose.y, -pose.altitudeM]));
+  const shadow = project([pose.x, pose.y, 0]);
 
   const axis = { stroke: SC.muted, fontSize: 11, fontFamily: MONO };
   const onDown = (e) => { drag.current = { x: e.clientX, y: e.clientY, ...view }; };
@@ -1024,7 +1122,7 @@ export default function FlightPanel({ design, frame }) {
         ) : null}
 
         <input type="range" min={0} max={Math.max(0, trace.length - 1)} value={i}
-          onChange={(e) => { setPlaying(false); setI(+e.target.value); }}
+          onChange={(e) => { setPlaying(false); setI(+e.target.value); setFrac(0); }}
           style={{ width: "100%", marginBottom: S.sm }} />
 
         <div style={{ display: "flex", gap: S.md, flexWrap: "wrap" }}>
@@ -1183,8 +1281,8 @@ export default function FlightPanel({ design, frame }) {
                 The shadow softens with height, which is what a shadow does
                 and also makes the altitude readable without the drop line. */}
             <ellipse cx={shadow.sx} cy={shadow.sy}
-                     rx={scale * span * 0.42 * (1 + 0.16 * Math.min(3, now.altitudeM / Math.max(0.5, span)))}
-                     ry={scale * span * 0.42 * Math.sin(view.pitch * DEG) * (1 + 0.16 * Math.min(3, now.altitudeM / Math.max(0.5, span)))}
+                     rx={scale * span * 0.42 * (1 + 0.16 * Math.min(3, pose.altitudeM / Math.max(0.5, span)))}
+                     ry={scale * span * 0.42 * Math.sin(view.pitch * DEG) * (1 + 0.16 * Math.min(3, pose.altitudeM / Math.max(0.5, span)))}
                      fill="#02060a" opacity="0.78" filter="url(#fp-soft)" />
             <line x1={shadow.sx} y1={shadow.sy} x2={centre.sx} y2={centre.sy}
                   stroke={VIEW.muted} strokeWidth="1" strokeDasharray="3 4" opacity="0.6" />

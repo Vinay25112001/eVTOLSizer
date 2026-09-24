@@ -1650,6 +1650,39 @@ export default function App(){
                       {seedMTOW:(SR&&SR.MTOW)||q.payload*8});
                     const D=solved?.propDiam ?? rotorDiameterFor(key,(SR&&SR.MTOW)||q.payload*8,dflt.nRotors);
                     if(D&&isFinite(D)) next.propDiam=D;
+                    /* THE SOLVE REPORTS WHETHER IT CLOSED, SO SAY SO. This
+                       returned `converged` and an explanatory `note` from the
+                       day it was written, and every caller read `.propDiam`
+                       and dropped the rest - so a diameter that never settled
+                       was written into the design and went on to drive disk
+                       loading, hover power, battery mass and MTOW with nothing
+                       on screen to say it was provisional. Measured on thirty
+                       sampled designs, six do not converge.
+
+                       The two outcomes are NOT the same and are not shown the
+                       same. `settled` means the iteration is cycling inside
+                       the 1 mm the sizing rule can express, so the diameter is
+                       as good as that rule gets and only the certificate is
+                       missing - that is an advisory. A cycle WIDER than 1 mm
+                       is a real oscillation: the disk loading flown is not the
+                       one the configuration asked for, and that is an error.
+                       See solveRotorDiameter's header for why the tolerance
+                       cannot be met and why it is not simply widened here. */
+                    if(solved&&solved.converged!==true){
+                      const mm=solved.gapMm;
+                      setDesignNotice(solved.settled
+                        ? {tone:"advisory",
+                           title:`Rotor diameter is uncertified on ${(CONFIGURATIONS[key]?.label||key).split(" —")[0]}`,
+                           lines:[solved.note,
+                             `Using ${D} m. It holds the target disk loading to the nearest `
+                             +`millimetre, which is the finest this rule expresses.`]}
+                        : {tone:"error",
+                           title:`Rotor diameter did not settle on ${(CONFIGURATIONS[key]?.label||key).split(" —")[0]}`,
+                           lines:[solved.note,
+                             `Using ${D} m, but it is still moving by ${mm} mm, so the disk `
+                             +`loading this design flies is not the one its configuration sets. `
+                             +`Change payload, range or rotor count, or set the diameter yourself.`]});
+                    }
                     /* Cruise speed is a property of the LAYOUT, not a global.
                        NASA fly their rotor-borne concepts at 98 kt and warn that
                        above ~90 kt "blade stall encompasses most of the rotor";

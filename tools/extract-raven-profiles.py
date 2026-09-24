@@ -22,6 +22,21 @@ Run from the directory holding the unzipped releases:
 """
 import re, glob, os, sys
 
+# This script's only output path is a redirect of stdout, so the encoding and
+# the line ending of the generated file are decided by the console, not by the
+# script. On Windows the encoding default is cp1252, which wrote the two
+# em-dashes in the header below as the single byte 0x97 and left
+# src/data/raven-profiles.js as the one file in the tree that was not valid
+# UTF-8. Encoding is therefore pinned.
+#
+# The line ending is pinned too, but only so the redirect is deterministic
+# rather than platform-dependent. It does not decide what is committed: this
+# repository is checked out with core.autocrlf=true, and every blob in it is
+# LF, so git normalises either choice to the same stored bytes. "\r\n" is the
+# one that additionally matches the working-tree file a Windows checkout
+# produces, so regenerating there shows no byte difference at all.
+sys.stdout.reconfigure(encoding="utf-8", newline="\r\n")
+
 FT, IN = 0.3048, 0.0254
 UNITS = {"RAVEN_v01_003_Release.vsp3": FT,
          "RAVEN SWFT VSP Public Release.vsp3": FT,

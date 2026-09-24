@@ -22,7 +22,7 @@
 
    Every one of those three reasons applies here exactly: this aircraft has
    propellers, its powertrain is sized on power, and its battery is sized on
-   energy. So the y-axis is W/P in N/W (equivalently kg/kW x 9.81).
+   energy. So the y-axis is W/P in N/W (equivalently kg/kW x 9.80665).
 
    ── WHERE THE DESIGN POINT GOES ──────────────────────────────────────────
    Same source: "the optimal design point is chosen for: 1. the highest possible

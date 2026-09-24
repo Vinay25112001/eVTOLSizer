@@ -20,7 +20,7 @@ import { ULTIMATE_FACTOR_OF_SAFETY } from "../engine/loadcases.js";
 export function VnDiagramTab(ctx) {
   const { SR, TTP, U, params, tab } = ctx;
 
-              const g0=9.81,rhoMSL=1.225;
+              const g0=9.80665,rhoMSL=1.225;
               const MTOW=SR.MTOW,WL=SR.WL,g=g0;
               const Vstall=SR.Vstall,VA=SR.VA,VD=SR.VD,VC=params.vCruise;
               /* ── EVERY LOAD FACTOR ON THIS TAB COMES FROM THE ENGINE ──────

@@ -728,12 +728,12 @@ export default function App(){
       const P_Pa=P_hPa*100;
       const rho_actual=P_Pa/(287*T_K);
       // Correct ISA density at elevation using full ISA formula (not just temperature ratio)
-      const rho_ISA_elev=1.225*Math.pow((288.15-0.0065*elevation)/288.15,(-9.81/(-0.0065*287))-1);
+      const rho_ISA_elev=1.225*Math.pow((288.15-0.0065*elevation)/288.15,(-9.80665/(-0.0065*287))-1);
       const sigma=rho_actual/1.225; // density ratio vs MSL
       const a_actual=Math.sqrt(1.4*287*T_K);
       const deltaT=T_C-(T_std-273.15); // temp deviation from ISA
       // Run sizing with actual atmospheric conditions
-      const MTOW=SR.MTOW,W=MTOW*9.81;
+      const MTOW=SR.MTOW,W=MTOW*9.80665;
       // ── Hover power — matches runSizing exactly (no twRatio in steady hover) ──
       // runSizing line: Phov=(W/p.etaHov)*Math.sqrt(DL/(2*rhoMSL))
       // DL uses W only (not W×TW) — TW is a structural margin, not applied in steady hover

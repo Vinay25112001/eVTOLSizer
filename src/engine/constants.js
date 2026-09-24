@@ -1,9 +1,46 @@
 /* =====================================================================
    PHYSICAL CONSTANTS
-   Single source of truth. Previously redeclared inside several functions.
+   =====================================================================
+   These are the eVTOL engine's constants. They are NOT the only place a
+   physical constant is written in this tree: the aircraft, transport,
+   turboprop and drone classes each open with their own compact preamble
+   of unit factors and constants, because each is a self-contained port of
+   a published method and reads better next to the formulae it serves. The
+   header here used to claim to be the single source of truth, which was
+   not true and had not been true for a long time. What holds the tree
+   together is not this file, it is validation/constants.mjs, which reads
+   every source file and requires that a constant written in more than one
+   place carry the SAME VALUE in all of them.
+
+   GRAVITY WAS THE DEFECT THAT PROMPTED THAT GATE. G0 here was 9.81 while
+   ten other modules wrote 9.80665, and the split ran INSIDE a single
+   class: classes/transport/atmosphere.js imports G0 for its barometric
+   formula while size.js, takeoff.js, landing.js and mission.js use
+   9.80665, so one aeroplane was sized under two gravities depending on
+   which module you were in. 9.81 carried no citation anywhere in the repo.
+
+   9.80665 IS THE DEFINED VALUE, and the sources this tool already relies
+   on all state it:
+     - NACA TR-824, notation list: "Standard acceleration of gravity =
+       9.80665 m/s2".
+     - NDARC Theory (NASA TP-2015-218751, R1.13) p.1-6, "reference
+       gravitational acceleration (9.80665 m/sec2)", and its constants
+       table, "g  9.80665 m/sec2  32.17405 ft/sec2".
+     - Loftin (NASA RP-1060) Table 1.II converts g units by 9.80665.
+     - Airbus, Getting to Grips with Aircraft Performance (2002) s1.1:
+       the ISA aerostatic equation dP = -rho g dh is written with
+       g0 = 9.80665 m/s2. This is the one that settles atmosphere.js — an
+       atmosphere built on 9.81 is not implementing the ISA.
+
+   Adopting it moved 18,069 values across 220 fields, MTOW on 170 cases,
+   by 0.035% (app-default MTOW 2799.45 -> 2798.46 kg). That is far below
+   this tool's ~9% mean absolute error and changes no conclusion; it was
+   done because a tool whose thesis is provenance should not size one
+   aeroplane with two gravities, and should use the value its own
+   references define.
    ===================================================================== */
 
-export const G0      = 9.81;      // gravitational acceleration, m/s^2
+export const G0      = 9.80665;   // standard gravity, m/s^2 — exact by definition; see header
 export const RHO_MSL = 1.225;     // ISA sea-level density, kg/m^3
 export const T0      = 288.15;    // ISA sea-level temperature, K
 export const LAPSE   = 0.0065;    // ISA tropospheric lapse rate, K/m

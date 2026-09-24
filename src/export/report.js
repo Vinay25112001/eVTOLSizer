@@ -163,7 +163,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   <p>All aerodynamic calculations use the International Standard Atmosphere (ISA) model evaluated at the cruise altitude h = ${p.cruiseAlt} m.</p>
   ${eq("T_{cr} = T_0 - L_{lapse} \\cdot h_{cr} = 288.15 - 0.0065 \\times "+p.cruiseAlt+" = "+fmt(288.15-0.0065*p.cruiseAlt,2)+"\\text{ K}",
     "Temperature at cruise altitude")}
-  ${eq("\\rho_{cr} = \\rho_{SL}\\left(\\frac{T_{cr}}{T_0}\\right)^{\\left(\\frac{g_0}{L_{lapse}\\,R_{air}}\\right)-1} = "+fmt(SR.MTOW ? 1.225*Math.pow((288.15-0.0065*p.cruiseAlt)/288.15, (-9.81/(-0.0065*287))-1) : 1.112,4)+"\\text{ kg/m}^3",
+  ${eq("\\rho_{cr} = \\rho_{SL}\\left(\\frac{T_{cr}}{T_0}\\right)^{\\left(\\frac{g_0}{L_{lapse}\\,R_{air}}\\right)-1} = "+fmt(SR.MTOW ? 1.225*Math.pow((288.15-0.0065*p.cruiseAlt)/288.15, (-9.80665/(-0.0065*287))-1) : 1.112,4)+"\\text{ kg/m}^3",
     "Density at cruise altitude (ISA troposphere)")}
   ${eq("a_{cr} = \\sqrt{\\gamma R_{air} T_{cr}} = \\sqrt{1.4 \\times 287 \\times "+(288.15-0.0065*p.cruiseAlt).toFixed(2)+"} = "+fmt(Math.sqrt(1.4*287*(288.15-0.0065*p.cruiseAlt)),2)+"\\text{ m/s}",
     "Speed of sound at cruise altitude")}
@@ -207,7 +207,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   // ── 5. WING AERODYNAMICS ─────────────────────────────────────────────
   const s5 = sec("wing","5. Wing Design & Aerodynamics",`
   <p>Wing area is sized to provide the required lift at cruise using the design lift coefficient C<sub>L,des</sub> = ${p.clDesign}.</p>
-  ${eq("S_w = \\frac{2\\,L_{req}}{\\rho_{cr}\\,V_{cr}^2\\,C_{L,des}} = \\frac{2\\times"+fmt(SR.MTOW*9.81,1)+"}{"+fmt(1.225*Math.pow((288.15-0.0065*p.cruiseAlt)/288.15,(-9.81/(-0.0065*287))-1),4)+"\\times"+p.vCruise+"^2\\times"+p.clDesign+"} = "+fmt(SR.Swing,2)+"\\text{ m}^2","Wing reference area")}
+  ${eq("S_w = \\frac{2\\,L_{req}}{\\rho_{cr}\\,V_{cr}^2\\,C_{L,des}} = \\frac{2\\times"+fmt(SR.MTOW*9.80665,1)+"}{"+fmt(1.225*Math.pow((288.15-0.0065*p.cruiseAlt)/288.15,(-9.80665/(-0.0065*287))-1),4)+"\\times"+p.vCruise+"^2\\times"+p.clDesign+"} = "+fmt(SR.Swing,2)+"\\text{ m}^2","Wing reference area")}
   ${eq("b_w = \\sqrt{AR\\cdot S_w} = \\sqrt{"+p.AR+"\\times"+fmt(SR.Swing,2)+"} = "+fmt(SR.bWing,2)+"\\text{ m}","Wing span")}
   ${eq("C_r = \\frac{2S_w}{b_w(1+\\lambda)} = "+fmt(SR.Cr_,3)+"\\text{ m}, \\quad C_t = \\lambda\\,C_r = "+fmt(SR.Ct_,3)+"\\text{ m}","Root and tip chord (taper λ = "+p.taper+")")}
   ${eq("\\bar{c} = \\frac{2}{3}C_r\\frac{1+\\lambda+\\lambda^2}{1+\\lambda} = "+fmt(SR.MAC,3)+"\\text{ m}","Mean aerodynamic chord (MAC)")}
@@ -234,7 +234,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   // ── 6. PROPULSION ────────────────────────────────────────────────────
   const s6 = sec("prop","6. Hover Propulsion Sizing",`
   <p>Rotor disk area is sized from actuator disk theory to satisfy the hover power budget with the given figure of merit η<sub>hov</sub> = ${p.etaHov}.</p>
-  ${eq("T_{rotor} = \\frac{W\\,g_0}{N_{rot}} = \\frac{"+fmt(SR.MTOW,1)+"\\times 9.81}{"+p.nPropHover+"} = "+fmt(SR.MTOW*9.81/p.nPropHover,1)+"\\text{ N}","Thrust per rotor")}
+  ${eq("T_{rotor} = \\frac{W\\,g_0}{N_{rot}} = \\frac{"+fmt(SR.MTOW,1)+"\\times 9.80665}{"+p.nPropHover+"} = "+fmt(SR.MTOW*9.80665/p.nPropHover,1)+"\\text{ N}","Thrust per rotor")}
   ${eq("A_{disk} = \\frac{T_{rotor}^3}{2\\,\\rho_{SL}\\,(P_{rotor}\\,\\eta_{hov})^2}","Disk area from actuator disk momentum theory")}
   ${eq("D_{rotor} = 2\\sqrt{A_{disk}/\\pi} = "+fmt(SR.Drotor,3)+"\\text{ m}","Rotor diameter")}
   ${eq("\\Omega_{tip} = \\sqrt{\\frac{2P_{rotor}\\eta_{hov}}{\\rho_{SL}\\,A_{disk}}}, \\quad \\text{RPM} = \\frac{60\\,\\Omega_{tip}}{2\\pi SR} = "+fmt(SR.RPM,0),"Tip speed and rotational speed")}
@@ -324,7 +324,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   `);
 
   // ── V-n DIAGRAM + OEI section ─────────────────────────────────────
-  const g0d_vn=9.81;
+  const g0d_vn=9.80665;
   /* FROM THE ENGINE, NOT A LITERAL. This was `nPosLim=3.5`, one of five
      independent copies of the limit load factor in this codebase; the
      exported report therefore showed 3.5 g for every aircraft it ever
@@ -385,7 +385,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   // ══════════════════════════════════════════════════════════════════════
 
   // ── Intermediate values recomputed for display ─────────────────────
-  const g0d=9.81,T0d=288.15,L_d=0.0065,Rgasd=287,rhoSLd=1.225;
+  const g0d=9.80665,T0d=288.15,L_d=0.0065,Rgasd=287,rhoSLd=1.225;
   const deltaISAd=p.deltaISA||0;
   const T0effd=T0d+deltaISAd;
   const Tcrd=T0effd-L_d*p.cruiseAlt;
@@ -450,7 +450,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   // ── D1. ROUND 1 — INITIAL MTOW ──────────────────────────────────────
   const sd1 = sec("iter1","D1. Round 1 — Initial MTOW Estimate (Simplified Range-Energy Method)",`
   <p>Round 1 computes a first-pass MTOW using a simplified battery mass fraction derived purely from range. Starting guess MTOW<sub>0</sub> = 2177 kg, iterated to convergence (&lt; 10<sup>−6</sup> kg).</p>
-  ${eq("f_{bat} = \\frac{g_0 \\cdot SR}{(L/D)\\,\\eta_{sys}\\,\\text{SED}_{cell}\\times 3600} = \\frac{9.81 \\times "+p.range+" \\times 1000}{"+p.LD+" \\times "+p.etaSys+" \\times "+p.sedCell+" \\times 3600} = "+fmt(bfd,5),"Simplified battery mass fraction (range-energy method)")}
+  ${eq("f_{bat} = \\frac{g_0 \\cdot SR}{(L/D)\\,\\eta_{sys}\\,\\text{SED}_{cell}\\times 3600} = \\frac{9.80665 \\times "+p.range+" \\times 1000}{"+p.LD+" \\times "+p.etaSys+" \\times "+p.sedCell+" \\times 3600} = "+fmt(bfd,5),"Simplified battery mass fraction (range-energy method)")}
   ${eq("W_{empty} = f_{EW} \\cdot \\text{MTOW} = "+p.ewf+" \\cdot \\text{MTOW}","Empty weight from structural mass fraction EWF = "+p.ewf)}
   ${eq("W_{bat,1} = f_{bat} \\cdot \\text{MTOW} = "+fmt(bfd,5)+" \\cdot \\text{MTOW}","Battery mass (Round 1 approximation)")}
   ${eq("\\text{MTOW}_{1} = \\frac{m_{pay}}{1 - f_{EW} - f_{bat}} = \\frac{"+p.payload+"}{1 - "+p.ewf+" - "+fmt(bfd,5)+"} = "+fmt(SR.MTOW1,2)+"\\text{ kg}","Analytical solution of weight closure")}
@@ -474,7 +474,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   ${eq("d_{cl} = \\frac{h_{cr}-h_{hov}}{\\tan\\gamma_{cl}} = "+fmt(ClimbRd,1)+"\\text{ m}, \\quad d_{dc} = \\frac{h_{cr}-h_{hov}}{\\tan\\gamma_{dc}} = "+fmt(DescRd,1)+"\\text{ m}","Climb and descent ground tracks")}
   ${eq("d_{cr} = SR - d_{cl} - d_{dc} - d_{res} = "+p.range*1000+" - "+fmt(ClimbRd,1)+" - "+fmt(DescRd,1)+" - "+fmt(reserveDistMd,1)+" = "+fmt(CruiseRanged,1)+"\\text{ m}","Net cruise distance")}
   <p><strong>Final converged iteration (MTOW = ${fmt(SR.MTOW,2)} kg):</strong></p>
-  ${eq("DL = \\frac{\\text{MTOW}\\cdot g_0}{N_{rot}\\cdot A_{disk}} = \\frac{"+fmt(SR.MTOW,2)+"\\times 9.81}{"+p.nPropHover+"\\times\\pi("+fmt(p.propDiam/2,3)+")^2} = "+fmt(DLd,2)+"\\text{ N/m}^2","Disk loading")}
+  ${eq("DL = \\frac{\\text{MTOW}\\cdot g_0}{N_{rot}\\cdot A_{disk}} = \\frac{"+fmt(SR.MTOW,2)+"\\times 9.80665}{"+p.nPropHover+"\\times\\pi("+fmt(p.propDiam/2,3)+")^2} = "+fmt(DLd,2)+"\\text{ N/m}^2","Disk loading")}
   ${eq("P_{hov} = \\frac{W}{\\eta_{hov}}\\sqrt{\\frac{DL}{2\\rho_{SL}}} \\div 1000 = \\frac{"+fmt(SR.MTOW*g0d,1)+"}{"+p.etaHov+"}\\sqrt{\\frac{"+fmt(DLd,2)+"}{2.45}} \\div 1000 = "+fmt(SR.Phov,2)+"\\text{ kW}","Hover power")}
   ${eq("P_{cl} = \\frac{W}{\\eta_{sys}}\\!\\left(\\dot{h}+\\frac{V_{cl}}{(L/D)_{cl}}\\right)\\!\\div 1000 = \\frac{"+fmt(SR.MTOW*g0d,1)+"}{"+p.etaSys+"}\\!\\left("+RoCd+"+\\frac{"+fmt(Vcld,2)+"}{"+fmt(LDcld,3)+"}\\right)\\!\\div 1000 = "+fmt(SR.Pcl,2)+"\\text{ kW}","Climb power")}
   ${eq("P_{cr} = \\frac{W\\,V_{cr}}{\\eta_{sys}\\,(L/D)} = \\frac{"+fmt(SR.MTOW*g0d,1)+"\\times "+p.vCruise+"}{"+p.etaSys+"\\times "+p.LD+"} \\div 1000 = "+fmt(SR.Pcr,2)+"\\text{ kW}","Cruise power")}
@@ -568,7 +568,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
 
   // ── D7. ROTOR & MOTOR SIZING ──────────────────────────────────────────
   const sd7 = sec("rotcalc","D7. Rotor & Motor Sizing — Actuator Disk Theory",`
-  ${eq("T_{total} = \\text{MTOW}\\times g_0 = "+fmt(SR.MTOW,2)+"\\times 9.81 = "+fmt(Ttotd,1)+"\\text{ N}","Total hover thrust")}
+  ${eq("T_{total} = \\text{MTOW}\\times g_0 = "+fmt(SR.MTOW,2)+"\\times 9.80665 = "+fmt(Ttotd,1)+"\\text{ N}","Total hover thrust")}
   ${eq("T_{rotor} = T_{total}/N_{rot} = "+fmt(Trotord,1)+"\\text{ N}, \\quad P_{rotor} = P_{hov}\\times 1000/N_{rot} = "+fmt(PrWd,1)+"\\text{ W}","Thrust and power per rotor")}
   ${eq("A_{disk} = \\frac{T_{rotor}^3}{2\\,\\rho_{SL}\\,(P_{rotor}\\,\\eta_{hov})^2} = \\frac{"+fmt(Trotord,1)+"^3}{2\\times 1.225\\times("+fmt(PrWd,1)+"\\times "+p.etaHov+")^2} = "+fmt(Adiskd,4)+"\\text{ m}^2","Disk area from actuator disk theory")}
   ${eq("D_{rot} = 2\\sqrt{A_{disk}/\\pi} = 2\\sqrt{"+fmt(Adiskd,4)+"/\\pi} = "+fmt(SR.Drotor,3)+"\\text{ m}","Rotor diameter")}
@@ -615,7 +615,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   `);
 
   // ── D10. NOISE MODEL ─────────────────────────────────────────────────
-  const g0d_n=9.81,T0d_n=288.15,Rgas_n=287,GAM_n=1.4,rhoMSL_n=1.225;
+  const g0d_n=9.80665,T0d_n=288.15,Rgas_n=287,GAM_n=1.4,rhoMSL_n=1.225;
   const aMSL_n=Math.sqrt(GAM_n*Rgas_n*T0d_n);
   const Mtip_h_n=Math.min(SR.TipSpd/aMSL_n,0.699);
   const DL_hover_n=(SR.MTOW*g0d_n/p.nPropHover)/(Math.PI*(p.propDiam/2)**2);
@@ -668,7 +668,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   `);
 
   // ── D11. DIRECT OPERATING COST (DOC) MODEL ─────────────────────────
-  const g0d_c=9.81;
+  const g0d_c=9.80665;
   const flightsPerYear_c=10*300;
   const fltHr_c=SR.Tend/3600;
   const CrateHov_c=SR.CrateHov||3.0;

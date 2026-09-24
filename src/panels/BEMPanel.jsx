@@ -66,7 +66,7 @@ export function BEMPanel({ params, SR, SC, U }) {
     const RPM   = +(SR?.RPM) || 500;
     const B     = Nbld;
     const rho   = 1.225;
-    const g0    = 9.81;
+    const g0    = 9.80665;
     const Omega = RPM * Math.PI / 30;
     const Vtip  = Omega * R;
     const c     = chord_r * R;             // constant chord (explicit assumption)
@@ -338,7 +338,7 @@ export function BEMPanel({ params, SR, SC, U }) {
           </button>
           {SR&&(
             <span style={{...S,color:SC.muted,fontSize:9}}>
-              From sizing: R={uc.len(SR.Drotor/2)}{uc.lenU} · RPM={SR.RPM} · {SR.nPropHover} rotors · T_req/rotor={(SR.MTOW*9.81/SR.nPropHover).toFixed(0)}N · V_tip={uc.speed(SR.RPM*Math.PI/30*(SR.Drotor/2))}{uc.speedU} · M_tip={(SR.TipMach).toFixed(3)}
+              From sizing: R={uc.len(SR.Drotor/2)}{uc.lenU} · RPM={SR.RPM} · {SR.nPropHover} rotors · T_req/rotor={(SR.MTOW*9.80665/SR.nPropHover).toFixed(0)}N · V_tip={uc.speed(SR.RPM*Math.PI/30*(SR.Drotor/2))}{uc.speedU} · M_tip={(SR.TipMach).toFixed(3)}
             </span>
           )}
         </div>

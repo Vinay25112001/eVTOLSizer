@@ -26,7 +26,7 @@ import { runSizing } from "../src/engine.js";
 import { downloadFractionFor, resolveConfiguration } from "../src/engine/configuration.js";
 import { twinRotorInterference, hubSpacingFor } from "../src/engine/coaxial.js";
 
-const G0 = 9.81, RHO_MSL = 1.225, T0 = 288.15, LAPSE = 0.0065,
+const G0 = 9.80665, RHO_MSL = 1.225, T0 = 288.15, LAPSE = 0.0065,
       R_GAS = 287, GAMMA = 1.4, P0 = 101325, MU0 = 1.47e-5;
 
 function lcg(seed) { let s = seed >>> 0;

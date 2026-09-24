@@ -1077,12 +1077,12 @@ function runSizingCore(p0) {
       const convTail_i = (p.tailType ?? cfgOut?.capabilities?.tailType ?? "vee") === "conventional";
       const ARfin_i = p.finAR ?? 1.103, ARstab_i = p.stabAR ?? 2.50;
       const vFrac_i = p.ventralOverFin ?? (0.2533 / 0.8392);
-      const wS_i = (S, AR) => 0.036 * S * Math.pow(AR, 0.25) * 0.82 * 1000 / 9.81;
+      const wS_i = (S, AR) => 0.036 * S * Math.pow(AR, 0.25) * 0.82 * 1000 / 9.80665;
       const Sven_i = Svr_i * (vFrac_i / (1 + vFrac_i));
       const Wvt_i = convTail_i
         ? wS_i(Svr_i - Sven_i, ARfin_i) + wS_i(Shr_i, ARstab_i)
           + wS_i(Sven_i, p.ventralAR ?? 4.282)
-        : 2*(0.036*Svtp_i*Math.pow(p.vtAR,0.25)*0.82*1000/9.81);
+        : 2*(0.036*Svtp_i*Math.pow(p.vtAR,0.25)*0.82*1000/9.80665);
       /* THE WEIGHT MODEL SIZES TO THIS AIRCRAFT'S OWN LOAD CASES. Evaluated per
          iteration at the current MTOW and wing, so the gust case - which
          depends on wing loading - converges with the design rather than being
@@ -1764,7 +1764,7 @@ function runSizingCore(p0) {
   const Srv=ruddervator_chord_frac*Svt_panel;   // ruddervator area per panel
 
   // Tail weight estimate (Roskam UAV method, % of empty weight)
-  const Wvt_panel=0.036*Svt_panel*Math.pow(AR_vt,0.25)*0.82*1000/9.81; // simplified Raymer eq 15.26
+  const Wvt_panel=0.036*Svt_panel*Math.pow(AR_vt,0.25)*0.82*1000/9.80665; // simplified Raymer eq 15.26
   const Wvt_total=2*Wvt_panel;
 
   /* ══ CONVENTIONAL TAIL — RAVEN'S OWN ARRANGEMENT ═══════════════════════
@@ -1833,7 +1833,7 @@ function runSizingCore(p0) {
 
   /* Same Raymer form the V-tail used, applied to each surface at its own
      aspect ratio, so the comparison is like for like. */
-  const wSurf = (S, AR) => 0.036 * S * Math.pow(AR, 0.25) * 0.82 * 1000 / 9.81;
+  const wSurf = (S, AR) => 0.036 * S * Math.pow(AR, 0.25) * 0.82 * 1000 / 9.80665;
   const Wfin = wSurf(Sv_fin, AR_fin);
   const Wstab = wSurf(Sh_stab, AR_stab);
   const Wventral = wSurf(Sv_ventral, p.ventralAR ?? 4.282);

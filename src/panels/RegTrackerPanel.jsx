@@ -21,7 +21,7 @@ export function RegTrackerPanel({ params, SR, SC }) {
       switch(rule.param) {
         case "OEI_margin_pct": {
           if(!sr) return null;
-          const g=9.81, N=p.nPropHover, TW=p.twRatio||1.2;
+          const g=9.80665, N=p.nPropHover, TW=p.twRatio||1.2;
           const T_nom = sr.MTOW*g*TW/N;         // motor design thrust (uses T/W)
           const T_oei = (N-1)*T_nom;            // (N-1) motors at full thrust
           return +(((T_oei - sr.MTOW*g)/(sr.MTOW*g))*100).toFixed(1);

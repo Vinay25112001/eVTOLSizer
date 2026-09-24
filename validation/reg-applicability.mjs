@@ -211,7 +211,7 @@ console.log("\n3. EVERY RULE'S VALUE MUST MOVE — a constant is not a check");
   const evaluate = (rule, p, sr) => {
     switch (rule.param) {
       case "OEI_margin_pct": {
-        const g = 9.81, N = p.nPropHover, TW = p.twRatio || 1.2;
+        const g = 9.80665, N = p.nPropHover, TW = p.twRatio || 1.2;
         const T_nom = sr.MTOW * g * TW / N;
         return +((((N - 1) * T_nom - sr.MTOW * g) / (sr.MTOW * g)) * 100).toFixed(1);
       }

@@ -59,7 +59,7 @@ const KT = 0.514444;                 // m/s per knot
 const FT = 0.3048;
 const LB_FT2_PER_PA = 0.020885434;   // lb/ft² per N/m²
 const RHO0_SLUG = 0.0023769;         // slug/ft³, ISA sea level
-const G_FT = 32.174;
+const G_FT = 32.17405;
 
 /* Level flight. Named rather than written as a bare 1 wherever a drawing
    needs it, so the V-n views carry no numeric load factor of their own —

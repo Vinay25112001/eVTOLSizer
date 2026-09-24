@@ -43,7 +43,7 @@ export function ConvergenceTab(ctx) {
                   <div>
                     <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.12em",marginBottom:3}}>THRUST-TO-WEIGHT ANALYSIS</div>
                     <div style={{fontSize:11,color:SC.text,lineHeight:1.6}}>
-                      At T/W = <span style={{color:SC.amber,fontWeight:700}}>{params.twRatio.toFixed(2)}</span>, installed hover thrust = <span style={{color:SC.blue,fontWeight:700}}>{(params.twRatio*SR.MTOW*9.81/1000).toFixed(1)} kN</span> → hover power = <span style={{color:SC.blue,fontWeight:700}}>{U.power(SR.Phov)} {U.powerU}</span>.
+                      At T/W = <span style={{color:SC.amber,fontWeight:700}}>{params.twRatio.toFixed(2)}</span>, installed hover thrust = <span style={{color:SC.blue,fontWeight:700}}>{(params.twRatio*SR.MTOW*9.80665/1000).toFixed(1)} kN</span> → hover power = <span style={{color:SC.blue,fontWeight:700}}>{U.power(SR.Phov)} {U.powerU}</span>.
                       Round 1 gives <span style={{color:SC.muted,fontWeight:700}}>{U.mass(SR.MTOW1)} {U.massU}</span>. Dual-constraint converges to <span style={{color:SC.green,fontWeight:700}}>{U.mass(SR.MTOW)} {U.massU}</span> — a <span style={{color:SC.amber,fontWeight:700}}>{((SR.MTOW/SR.MTOW1-1)*100).toFixed(1)}%</span> increase driven by peak hover power sizing.
                     </div>
                   </div>
@@ -199,7 +199,7 @@ export function ConvergenceTab(ctx) {
                         const isActive=Math.abs(d.tw-params.twRatio)<0.01;
                         const delta=d.R2-d.R1;
                         const pct=((d.R2/d.R1-1)*100);
-                        const W2=d.R2*9.81;
+                        const W2=d.R2*9.80665;
                         const DL2=(W2*d.tw)/(Math.PI*Math.pow(params.propDiam/2,2)*params.nPropHover);
                         const phov2=+(W2*d.tw/params.etaHov*Math.sqrt(DL2/(2*1.225))/1000).toFixed(1);
                         return(

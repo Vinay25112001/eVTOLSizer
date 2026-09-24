@@ -389,7 +389,7 @@ export function componentWeights(p, g, K = WEIGHT_CONSTANTS) {
     nTilting: cfg0.nTilting, cruiseThrustUnits: cfg0.cruiseThrustUnits,
     hasCruiseProp: cfg0.hasCruiseProp,
     transientFactor: motorTransientRequirement(p).factor,
-    W: g.MTOW * 9.81, rhoHov: g.rhoHov ?? 1.225, diskArea,
+    W: g.MTOW * 9.80665, rhoHov: g.rhoHov ?? 1.225, diskArea,
   });
   const PmotKW    = p.legacyMotorSizing === true
     ? (g.Phov * 1.15) / Math.max(1, g.nRotors)

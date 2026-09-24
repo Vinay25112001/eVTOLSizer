@@ -395,7 +395,7 @@ export function VTailTab(ctx) {
                             const sm=sm_pct/100;
                             const xCG_g=SR.xNP-sm*SR.MAC;
                             // Pitch moment about AC: CM_ac from airfoil + CL * (xCG-xAC)/MAC
-                            const CL_cr=SR.Swing>0?2*SR.MTOW*9.81/(1.225*params.vCruise**2*SR.Swing):1;
+                            const CL_cr=SR.Swing>0?2*SR.MTOW*9.80665/(1.225*params.vCruise**2*SR.Swing):1;
                             const CM_ac=SR.selAF?.CM||(-0.02);
                             const CM_net=CM_ac+CL_cr*sm;  // net pitch moment
                             const Sh_eff_cur=SR.Sh_eff||0.1;

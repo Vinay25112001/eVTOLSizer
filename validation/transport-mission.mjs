@@ -47,7 +47,7 @@ console.log("\n2. Mission");
   const t = jet(10999.999), s = jet(11000.001), u = jet(12497), hot = makeJetISA(15)(12497);
   check("jet ISA: the engine's ISA to 11 km, then 216.65 K, pressure continuous, exponential decay",
         Math.abs(u.T - 216.65) < 1e-9 && rel(s.P, t.P) < 1e-6
-        && rel(u.P, isa(11000).P * Math.exp(-9.80665 * 1497 / (287 * 216.65))) < 1e-12
+        && rel(u.P, isa(11000).P * Math.exp(-9.80665 * 1497 / (287.05287 * 216.65))) < 1e-12
         && [0, 3000, 10999].every((h) => JSON.stringify(jet(h)) === JSON.stringify(isa(h))),
         `41,000 ft: ${u.T.toFixed(2)} K, ${u.P.toFixed(0)} Pa`);
   check("ISA deviation above the tropopause shifts temperature only", Math.abs(hot.T - 231.65) < 1e-9 && hot.P === u.P);

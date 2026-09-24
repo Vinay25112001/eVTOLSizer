@@ -726,11 +726,11 @@ export default function App(){
       const T_K=T_C+273.15;
       const T_std=288.15-0.0065*elevation; // ISA temperature at this altitude
       const P_Pa=P_hPa*100;
-      const rho_actual=P_Pa/(287*T_K);
+      const rho_actual=P_Pa/(287.05287*T_K);
       // Correct ISA density at elevation using full ISA formula (not just temperature ratio)
-      const rho_ISA_elev=1.225*Math.pow((288.15-0.0065*elevation)/288.15,(-9.80665/(-0.0065*287))-1);
+      const rho_ISA_elev=1.225*Math.pow((288.15-0.0065*elevation)/288.15,(-9.80665/(-0.0065*287.05287))-1);
       const sigma=rho_actual/1.225; // density ratio vs MSL
-      const a_actual=Math.sqrt(1.4*287*T_K);
+      const a_actual=Math.sqrt(1.4*287.05287*T_K);
       const deltaT=T_C-(T_std-273.15); // temp deviation from ISA
       // Run sizing with actual atmospheric conditions
       const MTOW=SR.MTOW,W=MTOW*9.80665;

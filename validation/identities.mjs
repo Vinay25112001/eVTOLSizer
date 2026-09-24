@@ -27,7 +27,7 @@ import { downloadFractionFor, resolveConfiguration } from "../src/engine/configu
 import { twinRotorInterference, hubSpacingFor } from "../src/engine/coaxial.js";
 
 const G0 = 9.80665, RHO_MSL = 1.225, T0 = 288.15, LAPSE = 0.0065,
-      R_GAS = 287, GAMMA = 1.4, P0 = 101325, MU0 = 1.47e-5;
+      R_GAS = 287.05287, GAMMA = 1.4, P0 = 101325, MU0 = 1.47e-5;
 
 function lcg(seed) { let s = seed >>> 0;
   return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296); }
@@ -242,10 +242,35 @@ const CHECKS = [
               return [R.tailSlopeRatio, CLa(p.vtAR)/CLa(p.AR)];} },
 
   { name:"static margin definition", units:"1 = m/m", source:"SM = (x_np - x_cg)/MAC",
-    /* ABSOLUTE tolerance: SM is a small difference of two positions the engine
-       rounds to 3 dp, so near-neutral designs blow up any relative measure.
-       0.002 = 0.2% MAC, far below any decision threshold. */
-    absTol:2e-3,
+    /* THE TOLERANCE IS DERIVED, NOT CHOSEN. It used to be a flat 0.002 on the
+       reasoning that SM is a small difference of two 3-dp positions, so a
+       relative measure blows up near neutral. True, but the flat number
+       silently assumed MAC was about a metre. It is not: a tiltrotor in this
+       sweep has MAC 0.65 m and SM -2.33, and there the SAME rounding produces
+       up to 0.0034 — so the check sat at 100% of a bound that did not describe
+       it, and a 0.008% change to the gas constant tipped it over. Nothing
+       about the algebra was wrong; the allowance was.
+
+       The engine publishes xNP, xCGtotal and MAC to 3 dp and SM to 4 dp, and
+       computes SM itself from UNROUNDED internals. So this relation compares a
+       full-precision value against one rebuilt from stored digits, and what it
+       can legitimately differ by follows from those stores:
+           |d(SM)| <= (5e-4 + 5e-4)/MAC        both position stores
+                    + |SM| * 5e-4/MAC          MAC's own store
+                    + 5e-5                     SM's own store
+       That is STRICTER than 0.002 wherever MAC is near a metre and the design
+       is near neutral — which is most of this sweep — and looser only where
+       the published precision genuinely cannot resolve more. A real algebraic
+       error does not scale with 1/MAC, so it still fails.
+
+       This is the second time a flat allowance in this file has been found to
+       be the wrong shape, and the second time a tiltrotor surfaced it. See the
+       diverged mass-balance note below, which dropped a proportional term for
+       the mirror-image reason. */
+    absTol:(p,R)=>{
+      const mac = Math.abs(R.MAC) || 1e-9;
+      return (1e-3 + Math.abs(R.SM)*5e-4)/mac + 5e-5 + 1e-12;
+    },
     f:(p,R)=>[R.SM, (R.xNP-R.xCGtotal)/R.MAC] },
 
   { name:"wing AC from wing station", units:"m", source:"x_ac = fL·wingLEfrac + Xac",
@@ -398,7 +423,19 @@ for (const p of all) {
     const scale = Math.max(Math.abs(lhs), Math.abs(rhs), 1e-9);
     const rel = Math.abs(lhs - rhs) / scale;
     const absErr = Math.abs(lhs - rhs);
-    const bad = c.absTol != null ? absErr > c.absTol : rel > (c.tol ?? REL_TOL);
+    /* absTol may be a NUMBER or a function of the case. A derived bound is
+       for relations whose allowance is set by the engine's own stored
+       precision and therefore varies per design — see "static margin
+       definition". Its worst margin is printed below, because a rounding
+       bound running at 100% of itself is one change away from failing for
+       no physical reason. */
+    const tolAbs = typeof c.absTol === "function" ? c.absTol(p, R) : c.absTol;
+    const bad = tolAbs != null ? absErr > tolAbs : rel > (c.tol ?? REL_TOL);
+    if (tolAbs != null && typeof c.absTol === "function") {
+      const frac = absErr / tolAbs;
+      if (!c.worstMargin || frac > c.worstMargin.frac)
+        c.worstMargin = { frac, absErr, tolAbs, MAC: R.MAC, SM: R.SM, cfg: R.configType };
+    }
     if (bad) c.fails.push({ lhs, rhs, rel });
   }
 }
@@ -471,6 +508,13 @@ for (const c of results) {
   const worst = c.fails.length ? c.fails.reduce((a,b)=>((b.rel||0)>(a.rel||0)?b:a)) : null;
   console.log(`${ok ? " ok " : "FAIL"}  ${c.name.padEnd(34)} ${String(c.checked).padStart(3)} pts` +
     (ok ? "" : `   ${c.fails.length} fail, worst ${(worst.rel*100).toFixed(2)}%`));
+  /* A derived allowance always shows its headroom, passing or failing. */
+  if (c.worstMargin) {
+    const w = c.worstMargin;
+    console.log(`        worst ${w.absErr.toExponential(3)} of ${w.tolAbs.toExponential(3)} allowed`
+      + ` (${(100*w.frac).toFixed(0)}% of the derived rounding bound),`
+      + ` on ${w.cfg} MAC ${w.MAC} SM ${w.SM}`);
+  }
   if (!ok) {
     console.log(`        units : ${c.units}`);
     console.log(`        source: ${c.source}`);

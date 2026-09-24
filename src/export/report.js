@@ -163,11 +163,11 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   <p>All aerodynamic calculations use the International Standard Atmosphere (ISA) model evaluated at the cruise altitude h = ${p.cruiseAlt} m.</p>
   ${eq("T_{cr} = T_0 - L_{lapse} \\cdot h_{cr} = 288.15 - 0.0065 \\times "+p.cruiseAlt+" = "+fmt(288.15-0.0065*p.cruiseAlt,2)+"\\text{ K}",
     "Temperature at cruise altitude")}
-  ${eq("\\rho_{cr} = \\rho_{SL}\\left(\\frac{T_{cr}}{T_0}\\right)^{\\left(\\frac{g_0}{L_{lapse}\\,R_{air}}\\right)-1} = "+fmt(SR.MTOW ? 1.225*Math.pow((288.15-0.0065*p.cruiseAlt)/288.15, (-9.80665/(-0.0065*287))-1) : 1.112,4)+"\\text{ kg/m}^3",
+  ${eq("\\rho_{cr} = \\rho_{SL}\\left(\\frac{T_{cr}}{T_0}\\right)^{\\left(\\frac{g_0}{L_{lapse}\\,R_{air}}\\right)-1} = "+fmt(SR.MTOW ? 1.225*Math.pow((288.15-0.0065*p.cruiseAlt)/288.15, (-9.80665/(-0.0065*287.05287))-1) : 1.112,4)+"\\text{ kg/m}^3",
     "Density at cruise altitude (ISA troposphere)")}
-  ${eq("a_{cr} = \\sqrt{\\gamma R_{air} T_{cr}} = \\sqrt{1.4 \\times 287 \\times "+(288.15-0.0065*p.cruiseAlt).toFixed(2)+"} = "+fmt(Math.sqrt(1.4*287*(288.15-0.0065*p.cruiseAlt)),2)+"\\text{ m/s}",
+  ${eq("a_{cr} = \\sqrt{\\gamma R_{air} T_{cr}} = \\sqrt{1.4 \\times 287.05287 \\times "+(288.15-0.0065*p.cruiseAlt).toFixed(2)+"} = "+fmt(Math.sqrt(1.4*287.05287*(288.15-0.0065*p.cruiseAlt)),2)+"\\text{ m/s}",
     "Speed of sound at cruise altitude")}
-  ${eq("M = \\frac{V_{cr}}{a_{cr}} = \\frac{"+p.vCruise+"}{"+fmt(Math.sqrt(1.4*287*(288.15-0.0065*p.cruiseAlt)),2)+"} = "+fmt(SR.Mach,4),
+  ${eq("M = \\frac{V_{cr}}{a_{cr}} = \\frac{"+p.vCruise+"}{"+fmt(Math.sqrt(1.4*287.05287*(288.15-0.0065*p.cruiseAlt)),2)+"} = "+fmt(SR.Mach,4),
     "Cruise Mach number")}
   `);
 
@@ -207,7 +207,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   // ── 5. WING AERODYNAMICS ─────────────────────────────────────────────
   const s5 = sec("wing","5. Wing Design & Aerodynamics",`
   <p>Wing area is sized to provide the required lift at cruise using the design lift coefficient C<sub>L,des</sub> = ${p.clDesign}.</p>
-  ${eq("S_w = \\frac{2\\,L_{req}}{\\rho_{cr}\\,V_{cr}^2\\,C_{L,des}} = \\frac{2\\times"+fmt(SR.MTOW*9.80665,1)+"}{"+fmt(1.225*Math.pow((288.15-0.0065*p.cruiseAlt)/288.15,(-9.80665/(-0.0065*287))-1),4)+"\\times"+p.vCruise+"^2\\times"+p.clDesign+"} = "+fmt(SR.Swing,2)+"\\text{ m}^2","Wing reference area")}
+  ${eq("S_w = \\frac{2\\,L_{req}}{\\rho_{cr}\\,V_{cr}^2\\,C_{L,des}} = \\frac{2\\times"+fmt(SR.MTOW*9.80665,1)+"}{"+fmt(1.225*Math.pow((288.15-0.0065*p.cruiseAlt)/288.15,(-9.80665/(-0.0065*287.05287))-1),4)+"\\times"+p.vCruise+"^2\\times"+p.clDesign+"} = "+fmt(SR.Swing,2)+"\\text{ m}^2","Wing reference area")}
   ${eq("b_w = \\sqrt{AR\\cdot S_w} = \\sqrt{"+p.AR+"\\times"+fmt(SR.Swing,2)+"} = "+fmt(SR.bWing,2)+"\\text{ m}","Wing span")}
   ${eq("C_r = \\frac{2S_w}{b_w(1+\\lambda)} = "+fmt(SR.Cr_,3)+"\\text{ m}, \\quad C_t = \\lambda\\,C_r = "+fmt(SR.Ct_,3)+"\\text{ m}","Root and tip chord (taper λ = "+p.taper+")")}
   ${eq("\\bar{c} = \\frac{2}{3}C_r\\frac{1+\\lambda+\\lambda^2}{1+\\lambda} = "+fmt(SR.MAC,3)+"\\text{ m}","Mean aerodynamic chord (MAC)")}
@@ -385,7 +385,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   // ══════════════════════════════════════════════════════════════════════
 
   // ── Intermediate values recomputed for display ─────────────────────
-  const g0d=9.80665,T0d=288.15,L_d=0.0065,Rgasd=287,rhoSLd=1.225;
+  const g0d=9.80665,T0d=288.15,L_d=0.0065,Rgasd=287.05287,rhoSLd=1.225;
   const deltaISAd=p.deltaISA||0;
   const T0effd=T0d+deltaISAd;
   const Tcrd=T0effd-L_d*p.cruiseAlt;
@@ -537,7 +537,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   ${eq("\\bar{y}_{MAC} = \\frac{b_w}{6}\\,\\frac{1+2\\lambda}{1+\\lambda} = "+fmt(SR.Ymac,3)+"\\text{ m}","Spanwise MAC position")}
   ${eq("\\Lambda_{LE} = \\arctan\\!\\left(\\frac{C_r-C_t}{b_w/2}\\right) = \\arctan\\!\\left(\\frac{"+fmt(SR.Cr_,3)+"-"+fmt(SR.Ct_,3)+"}{"+fmt(SR.bWing/2,3)+"}\\right) = "+fmt(SR.sweep,2)+"^\\circ","Leading edge sweep")}
   ${eq("Re_w = \\frac{\\rho_{cr}\\,V_{cr}\\,\\bar{c}}{\\mu_{cr}} = \\frac{"+fmt(rhoCrd,4)+"\\times "+p.vCruise+"\\times "+fmt(SR.MAC,3)+"}{"+fmt(muCrd,7)+"} = "+fmt(SR.Re_,0),"Wing chord Reynolds number")}
-  ${eq("M = \\frac{V_{cr}}{a_{cr}} = \\frac{"+p.vCruise+"}{"+fmt(Math.sqrt(1.4*287*Tcrd),2)+"} = "+fmt(SR.Mach,4),"Cruise Mach number")}
+  ${eq("M = \\frac{V_{cr}}{a_{cr}} = \\frac{"+p.vCruise+"}{"+fmt(Math.sqrt(1.4*287.05287*Tcrd),2)+"} = "+fmt(SR.Mach,4),"Cruise Mach number")}
   ${eq("V_{stall} = \\sqrt{\\frac{2(W/S)}{\\rho_{cr}\\,C_{L,max}}} = \\sqrt{\\frac{2\\times "+fmt(SR.WL,1)+"}{"+fmt(rhoCrd,4)+"\\times "+(SR.selAF&&SR.selAF.CLmax?fmt(SR.selAF.CLmax,2):"1.60")+"}} = "+fmt(SR.Vstall,2)+"\\text{ m/s}","Stall speed")}
   `);
 
@@ -615,7 +615,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
   `);
 
   // ── D10. NOISE MODEL ─────────────────────────────────────────────────
-  const g0d_n=9.80665,T0d_n=288.15,Rgas_n=287,GAM_n=1.4,rhoMSL_n=1.225;
+  const g0d_n=9.80665,T0d_n=288.15,Rgas_n=287.05287,GAM_n=1.4,rhoMSL_n=1.225;
   const aMSL_n=Math.sqrt(GAM_n*Rgas_n*T0d_n);
   const Mtip_h_n=Math.min(SR.TipSpd/aMSL_n,0.699);
   const DL_hover_n=(SR.MTOW*g0d_n/p.nPropHover)/(Math.PI*(p.propDiam/2)**2);

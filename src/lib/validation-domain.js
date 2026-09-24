@@ -127,7 +127,7 @@ export default {
     "errorPct": {
      "MTOW": -19.2,
      "empty": -28,
-     "fuel": -6
+     "fuel": -5.9
     },
     "errorModel": "validation/turboelectric.mjs (NASA technology inputs)"
    }

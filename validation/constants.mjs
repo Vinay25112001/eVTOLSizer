@@ -50,11 +50,29 @@
    table or a sentence is left alone, and this gate does not pretend
    otherwise: that is a stated limit, not a silent one.
 
+   THE SECOND CONSTANT CAME IN BY A DIFFERENT DOOR, and it is why this
+   file has two kinds of check rather than one. R_GAS was 287, while the
+   transport class wrote 287.05287 and the drone sizer a third value,
+   287.058. A literal scan was never going to find the 287: it is a round
+   number that appears in this very tree as a power in kW, a weight in lb
+   and a column of vehicle data, so no band tight enough to be worth
+   having would ever claim it. What gives it away is that it CONTRADICTS
+   THE CONSTANTS BESIDE IT. P0, RHO_MSL, T0 and R_GAS are tied by the
+   ideal gas law, and at R = 287 the file's own P0 and T0 imply a
+   sea-level density of 1.225226 against the RHO_MSL = 1.225 declared
+   four lines away. The engine held a sea-level density that its own
+   pressure, temperature and gas constant denied.
+
+   So: where a constant is pinned by other constants, CHECK THE RELATION,
+   NOT THE DIGITS. Section 1b does that, and it is the sharper instrument
+   of the two — it needs no band, no allowlist and no judgement about
+   which numbers look suspicious.
+
    Run: node validation/constants.mjs
    ===================================================================== */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { G0 } from "../src/engine/constants.js";
+import { G0, R_GAS, RHO_MSL, T0, GAMMA, P0 } from "../src/engine/constants.js";
 
 const fails = [];
 let passes = 0;
@@ -87,10 +105,49 @@ check(Math.abs(G_SI / 0.3048 - G_FT) < 5e-6,
   "the imperial value is the same constant through the defined foot",
   `${G_SI} / 0.3048 = ${(G_SI / 0.3048).toFixed(7)} against NDARC's published ${G_FT}`);
 
+/* ── 1b. THE CONSTANTS MUST NOT CONTRADICT ONE ANOTHER ──────────────── */
+/* This is the check that actually caught R_GAS, and it is a different
+   instrument from the literal scan below. P0, RHO_MSL, T0 and R_GAS are
+   four numbers tied together by the ideal gas law, so three of them fix
+   the fourth and it is not free to be "about right". R_GAS was 287, which
+   put P0/(R*T0) at 1.225226 against a RHO_MSL of 1.225 declared four
+   lines away in the same file — the engine held a sea-level density its
+   own pressure, temperature and gas constant denied.
+
+   A SCAN FOR SUSPICIOUS LITERALS COULD NEVER HAVE FOUND THAT. 287 is not
+   a suspicious number: it is a round one, and it appears in this tree as
+   a power in kW, a weight in lb and a column of vehicle data. Only the
+   relation gives it away. Where a constant is pinned by other constants,
+   check the RELATION and not the digits. */
+const NDARC_CS0 = 340.294;   // m/sec, NDARC Theory constants table, sea level
+
+console.log("\n-- the constants against each other --");
+check(Math.abs(P0 / (R_GAS * T0) / RHO_MSL - 1) < 1e-6,
+  "the ideal gas law closes on the declared sea-level density",
+  `P0/(R*T0) = ${(P0 / (R_GAS * T0)).toFixed(6)} against RHO_MSL = ${RHO_MSL} ` +
+  `(at R = 287 this reads 1.225226 and the file contradicts itself)`);
+check(Math.abs(Math.sqrt(GAMMA * R_GAS * T0) / NDARC_CS0 - 1) < 1e-5,
+  "and reproduces NDARC's published sea-level speed of sound",
+  `sqrt(GAMMA*R*T0) = ${Math.sqrt(GAMMA * R_GAS * T0).toFixed(4)} against NDARC's ` +
+  `${NDARC_CS0} m/sec — a figure NOT used to derive R, so it is an independent check ` +
+  `(at R = 287 this reads 340.2626)`);
+check(Math.abs(P0 / (RHO_MSL * T0) / R_GAS - 1) < 1e-6,
+  "and R is what NDARC's own p0, rho0 and T0 imply",
+  `p0/(rho0*T0) = ${(P0 / (RHO_MSL * T0)).toFixed(6)} — R is derived from the table, ` +
+  `not looked up; 287.05287 reproduces it to every digit the rounded rho0 supports`);
+
 /* ── 2. THE NEIGHBOURHOODS ──────────────────────────────────────────── */
+const R_EXACT = 287.05287;
 const BANDS = [
   { name: "gravity, SI",       lo: 9.805,  hi: 9.815, exact: G_SI, unit: "m/s^2" },
   { name: "gravity, imperial", lo: 32.15,  hi: 32.20, exact: G_FT, unit: "ft/s^2" },
+  /* The lower edge sits just ABOVE a bare 287 for the same reason the
+     gravity band sits just above a bare 9.8: 287 is a power in kW, a
+     weight in lb and a data column here, and a band that collects those
+     is a band somebody silences. A bare 287 standing in for R is caught
+     by the relations above and by the name pass, not by its digits. The
+     upper edge sits below 287.3, which is an installed power in kW. */
+  { name: "specific gas constant", lo: 287.01, hi: 287.20, exact: R_EXACT, unit: "J/(kg K)" },
 ];
 
 /* EVERY EXCEPTION CARRIES A REASON. An entry here is a claim that a
@@ -122,6 +179,18 @@ const ALLOWED = [
        is never excused, only the prose about it. */
     notOnLineMatching: /export\s+const\s+G0/,
   },
+  /* The same shape again, for R. constants.js SHOWS ITS WORKING: it prints
+     the derivation p0/(rho0*T0) = 287.052874, and names 287.053 and 287.058
+     as the six-figure rounding and the drone sizer's discarded third value.
+     A header that could not write those could not explain anything. Each is
+     fenced off the declaration line, so none of them can smuggle a wrong
+     value into the export the way an unfenced (file, value) pair would. */
+  ...["287.052874", "287.053", "287.058"].map((value) => ({
+    file: "src/engine/constants.js", value,
+    why: "the header derives R and names the values it is not, which it cannot do " +
+         "without writing them down; never excused on the declaration itself.",
+    notOnLineMatching: /export\s+const\s+R_GAS/,
+  })),
 ];
 const excused = (file, value, lineText) =>
   ALLOWED.some((a) =>
@@ -169,6 +238,13 @@ const LITERAL = /(?<![\d.\w])(\d+(?:\.\d+)?)(?![\d.])/g;
 /* The 1-based line number of an offset, and the whole line it sits on —
    the allowlist needs the text as well as the number, because one of the
    exceptions below is allowed in prose and forbidden in a declaration. */
+/* Comments removed, so prose that must WRITE a wrong value in order to
+   explain it is not mistaken for code. Used by the name pass and the
+   operand pass; the band pass deliberately still reads comments and
+   strings, because a stale printed value is itself a defect. */
+const stripComments = (s) =>
+  s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+
 const NL = String.fromCharCode(10);
 function lineAt(text, index) {
   const lines = text.split(NL);
@@ -200,14 +276,17 @@ const MUST_FIRE = [
   ["const G = 9.81;",                  "the value that was actually there"],
   ["const G_FT = 32.2;",               "an imperial gravity rounded off"],
   ["eq('W \\\\times 9.807 = ')",       "a wrong g inside a displayed equation"],
+  ["const R = 287.058;",               "the drone sizer's discarded third gas constant"],
+  ["const R = 287.053;",               "the six-figure rounding, which is not the value in use"],
 ];
 for (const [snippet, why] of MUST_FIRE) {
   check(scan(snippet, "control").length > 0, `fires on: ${snippet.trim()}`, why);
 }
 const MUST_NOT_FIRE =
-  "const G = 9.80665, G_FT = 32.17405;\n" +
+  "const G = 9.80665, G_FT = 32.17405, R = 287.05287;\n" +
   "const oewErrPct = 9.78, powerLoading = 9.85, piSquared = 9.8696;\n" +
   "const dischargeA = 9.8, mtowErrPct = 9.8;\n" +
+  "const pusherKW = 287, weightLb = 287, installedKW = 287.3;\n" +
   "const noseFrac = 32.1;  // per cent of body length, and a 9.8 deg glide angle\n";
 check(scan(MUST_NOT_FIRE, "control").length === 0,
   "and stays silent on the correct values and on near neighbours that are not gravity",
@@ -243,16 +322,68 @@ check(offenders.length === 0,
     : `${ALLOWED.length} named exceptions, each with a reason: ` +
       ALLOWED.map((a) => `${a.file} ${a.value}`).join("; "));
 
-/* ── 5. GRAVITY-NAMED BINDINGS ──────────────────────────────────────── */
+/* ── 5. CONSTANT-NAMED BINDINGS ─────────────────────────────────────── */
 /* The band catches a value that is nearly right. This catches a value
-   that is nowhere near right but is bound to a name that means gravity,
-   which the band would sail straight past. A bare g or G is only
-   considered when the value is already in the region where it could only
-   have been meant as gravity, so that an unrelated one-letter variable
-   holding a 0 or a 2 is not dragged in. */
-console.log("\n-- identifiers that mean gravity --");
-const NAMED = /\b(G0|g0|gn|GRAVITY|gravity|G_FT|g_ft|G|g)\s*=\s*(\d+(?:\.\d+)?)\b/g;
-const PLAUSIBLY_G = (v) => (v >= 8 && v <= 12) || (v >= 30 && v <= 35);
+   that is nowhere near right but is bound to a name that means the
+   constant, which the band would sail straight past — a bare 287 bound
+   to R is the case that matters, since 287 sits deliberately outside the
+   gas-constant band. A one-letter name is only considered when the value
+   is already in the region where it could only have been meant as that
+   constant, so an unrelated G holding a 0, or an R holding a rotor
+   radius, is not dragged in.
+
+   COMMENTS ARE STRIPPED FIRST. A sentence may need to write "with
+   R = 287" to explain why 287 is wrong, and src/engine/constants.js does
+   exactly that. Prose is not a binding. */
+console.log("\n-- identifiers that mean a physical constant --");
+/* `ambiguous` names are ones this codebase also uses for something else, so
+   they are only judged when the value is already in the region where it
+   could only have been meant as the constant. G and g are geometry and
+   gains elsewhere; R is a rotor radius all over this tree; and RL turned
+   out to be a ruler-left SVG coordinate in Components.jsx — it is in the
+   list at all because the HAW TOFL source writes the gas constant as RL,
+   which is a reminder that a notation borrowed from a paper does not own
+   the name in the code. An UNAMBIGUOUS name gets no such benefit: R_GAS
+   holding anything but the accepted value is wrong whatever the number. */
+const NAMED_FAMILIES = [
+  { names: ["G0", "g0", "gn", "GRAVITY", "gravity", "G_FT", "g_ft", "G", "g"],
+    ambiguous: ["G", "g"], accept: [G_SI, G_FT],
+    plausible: (v) => (v >= 8 && v <= 12) || (v >= 30 && v <= 35) },
+  { names: ["R_GAS", "R_gas", "Rgas", "R_air", "Rair", "RL", "R"],
+    ambiguous: ["R", "RL"], accept: [R_EXACT],
+    plausible: (v) => v >= 280 && v <= 295 },
+];
+const NAMED = new RegExp(
+  "\\b(" + NAMED_FAMILIES.flatMap((f) => f.names).join("|") + ")\\s*=\\s*(\\d+(?:\\.\\d+)?)\\b", "g");
+function scanNames(raw, rel) {
+  const out = [];
+  const text = stripComments(raw);
+  for (const m of text.matchAll(NAMED)) {
+    const name = m[1], v = Number(m[2]);
+    const fam = NAMED_FAMILIES.find((f) => f.names.includes(name));
+    if (!fam) continue;
+    if (fam.ambiguous.includes(name) && !fam.plausible(v)) continue;
+    if (fam.accept.includes(v)) continue;
+    if (excused(rel, m[2], lineAt(text, m.index).text)) continue;
+    out.push(`${rel} ${name} = ${m[2]}`);
+  }
+  return out;
+}
+
+/* CONTROL. This pass is the ONLY thing that catches a bare 287 bound to
+   the gas constant, because 287 sits outside the band on purpose, so a
+   silent pass here would be indistinguishable from no pass at all. */
+check(scanNames("const R_GAS = 287;", "control").length === 1,
+  "control: it fires on R_GAS = 287, which no band will ever claim",
+  "the exact defect this item fixed, and the reason the name pass exists");
+check(scanNames("const R = 287;", "control").length === 1 &&
+      scanNames("const g = 9.8;", "control").length === 1,
+  "control: and on a one-letter name holding a plausible wrong value");
+check(scanNames("const RL = 120, R = 0.9, G = 2;\nconst R_GAS = 287.05287;\n", "control").length === 0,
+  "control: and not on the same letters used for something else",
+  "RL is a ruler coordinate in Components.jsx, R is a rotor radius throughout — " +
+  "an ambiguous name is judged only inside the constant's own range");
+
 const misnamed = [];
 const walkNames = (dir) => {
   for (const e of readdirSync(dir)) {
@@ -261,22 +392,14 @@ const walkNames = (dir) => {
     if (!/\.(jsx?|mjs)$/.test(e)) continue;
     const rel = p.replace(/\\/g, "/");
     if (skipped(rel)) continue;
-    const text = readFileSync(p, "utf8");
-    for (const m of text.matchAll(NAMED)) {
-      const name = m[1], v = Number(m[2]);
-      const bare = name === "G" || name === "g";
-      if (bare && !PLAUSIBLY_G(v)) continue;
-      if (v === G_SI || v === G_FT) continue;
-      if (excused(rel, m[2], lineAt(text, m.index).text)) continue;
-      misnamed.push(`${rel} ${name} = ${m[2]}`);
-    }
+    misnamed.push(...scanNames(readFileSync(p, "utf8"), rel));
   }
 };
 for (const r of ROOTS) walkNames(r);
 check(misnamed.length === 0,
-  "every identifier that means gravity holds one of the two accepted values",
+  "every identifier that means a physical constant holds an accepted value",
   misnamed.length ? misnamed.slice(0, 8).join(" | ")
-                  : "9.80665 m/s^2 or 32.17405 ft/s^2, and nothing else");
+                  : "9.80665 m/s^2, 32.17405 ft/s^2, 287.05287 J/(kg K) — and nothing else");
 
 /* ── 6. A BARE 9.8 DOING ARITHMETIC ─────────────────────────────────── */
 /* The band will not claim a bare 9.8, because 9.8 is also an amperage, a
@@ -285,7 +408,6 @@ check(misnamed.length === 0,
    from a mass, or the reverse. Comments and their contents are removed
    first, so a sentence mentioning a 9.8 degree descent is not arithmetic. */
 console.log("\n-- a bare 9.8 used as a multiplier or divisor --");
-const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 const AS_OPERAND = /(?:[*/]\s*9\.8(?![\d])|(?<![\d.])9\.8(?![\d])\s*[*/])/;
 const scanOperand = (text) => {
   const out = [];

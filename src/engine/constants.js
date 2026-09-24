@@ -44,7 +44,34 @@ export const G0      = 9.80665;   // standard gravity, m/s^2 — exact by defini
 export const RHO_MSL = 1.225;     // ISA sea-level density, kg/m^3
 export const T0      = 288.15;    // ISA sea-level temperature, K
 export const LAPSE   = 0.0065;    // ISA tropospheric lapse rate, K/m
-export const R_GAS   = 287;       // specific gas constant for air, J/(kg*K)
+/* ── THE SPECIFIC GAS CONSTANT IS NOT A FREE CHOICE ───────────────────
+   R_GAS was 287, and 287 is not merely imprecise here — it made THIS FILE
+   contradict itself. P0, RHO_MSL and T0 are all declared above, and the
+   ideal gas law ties the four together: with R = 287,
+       P0 / (R * T0) = 101325 / (287 * 288.15) = 1.225226 kg/m^3
+   against the RHO_MSL = 1.225 declared two lines up. Four numbers, and
+   they could not all be true at once. An engine cannot hold a sea-level
+   density that its own pressure, temperature and gas constant deny.
+
+   THE VALUE IS DERIVED, NOT LOOKED UP. NDARC Theory's constants table
+   (NASA TP-2015-218751 R1.13) publishes p0 = 101325 N/m2, rho0 = 1.225
+   kg/m3 and T0 = 288.15 K but no R, so R is what those three imply:
+       R = p0 / (rho0 * T0) = 287.052874 J/(kg*K)
+   and 287.05287 reproduces that to every digit the rounded rho0 supports.
+
+   IT IS THEN CONFIRMED BY A NUMBER NOT USED IN THE DERIVATION. The same
+   NDARC table publishes the sea-level speed of sound, cs0 = 340.294
+   m/sec. sqrt(GAMMA * R * T0) gives 340.2940 at 287.05287 — exact — and
+   340.2626 at 287, which misses NDARC's published figure by 0.03 m/s.
+   So the table refutes 287 twice over, once through density and once
+   through the speed of sound, and neither route was fitted to the other.
+
+   Airbus (Getting to Grips with Aircraft Performance, 2002, s1.1) and
+   Lucht (HAW Hamburg, TOFL) both write 287.053, which is this same value
+   at six significant figures. The drone sizer separately carried 287.058,
+   a third value with no citation of its own; it is gone.
+   ===================================================================== */
+export const R_GAS   = 287.05287; // specific gas constant for air, J/(kg*K) — derived; see above
 export const GAMMA   = 1.4;       // ratio of specific heats
 export const MU0     = 1.47e-5;   // reference dynamic viscosity, Pa*s
 export const P0      = 101325;    // ISA sea-level static pressure, Pa

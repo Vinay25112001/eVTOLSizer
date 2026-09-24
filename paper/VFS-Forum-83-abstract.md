@@ -122,11 +122,11 @@ mission variables, not one:
 | configuration | W_P/W_E at 161 km | crossover range | W_P/W_E at 10 km |
 |---|---|---|---|
 | lift+cruise | 0.747 | 114.6 km | 1.484 |
-| hybrid (tilt+lift) | 0.792 | 122.0 km | 1.436 |
+| hybrid (tilt+lift) | 0.792 | 122.3 km | 1.436 |
 | hybrid pusher | 0.727 | 110.5 km | 1.314 |
-| tiltrotor | 0.755 | 114.0 km | 1.110 |
+| tiltrotor | 0.755 | 114.3 km | 1.110 |
 | side-by-side | 0.329 | none in 2–161 km | 0.755 |
-| multicopter | 0.236 | none in 2–161 km | 0.547 |
+| multicopter | 0.236 | none in 2–161 km | 0.548 |
 
 Crossovers are located by bisection to 0.5 km. A coarse sweep over a fixed list
 of ranges returned 90–120 km for these — the lower bracket of each containing
@@ -137,7 +137,7 @@ The second variable is the reserve, and it changes the answer qualitatively. A
 fixed 20-minute reserve is a large constant floor under mission energy: as range
 falls, E_total does not fall towards zero but towards the reserve. At a 10 km
 mission the two rotor-borne layouts are energy-governed at a 20-minute reserve
-(0.547 and 0.755) and **power-governed at five minutes** (1.059 and 1.432). So
+(0.548 and 0.755) and **power-governed at five minutes** (1.059 and 1.432). So
 "this configuration is never power-limited" is a statement about the assumed
 reserve, not about the configuration — and it is true or false depending on a
 parameter that is often not reported at all.

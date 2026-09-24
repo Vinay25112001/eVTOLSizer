@@ -83,7 +83,7 @@ export const G = 9.80665;
    instead of a density; the troposphere form, stated rather than buried. */
 export function isaDensity(altitudeM = 0) {
   if (altitudeM < 0) throw new Error(`sizing: altitude must be >= 0, got ${altitudeM}`);
-  const T0 = 288.15, L = 0.0065, R = 287.058, g = 9.80665, p0 = 101325;
+  const T0 = 288.15, L = 0.0065, R = 287.05287, g = 9.80665, p0 = 101325;
   const T = T0 - L * altitudeM;
   const p = p0 * Math.pow(T / T0, g / (L * R));
   return p / (R * T);

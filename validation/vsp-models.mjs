@@ -22,7 +22,7 @@
    ===================================================================== */
 import { runSizing } from "../src/engine.js";
 import { VSP_MODELS, VSP_META, derived, paramsFromModel,
-         wingLoadingForMTOW, minCruiseSpeedFor, compareToModel } from "../src/data/vsp-models.js";
+         wingLoadingForMTOW, compareToModel, replicateModel } from "../src/data/vsp-models.js";
 
 const TOL = 1.0;                       // percent — the file is exact, so this is tight
 const BASE = { payload:200, range:60, vCruise:60, cruiseAlt:1000, hoverHeight:15.24,
@@ -35,22 +35,22 @@ const MISSION = { raven: { payload:200, range:60, M0:900 },
                   swft:  { payload:1200, range:150, M0:5000 } };
 
 /** Close the airframe: MTOW sets W/S (to hold the published area) and the wing
-    sets the minimum cruise speed, so both are iterated with the loop. */
+    sets the minimum cruise speed, so both are iterated with the loop.
+
+    THIS USED TO BE A SECOND COPY OF THAT LOOP, and it carried the same defect
+    as the one in the tab: the only failure branch tested `!isFinite(R.MTOW)`,
+    so a run that exhausted its 60 iterations without closing came back
+    indistinguishable from one that converged - and was then reported under a
+    check labelled "replication converged", which tested no such thing. Both
+    copies now call the one solver in src/data/vsp-models.js, which reports a
+    status; the check below reads it. */
 function replicate(key) {
   const mi = MISSION[key];
-  let M = mi.M0, V = BASE.vCruise, R = null, p = null;
-  for (let i = 0; i < 60; i++) {
-    V = Math.max(BASE.vCruise, 1.02 * minCruiseSpeedFor(key, M, BASE.clCruiseMax));
-    p = { ...paramsFromModel(key, BASE), payload: mi.payload, vCruise: V,
-          wingLoadingNm2: wingLoadingForMTOW(key, M),
-          range: mi.range + 0.76 * V * (BASE.reserveMinutes * 60) / 1000 };
-    R = runSizing(p);
-    if (!R || !isFinite(R.MTOW)) return { R: null, p, M, V };
-    const nM = M + 0.5 * (R.MTOW - M);
-    if (Math.abs(nM - M) < 0.01) { M = nM; break; }
-    M = nM;
-  }
-  return { R, p, M, V };
+  return replicateModel(key, runSizing,
+    (M, V) => ({ ...paramsFromModel(key, BASE), payload: mi.payload, vCruise: V,
+      wingLoadingNm2: wingLoadingForMTOW(key, M),
+      range: mi.range + 0.76 * V * (BASE.reserveMinutes * 60) / 1000 }),
+    { payload: mi.payload, vCruiseMin: BASE.vCruise, clCruiseMax: BASE.clCruiseMax });
 }
 
 const fails = [];
@@ -78,9 +78,17 @@ for (const key of ["raven", "swft"]) {
 
 console.log("");
 for (const key of ["raven", "swft"]) {
-  const { R, M, V } = replicate(key);
+  const out = replicate(key);
+  const { R, MTOW: M, V } = out;
   console.log(`── ${VSP_META[key].label}`);
-  if (!R) { check(false, `${key}: replication converged`); continue; }
+  /* The check now tests what its name says. `status` is the solver's verdict;
+     anything but "converged" means the geometry comparison below would be
+     describing a design that was never closed. */
+  check(out.status === "converged", `${key}: replication converged`,
+    out.status === "converged"
+      ? `closed at ${M} kg in ${out.iters} iteration(s)`
+      : `status "${out.status}" after ${out.iters} iteration(s) — ${out.note}`);
+  if (out.status !== "converged" || !R) continue;
   console.log(`   gross weight ${M.toFixed(0)} kg and cruise ${V.toFixed(1)} m/s are RESULTS —`
     + ` the .vsp3 publishes no mass, power or mission`);
   const c = compareToModel(key, R);

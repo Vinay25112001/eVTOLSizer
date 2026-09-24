@@ -293,3 +293,140 @@ export function compareToModel(key, R) {
         + "so only geometry is scored. Wing area is a CHECK here, never an input.",
   };
 }
+
+/* ── REPLICATING A PUBLISHED MODEL IS A SOLVE, SO IT REPORTS LIKE ONE ──
+   Closing one of these airframes means finding the mass at which the tool's
+   own sizing reproduces it: MTOW sets the wing loading needed to hold the
+   published area, and the wing sets the minimum cruise speed, so both are
+   iterated together. This function owns that loop.
+
+   IT OWNS IT BECAUSE THERE WERE TWO COPIES AND THEY BOTH HAD THE SAME BUG.
+   VspModelsTab.jsx and validation/vsp-models.mjs each carried their own
+   transcription, and in both the only failure branch tested
+   `!isFinite(R.MTOW)`. Neither looked at the ITERATION CAP, and neither
+   looked at `r2Diverged`, so a run that never closed came back indistinguishable
+   from one that did - and the harness's version printed that under a check
+   LABELLED "replication converged", which is a check that cannot fail.
+
+   Measured over thirty missions across the two eVTOL models, fourteen never
+   closed and every one was presented as a successful match against published
+   NASA geometry. They were not near-misses: raven at payload 400 kg reported
+   10,574 kg, against the ~2,180 kg at which that mission actually closes.
+
+   THE CAUSE WAS CONSUMING A MASS THE ENGINE HAD DISOWNED. runSizing sets
+   r2Diverged when its own weight loop ran away, and returns the last iterate
+   so the caller can see what happened - not so the caller can iterate on it.
+   Feeding it back in is what sent raven past its real solution: the seed at
+   1000 kg diverges, the diverged 9935 kg was taken as a mass, and the next
+   step jumped to 5468 kg, straight over the region where the design closes.
+
+   So a diverged point is treated as OUT OF DOMAIN, the way a solver treats a
+   function-domain error - the step is cut back toward the last good mass
+   rather than the solve abandoned (PETSc's SNESSetFunctionDomainError has the
+   same shape). And because the caller's seed may itself lie outside the
+   domain, a short ladder of starting masses is tried first and the one with
+   the smallest closure residual is used: finding a feasible start is a step
+   in its own right, not something to assume.
+
+   THE TOLERANCE IS RELATIVE. It was 0.01 kg absolute, which is two quanta of
+   the engine's own `MTOW:+MTOW.toFixed(2)` store and means something quite
+   different on a 900 kg airframe than on a 7000 kg one. NDARC states its
+   sizing tolerance as a fraction of the reference weight (Theory
+   TP-2015-218751 sec. 5-1.1, "scaled for each element"; 0.01 eps on a gross
+   weight, eps = .01 by default), so this uses 1e-4 of the current mass.
+   Measured on the two published cases the change is invisible where it
+   matters: raven closes at 983.62 kg instead of 983.73 and swft at 6998.43
+   instead of 6998.65, and the worst geometry error against the .vsp3 files
+   is unchanged at 0.100% and 0.000%.
+
+   Returns a STATUS, never a bare number:
+     "converged"      the mass closes and the comparison means something
+     "stalled"        ran the cap, still moving; a design the tool cannot pin
+     "does-not-close" no mass in the domain closes this mission
+     "not-a-model"    the key is not an eVTOL this loop can size (BD-6)
+   @param {string} key
+   @param {function} runSizingFn
+   @param {function} buildParams (MTOW_kg, vCruise_ms) => params | null
+   @param {object} [opts]
+   @returns {{status:string, MTOW:number|null, V:number|null, R:object|null,
+              params:object|null, iters:number, retreats:number, note:string}}
+*/
+export function replicateModel(key, runSizingFn, buildParams, opts = {}) {
+  const meta = VSP_META[key];
+  const label = meta?.label || key;
+  if (!meta || !meta.isEVTOL) {
+    return { status:"not-a-model", MTOW:null, V:null, R:null, params:null,
+      iters:0, retreats:0,
+      note: `${label} is a fixed-wing control case, not an eVTOL. The rotor `
+          + `sizing loop does not apply to it, so no replication is attempted.` };
+  }
+  const vMin      = Number(opts.vCruiseMin) || 0;
+  const clMax     = opts.clCruiseMax ?? 0.90;
+  const relTol    = opts.relTol ?? 1e-4;
+  const maxIter   = opts.maxIter ?? 60;
+  const maxRetreat = opts.maxRetreat ?? 12;
+  const payload   = Math.max(50, Number(opts.payload) || 400);
+  const seedFactors = opts.seedFactors ?? [2, 3, 4, 5, 6, 8, 11, 15, 20];
+
+  const speedAt = (M) => Math.max(vMin, 1.02 * minCruiseSpeedFor(key, M, clMax));
+  const sizeAt = (M) => {
+    const V = speedAt(M);
+    const p = buildParams(M, V);
+    if (!p) return { R:null, p:null, V };
+    return { R: runSizingFn(p), p, V };
+  };
+  const usable = (R) => !!R && R.r2Diverged !== true && isFinite(R.MTOW) && R.MTOW > 0;
+
+  /* FEASIBLE START. The caller's guess may sit where the sizing does not
+     close, and stepping away from such a point needs a direction this loop
+     does not have. Try a ladder and keep the closest to closure. */
+  let M = null, bestRes = Infinity;
+  for (const f of seedFactors) {
+    const m = payload * f;
+    const { R } = sizeAt(m);
+    if (!usable(R)) continue;
+    const res = Math.abs(R.MTOW - m) / m;
+    if (res < bestRes) { bestRes = res; M = m; }
+  }
+  if (M == null) {
+    return { status:"does-not-close", MTOW:null, V:null, R:null, params:null,
+      iters:0, retreats:0,
+      note: `no starting mass between ${Math.round(payload * seedFactors[0])} and `
+          + `${Math.round(payload * seedFactors[seedFactors.length - 1])} kg lets the `
+          + `sizing loop close on this mission, so ${label} cannot be replicated at `
+          + `this payload and range. Reduce one of them.` };
+  }
+
+  let R = null, p = null, V = null, lastGood = null;
+  let iters = 0, retreats = 0, status = "stalled", lastStep = null;
+  for (let i = 0; i < maxIter; i++) {
+    iters = i + 1;
+    ({ R, p, V } = sizeAt(M));
+    if (!usable(R)) {
+      /* Out of domain: never taken as a mass. Cut the step instead. */
+      if (++retreats > maxRetreat) { status = "does-not-close"; break; }
+      M = lastGood != null ? lastGood + 0.5 * (M - lastGood) : M * 0.9;
+      continue;
+    }
+    lastGood = M;
+    const nM = M + 0.5 * (R.MTOW - M);
+    lastStep = Math.abs(nM - M);
+    if (lastStep < relTol * Math.abs(M)) { M = nM; status = "converged"; break; }
+    M = nM;
+  }
+
+  const MTOW = M == null ? null : +M.toFixed(2);
+  const note = status === "converged"
+    ? `${label} closes at ${MTOW} kg; the comparison below is against a design `
+      + `the loop actually solved`
+    : status === "stalled"
+      ? `${label} did not settle: after ${iters} iterations the mass is still `
+        + `moving by ${lastStep == null ? "an unmeasured amount" : lastStep.toFixed(2) + " kg"}, `
+        + `wider than the ${(relTol * 100).toFixed(2)}% asked for. The figure shown is the `
+        + `last iterate and the geometry comparison does not describe a closed design`
+      : `the sizing loop stopped closing on the way to a solution for ${label}, `
+        + `and after ${retreats} attempts to step back into the region where it does, `
+        + `no mass was found. This mission does not close`;
+  return { status, MTOW, V, R: status === "converged" ? R : R, params: p,
+    iters, retreats, note };
+}

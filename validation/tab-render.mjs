@@ -223,6 +223,65 @@ for (const [key, powertrain] of Object.keys(CFG.CONFIGURATIONS).flatMap(k => [[k
         + `${tailTabLabel(cap)} aircraft`);
   }
 }
+/* ── THE WING-POSITION DIAGNOSIS REACHES THE SCREEN ───────────────────
+   autoPositionWing solves for the station that produces targetSM. When it
+   cannot, it rebuilds at the station the user asked for and returns
+   wingPosConverged:false with wingPosReason - a written explanation of why,
+   distinguishing a target above the attainable peak from an SM curve that
+   jumps across the target discontinuously. Every one of those fields was
+   registered in provenance.js and rendered by NOTHING: grep found them only
+   in wingPosition.js and the registry. The Static Margin card meanwhile read
+   "target 15%" under a margin that had never been positioned to 15%.
+
+   SM is not monotonic in wing station - aft carries the CG aft but shortens
+   the tail arm, so it peaks and falls - so "unreachable" is a real outcome,
+   not a solver failure, and the best attainable margin is the useful thing
+   to show beside it.
+
+   This is checked BOTH WAYS. A gate that only asserts the banner appears
+   would pass just as happily on a tab that always shows it. */
+{
+  const key = "liftcruise", d = CFG.CONFIG_DEFAULTS[key];
+  const base = { ...B, configType: key, powertrain: "battery", nPropHover: d.nRotors,
+    vCruise: d.vCruise_ms ?? B.vCruise, tipSpeed: d.tipSpeed_ms ?? B.tipSpeed,
+    LD: d.LD_target ?? B.LD, etaHov: d.etaHov ?? B.etaHov, autoPositionWing: true,
+    ...(d.wingLoadingNm2 ? { wingLoadingNm2: d.wingLoadingNm2 } : {}) };
+  const withDiam = (p) => ({ ...p, propDiam: CFG.solveRotorDiameter(key, p, runSizing)?.propDiam });
+  const render = (targetSM) => {
+    const params = withDiam({ ...base, targetSM });
+    const SR = runSizing(params);
+    const html = renderToStaticMarkup(React.createElement(MOD.VTailTab, ctxFor(params, SR)));
+    return { SR, html };
+  };
+
+  /* 2.0 is far above any attainable margin and is used because it RELIABLY
+     puts the solver in the unreachable branch; nothing realistic does, which
+     is exactly why this path went unrendered for so long. */
+  const bad = render(2.0);
+  const good = render(0.15);
+
+  check(bad.SR.wingPosConverged === false && !!bad.SR.wingPosReason,
+    "an unreachable static-margin target is reported as unreachable by the engine",
+    bad.SR.wingPosConverged === false
+      ? `best attainable ${(bad.SR.wingPosBestSM * 100).toFixed(1)}% of MAC`
+      : "the engine converged on a 200% target, so this check has no subject");
+  check(/data-wing-pos="unreachable"/.test(bad.html),
+    "the tail tab RENDERS the wing-position diagnosis when it fires",
+    /data-wing-pos="unreachable"/.test(bad.html)
+      ? "the reason panel is in the markup"
+      : "wingPosReason was computed and nothing put it on screen");
+  check(/NOT reached/.test(bad.html),
+    "the static-margin card stops claiming a target the wing never reached",
+    /NOT reached/.test(bad.html) ? "the subtitle says so" : "the card still reads a bare target");
+  check(good.SR.wingPosConverged !== false
+        && !/data-wing-pos="unreachable"/.test(good.html)
+        && !/NOT reached/.test(good.html),
+    "and says none of it when the target IS reached (positive control)",
+    good.SR.wingPosConverged !== false
+      ? "a 15% target converges and the tab is quiet"
+      : "the control case did not converge, so the negative above proves nothing");
+}
+
 rmSync(dir, { recursive: true, force: true });
 
 console.log(`  rendered ${rendered} tab x configuration combinations`);

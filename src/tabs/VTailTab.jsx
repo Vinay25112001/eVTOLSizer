@@ -19,6 +19,55 @@ import { capabilitiesFor } from "../engine/configuration.js";
    Extracted from App.jsx. Receives the App context as a single `ctx`
    prop; everything it reads is destructured explicitly below, so the tab's
    dependency on App state is visible in one place. */
+/* ── THE WING-POSITION DIAGNOSIS, WHEREVER THE TAIL TAB LANDS ─────────
+   autoPositionWing solves for the wing station that produces targetSM. When
+   it cannot it does the right thing - rebuilds at the station the user asked
+   for and returns wingPosConverged:false with wingPosReason, a written
+   account of why: a target above the attainable peak, or an SM curve that
+   jumps across the target discontinuously because the sizing loop lands on a
+   different branch either side of the crossing.
+
+   Nothing rendered any of it. The fields were registered in provenance.js and
+   read by no component, so the tool computed a full explanation and threw it
+   away, while the Static Margin card went on advertising a target the wing
+   had never been positioned to.
+
+   SM is NOT monotonic in wing station - moving the wing aft carries the CG
+   aft but shortens the tail arm, so it peaks and falls - which is why
+   "unreachable" is a real answer rather than a solver failure, and why the
+   best attainable margin belongs beside it.
+
+   This lives in one component because the tab has TWO bodies, a conventional
+   fin-and-stabilator and a V-tail, and putting it in one of them is how it
+   would come to be shown on some aircraft and not others. */
+function WingPositionNotice({ SR }) {
+  if (SR?.wingPosConverged !== false || !SR?.wingPosReason) return null;
+  return (
+    <div role="status" data-wing-pos="unreachable"
+      style={{padding:"10px 14px",borderRadius:6,background:SC.panel,
+        border:`1px solid ${SC.amber}`,borderLeft:`4px solid ${SC.amber}`,
+        fontSize:11,color:SC.text,lineHeight:1.6}}>
+      <div style={{fontWeight:700,color:SC.amber,marginBottom:4}}>
+        The wing was not auto-positioned
+      </div>
+      <div>{SR.wingPosReason}</div>
+      <div style={{marginTop:4,color:SC.muted}}>
+        The geometry here is built at the wing station you set, not at a solved one,
+        so the static margin shown is what that station gives.
+      </div>
+    </div>
+  );
+}
+
+/* The subtitle of a static-margin card must not advertise a target the wing
+   was never positioned to reach. */
+function smTargetSub(SR, params) {
+  const t = ((params.targetSM ?? 0.15) * 100).toFixed(0);
+  if (SR?.wingPosConverged !== false) return `target ${t}%`;
+  return `target ${t}% NOT reached`
+    + (SR.wingPosBestSM != null ? ` — best attainable ${(SR.wingPosBestSM * 100).toFixed(1)}%` : "");
+}
+
 /* ── CONVENTIONAL TAIL: FIN + ALL-MOVING STABILATOR ───────────────────
    RAVEN's layout, which the hybrid carries. It was being shown the V-tail
    panel below -- dihedral sweeps, ruddervator area, ruddervator trim and an
@@ -58,12 +107,27 @@ function ConventionalTail({ SR, U, params }) {
              sub="single vertical surface"/>
         <KPI label="Tail Moment Arm lv" value={U.len(SR.lv)} unit={U.lenU} color={SC.teal}
              sub="wing AC to tail AC"/>
+        {/* THE SUBTITLE MUST NOT CLAIM A TARGET THE WING NEVER REACHED.
+            autoPositionWing solves for the station that produces targetSM, and
+            when it cannot it does the right thing: it rebuilds at the station
+            the user asked for and returns wingPosConverged:false alongside
+            wingPosReason, a written diagnosis of WHY - target above the
+            attainable peak, or an SM curve that jumps across the target
+            discontinuously. Nothing rendered any of it. So this card read
+            "target 15%" under a margin that was never positioned to 15%, and
+            the one explanation the tool had computed was dead text.
+            SM is not monotonic in wing station - moving the wing aft carries
+            the CG aft but shortens the tail arm, so it peaks and falls - which
+            is why "unreachable" is a real outcome rather than a solver
+            failure, and why the best attainable margin is worth showing. */}
         <KPI label="Static Margin" value={(SR.SM * 100).toFixed(1)} unit="% MAC"
              color={SR.SM > 0.05 && SR.SM < 0.25 ? SC.green : SC.red}
-             sub={`target ${((params.targetSM ?? 0.15) * 100).toFixed(0)}%`}/>
+             sub={smTargetSub(SR, params)}/>
         <KPI label="Tail Group Mass" value={U.mass(SR.tailWeightConventional)} unit={U.massU}
              color={SC.purple} sub="fin + stabilator"/>
       </div>
+
+      <WingPositionNotice SR={SR}/>
 
       <Panel title="Fin and stabilator geometry">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -110,6 +174,7 @@ export function VTailTab(ctx) {
   return (
 
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                <WingPositionNotice SR={SR}/>
                 {/* KPI row */}
                 <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10}}>
                   <KPI label="Total V-Tail Area" value={U.area(SR.Svt_total)} unit={U.areaU} color={SC.amber}
@@ -121,7 +186,7 @@ export function VTailTab(ctx) {
                     sub={`Set: ${params.vtGamma}°`}/>
                   <KPI label="Static Margin (w/ Vtail)" value={(SR.SM_vt*100).toFixed(1)} unit="% MAC"
                     color={SR.SM_vt>=0.05&&SR.SM_vt<=0.25?SC.green:SC.red}
-                    sub={`Baseline: ${(SR.SM*100).toFixed(1)}%`}/>
+                    sub={`Baseline: ${(SR.SM*100).toFixed(1)}% · ${smTargetSub(SR, params)}`}/>
                   <KPI label="Ruddervator Area" value={U.area(SR.Srv)} unit={`${U.areaU}/panel`} color={SC.blue}
                     sub="30% chord"/>
                 </div>

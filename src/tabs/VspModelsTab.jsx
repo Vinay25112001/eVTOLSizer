@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { SC } from "../lib/theme.js";
 import { VSP_MODELS, VSP_META, derived, paramsFromModel,
-         wingLoadingForMTOW, minCruiseSpeedFor, compareToModel } from "../data/vsp-models.js";
+         wingLoadingForMTOW, compareToModel, replicateModel } from "../data/vsp-models.js";
 import { runSizing } from "../engine";
 import { engineInputs } from "../lib/designfile.js";
 
@@ -29,20 +29,23 @@ export function VspModelsTab(ctx) {
     setBusy(true);
     setTimeout(() => {
       try {
-        let M = params.payload > 600 ? 5000 : 1000, V = params.vCruise, R = null, p = null;
-        for (let i = 0; i < 60; i++) {
-          V = Math.max(params.vCruise, 1.02 * minCruiseSpeedFor(sel, M, params.clCruiseMax ?? 0.90));
-          p = engineInputs({ ...paramsFromModel(sel, params), vCruise: V,
-                wingLoadingNm2: wingLoadingForMTOW(sel, M) });
-          R = runSizing(p);
-          if (!R || !isFinite(R.MTOW)) break;
-          const nM = M + 0.5 * (R.MTOW - M);
-          if (Math.abs(nM - M) < 0.01) { M = nM; break; }
-          M = nM;
-        }
-        setRes(R && isFinite(R.MTOW)
-          ? { R, MTOW: M, V, cmp: compareToModel(sel, R), params: p }
-          : { error: "the loop did not close on this mission — try a smaller payload or range" });
+        /* The loop lives in data/vsp-models.js so this tab and
+           validation/vsp-models.mjs cannot drift apart again - they did, and
+           both copies reported a run that never closed as a success. It
+           returns a STATUS, and everything below branches on that rather than
+           on whether a number came back at all. */
+        const out = replicateModel(sel, runSizing,
+          (M, V) => {
+            const base = paramsFromModel(sel, params);
+            return base && engineInputs({ ...base, vCruise: V,
+              wingLoadingNm2: wingLoadingForMTOW(sel, M) });
+          },
+          { payload: params.payload, vCruiseMin: params.vCruise,
+            clCruiseMax: params.clCruiseMax ?? 0.90 });
+        setRes(out.status === "converged"
+          ? { R: out.R, MTOW: out.MTOW, V: out.V, cmp: compareToModel(sel, out.R),
+              params: out.params, note: out.note }
+          : { error: out.note, status: out.status });
       } catch (e) { setRes({ error: String(e?.message ?? e) }); }
       setBusy(false);
     }, 0);

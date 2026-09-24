@@ -69,7 +69,20 @@ import { AIRCRAFT_CLASSES, CLASS_IDS, DEFAULT_CLASS, classOf, sizeDesign, classF
    layout, because the flat 8% was too pessimistic at every rate the fleet
    demands. golden-master was re-recorded deliberately, not to make a failure
    go away. See validation/peukert-derate.mjs, which gates the replacement. */
-const PINNED_DEFAULTS_HASH = "17aac5c2e18684";
+/* MOVED AGAIN, for two constants that were previously INVISIBLE. `vtTaper`
+   (0.40) and `vtRuddervatorChordFrac` (0.30) were hardcoded inside
+   engine.js and registered nowhere, so nothing could see or sweep them --
+   which is precisely why the V-tail planform outputs were `unverified` while
+   the wing running the identical trapezoid algebra was `derived`. Registering
+   them changes the hash without changing any shipped VALUE: both keep the
+   number they already had. The third of that trio, the section thickness, is
+   NOT here because it stopped being a constant at all -- it is computed from
+   the wing's t/c per Scholz ch.9 (engine/control-surfaces.js). Sized results
+   DID move, but only through the drag of the V-tail component build-up and
+   the corrected deflections; MTOW is unchanged, because that build-up turns
+   out not to reach the drag total at all (see the note at the tail wetted
+   areas). */
+const PINNED_DEFAULTS_HASH = "0bbf25325c7d59";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 let pass = 0, fail = 0;

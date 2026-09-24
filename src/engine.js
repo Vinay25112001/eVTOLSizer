@@ -20,6 +20,10 @@ import { cabinAdequacy, OCCUPANT_MASS_KG, CABIN_FLOOR_PER_OCCUPANT_M2,
          equivalentDiameter } from "./engine/cabin.js";
 import { atmosphereSet, viscosity, applySizingDay, SIZING_DAYS } from "./engine/atmosphere.js";
 import { selectAirfoil } from "./engine/airfoils.js";
+import { tauEffectiveness, tailThickness, requiredChordFraction,
+         RUDDERVATOR_CHORD_FRAC_MIN, RUDDERVATOR_CHORD_FRAC_MAX,
+         ELEVATOR_DEFLECTION_MAX_DEG }
+  from "./engine/control-surfaces.js";
 import { rotorcraftDragCD0, DRAG_CONSTANTS } from "./engine/drag.js";
 import { componentWeights, WEIGHT_CONSTANTS } from "./engine/weights.js";
 import { componentCG, staticMarginCriterion, CG_STATIONS, ROTOR_STATIONS, STABILITY_AUGMENTATION } from "./engine/cg.js";
@@ -1636,8 +1640,25 @@ function runSizingCore(p0) {
      body that blunt. constants.js switches to a spheroid under fineness 2.5
      for exactly that reason and line 627 already called it; this did not. */
   const Swf=fuselageWettedArea(fL,fD);
-  // Tail wetted areas: fixed fractions of wing area (conceptual estimate only)
-  // NOT dynamically sized — real tail sizing uses volume coefficients and moment arm
+  /* ⚠ THE SIZED TAIL DOES NOT REACH THE DRAG TOTAL. These two wetted areas
+     are fixed fractions of WING area, and CD0h/CD0v below carry a bare form
+     factor of 1.05 with no thickness term at all, where the wing beside them
+     uses the full Raymer FF on p.tc. So the entire tail-sizing chain --
+     volume coefficients, Sh_req/Sv_req, the V-tail panel geometry -- changes
+     the drawn aircraft and the weights, and changes the DRAG not at all.
+
+     MEASURED, not inferred: correcting the section thickness in the V-tail
+     component build-up moved CD0vt by 6.7% and MTOW by exactly nothing,
+     because CD0vt is computed near the tail block and then only RETURNED --
+     it is absent from CD0tot. Two tail drag calculations exist; the careful
+     one is the one that is thrown away.
+
+     WHY IT IS STILL LIKE THIS: the honest fix needs the tail arm lv, which
+     needs xACwing, which comes from the wing-position solve -- all of it
+     AFTER this point in the loop. Coupling them means moving that solve
+     earlier, which has convergence consequences and is its own item rather
+     than a line to change in passing. Registered here so the next reader
+     meets it at the code rather than in a note somewhere else. */
   const Swhs=2*Swing*0.18, Swvs=2*Swing*0.12;
   // Nacelle wetted area: proportional to rotor radius² (not fixed arbitrary constants)
   // S_wet_nac ≈ N_rot × K_nac × π × R² where K_nac≈0.10 (nacelle/fairing ≈ 10% of disk area)
@@ -1867,18 +1888,34 @@ function runSizingCore(p0) {
   const Sv_eff_vee=2*Svt_panel*sin2;   // total yaw-effective  area
 
 
-  // Panel geometry (Raymer): assume AR_vt = 2.5, taper 0.4, NACA 0009
+  /* ── V-TAIL PANEL GEOMETRY ────────────────────────────────────────────
+     These three used to read "assume AR_vt = 2.5, taper 0.4, NACA 0009",
+     with the taper and the thickness HARDCODED and registered nowhere, so
+     nothing could see or sweep them. Only vtAR was an input. That is why
+     MAC_vt was `unverified` while the wing's MAC -- character for character
+     the same trapezoid formula -- was `derived`: the V-tail version ran on a
+     constant no registry entry described, and `derived` means adding no new
+     assumption. All three are now visible; see src/engine/control-surfaces.js
+     for the sourcing of the two a document can actually settle. */
   const AR_vt=p.vtAR;
-  const taper_vt=0.4;
+  const taper_vt=p.vtTaper ?? 0.4;
   const bvt_panel=Math.sqrt(AR_vt*Svt_panel);               // panel span
   const Cr_vt=2*Svt_panel/(bvt_panel*(1+taper_vt));
   const Ct_vt=Cr_vt*taper_vt;
   const MAC_vt=(2/3)*Cr_vt*(1+taper_vt+taper_vt**2)/(1+taper_vt);
   const sweep_vt=Math.atan((Cr_vt-Ct_vt)/(bvt_panel/2))*180/Math.PI;  // LE sweep: semi-span
 
-  // Ruddervator sizing: control surface = 25–35% of panel chord
-  const ruddervator_chord_frac=0.30;
+  /* Ruddervator chord fraction. [SRC] Scholz ch.9 sec.9.5 puts control
+     surfaces at "approximately 25% to 40% of the chord of the tail", and the
+     input is clamped to that published band so it cannot be set outside its
+     own source. It is no longer merely assumed adequate: the deflection it
+     implies is computed properly below and CHECKED against a published
+     deflection limit, and the smallest chord that would meet that limit is
+     reported beside it. */
+  const ruddervator_chord_frac=Math.min(RUDDERVATOR_CHORD_FRAC_MAX,
+    Math.max(RUDDERVATOR_CHORD_FRAC_MIN, p.vtRuddervatorChordFrac ?? 0.30));
   const Srv=ruddervator_chord_frac*Svt_panel;   // ruddervator area per panel
+  const vtTC=tailThickness(p.tc);   // [SRC] Scholz ch.9: 0.90*wing t/c, 9-12%
 
   // Tail weight estimate (Roskam UAV method, % of empty weight)
   const Wvt_panel=0.036*Svt_panel*Math.pow(AR_vt,0.25)*0.82*1000/9.80665; // simplified Raymer eq 15.26
@@ -1976,10 +2013,17 @@ function runSizingCore(p0) {
   const ruddervator_combined_auth=Math.sqrt(pitch_ratio**2+yaw_ratio**2);
 
   // Drag contribution of V-tail (Raymer component buildup)
-  const Swvt=2*Svt_panel*(1+0.25*0.09*(1+taper_vt*0.25)); // wetted area (NACA 0009 → tc=0.09)
+  /* Wetted area. The 0.09 here was a bare literal with "NACA 0009" in a
+     comment, while the IDENTICAL wing expression used the registered p.tc.
+     It is now the computed tail thickness. */
+  const Swvt=2*Svt_panel*(1+0.25*vtTC*(1+taper_vt*0.25));
   const Revt=rhoCr*p.vCruise*MAC_vt/muCr;
   const Cfvt=0.455/Math.log10(Revt)**2.58/(1+0.144*Mach**2)**0.65;
-  const FFvt=(1+0.6/0.3*0.09+100*0.09**4)*1.05;
+  /* Raymer component form factor. The two 0.09s were the same undeclared
+     NACA 0009 thickness as the wetted area above; both now read the computed
+     tail t/c. The 0.6/0.3 is (0.6 / x/c of max thickness) for a 4-digit
+     section, whose max thickness is at 30% chord. */
+  const FFvt=(1+0.6/0.3*vtTC+100*vtTC**4)*1.05;
   const CD0vt=Cfvt*FFvt*Swvt/Swing;
 
   // Updated NP with correct V-tail pitch contribution (cos²Γ component)
@@ -1996,15 +2040,64 @@ function runSizingCore(p0) {
 
   // Ruddervator symmetric (elevator) deflection for pitch trim at cruise
   // δ_e_equiv = δ_rv × cos(Γ)  → δ_rv = δ_e_equiv / cos(Γ)
+  /* ── RUDDERVATOR DEFLECTION FOR CRUISE PITCH TRIM ─────────────────────
+     THIS WAS DIMENSIONALLY WRONG. The expression below is a required tail
+     LIFT COEFFICIENT -- every term in it is dimensionless -- and the old code
+     called it "equivalent elevator rad" and converted it straight to degrees,
+     as though a delta-CL were an angle. It is not. Turning a required lift
+     increment into a deflection needs the lift-curve slope and the control
+     effectiveness:
+
+         delta = dCL / (CL_alpha * tau)
+
+     CL_alpha for the tail is CLaH, which this engine ALREADY computes from
+     Raymer Eq.12.6 further up and then used only for the slope ratio and for
+     reporting -- it never reached this calculation. tau is the thin-airfoil
+     control effectiveness, sourced in engine/control-surfaces.js. Their
+     product is about 2.0 per radian at the default geometry, so the old form
+     over-reported the deflection by roughly a factor of two.
+
+     A second consequence, worth naming because it made the error hard to see:
+     with pitch_ratio = 1 (the max() construction makes pitch govern on every
+     winged layout here) the old expression collapses to -CM_ac/(eta*vtCh),
+     which is IDENTICAL for any two layouts sharing an airfoil -- which is why
+     three of the four reported exactly 11.00 deg. It was reporting the
+     airfoil's pitching moment, not the tail's deflection. */
   const CM_ac=selAF.CM;
-  const delta_e_equiv=-(CM_ac*Swing*MAC)/(eta_vt*Sh_eff*lv);   // equivalent elevator rad
+  const dCL_trim=-(CM_ac*Swing*MAC)/(eta_vt*Sh_eff*lv);   // required tail dCL, dimensionless
+  const tau_rv=tauEffectiveness(ruddervator_chord_frac);
+  const delta_e_equiv=dCL_trim/Math.max(1e-9,CLaH*tau_rv);      // equivalent elevator, rad
   const delta_rv_rad=delta_e_equiv/Math.cos(vtGamma);           // ruddervator deflection rad
   const delta_rv_deg=delta_rv_rad*180/Math.PI;
+  /* The smallest published chord fraction that would trim inside the
+     deflection allowance, so the shipped value can be compared with what the
+     requirement actually asks for. null = even 40% chord cannot do it. */
+  const rvChordRequired=requiredChordFraction({dCLreq:dCL_trim,CLalpha:CLaH,gamma:vtGamma});
 
-  // Ruddervator differential (rudder) deflection for yaw trim (β=2° sideslip estimate)
-  const CY_beta=-0.30;  // typical side-force derivative
-  const beta_trim=2*Math.PI/180;
-  const delta_yaw_rv_deg=(CY_beta*beta_trim*Swing)/(2*Sv_eff/lv)*180/Math.PI*(-1);
+  /* ── DIFFERENTIAL DEFLECTION FOR YAW TRIM AT SIDESLIP ─────────────────
+     THE OLD FORM WAS DIMENSIONALLY INCONSISTENT: it read
+        (CY_beta*beta*Swing) / (2*Sv_eff/lv)
+     whose units are m^2 * m / m^2 = METRES, and then converted that to
+     degrees. A deflection cannot come out of a length. Replaced by the
+     side-force balance it was evidently reaching for -- the fin must carry
+     the side force the sideslip produces,
+
+        dCL_v * Sv_eff = |CY_beta| * beta * Swing
+
+     -- followed by the same lift-slope-and-effectiveness conversion the pitch
+     axis now uses, and the V-tail's 1/sin(gamma) differential factor (the
+     yaw-effective area is the sin^2 component, so yaw authority vanishes as
+     the dihedral goes flat, exactly as pitch authority vanishes at 90 deg).
+
+     BOTH REMAINING INPUTS ARE STILL ASSUMPTIONS AND ARE RECORDED AS SUCH in
+     the provenance entry: CY_beta = -0.30 is described in the original code
+     only as "typical" and is uncited, and the 2 deg sideslip is an estimate,
+     not a certification condition. Fixing the algebra does not source them. */
+  const CY_beta=-0.30;  // [LAY] uncited "typical" side-force derivative
+  const beta_trim=2*Math.PI/180;  // [LAY] 2 deg sideslip estimate
+  const dCL_yaw=Math.abs(CY_beta)*beta_trim*Swing/Math.max(1e-9,Sv_eff);
+  const sinG=Math.max(1e-6,Math.sin(vtGamma));
+  const delta_yaw_rv_deg=dCL_yaw/Math.max(1e-9,CLaH*tau_rv)/sinG*180/Math.PI;
 
   /* Propulsion */
   const Ttot=MTOW*g0*TW,Trotor=Ttot/p.nPropHover,Protor_W=Phov*1000/p.nPropHover;
@@ -3133,6 +3226,23 @@ function runSizingCore(p0) {
        +"what \"a well-designed Lift+Cruise configuration could achieve\" "
        +"[SRC S3270]. Aerodynamic L/D, not L/De."},
     {label:"V-tail pitch auth.",ok:pitch_ratio>=1.0,val:`${(pitch_ratio*100).toFixed(0)}%`},
+    /* The ruddervator is no longer merely assumed adequate. Its trim
+       deflection is now computed through the lift-curve slope and the
+       thin-airfoil effectiveness, and checked against a published limit
+       [SRC] Scholz ch.9 sec.9.5 (elevator down 15-35 deg; 15 is the
+       conservative end of the published band), with most of that travel
+       reserved for manoeuvre rather than spent on steady trim. */
+    /* Only where there IS a tail to deflect. A wingless layout carries no
+       V-tail, so delta_rv_deg is NaN there and the row would render "NaN° at
+       30% chord" — the tab-render gate catches exactly that, and caught this. */
+    ...(Number.isFinite(delta_rv_deg)?[{
+     label:`Ruddervator trims within ${ELEVATOR_DEFLECTION_MAX_DEG}°`,
+     ok:Math.abs(delta_rv_deg)<=ELEVATOR_DEFLECTION_MAX_DEG,
+     val:`${Math.abs(delta_rv_deg).toFixed(2)}° at ${(100*ruddervator_chord_frac).toFixed(0)}% chord`
+        +` — ${(100*Math.abs(delta_rv_deg)/ELEVATOR_DEFLECTION_MAX_DEG).toFixed(0)}% of the published travel,`
+        +` the rest left for manoeuvre`
+        +(rvChordRequired==null?`; even ${(100*RUDDERVATOR_CHORD_FRAC_MAX).toFixed(0)}% chord cannot trim it`
+          :rvChordRequired>ruddervator_chord_frac?`; ${(100*rvChordRequired).toFixed(0)}% chord would be needed`:``)}]:[]),
     {label:"V-tail yaw auth.",ok:yaw_ratio>=1.0,val:`${(yaw_ratio*100).toFixed(0)}%`},
     {label:"Mach < 0.45",ok:Mach<0.45,val:`M${Mach.toFixed(3)}`},
     /* ── TAIL AREA, AND THE FUSELAGE LENGTH THAT WOULD FIX IT ──────────
@@ -3784,6 +3894,12 @@ function runSizingCore(p0) {
     bvt_panel:+bvt_panel.toFixed(3),Cr_vt:+Cr_vt.toFixed(3),Ct_vt:+Ct_vt.toFixed(3),MAC_vt:+MAC_vt.toFixed(3),
     sweep_vt:+sweep_vt.toFixed(2),Srv:+Srv.toFixed(3),Wvt_total:+Wvt_total.toFixed(1),
     CD0vt:+CD0vt.toFixed(6),SM_vt:+SM_vt.toFixed(4),delta_rv_deg:+delta_rv_deg.toFixed(2),
+    /* The three constants that used to be hardcoded, now reported so the
+       geometry can be audited from the output alone, plus the effectiveness
+       that converts a lift requirement into a deflection. */
+    vtTaper:+taper_vt.toFixed(4), vtTC:+vtTC.toFixed(4),
+    rvChordFrac:+ruddervator_chord_frac.toFixed(4), tauRuddervator:+tau_rv.toFixed(4),
+    rvChordRequired:rvChordRequired==null?null:+rvChordRequired.toFixed(4),
     lv:+lv.toFixed(3),
     fusSpanRatio,tailWingRatio,
     // NDARC parasite-drag cross-check

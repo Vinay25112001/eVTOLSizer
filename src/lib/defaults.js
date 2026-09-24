@@ -354,4 +354,16 @@ export const DEFAULT_PARAMS = {
     vtCh:0.45,
     vtCv:0.032,
     vtAR:2.5,
+    /* THESE TWO WERE HARDCODED IN engine.js AND REGISTERED NOWHERE, which is
+       why the V-tail planform outputs were `unverified` while the wing's
+       identical trapezoid algebra was `derived` — they added an assumption
+       nothing could see or sweep. The third of that trio, the section
+       thickness, is NOT here because it is no longer a constant at all: it is
+       computed from the wing's t/c per Scholz ch.9 (see engine/control-
+       surfaces.js). vtTaper keeps its inherited 0.4 DELIBERATELY: no source
+       in the corpus derives a tail taper, and the only sourced values found
+       (0.25-0.30) come from a transport deck quoted second-hand, which is not
+       evidence enough to move a shipped default. */
+    vtTaper:0.40,                  // V-tail panel taper ratio
+    vtRuddervatorChordFrac:0.30,   // [SRC] Scholz ch.9 9.5: 25%-40% of tail chord
 };

@@ -1,7 +1,14 @@
 /* =====================================================================
    LEVERAGE OF THE UNVERIFIED INPUTS
    =====================================================================
-   provenance.js marks 28 inputs `unverified`. Some of those are user
+   INPUTS. THIS GATE DOES NOT COVER THE UNVERIFIED OUTPUTS, and the title
+   used to be read as though it did: it sweeps inputs, and it covers 13 of
+   the 27. The 70 unverified OUTPUTS are a larger group and are triaged by
+   validation/unverified-triage.mjs instead, because sweeping an output is
+   meaningless -- nothing downstream of the engine feeds back into MTOW, so
+   an output's risk is its REACH, not its sensitivity.
+
+   provenance.js marks 27 inputs `unverified`. Some of those are user
    requirements and carry no obligation -- a payload is chosen, not
    derived. The rest are modelling assumptions with no source behind
    them, and they are not equally important: an unsourced number that

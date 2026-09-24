@@ -803,12 +803,23 @@ export function downloadBasisFor(key, nTilting, nRotors) {
  * @returns {number|null} rotor DIAMETER in metres
  */
 export function rotorDiameterFor(key, MTOW_kg, nRotors) {
+  const D = rotorDiameterExact(key, MTOW_kg, nRotors);
+  return D == null ? null : +D.toFixed(3);
+}
+
+/* The same calculation WITHOUT the presentation rounding, for anything that
+   iterates on it. Rounding to the millimetre is a display decision; feeding a
+   rounded value back into a fixed-point loop is not, and it is what made this
+   solve unable to converge - see solveRotorDiameter's header. Callers that
+   want a diameter to show or store want rotorDiameterFor; callers that want
+   one to ITERATE ON want this. */
+export function rotorDiameterExact(key, MTOW_kg, nRotors) {
   const d = CONFIG_DEFAULTS[key];
   if (!d || !(MTOW_kg > 0)) return null;
   const N = Math.max(1, nRotors ?? d.nRotors);
   const DL_Nm2 = d.DL_lbft2 / 0.0208854;          // lb/ft² -> N/m²
   const R = Math.sqrt((MTOW_kg * 9.80665) / (N * Math.PI * DL_Nm2));
-  return +(2 * R).toFixed(3);
+  return 2 * R;
 }
 
 /* ── ROTOR DIAMETER MUST BE SOLVED, NOT EVALUATED ONCE ─────────────────
@@ -834,120 +845,158 @@ export function rotorDiameterFor(key, MTOW_kg, nRotors) {
 
    @param runSizingFn  passed in to avoid a circular import; engine.js imports
                        this module, so this module cannot import engine.js. */
-/* ── WHY THIS SOLVE REPORTS NON-CONVERGENCE ON SOME DESIGNS ───────────
-   The default tolerance is FINER THAN THE RESOLUTION OF THE FUNCTION IT
-   SOLVES, and on designs whose fixed point falls between two millimetre
-   values that makes the test unsatisfiable.
+/* ── WHY THIS SOLVE ITERATES ON AN UNROUNDED DIAMETER ────────────
+   This loop used to call rotorDiameterFor inside itself, and rotorDiameterFor
+   ends `+(2 * R).toFixed(3)`. Every value it can return therefore lies on a
+   1 mm lattice, while the loop accepted at |Dn - D| < 1e-4 m - a TENTH of that
+   spacing. Meeting that needs the same lattice point twice; any two distinct
+   values it can return differ by ten times the tolerance. On the designs whose
+   fixed point fell between two lattice points the test was unsatisfiable BY
+   CONSTRUCTION, and the loop ran its cap every time.
 
-   `rotorDiameterFor` ends `return +(2 * R).toFixed(3)`, so every value it
-   can return lies on a 1 mm lattice. This loop accepts when
+   This is a known failure, not a tuning accident. A quantised state on a
+   bounded trajectory makes an iteration a finite-state machine, so its orbit
+   is eventually periodic (Butterweck, Ritzerfeld & Werter, EUT Report
+   88-E-205, 1988, sec. IV.A: quantisation "implies a discrete-amplitude
+   character" and the state "enters a limit cycle"); a period of two or more
+   then holds successive iterates at least one quantum apart forever. Two
+   things were measured before this was written down, because both are the
+   obvious guesses and both are wrong: more iterations do not help (40, 200
+   and 1000 failed on identical designs), and the damping was not the cause
+   (the same designs failed undamped).
 
-       |Dn - D| < tol,   tol = 1e-4 m = 0.1 mm
+   THE REMEDY IS STRUCTURAL: keep the coarse quantiser out of the loop. The
+   signal-processing literature prefers this to widening the tolerance - which
+   Butterweck et al. sec. IV.C call "screening", "the classical technique" -
+   and the reason that literature must often settle for screening does not
+   apply here: a fixed hardware word length is a constraint, full internal
+   precision in software is free. So the loop iterates on rotorDiameterExact
+   and rounds ONCE, at the return. The map is continuous again, which is also
+   the condition every published sizing-loop criterion assumes.
 
-   which is a tenth of the lattice spacing. Convergence therefore requires
-   Dn to land on the SAME lattice point twice: any two distinct values it
-   can return differ by at least 1e-3, which is ten times the tolerance.
+   THE TOLERANCE IS RELATIVE, AND SCALED, because that is what this domain
+   does. NDARC states a single sizing tolerance scaled per element - Theory
+   (NASA TP-2015-218751) sec. 5-1.1: "Single values are specified for the task
+   and then scaled for each element tested"; sec. 5-1.2 gives "0.1[eps]L for
+   rotor radius", and toler_size defaults to .01, so NDARC accepts a rotor
+   radius at about 1e-3 of a reference length. The absolute 1e-4 m this loop
+   used has no precedent in NDARC, FLOPS, GASP or Aviary, and on a 3 m rotor
+   it was roughly forty times stricter than NDARC's own figure. (The Greek
+   letter drops out of the corpus text extraction - it reads "0.1L" at
+   NDARC-TP-2015-218751_theory.txt:1636 - so the eps is read from sec. 5-1.1,
+   not seen. Flagged rather than asserted.)
 
-   Measured, on the six of thirty sampled designs that do not converge: every
-   one settles into a stable TWO-CYCLE. There is no fixed point on the lattice
-   for them to find. But the cycles are NOT all the same size, and the
-   difference is the whole point:
+   Asking for more accuracy than the function can deliver is a named mistake:
+   Gill, Murray & Wright, Practical Optimization (1981) sec. 8.4.2.3 is titled
+   "Overly stringent termination criteria", and sec. 8.2.2 notes that "Asking
+   for unattainable accuracy is one of the most frequent reasons that a
+   routine indicates that it has failed."
 
-     - FIVE cycle between ADJACENT lattice points. hybrid at payload 300
-       alternates Dn = 1.658 and 1.657 forever, |Dn - D| pinned at 0.769 mm.
-       These designs ARE settled - to the finest diameter their own sizing
-       rule can express - and only the certificate is missing.
+   RELAXATION IS 0.5, ON EVIDENCE AND PRECEDENT. The previous 0.7 carried a
+   comment claiming it "removes any chance of a limit cycle", which was not
+   true. Measured across 36 designs on two parameter bases with the continuous
+   map: omega 1.0 (NDARC's own sizing default) leaves three designs at the
+   cap, 0.7 leaves one, and 0.5 leaves none. 0.5 is also the value NDARC ships
+   for its damped inner loops. Note the local slope at the worst design is
+   -0.63, well inside the contraction bound, so linear theory does NOT predict
+   that 0.7 fails there - the map carries millimetre-scale noise from the
+   sizing loop underneath it, and the relaxation is chosen against measurement
+   rather than against the linear estimate.
 
-     - ONE DOES NOT. hybridPusher at payload 600 cycles between Dn = 3.145
-       and 3.163, EIGHTEEN lattice points apart, with |Dn - D| pinned at
-       13.846 mm. That is a real oscillation in the map, not a rounding
-       artefact: MTOW swings 2730 <-> 2762 kg across the cycle, and the
-       diameter returned is genuinely uncertain by about +/-9 mm.
+   THREE OUTCOMES, NOT TWO. A small step is not by itself a success: KINSOL
+   treats it as a possible stall ("Only the first condition (small residual)
+   is considered a successful completion"), and GMW separate an accuracy test
+   from a cost backstop. So this returns `status` of "converged", "stalled"
+   (ran the cap, with the amplitude it was still moving by) or "inner-diverged".
 
-   So the quantization explains why the TOLERANCE can never be met. It does
-   NOT make every failure harmless, and nothing here may assume it does. The
-   reported note compares the measured gap against the 1 mm lattice and says
-   which of the two regimes a given design is in, rather than describing all
-   six the same way.
-
-   Two things were tested before this was written down, because both are
-   the obvious guesses and both are wrong:
-     - MORE ITERATIONS DO NOT HELP. maxIter 40, 200 and 1000 all fail on
-       exactly the same six designs. The cycle is stable, not slow.
-     - THE DAMPING IS NOT THE CAUSE. Running the same six undamped
-       (relax 1.0) fails them too. Undamped, D is itself a lattice point,
-       so the test then demands Dn == D exactly - which is the same
-       requirement stated differently.
-
-   So the loop is not broken and the designs are not bad: each is settled
-   to within the millimetre its own sizing rule can express. What is wrong
-   is that the solver cannot CERTIFY that, because it was given a bound
-   finer than the quantity it measures.
-
-   THIS IS NOT FIXED HERE, DELIBERATELY. Matching tol to the lattice - or
-   not rounding inside the loop - changes which value the loop returns, and
-   therefore moves MTOW, the golden masters, the reference renders and the
-   published figures in paper/. That is a change that must own its four
-   re-records and be made on purpose. Until then the condition is REPORTED
-   rather than hidden: `converged` and `note` below say what happened, and
-   the caller shows it. Whoever takes it on should start here.
-
-   (This is the third time this project has found a tolerance that did not
-   match the stored precision of the thing it bounds. The two in
-   validation/identities.mjs were too LOOSE for the store; this one is too
-   TIGHT for it. Same defect, opposite sign.) */
+   AN INNER FAILURE IS PROPAGATED, NOT CONSUMED. When the sizing loop under
+   this one reports r2Diverged it has returned the last iterate of a weight
+   spiral the engine has ALREADY declared meaningless; feeding that back in as
+   a mass is what produced a 794 mm oscillation on one multicopter. Solver
+   libraries treat an inner failure as its own terminal state - PETSc has a
+   dedicated SNES_DIVERGED_INNER and instructs callers to "always call
+   SNESGetConvergedReason() after each SNESSolve()" - so this loop stops and
+   says which. No source states "never consume a non-converged inner result"
+   in those words; this follows the convention those libraries are built on.
+   */
 export function solveRotorDiameter(key, baseParams, runSizingFn, opts = {}) {
   const d = CONFIG_DEFAULTS[key];
   const N = Math.max(1, baseParams?.nPropHover ?? d?.nRotors ?? 4);
   if (!d || typeof runSizingFn !== "function") return null;
-  const maxIter = opts.maxIter ?? 40, tol = opts.tol ?? 1e-4;
+  const maxIter = opts.maxIter ?? 40;
+  /* RELATIVE, per NDARC sec. 5-1.1/5-1.2 (0.1 eps on a rotor radius, eps = .01).
+     An absolute metre figure has no precedent in NDARC, FLOPS, GASP or Aviary
+     and does not mean the same thing on a 1.6 m rotor as on a 15 m one. */
+  const relTol = opts.relTol ?? 1e-3;
+  const relax  = opts.relax  ?? 0.5;
 
   /* Seed from the payload rather than a fixed 3175 kg, so the first guess at
      least scales with the aircraft being asked for. */
   let mtow = Number(opts.seedMTOW) || Math.max(200, (Number(baseParams.payload) || 400) * 6);
-  let D = rotorDiameterFor(key, mtow, N);
-  let R = null, converged = false, gap = null, iters = 0;
+  let D = rotorDiameterExact(key, mtow, N);
+  let R = null, gap = null, iters = 0, status = "stalled";
+  let lastGood = null, retreats = 0;
+  const maxRetreat = opts.maxRetreat ?? 12;
 
   for (let i = 0; i < maxIter; i++) {
     iters = i + 1;
     R = runSizingFn({ ...baseParams, configType: key, nPropHover: N, propDiam: D });
-    const m = Number(R?.MTOW);
-    if (!isFinite(m) || m <= 0) break;
-    const Dn = rotorDiameterFor(key, m, N);
-    if (!isFinite(Dn) || Dn <= 0) break;
+
+    /* OUT OF DOMAIN. The inner sizing loop's own verdict is read BEFORE its
+       number is used: r2Diverged means the engine is handing back the last
+       iterate of a failed weight spiral, which it already reports as
+       meaningless, so it is never consumed as a mass here.
+
+       It is not a reason to give up either, and that was measured: the
+       divergence is usually a TRANSIENT the path walks through. sideBySide at
+       payload 1000 diverges only at the fourth iterate and then closes at
+       10.44 m; multicopter at 1800 diverges on the SEED, which the payload
+       heuristic puts at 17.7 m, and closes at 14.5 m once the iteration gets
+       inside the domain. Terminating on the first occurrence threw both away.
+
+       So the point is treated the way a solver treats a function-domain
+       error - PETSc's SNESSetFunctionDomainError, where the step is cut
+       rather than the solve abandoned. With a good point behind us we retreat
+       halfway back to it; with none yet, the seed itself is outside the
+       domain and the diameter is shrunk until it is inside. The 0.9 is a
+       search step for a feasible start, not a sourced constant. Only when the
+       retreats are exhausted is this reported as a design that does not
+       close. */
+    const innerBad = (R && R.r2Diverged === true);
+    const m = innerBad ? NaN : Number(R?.MTOW);
+    if (innerBad || !isFinite(m) || m <= 0) {
+      if (++retreats > maxRetreat) { status = innerBad ? "inner-diverged" : "inner-failed"; break; }
+      D = lastGood != null ? lastGood + 0.5 * (D - lastGood) : D * 0.9;
+      continue;
+    }
+    lastGood = D;
+
+    const Dn = rotorDiameterExact(key, m, N);
+    if (!isFinite(Dn) || Dn <= 0) { status = "inner-failed"; break; }
     gap = Math.abs(Dn - D);
-    if (gap < tol) { D = Dn; converged = true; break; }
-    /* under-relax: the map is contractive here, and damping costs one extra
-       iteration. It does NOT decide whether this loop converges - the six
-       designs that fail fail undamped too, for the reason in the header. */
-    D = D + 0.7 * (Dn - D);
+    if (gap < relTol * Math.abs(Dn)) { D = Dn; status = "converged"; break; }
+    D = D + relax * (Dn - D);
   }
-  /* The gap is reported in MILLIMETRES, against the 1 mm the sizing rule can
-     express. That RATIO - not the raw number - is what tells a reader whether
-     an uncertified diameter is a real problem or a solver artefact. */
-  const gapMm = gap == null ? null : +(gap * 1e3).toFixed(3);
-  return { propDiam: D == null ? null : +D.toFixed(4), converged, MTOW: R?.MTOW ?? null,
-    gapMm, iters, latticeMm: 1,
-    /* SETTLED means the cycle is no wider than the 1 mm the sizing rule can
-       express, so the design is at its finest expressible diameter and only
-       the certificate is missing. OSCILLATING means it is genuinely moving,
-       and the diameter carries that much uncertainty. Saying "did not
-       converge" for both would be true and useless: it would read as alarming
-       for the first and as routine for the second. */
-    settled: converged ? true : (gapMm != null && gapMm <= 1),
-    note: converged
+
+  const converged = status === "converged";
+  const gapMm = gap == null ? null : +(gap * 1e3).toFixed(4);
+  const propDiam = D == null ? null : +D.toFixed(4);
+  return { propDiam, converged, status, MTOW: R?.MTOW ?? null, gapMm, iters,
+    relTol, relax, retreats,
+    note: status === "converged"
       ? `rotor diameter solved with MTOW to hold DL ${d.DL_lbft2} lb/ft^2`
-      : gapMm != null && gapMm <= 1
-        ? `rotor diameter is settled to ${gapMm} mm - finer than the 1 mm this `
-          + `sizing rule can express - but the solver's tolerance is `
-          + `${(tol * 1e3).toFixed(1)} mm, finer still, so ${iters} iterations `
-          + `could not certify it. The diameter holds DL ${d.DL_lbft2} lb/ft^2 `
-          + `to that millimetre; treat it as good, not as converged`
-        : `rotor diameter did NOT settle: after ${iters} iterations it is still `
-          + `oscillating by ${gapMm == null ? "an unmeasured amount" : gapMm + " mm"}, `
-          + `which is wider than the 1 mm this sizing rule can express. The value `
-          + `returned is the last iterate and carries that uncertainty - the disk `
-          + `loading it actually flies is not the ${d.DL_lbft2} lb/ft^2 targeted` };
+      : status === "inner-diverged"
+        ? `the sizing loop did not close at ${propDiam} m, so there is no mass to `
+          + `size a rotor against. The diameter shown is the last one tried and `
+          + `means nothing on its own - this design does not close`
+        : status === "inner-failed"
+          ? `sizing returned no usable mass at ${propDiam} m, so the rotor diameter `
+            + `could not be solved`
+          : `rotor diameter did NOT settle: after ${iters} iterations it is still `
+            + `moving by ${gapMm == null ? "an unmeasured amount" : gapMm + " mm"}, `
+            + `outside the ${(relTol * 100).toFixed(2)}% this solve asks for. The `
+            + `value returned is the last iterate and carries that uncertainty - `
+            + `the disk loading it flies is not the ${d.DL_lbft2} lb/ft^2 targeted` };
 }
 
 export function capabilitiesFor(key, nRotors) {

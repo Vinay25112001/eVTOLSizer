@@ -1,50 +1,40 @@
 /* =====================================================================
-   THE ROTOR-DIAMETER SOLVE REPORTS WHETHER IT CLOSED
+   THE ROTOR-DIAMETER SOLVE CLOSES, AND ITS ANSWER IS CHECKED BY RESIDUAL
    =====================================================================
-   solveRotorDiameter iterates rotor diameter against MTOW so the design
-   holds the disk loading its configuration specifies. It has returned a
-   `converged` flag and an explanatory `note` since it was written. Every
-   caller read `.propDiam` and dropped the rest - App.jsx's configuration
-   switcher and ten harnesses in this directory - so a diameter that never
-   settled was written into the design and went on to set disk loading,
-   hover power, battery mass and MTOW with nothing anywhere saying it was
-   provisional. The note even read "last value returned and flagged"; it
-   was returned, and it was not flagged, because nothing read the flag.
+   solveRotorDiameter iterates rotor diameter against MTOW so a design holds
+   the disk loading its configuration specifies. It could not converge on a
+   minority of designs, and the reason was structural rather than a bad
+   tolerance value: the loop called rotorDiameterFor, which ends
+   `+(2 * R).toFixed(3)`, so every value it could return lay on a 1 mm
+   lattice - while the test accepted at 1e-4 m, a TENTH of that spacing.
+   A quantised state on a bounded trajectory is a finite-state machine whose
+   orbit is eventually periodic (Butterweck, Ritzerfeld & Werter, EUT Report
+   88-E-205, sec. IV.A), and a period of two or more holds successive iterates
+   at least one quantum apart forever. The test was unsatisfiable by
+   construction, and the cap was reached every time.
 
-   WHY THE SOLVE CANNOT ALWAYS CONVERGE, which is the part that decides
-   what this gate is allowed to assert. rotorDiameterFor ends
+   The fix is structural - the loop iterates on rotorDiameterExact and rounds
+   once, at the return - with a relative tolerance in place of an absolute
+   metre figure, per NDARC's scaled-per-element form. Full reasoning and
+   citations are in solveRotorDiameter's header.
 
-       return +(2 * R).toFixed(3)
+   WHAT THIS GATE CHECKS, AND WHY IT IS BUILT THIS WAY.
 
-   so every diameter it can return lies on a 1 mm lattice, while the
-   solver accepts at |Dn - D| < 1e-4 m, a TENTH of that spacing. Meeting
-   it needs the same lattice point twice; any two distinct values differ
-   by at least ten times the tolerance. Designs whose fixed point falls
-   between two lattice points therefore cycle forever. Measured: more
-   iterations do not help (40, 200 and 1000 fail identically) and the
-   damping is not the cause (the same designs fail undamped).
+   It does not take the solver's word for anything. `converged` is a claim the
+   solver makes about itself; a flag can be wrong while the number is right,
+   or right while the number is stale. So the central check RE-EVALUATES the
+   residual at the returned diameter - runs the sizing again, recomputes the
+   diameter that mass implies, and requires the two to agree. That is the
+   success criterion the literature actually endorses (KINSOL: "Only the first
+   condition (small residual) is considered a successful completion"), and it
+   would catch a solver that reported convergence it had not achieved.
 
-   SO "DID NOT CONVERGE" IS NOT ONE OUTCOME, AND THIS GATE'S JOB IS TO
-   KEEP THE TWO APART.
-
-     - A cycle no wider than the 1 mm the rule can express means the
-       design IS settled, to the finest diameter the rule has, and only
-       the certificate is missing.
-     - A cycle WIDER than that is a real oscillation. One sampled design
-       cycles 18 lattice points, 13.8 mm, with MTOW swinging 2730 <-> 2762
-       kg - the disk loading it flies is not the one it asked for.
-
-   Collapsing those into one message would be true and useless: alarming
-   for the first, routine for the second. `settled` separates them and
-   the note says which.
-
-   WHAT THIS GATE DELIBERATELY DOES NOT DO. It does not assert WHICH
-   designs fail to converge, because that depends on DEFAULT_PARAMS,
-   which is pinned by content hash elsewhere and will move. It asserts
-   the REPORTING is self-consistent for whatever the sweep finds, and it
-   positive-controls itself: if the sweep ever contains no converged case
-   or no non-converged case, the gate FAILS rather than passing with
-   nothing to check. A check that cannot fail is not a check.
+   It also pins the STRUCTURAL property directly, because that is the thing
+   that regresses silently: an exact fixed point of a continuous map lands
+   off the millimetre lattice, so if someone puts rotorDiameterFor back inside
+   the loop the converged diameters become lattice values and section 4 fails.
+   Asserting "the bug is fixed" is worth little; asserting "the loop is not
+   using the quantised map" is what keeps it fixed.
    ===================================================================== */
 import { runSizing } from "../src/engine.js";
 import * as CFG from "../src/engine/configuration.js";
@@ -66,154 +56,167 @@ const B = { payload:455, range:161, vCruise:67, cruiseAlt:1000, hoverHeight:15.2
   ewf:0.5, weightModel:"buildup", autoPositionWing:true, targetSM:0.15, fusLen:7.2,
   fusDiam:1.65, vtGamma:45, vtCh:0.45, vtCv:0.032, vtAR:2.5 };
 
-const LATTICE_MM = 1;   // rotorDiameterFor rounds to 3 dp of a metre
+const LATTICE = 1e-3;          // metres; rotorDiameterFor rounds to 3 dp
+const onLattice = (D) => Math.abs(D * 1000 - Math.round(D * 1000)) < 1e-9;
 
 console.log("ROTOR DIAMETER SOLVE GATE");
 console.log("=".repeat(78));
 
-/* ── 1. THE LATTICE IS REAL ───────────────────────────────────────────
-   The whole analysis above rests on rotorDiameterFor quantising to 1 mm.
-   Assert it directly: if someone changes that rounding, this gate's
-   reasoning is stale and must be re-derived, not quietly carried over. */
+/* ── 1. THE TWO DIAMETER FUNCTIONS DIFFER IN EXACTLY ONE WAY ──────────
+   rotorDiameterFor is the DISPLAY path and must keep quantising;
+   rotorDiameterExact is the ITERATION path and must not. If these ever
+   become the same function the structural fix is gone. */
 {
   const k = Object.keys(CFG.CONFIGURATIONS)[0];
   const N = CFG.CONFIG_DEFAULTS[k].nRotors;
-  let offLattice = 0, n = 0;
+  let roundedOff = 0, exactOn = 0, disagree = 0, n = 0;
   for (let m = 800; m <= 4000; m += 7) {
-    const D = CFG.rotorDiameterFor(k, m, N);
-    if (D == null) continue;
+    const Dr = CFG.rotorDiameterFor(k, m, N);
+    const De = CFG.rotorDiameterExact(k, m, N);
+    if (Dr == null || De == null) continue;
     n++;
-    if (Math.abs(D * 1000 - Math.round(D * 1000)) > 1e-9) offLattice++;
+    if (!onLattice(Dr)) roundedOff++;
+    if (onLattice(De)) exactOn++;
+    if (Math.abs(Dr - De) > LATTICE / 2 + 1e-12) disagree++;
   }
-  check(n > 100 && offLattice === 0,
-    `rotorDiameterFor returns values on a ${LATTICE_MM} mm lattice`,
-    `${n} masses sampled, ${offLattice} off-lattice`);
+  check(n > 100 && roundedOff === 0,
+    "rotorDiameterFor quantises to the 1 mm lattice (the display path)",
+    `${n} masses, ${roundedOff} off-lattice`);
+  check(exactOn <= 1,
+    "rotorDiameterExact does NOT quantise (the iteration path)",
+    `${exactOn} of ${n} landed on the lattice by coincidence`);
+  check(disagree === 0,
+    "the two agree to within half a quantum, so only precision differs",
+    `${disagree} disagreed by more than ${LATTICE / 2} m`);
 }
 
-/* ── 2. SWEEP, AND REPORT WHAT CAME BACK ──────────────────────────── */
+/* ── 2. SWEEP ─────────────────────────────────────────────────────── */
 console.log("");
-console.log("  layout          payload  converged  settled   gap(mm)   D (m)");
+console.log("  layout          payload  status          iters  retreat   gap(mm)     D (m)");
 
 const results = [];
 for (const k of Object.keys(CFG.CONFIGURATIONS)) {
-  const d = CFG.CONFIG_DEFAULTS[k];
-  /* 800 is in this grid on purpose: it is the payload at which tiltrotor
-     produces a 0.719 mm cycle, the SETTLED regime. Without it the sweep
-     finds only large oscillations and half the reporting below is never
-     exercised - the gate would pass while proving nothing about the branch
-     a user is most likely to meet. */
-  for (const payload of [300, 600, 800, 1000]) {
+  for (const payload of [300, 600, 1000, 1800]) {
+    const d = CFG.CONFIG_DEFAULTS[k];
     const p0 = { ...B, payload, configType:k, nPropHover:d.nRotors,
       vCruise:d.vCruise_ms ?? B.vCruise, tipSpeed:d.tipSpeed_ms ?? B.tipSpeed,
       LD:d.LD_target ?? B.LD, etaHov:d.etaHov ?? B.etaHov,
       ...(d.wingLoadingNm2 ? { wingLoadingNm2:d.wingLoadingNm2 } : {}) };
     const r = CFG.solveRotorDiameter(k, p0, runSizing, { seedMTOW: payload * 8 });
     if (!r) continue;
-    results.push({ k, payload, r });
+    results.push({ k, payload, p0, r });
     console.log("  " + k.padEnd(15) + String(payload).padStart(7)
-      + String(r.converged).padStart(11) + String(r.settled).padStart(9)
-      + (r.gapMm == null ? "—" : r.gapMm.toFixed(3)).padStart(10)
-      + String(r.propDiam ?? "—").padStart(9));
+      + "  " + String(r.status).padEnd(16) + String(r.iters).padStart(4)
+      + String(r.retreats).padStart(8)
+      + (r.gapMm == null ? "—" : r.gapMm.toFixed(4)).padStart(11)
+      + String(r.propDiam ?? "—").padStart(10));
   }
 }
-
 console.log("");
 
-/* ── 3. POSITIVE CONTROL — the sweep must exercise BOTH outcomes ───── */
-const converged = results.filter((x) => x.r.converged === true);
-const notConv   = results.filter((x) => x.r.converged !== true);
-check(converged.length > 0, "the sweep contains at least one CONVERGED solve",
-  `${converged.length} of ${results.length}`);
-check(notConv.length > 0, "the sweep contains at least one NON-CONVERGED solve",
-  notConv.length > 0
-    ? `${notConv.length} of ${results.length} — the reporting below is exercised`
-    : "nothing to check: every case converged, so this gate proves nothing. "
-      + "Widen the sweep rather than deleting the check.");
+const converged = results.filter((x) => x.r.status === "converged");
 
-/* BOTH REGIMES, not just one. The checks below branch on `settled`, so a
-   sweep that produces only large oscillations leaves the settled branch -
-   the one a user meets most often - completely untested while the gate
-   still reports PASS. Requiring one of each is what stops that. */
-const settledCases = notConv.filter((x) => x.r.settled === true);
-const oscillating  = notConv.filter((x) => x.r.settled !== true);
-check(settledCases.length > 0,
-  "the sweep exercises the SETTLED regime (a cycle inside the lattice)",
-  settledCases.length
-    ? settledCases.map((x) => `${x.k}/${x.payload} ${x.r.gapMm} mm`).join(", ")
-    : "no case cycles within 1 mm, so the settled branch below is never run. "
-      + "Widen the sweep rather than deleting the check.");
-check(oscillating.length > 0,
-  "the sweep exercises the OSCILLATING regime (a cycle wider than the lattice)",
-  oscillating.length
-    ? oscillating.map((x) => `${x.k}/${x.payload} ${x.r.gapMm} mm`).join(", ")
-    : "no case cycles wider than 1 mm, so the oscillating branch is never run. "
-      + "Widen the sweep rather than deleting the check.");
+/* ── 3. THE RESIDUAL, RE-EVALUATED — the check that does the work ──── */
+{
+  const bad = [];
+  for (const { k, payload, p0, r } of converged) {
+    const d = CFG.CONFIG_DEFAULTS[k];
+    const R = runSizing({ ...p0, configType:k, nPropHover:d.nRotors, propDiam:r.propDiam });
+    if (R?.r2Diverged === true) { bad.push(`${k}/${payload}: converged on a DIVERGED sizing`); continue; }
+    const m = Number(R?.MTOW);
+    if (!isFinite(m) || m <= 0) { bad.push(`${k}/${payload}: no mass at the returned diameter`); continue; }
+    const Dn = CFG.rotorDiameterExact(k, m, d.nRotors);
+    const rel = Math.abs(Dn - r.propDiam) / Math.abs(Dn);
+    /* The returned value is rounded to 4 dp for storage, so allow that
+       rounding on top of the solver's own tolerance - and nothing else. */
+    const allow = r.relTol + (5e-5 / Math.abs(Dn));
+    if (!(rel <= allow))
+      bad.push(`${k}/${payload}: residual ${(rel * 100).toFixed(4)}% > ${(allow * 100).toFixed(4)}%`);
+  }
+  check(bad.length === 0,
+    "every converged diameter still satisfies its residual when re-evaluated",
+    bad.length ? bad.join("; ") : `${converged.length} design(s) re-sized and checked`);
+}
 
-/* ── 4. EVERY RESULT REPORTS ITSELF CONSISTENTLY ──────────────────── */
+/* ── 4. THE STRUCTURAL PROPERTY — the loop is not using the rounded map ──
+   An exact fixed point of a continuous map has no reason to sit on the
+   millimetre lattice. If rotorDiameterFor goes back inside the loop, every
+   converged diameter becomes a lattice value and this fails. One or two
+   coincidences are possible; all of them are not. */
+{
+  const latticed = converged.filter((x) => onLattice(x.r.propDiam));
+  check(converged.length >= 6 && latticed.length <= 1,
+    "converged diameters are NOT on the 1 mm lattice (the map is continuous)",
+    `${latticed.length} of ${converged.length} on-lattice`
+      + (latticed.length ? ` — ${latticed.map((x) => x.k + "/" + x.payload).join(", ")}` : ""));
+}
+
+/* ── 5. NOTHING STALLS ────────────────────────────────────────────────
+   This is the fix's actual claim, and it is deliberately NOT "every design
+   closes". Some designs in this grid have no fixed point at all, and that is
+   a fact about the aircraft rather than the solver: scanning 85 diameters
+   from 4 m to 25 m, multicopter at payload 1000 gets no closer than a 3.6%
+   residual and at 1800 no closer than 34.7%, against the 0.1% asked for.
+   There is no rotor that closes those designs, so "does not close" is the
+   correct answer and a gate demanding otherwise would be demanding a lie.
+
+   What the structural fix DID remove is stalling: a design sitting in a
+   feasible region, oscillating, running out of iterations because the
+   tolerance was finer than the map's own resolution. Six of thirty sampled
+   designs did that before. None may now.
+
+   The two outcomes are different problems and the status column says which:
+   "stalled" is a design the tool cannot pin down; "inner-diverged" is one
+   whose sizing loop could not be kept in its domain. */
+{
+  const stalled = results.filter((x) => x.r.status === "stalled");
+  check(stalled.length === 0, "no design STALLS (the quantisation failure mode is gone)",
+    stalled.length
+      ? stalled.map((x) => `${x.k}/${x.payload} still moving ${x.r.gapMm} mm after ${x.r.iters}`).join("; ")
+      : `${results.length} designs, none stalled`);
+
+  /* Positive control: this gate must not pass because everything failed. */
+  check(converged.length >= results.length / 2,
+    "most of the sweep actually closes, so the checks above have subjects",
+    `${converged.length} of ${results.length} converged`);
+}
+
+/* ── 6. A DIVERGED INNER SOLVE IS NEVER CONSUMED AS A MASS ────────────
+   The out-of-domain path must be EXERCISED, or the retreat logic is
+   untested. Two designs in this grid reach it: the seed for multicopter at
+   1800 lies outside the domain, and sideBySide at 1000 walks through a
+   transient divergence. If a future engine change stops producing either,
+   this fails rather than passing silently - widen the grid, do not delete
+   the check. */
+{
+  const retreated = results.filter((x) => x.r.retreats > 0);
+  check(retreated.length > 0,
+    "the out-of-domain retreat path is exercised by the sweep",
+    retreated.length
+      ? retreated.map((x) => `${x.k}/${x.payload} retreated ${x.r.retreats}x and ${x.r.status}`).join("; ")
+      : "no design hit a diverged inner solve, so the retreat logic is untested");
+
+  const consumed = converged.filter((x) => x.r.MTOW != null && !(x.r.MTOW > 0));
+  check(consumed.length === 0, "no converged solve carries a non-positive mass",
+    consumed.length ? consumed.map((x) => x.k).join(", ") : `${converged.length} checked`);
+}
+
+/* ── 7. THE REPORT IS SELF-CONSISTENT ─────────────────────────────── */
 {
   const bad = [];
   for (const { k, payload, r } of results) {
     const w = (m) => bad.push(`${k}/${payload}: ${m}`);
     if (typeof r.converged !== "boolean") w("converged is not a boolean");
-    if (typeof r.settled !== "boolean") w("settled is not a boolean");
+    if (r.converged !== (r.status === "converged")) w("converged disagrees with status");
     if (typeof r.note !== "string" || r.note.length < 20) w("note is missing or trivial");
     if (!(r.propDiam > 0)) w("no diameter returned");
-    if (r.converged === true && r.settled !== true) w("converged but not settled");
-    if (r.gapMm != null && !(r.gapMm >= 0)) w("gapMm is not a magnitude");
-    /* A NON-CONVERGED SOLVE MUST CARRY ITS MEASURED GAP. Without it the
-       two regimes cannot be told apart, and - found by mutation, not by
-       reading - the checks below that branch on gapMm SKIP silently when
-       it is absent, so deleting the field made this whole gate pass while
-       testing nothing. Demand it here, where absence is a failure rather
-       than a reason to move on. */
-    if (r.converged !== true && !Number.isFinite(r.gapMm))
-      w("non-converged but reports no measured gap, so the regime is undecidable");
+    if (!(r.relTol > 0)) w("no tolerance reported");
+    if (r.status === "converged" && !/lb\/ft\^2/.test(r.note)) w("converged note names no disk loading");
+    if (r.status === "stalled" && !Number.isFinite(r.gapMm))
+      w("stalled but reports no measured gap, so the amplitude is undecidable");
   }
-  check(bad.length === 0, "every solve returns a consistent convergence report",
+  check(bad.length === 0, "every solve returns a consistent report",
     bad.length ? bad.join("; ") : `${results.length} results`);
-}
-
-/* ── 5. `settled` IS THE LATTICE TEST, NOT A SECOND OPINION ───────── */
-{
-  const bad = [];
-  for (const { k, payload, r } of notConv) {
-    if (r.gapMm == null) continue;
-    const shouldBeSettled = r.gapMm <= LATTICE_MM;
-    if (r.settled !== shouldBeSettled)
-      bad.push(`${k}/${payload}: gap ${r.gapMm} mm but settled=${r.settled}`);
-  }
-  check(bad.length === 0,
-    `settled is exactly "the cycle is no wider than ${LATTICE_MM} mm"`,
-    bad.length ? bad.join("; ") : `${notConv.length} non-converged case(s) checked`);
-}
-
-/* ── 6. THE NOTE SAYS WHICH REGIME, IN WORDS ──────────────────────────
-   The note is what the user reads. A settled note must not describe an
-   oscillation, and an oscillating note must not claim the value sits
-   inside the millimetre the rule expresses - that would tell someone a
-   13.8 mm cycle was fine. */
-{
-  const bad = [];
-  for (const { k, payload, r } of notConv) {
-    const n = r.note.toLowerCase();
-    if (r.settled) {
-      if (!n.includes("settled to")) bad.push(`${k}/${payload}: settled note does not say so`);
-      if (n.includes("did not settle")) bad.push(`${k}/${payload}: settled note claims it did not`);
-    } else {
-      if (!n.includes("did not settle")) bad.push(`${k}/${payload}: oscillating note does not say so`);
-      if (n.includes("treat it as good")) bad.push(`${k}/${payload}: oscillating note calls it good`);
-    }
-    if (!n.includes("mm")) bad.push(`${k}/${payload}: note gives no magnitude`);
-  }
-  check(bad.length === 0, "the note distinguishes a settled cycle from a real oscillation",
-    bad.length ? bad.join("; ") : `${notConv.length} note(s) read`);
-}
-
-/* ── 7. A CONVERGED SOLVE STILL SAYS WHAT IT HELD ─────────────────── */
-{
-  const bad = converged.filter(({ r }) => !/lb\/ft\^2/.test(r.note)).map((x) => x.k);
-  check(bad.length === 0, "a converged solve names the disk loading it held",
-    bad.length ? bad.join(", ") : `${converged.length} note(s)`);
 }
 
 console.log("");
@@ -223,5 +226,6 @@ if (fails.length) {
   for (const f of fails) console.log("  - " + f);
   process.exit(1);
 }
-console.log(`ROTOR DIAMETER SOLVE GATE PASSED (${results.length} solves, `
-  + `${converged.length} converged, ${notConv.length} reported as not)`);
+console.log(`ROTOR DIAMETER SOLVE GATE PASSED (${results.length} designs: `
+  + `${converged.length} closed with residuals re-evaluated, `
+  + `${results.length - converged.length} reported as not closing, 0 stalled)`);

@@ -121,8 +121,8 @@ mission variables, not one:
 
 | configuration | W_P/W_E at 161 km | crossover range | W_P/W_E at 10 km |
 |---|---|---|---|
-| lift+cruise | 0.747 | 114.6 km | 1.484 |
-| hybrid (tilt+lift) | 0.792 | 122.3 km | 1.436 |
+| lift+cruise | 0.747 | 114.6 km | 1.485 |
+| hybrid (tilt+lift) | 0.792 | 122.0 km | 1.436 |
 | hybrid pusher | 0.727 | 110.5 km | 1.314 |
 | tiltrotor | 0.755 | 114.3 km | 1.110 |
 | side-by-side | 0.329 | none in 2–161 km | 0.755 |

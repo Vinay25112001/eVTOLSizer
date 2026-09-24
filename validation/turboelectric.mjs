@@ -94,7 +94,12 @@ for (const c of LAYOUTS) {
        && Math.abs(r.weightGroupsRaw.fuelTank - r.fuelTankMassKg) < 0.01);
     id("empty mass = sum of groups",
        Math.abs(Object.values(r.weightGroupsRaw).reduce((s, x) => s + (Number(x) || 0), 0) - r.Wempty) < 0.05);
-    const packKWh = r.Wbat * (p.sedCell * (1 - (p.cRateDerate ?? 0.08))) / 1000;
+    /* SED_eff is the cell figure derated for C-rate. That derate is no longer
+       a flat input — it is Peukert at the demanded rate — so take the value
+       the engine APPLIED rather than re-asserting a constant that has moved.
+       (Unlike identities.mjs this is not an identity on the derate itself; it
+       is a downstream power check, so reading the applied value is correct.) */
+    const packKWh = r.Wbat * (p.sedCell * (1 - (r.cRateDerate ?? 0))) / 1000;
     /* The pack is sized inside the loop from that pass's hover power; the
        reported Phov can differ by the convergence tolerance, hence 0.1%. */
     id("pack power within 14C", r.Phov / packKWh <= k.emergencyCRate * (1 + 1e-3));

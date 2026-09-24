@@ -458,7 +458,7 @@ export const TECH_BASELINE = {
      than reverted — see the note in validate.mjs. */
   etaSys:         0.744, // FULL chain: eta_prop 0.80 x eta_powertrain 0.93
   socMin:         0.20,  // usable-SoC floor
-  cRateDerate:    0.08,  // SED derate at hover C-rate
+  // SED derate at hover C-rate
   ewf:            0.50,  // empty-weight fraction — the dominant assumption
   LD:             14,    // cruise L/D target
   AR:             9,

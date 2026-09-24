@@ -343,12 +343,27 @@ const CHECKS = [
          + "η_bat,eff = Etot / (E_forward + E_vertical/η_bat) per NASA RST scoping",
     f:(p,R)=>{
       const packUsable = p.sedBasis === "packUsable";
-      const sedEff = packUsable ? p.sedCell : p.sedCell*(1-(p.cRateDerate ?? 0.08));
       const etaRaw = packUsable ? 1 : p.etaBat;
       const vertOnly = (p.etaBatScope ?? "verticalOnly") !== "mission";
       const Evert = packUsable ? R.Etot : (vertOnly ? (R.Eto + R.Eld) : R.Etot);
       const Ereq  = (R.Etot - Evert) + Evert/Math.max(1e-6, etaRaw);
       const etaB  = Ereq > 0 ? R.Etot/Ereq : etaRaw;
+      /* THE C-RATE DERATE IS NO LONGER A FLAT INPUT — it is Peukert at the
+         rate the design demands. Re-derived here from the PUBLISHED EQUATION
+         and the engine's REPORTED quantities, deliberately not by calling the
+         engine's own peukertDerate(): an identity that imports the function it
+         is checking tests nothing. [SRC] NDARC TP-2015-218751 ch.26:10652,
+         capacity ~ 1/x^(k-1), k = 1.01-1.05 for lithium-ion; x is on the
+         USABLE-capacity basis (:10650), so x = P_hover/E_req, capped by the
+         power-sized branch at maxCRate/(1-socMin). An explicitly supplied
+         cRateDerate is an override and is honoured, as the engine does. */
+      const k    = Math.min(1.05, Math.max(1.01, p.peukertK ?? 1.05));
+      const soc  = packUsable ? 0 : (p.socMin ?? 0);
+      const xRaw = (R.Phov > 0 && Ereq > 0)
+        ? Math.min(R.Phov/Ereq, (p.maxCRate ?? 4.0)/Math.max(1e-9, 1-soc)) : null;
+      const peuk = (xRaw != null && xRaw > 1) ? 1 - Math.pow(xRaw, -(k-1)) : 0;
+      const derate = packUsable ? 0 : (p.cRateDerate != null ? p.cRateDerate : peuk);
+      const sedEff = packUsable ? p.sedCell : p.sedCell*(1-derate);
       return [R.PackkWh, R.Wbat*sedEff*etaB/1000];
     } },
 

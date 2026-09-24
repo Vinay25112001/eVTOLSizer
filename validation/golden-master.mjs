@@ -51,7 +51,7 @@ const BASE = {
   reserveMinutes: 20, LD: 14, AR: 9, eOsw: 0.85, clDesign: 0.55, taper: 0.45,
   tc: 0.15, nPropHover: 6, propDiam: 3.0, twRatio: 1.3, convTolExp: -6,
   etaHov: 0.70, etaSys: 0.80, rateOfClimb: 5.08, climbAngle: 5, descentAngle: 6,
-  climbLDPenalty: 0.13, deltaISA: 0, cRateDerate: 0.08, sedCell: 300,
+  climbLDPenalty: 0.13, deltaISA: 0, sedCell: 300,
   etaBat: 0.90, socMin: 0.19, ewf: 0.50, fusLen: 7.2, fusDiam: 1.65,
   vtGamma: 45, vtCh: 0.45, vtCv: 0.032, vtAR: 2.5,
 };

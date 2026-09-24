@@ -72,7 +72,7 @@ const p = {
   LD: 5.8, AR: 9, eOsw: 0.85, taper: 0.45, tc: 0.15, wingLoadingNm2: 1371,
   clCruiseMax: 0.9, clDesign: 0.55, propDiam: D, twRatio: 1.3, convTolExp: -6,
   etaHov: 0.70, tipSpeed: 167.64, etaSys: 0.8, rateOfClimb: 5.08, climbAngle: 5,
-  descentAngle: 6, climbLDPenalty: 0.13, deltaISA: 0, cRateDerate: 0.08,
+  descentAngle: 6, climbLDPenalty: 0.13, deltaISA: 0, 
   sedCell: 300, etaBat: 0.9, socMin: 0.19, ewf: 0.5, weightModel: "buildup",
   fusLen: P.fusLen_m.value, fusDiam: P.fusWidth_m.value,
   configType: "multicopter", nPropHover: N,

@@ -86,6 +86,16 @@ const DB = {
     },
   ],
 
+  /* SELECTING A CELL NO LONGER SETS A C-RATE DERATE, and that is a fix rather
+     than an omission. Each entry used to carry its own hardcoded derate, and a
+     third rule (a ladder on maxCRate) was applied to AI-suggested cells - three
+     mutually inconsistent unsourced rules for one quantity, disagreeing for
+     five of the eight cells here. All three keyed on the cell's RATED MAXIMUM
+     C-rate, a capability, never on the rate the MISSION demands. The derate is
+     now computed from demand by Peukert [SRC] NDARC ch.26, so a per-cell value
+     would OVERRIDE the sourced model every time someone picked a battery.
+     `maxCRate` below still matters: it is a delivery limit, and it caps the
+     rate the derate is evaluated at through the power-sized branch. */
   batteries: [
     {
       id:"molicel-p45b", name:"INR21700-P45B", mfr:"Molicel", badge:"Best eVTOL Cell",
@@ -93,7 +103,7 @@ const DB = {
       capAh:4.5, voltV:3.6, maxCRate:10, cycleLife:800, massG:70, year:2024,
       notes:"Ranked #1 for eVTOL by 2025 MDPI feasibility study (300 cells compared). 242 Wh/kg cell / 10C max discharge. Ideal balance of power and energy. Production cell — available now.",
       url:"https://www.molicel.com/inr-21700-p45b/",
-      apply:{ sedCell:242, cRateDerate:0.06, label:"Molicel P45B — 242 Wh/kg, 10C" }
+      apply:{ sedCell:242, label:"Molicel P45B — 242 Wh/kg, 10C" }
     },
     {
       id:"samsung-50e", name:"INR21700-50E", mfr:"Samsung SDI", badge:"High Energy",
@@ -101,7 +111,7 @@ const DB = {
       capAh:5.0, voltV:3.6, maxCRate:2, cycleLife:500, massG:68, year:2023,
       notes:"Highest energy density production 21700 cell. 265 Wh/kg but only 2C max — limits hover power. Best for range-optimised cruise-dominant designs.",
       url:"https://www.samsungsdi.com",
-      apply:{ sedCell:265, cRateDerate:0.10, label:"Samsung 50E — 265 Wh/kg, 2C" }
+      apply:{ sedCell:265, label:"Samsung 50E — 265 Wh/kg, 2C" }
     },
     {
       id:"lg-m50lt", name:"INR21700-M50LT", mfr:"LG Energy Solution", badge:"Cold Ops",
@@ -109,7 +119,7 @@ const DB = {
       capAh:5.0, voltV:3.6, maxCRate:3.5, cycleLife:600, massG:68, year:2023,
       notes:"Low-temperature variant: rated to −30°C. 263 Wh/kg at 3.5C. Best for cold-climate operations (mountain airports, Nordic routes).",
       url:"https://www.lgensol.com",
-      apply:{ sedCell:263, cRateDerate:0.09, label:"LG M50LT — 263 Wh/kg, 3.5C" }
+      apply:{ sedCell:263, label:"LG M50LT — 263 Wh/kg, 3.5C" }
     },
     {
       id:"panasonic-21700t", name:"NCR21700T", mfr:"Panasonic / Tesla", badge:"Long Life",
@@ -117,7 +127,7 @@ const DB = {
       capAh:4.8, voltV:3.6, maxCRate:4, cycleLife:1000, massG:68, year:2023,
       notes:"NCA chemistry gives best calendar aging (~5%/yr). 260 Wh/kg at 4C. Proven in Tesla Model 3/Y production — excellent supply chain.",
       url:"https://www.panasonic.com",
-      apply:{ sedCell:260, cRateDerate:0.08, label:"Panasonic NCR21700T — 260 Wh/kg" }
+      apply:{ sedCell:260, label:"Panasonic NCR21700T — 260 Wh/kg" }
     },
     {
       id:"catl-qilin", name:"Qilin CTP 3.0", mfr:"CATL", badge:"Best Pack Density",
@@ -125,7 +135,7 @@ const DB = {
       capAh:null, voltV:3.7, maxCRate:6, cycleLife:1000, massG:null, year:2024,
       notes:"CATL's 3rd-gen cell-to-pack. 255 Wh/kg at pack level — highest production pack density (2024). 6C ultra-fast charge. 72% volume utilisation. Li Auto Mega EV uses this.",
       url:"https://www.catl.com",
-      apply:{ sedCell:315, cRateDerate:0.07, label:"CATL Qilin — 315 Wh/kg cell, 255 pack" }
+      apply:{ sedCell:315, label:"CATL Qilin — 315 Wh/kg cell, 255 pack" }
     },
     {
       id:"amprius-simax", name:"SiMaxx™ Ultra", mfr:"Amprius Technologies", badge:"Silicon Anode",
@@ -133,7 +143,7 @@ const DB = {
       capAh:null, voltV:3.8, maxCRate:5, cycleLife:400, massG:null, year:2024,
       notes:"Silicon anode cells at 450 Wh/kg cell. In production for Airbus Zephyr HAPS / stratospheric UAV. Limited cycle life (400 cycles to 80%). Game-changer for range but expensive.",
       url:"https://amprius.com",
-      apply:{ sedCell:450, cRateDerate:0.12, label:"Amprius SiMaxx — 450 Wh/kg" }
+      apply:{ sedCell:450, label:"Amprius SiMaxx — 450 Wh/kg" }
     },
     {
       id:"quantumscape-qse5", name:"QSE-5 Solid State", mfr:"QuantumScape", badge:"Near-Future",
@@ -141,7 +151,7 @@ const DB = {
       capAh:null, voltV:4.0, maxCRate:4, cycleLife:1000, massG:null, year:2025,
       notes:"Solid ceramic separator, no flammable electrolyte. 15-min 0→80% charge. VW pilot sampling 2025. Aviation variant in development. No liquid — aviation safety advantage.",
       url:"https://www.quantumscape.com",
-      apply:{ sedCell:400, cRateDerate:0.05, label:"QuantumScape QSE-5 — 400 Wh/kg" }
+      apply:{ sedCell:400, label:"QuantumScape QSE-5 — 400 Wh/kg" }
     },
     {
       id:"solid-power-assb", name:"All-Solid-State EV", mfr:"Solid Power (BMW/Ford)", badge:"Near-Future",
@@ -149,7 +159,7 @@ const DB = {
       capAh:null, voltV:3.9, maxCRate:3, cycleLife:800, massG:null, year:2025,
       notes:"BMW i7 pilot testing 2024. Bipolar stacking architecture. Combined 380 Wh/kg with improved safety. BMW targets volume production 2027.",
       url:"https://www.solidpowerbattery.com",
-      apply:{ sedCell:380, cRateDerate:0.06, label:"Solid Power ASSB — 380 Wh/kg" }
+      apply:{ sedCell:380, label:"Solid Power ASSB — 380 Wh/kg" }
     },
   ],
 
@@ -848,7 +858,6 @@ export function ComponentDBPanel({ params, SC, onParamChange, U }) {
     const updates = {};
     if (comp.apply.etaSys)    updates.etaSys    = comp.apply.etaSys;
     if (comp.apply.sedCell)   updates.sedCell   = comp.apply.sedCell;
-    if (comp.apply.cRateDerate !== undefined) updates.cRateDerate = comp.apply.cRateDerate;
     Object.entries(updates).forEach(([k,v]) => onParamChange(k)(v));
     setApplied(comp.id);
     setTimeout(() => setApplied(null), 3000);
@@ -909,7 +918,6 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
           if (c.category === "batteries") {
             return { ...c, apply: {
               sedCell:     c.sedCellWhkg || 250,
-              cRateDerate: c.maxCRate >= 8 ? 0.05 : c.maxCRate >= 4 ? 0.08 : 0.11,
               label: `${c.name} — ${c.sedCellWhkg} Wh/kg`,
             }};
           }

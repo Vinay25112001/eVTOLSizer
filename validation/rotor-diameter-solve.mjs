@@ -52,7 +52,7 @@ const B = { payload:455, range:161, vCruise:67, cruiseAlt:1000, hoverHeight:15.2
   reserveMinutes:20, LD:8.5, AR:9, eOsw:0.85, taper:0.45, tc:0.15, wingLoadingNm2:1371,
   clCruiseMax:0.9, clDesign:0.55, propDiam:2.37, twRatio:1.3, convTolExp:-6, etaHov:0.74,
   tipSpeed:167.64, etaSys:0.8, rateOfClimb:5.08, climbAngle:5, descentAngle:6,
-  climbLDPenalty:0.13, deltaISA:0, cRateDerate:0.08, sedCell:300, etaBat:0.9, socMin:0.19,
+  climbLDPenalty:0.13, deltaISA:0, sedCell:300, etaBat:0.9, socMin:0.19,
   ewf:0.5, weightModel:"buildup", autoPositionWing:true, targetSM:0.15, fusLen:7.2,
   fusDiam:1.65, vtGamma:45, vtCh:0.45, vtCv:0.032, vtAR:2.5 };
 
@@ -140,15 +140,48 @@ const converged = results.filter((x) => x.r.status === "converged");
 
 /* ── 4. THE STRUCTURAL PROPERTY — the loop is not using the rounded map ──
    An exact fixed point of a continuous map has no reason to sit on the
-   millimetre lattice. If rotorDiameterFor goes back inside the loop, every
-   converged diameter becomes a lattice value and this fails. One or two
-   coincidences are possible; all of them are not. */
+   millimetre lattice. If rotorDiameterFor goes back inside the loop, EVERY
+   converged diameter becomes a lattice value. That is the regression this
+   guards, and it is an all-or-nothing one.
+
+   THE THRESHOLD WAS WRONG AND THIS IS WHY IT MOVED. It allowed at most ONE
+   coincidence, but the returned diameter is stored rounded to 4 dp, so a
+   value lands exactly on the millimetre lattice whenever its fourth decimal
+   is zero — probability ~1/10, independently, per design. Over this grid of
+   ~23 converged designs the EXPECTED number of coincidences is therefore
+   ~2.3, with a standard deviation of ~1.4. A bound of 1 sits BELOW the mean:
+   it had roughly a 70% chance of failing on any change that moved the
+   diameters at all, and it passed at the previous commit by luck rather than
+   by structure. It duly fired on a battery change that has nothing to do with
+   the rotor solver — 5 of 23, all five being 4-dp values ending in zero
+   (5.1930, 2.6440, 3.3350, 11.9580, 16.0950).
+
+   The bound is now set by the FAILURE MODE instead of by taste. The
+   regression puts 100% on the lattice; chance puts ~10% there. Half is ~6 sd
+   above the chance mean and far below the regression, so it separates the two
+   cleanly and cannot be tripped by a design shift. It is NOT vacuous: the
+   mutation "put rotorDiameterFor back inside the loop" still fails it, which
+   is checked directly below rather than asserted. */
 {
   const latticed = converged.filter((x) => onLattice(x.r.propDiam));
-  check(converged.length >= 6 && latticed.length <= 1,
+  const bound = Math.floor(converged.length / 2);
+  check(converged.length >= 6 && latticed.length <= bound,
     "converged diameters are NOT on the 1 mm lattice (the map is continuous)",
-    `${latticed.length} of ${converged.length} on-lattice`
+    `${latticed.length} of ${converged.length} on-lattice, bound ${bound}`
+      + ` (chance expectation ~${(converged.length/10).toFixed(1)} from 4-dp storage;`
+      + ` the regression this guards puts ALL ${converged.length} on the lattice)`
       + (latticed.length ? ` — ${latticed.map((x) => x.k + "/" + x.payload).join(", ")}` : ""));
+
+  /* THE GUARD, GUARDED. Quantise every converged diameter — exactly what
+     using the rounded map inside the loop would do — and confirm the check
+     above would reject it. Without this, loosening the bound could have made
+     the check unable to fail, which is the failure mode this repo has already
+     been bitten by once. */
+  const quantised = converged.map((x) => Math.round(x.r.propDiam * 1000) / 1000);
+  const allOnLattice = quantised.filter(onLattice).length;
+  check(allOnLattice > bound,
+    "the lattice check would still REJECT the rounded map",
+    `quantising all ${converged.length} diameters gives ${allOnLattice} on-lattice, above the bound of ${bound}`);
 }
 
 /* ── 5. NOTHING STALLS ────────────────────────────────────────────────

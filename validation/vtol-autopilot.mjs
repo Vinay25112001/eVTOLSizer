@@ -53,7 +53,7 @@ const BASE = {
   LD: 8.5, AR: 9, eOsw: 0.85, taper: 0.45, tc: 0.15, wingLoadingNm2: 1371, clCruiseMax: 0.9,
   clDesign: 0.55, propDiam: 2.37, twRatio: 1.3, convTolExp: -6, etaHov: 0.74, tipSpeed: 167.64,
   etaSys: 0.8, rateOfClimb: 5.08, climbAngle: 5, descentAngle: 6, climbLDPenalty: 0.13, deltaISA: 0,
-  cRateDerate: 0.08, sedCell: 300, etaBat: 0.9, socMin: 0.19, ewf: 0.5, weightModel: "buildup",
+  sedCell: 300, etaBat: 0.9, socMin: 0.19, ewf: 0.5, weightModel: "buildup",
   autoPositionWing: true, targetSM: 0.15, fusLen: 7.2, fusDiam: 1.65, vtGamma: 45, vtCh: 0.45,
   vtCv: 0.032, vtAR: 2.5,
 };

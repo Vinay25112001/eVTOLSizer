@@ -112,7 +112,7 @@ Battery mass is sized as the heavier of two requirements — energy for the
 mission, and power to hover: `W_battery = max(W_E, W_P)`. Reporting that a tool
 applies "dual energy and power constraints" says nothing about which of them
 ever governs. Measured across all six configurations at the reference mission,
-**energy binds on every one**, with W_P/W_E between 0.236 and 0.792. The `max`
+**energy binds on every one**, with W_P/W_E between 0.236 and 0.791. The `max`
 never selects W_P, so no weight difference at that mission is attributable to
 the power constraint, however prominently the dual formulation is described.
 
@@ -122,9 +122,9 @@ mission variables, not one:
 | configuration | W_P/W_E at 161 km | crossover range | W_P/W_E at 10 km |
 |---|---|---|---|
 | lift+cruise | 0.747 | 114.6 km | 1.485 |
-| hybrid (tilt+lift) | 0.792 | 122.0 km | 1.436 |
-| hybrid pusher | 0.727 | 110.5 km | 1.314 |
-| tiltrotor | 0.755 | 114.3 km | 1.110 |
+| hybrid (tilt+lift) | 0.791 | 122.0 km | 1.437 |
+| hybrid pusher | 0.726 | 110.5 km | 1.314 |
+| tiltrotor | 0.753 | 114.0 km | 1.110 |
 | side-by-side | 0.329 | none in 2–161 km | 0.755 |
 | multicopter | 0.236 | none in 2–161 km | 0.548 |
 
@@ -137,7 +137,7 @@ The second variable is the reserve, and it changes the answer qualitatively. A
 fixed 20-minute reserve is a large constant floor under mission energy: as range
 falls, E_total does not fall towards zero but towards the reserve. At a 10 km
 mission the two rotor-borne layouts are energy-governed at a 20-minute reserve
-(0.548 and 0.755) and **power-governed at five minutes** (1.059 and 1.432). So
+(0.548 and 0.755) and **power-governed at five minutes** (1.059 and 1.433). So
 "this configuration is never power-limited" is a statement about the assumed
 reserve, not about the configuration — and it is true or false depending on a
 parameter that is often not reported at all.
@@ -177,7 +177,7 @@ around it. This is the only construction that can distinguish a bad model from a
 bad convergence, and it is what allowed the −46.7% to be attributed to the
 equation rather than to the tool.
 
-**Machine-readable provenance on every output.** All 452 registered engine
+**Machine-readable provenance on every output.** All 456 registered engine
 outputs carry a status — validated, sourced, calibrated, derived, or assumed —
 with its citation, and continuous integration fails if any output is emitted
 without one. `validated` has a single meaning: the value has been numerically
@@ -300,12 +300,12 @@ tool with no offset available should report slopes.
 
 So the tool reports **rankings between configurations**, and reports whether
 each ranking survives the assumed coefficients moving by 50%. All five
-handling metrics examined are robust in that sense, with spreads of 117–1679% —
+handling metrics examined are robust in that sense, with spreads of 117–1212% —
 these are not marginal differences. Two results follow that no absolute value
 was needed to obtain:
 
 - a **side-by-side layout has almost no rotor-derived pitch damping**
-  (M_q = −0.43 against L_p = −5.40), because two rotors abreast have no
+  (M_q = −0.45 against L_p = −5.37), because two rotors abreast have no
   fore-aft separation. It falls out of the geometry; nothing was assumed.
 - the damping and agility rankings are **strongly inverted** across the six
   layouts (Spearman ρ = −0.94), which is the stability-versus-manoeuvrability
@@ -324,7 +324,7 @@ The Call for Papers weighs completion status, so it is stated precisely.
 the seventeen-harness verification suite, all gated in continuous integration; the
 39 published comparisons reported in §2; component-level testing of every
 weight model against all eight NASA concept variants; provenance registration of
-all 452 outputs; the generated validation report with its staleness gate; and the
+all 456 outputs; the generated validation report with its staleness gate; and the
 NASA-STD-7009B assessment; and the analysis layers of §6, including an
 inertia tensor built from the drawn geometry, hover attitude dynamics after
 Malpica et al., and the robustness testing that decides which comparisons may

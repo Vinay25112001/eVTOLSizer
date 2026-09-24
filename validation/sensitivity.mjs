@@ -26,7 +26,7 @@ const BASE = {
   wingLoadingNm2:1450, clCruiseMax:0.90, clDesign:0.55,
   nPropHover:6, propDiam:3.0, twRatio:1.3, convTolExp:-6,
   etaHov:0.70, etaSys:0.80, rateOfClimb:5.08, climbAngle:5, descentAngle:6,
-  climbLDPenalty:0.13, deltaISA:0, cRateDerate:0.08,
+  climbLDPenalty:0.13, deltaISA:0, 
   sedCell:300, etaBat:0.90, socMin:0.19, ewf:0.50,
   weightModel:"buildup", autoPositionWing:true, targetSM:0.15,
   configType:"hybrid", nRotorsStopped:2,

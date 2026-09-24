@@ -99,9 +99,84 @@ export const NZ_HOVER_MAX   = 1.77;   // [SRC] VFS 2025 — largest that converg
    (which suppresses all three deratings) was honoured by the sizing loop but
    IGNORED by the payload-range and sweep code, and the battery-efficiency term
    is applied to vertical flight only (see the sizing loop and note 18). */
-export function batteryConvention(p, { Etot, Evert } = {}) {
+/* =====================================================================
+   THE C-RATE CAPACITY DERATE — PEUKERT, NOT A FLAT FRACTION
+   =====================================================================
+   [SRC] NDARC Theory Manual, NASA/TP-2015-218751 ch.26 "Battery Model"
+   (same text as ch.28 of the 2025 revision TP-20250010468), line 10652:
+
+     "The capacity depends on the discharge current. The Peukert model
+      assumes I^k*T = constant, where T is the discharge time for current
+      I = xCref. The Peukert coefficient k = 1.2 to 1.3 for lead-acid
+      batteries, and k = 1.01 to 1.05 for lithium-ion batteries (weak
+      dependence). Thus the capacity C = IT ~ 1/x^(k-1). An increase in
+      current by a factor of 10 means a 2-11% reduction of capacity for
+      lithium-ion batteries."
+
+   x IS OUR C-RATE, stated in the same chapter (line 10650): "The current
+   is measured in terms of the charge capacity: I = xC (A), corresponding
+   to a discharge time of 1/x hours. The units of x are 1/hr."
+
+   So the usable capacity relative to the low-current reference is
+   x^-(k-1), and the derate is 1 - x^-(k-1). SELF-CONSISTENCY CHECK, which
+   the gate re-runs: at x=10 this gives 2.3% (k=1.01) and 10.9% (k=1.05),
+   reproducing NDARC's own stated "2-11%".
+
+   WHY THIS REPLACES A FLAT 8%. The flat value was unverified ("8% SED
+   derate; no source") and was applied identically across a demanded hover
+   C-rate spanning 1.16C to 3.92C, a factor of 3.4. Against this model the
+   flat form is too pessimistic at EVERY rate the fleet demands, even at
+   the most penalising end of NDARC's range: 6.1-6.6% at 3-4C, and 0.74%
+   at the multicopter's 1.16C — an over-penalty of 10.8x there.
+
+   WHAT THIS IS *NOT*. Peukert is the CAPACITY half of the rate response.
+   The VOLTAGE half (V = V0 - IR, NDARC 26-1) is already carried by
+   `etaBat`, scoped to vertical flight on NASA's RVLT convention — see the
+   note in the sizing loop. The two are not double-counting; they are the
+   two halves. NDARC's equivalent-circuit form was declined in this engine
+   because it needs cell IR data we do not carry, but THAT OBJECTION NEVER
+   APPLIED TO THE CAPACITY HALF: Peukert needs only k and the C-rate, and
+   the engine already computes the C-rate.
+
+   k IS A USER INPUT BOUNDED BY ITS SOURCE. NDARC publishes a range rather
+   than a value, so the range is the input's domain: the slider cannot be
+   moved outside 1.01-1.05 and the API clamps to the same bounds. The
+   default is the PESSIMISTIC end, on the principle that where a source
+   gives a range, sizing takes the end that cannot flatter the design. */
+export const PEUKERT_K_MIN = 1.01;   // [SRC] TP-2015-218751:10652, Li-ion
+export const PEUKERT_K_MAX = 1.05;   // [SRC] same line
+export const PEUKERT_K_DEFAULT = 1.05;
+
+/* Usable-capacity derate at C-rate `x` (1/hr). Returns 0 for x <= 1, where
+   the reference capacity already applies and Peukert predicts no loss. */
+export function peukertDerate(x, k = PEUKERT_K_DEFAULT) {
+  const kk = Math.min(PEUKERT_K_MAX, Math.max(PEUKERT_K_MIN, k));
+  if (!Number.isFinite(x) || x <= 1) return 0;
+  return 1 - Math.pow(x, -(kk - 1));
+}
+
+/* The hover C-rate, on the USABLE-capacity basis Peukert is defined against.
+   NDARC ch.26:10650 — "C is the usable capacity at low current and a
+   reference temperature", and "I = xC". So x is hover power over the energy
+   the pack can actually deliver, NOT over nameplate. This is the same basis
+   the engine reports `CrateHov` on, and an identity gate holds the two equal.
+
+   sedEff CANCELS out of both sizing branches, which is what makes this
+   computable before the derate is known, with no inner iteration:
+     energy-governed  usable = Etot/etaB = Ereq        -> x = Phov/Ereq
+     power-governed   usable = Phov(1-soc)/maxCRate    -> x = maxCRate/(1-soc)
+   The pack is the LARGER of the two, so the rate is the SMALLER. The residual
+   coupling runs through MTOW and is resolved by the master loop, like the
+   relaxed rotor diameter. */
+export function hoverCRate({ Phov, Etot, etaEff, usableFrac, maxCRate }) {
+  if (!(Phov > 0) || !(Etot > 0) || !(usableFrac > 0)) return null;
+  const energyBranch = Phov * (etaEff ?? 1) / Etot;      // = Phov/Ereq
+  const powerBranch  = (maxCRate ?? 4.0) / usableFrac;
+  return Math.min(energyBranch, powerBranch);
+}
+
+export function batteryConvention(p, { Etot, Evert, Phov } = {}) {
   const packUsable = p.sedBasis === "packUsable";
-  const sedEff   = packUsable ? p.sedCell : p.sedCell * (1 - (p.cRateDerate ?? 0.08));
   const socFloor = packUsable ? 0 : (p.socMin ?? 0);
   const etaRaw   = packUsable ? 1 : (p.etaBat ?? 1);
   /* Vertical-flight scoping, same rule as the sizing loop. With no segment
@@ -111,8 +186,25 @@ export function batteryConvention(p, { Etot, Evert } = {}) {
     ? Etot / ((Etot - Evert) + Evert / Math.max(1e-6, etaRaw))
     : etaRaw;
   const usableFrac = 1 - socFloor;          // = depth of discharge [SRC]
+  /* C-RATE DERATE. `packUsable` says the figure entered is already a net
+     pack number, so all three deratings stay suppressed. Otherwise the
+     derate follows Peukert at the rate this design actually demands. When
+     no hover power is supplied the rate is UNKNOWN, and this says so
+     (`rateKnown:false`) rather than quietly substituting a number — the
+     caller decides what to do with an undetermined rate. */
+  const kPeukert = Math.min(PEUKERT_K_MAX, Math.max(PEUKERT_K_MIN,
+                     p.peukertK ?? PEUKERT_K_DEFAULT));
+  const cHover = packUsable ? null
+    : hoverCRate({ Phov, Etot, etaEff, usableFrac, maxCRate: p.maxCRate ?? 4.0 });
+  const overridden = !packUsable && p.cRateDerate != null;
+  const rateKnown = packUsable || overridden || cHover != null;
+  const cRateDerate = packUsable ? 0
+    : overridden ? p.cRateDerate
+    : (cHover != null ? peukertDerate(cHover, kPeukert) : 0);
+  const sedEff = packUsable ? p.sedCell : p.sedCell * (1 - cRateDerate);
   return {
     packUsable, sedEff, socFloor, usableFrac, etaRaw, etaEff,
+    kPeukert, cHover, rateKnown, cRateDerate, overridden,
     /* kWh a given battery mass can actually deliver to the mission. */
     energyFromMass: (kg) => kg * sedEff * etaEff * usableFrac / 1000,
     /* battery mass needed to deliver a given mission energy. */
@@ -625,6 +717,7 @@ function runSizingCore(p0) {
   let solidityReqOut=p.solidity??0.10;   // unclamped requirement, for the buildability check
   let spBattery=0, WE_out=0, WP_out=0;   // battery sizing values escaping the loop
   let sedEffOut=0, packUsableOut=false;
+  let cHoverOut=null, cDerateOut=0, kPeukertOut=PEUKERT_K_DEFAULT, cOverriddenOut=false;
   let etaBatEffOut=1, EvertOut=0;
   let groupSumsOut=null, gearOut=null, avOut=null, sizeCondOut=null, PmotInstalledOut=null, nzWeightsOut=null;
   let cruiseRatingKWOut=0, motorTauOut=0, motorExtrapOut=false;
@@ -1149,9 +1242,11 @@ function runSizingCore(p0) {
        (The NASA reference entry achieves the same thing explicitly by setting
        cRateDerate 0, socMin 0, etaBat 1.0 — this just makes it declarable.) */
     const packUsable=p.sedBasis==="packUsable";
-    const sedEff=packUsable?p.sedCell:p.sedCell*(1-(p.cRateDerate??0.08));
-    sedEffOut=sedEff; packUsableOut=packUsable;
+    packUsableOut=packUsable;
     const socFloor=packUsable?0:p.socMin;
+    /* sedEff is NOT computed here any more: the C-rate derate depends on the
+       rate this design demands, and that needs Ereq. It is computed below,
+       immediately after Ereq and before its first use in W_E. */
     /* ── BATTERY EFFICIENCY APPLIES TO VERTICAL FLIGHT, NOT THE WHOLE
            MISSION ────────────────────────────────────────────────────────
        This engine divided the ENTIRE mission energy by etaBat. NASA does not,
@@ -1217,6 +1312,28 @@ function runSizingCore(p0) {
     const Ereq=(Etot-Evert)+Evert/Math.max(1e-6,etaBatRaw);
     const etaB=Ereq>0?Etot/Ereq:etaBatRaw;
     etaBatEffOut=etaB;
+    /* ── C-RATE DERATE, AT THE RATE THIS DESIGN ACTUALLY DEMANDS ─────────
+       Peukert, from NDARC ch.26 — see the sourced note on peukertDerate().
+       This sits here, not with the other pack conventions above, because it
+       needs Ereq. It does NOT need sedEff: sedEff cancels out of both
+       sizing branches (pack nameplate = max(W_E,W_P)*sedEff =
+       max(Etot/((1-soc)*etaB), Phov/maxCRate)), so there is no inner
+       iteration and no lag. The remaining coupling runs through MTOW and is
+       resolved by the master loop, like the relaxed rotor diameter above. */
+    const kPeuk=Math.min(PEUKERT_K_MAX,Math.max(PEUKERT_K_MIN,
+                  p.peukertK??PEUKERT_K_DEFAULT));
+    const cHov=packUsable?null:hoverCRate({Phov,Etot,etaEff:etaB,
+                  usableFrac:1-socFloor,maxCRate:p.maxCRate??4.0});
+    /* An explicitly supplied cRateDerate is an OVERRIDE and is honoured —
+       same idiom as p.spBattery below. It is how a reference design declares
+       "no derating" (the NASA entry sets it to 0). It is REPORTED as an
+       override rather than passing silently, because a sourced model that
+       can be replaced without saying so is not a sourced model. */
+    const cOverridden=!packUsable&&p.cRateDerate!=null;
+    const cDerate=packUsable?0:(cOverridden?p.cRateDerate:peukertDerate(cHov,kPeuk));
+    const sedEff=packUsable?p.sedCell:p.sedCell*(1-cDerate);
+    sedEffOut=sedEff; cHoverOut=cHov; cDerateOut=cDerate; kPeukertOut=kPeuk;
+    cOverriddenOut=cOverridden;
     // Dual-constraint battery sizing — matches MATLAB: Wbattery = max(W_E, W_P)
     // W_E: energy limit  — exact (1-SoCmin) form, not (1+SoCmin) approximation
     // W_P: power limit   — W_P = P_hover / SP_battery
@@ -3593,6 +3710,10 @@ function runSizingCore(p0) {
     SEDpack:+SEDpack.toFixed(1),Nseries,Npar,Ncells,PackV:+PackV.toFixed(0),PackAh:+PackAh.toFixed(1),
     PackkWh:+PackkWh.toFixed(3), PackUsablekWh:+PackUsablekWh.toFixed(3),
     PackInstalledkWh:+PackInstalledkWh.toFixed(3),CrateHov:+CrateHov.toFixed(2),CrateCr:+CrateCr.toFixed(2),Pheat:+Pheat.toFixed(1),
+    /* The C-rate derate as APPLIED, plus what produced it, so the number is
+       auditable from the output alone rather than only from the source. */
+    cRateDerate:+cDerateOut.toFixed(6), cRateSizing:cHoverOut==null?null:+cHoverOut.toFixed(3),
+    peukertK:+kPeukertOut.toFixed(3), cRateOverridden:cOverriddenOut,
     Vstall:+Vstall.toFixed(2),VA:+VA.toFixed(2),VD:+VD.toFixed(2),
     vnData,rpData,rpFerryPoint,ferryRange:+ferryRange.toFixed(1),maxPayloadRp:+maxPayload.toFixed(0),polarData,powerSteps,socSteps,velSteps,energySteps,convData,twSweepData,tolSweepData,weightBreak,dragComp,tPhases,
     /* `feasible` and the pass count consider real CHECKS only. Omissions are

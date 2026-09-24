@@ -2071,7 +2071,26 @@ export default function App(){
             <Slider label="Cell SED" unit="Wh/kg" value={params.sedCell} min={150} max={500} step={5} onChange={set("sedCell")} note="CELL level. NASA sizes on 400 Wh/kg PACK (installed+usable) -- do not mix"/>
             <Slider label="Battery η" unit="" value={params.etaBat} min={0.70} max={0.99} step={0.01} onChange={set("etaBat")}/>
             <Slider label="Min SoC" unit="" value={params.socMin} min={0.05} max={0.40} step={0.01} onChange={set("socMin")}/>
-            <Slider label="C-Rate SED Derate" unit="" value={params.cRateDerate??0.08} min={0.0} max={0.20} step={0.01} onChange={set("cRateDerate")} note="SED loss at peak hover C-rate (8% default for ~3-4C)"/>
+            {/* THE C-RATE DERATE IS NO LONGER A SLIDER, because it is no longer
+                an assumption: it is computed from the rate this design demands.
+                What IS a slider is Peukert's k — and its RANGE IS ITS CITATION.
+                NDARC ch.26 publishes 1.01-1.05 for lithium-ion rather than a
+                single value, so those are the stops: the tool cannot be set to
+                an unsourced k. Default 1.05, the pessimistic end. */}
+            <Slider label="Peukert k" unit="" value={params.peukertK??1.05} min={1.01} max={1.05} step={0.01} onChange={set("peukertK")} note="Capacity vs discharge rate. NDARC ch.26: k = 1.01-1.05 for Li-ion — the slider spans exactly the published range"/>
+            {(()=>{
+              const d=SR?.cRateDerate, x=SR?.cRateSizing, ov=SR?.cRateOverridden;
+              if(d==null) return null;
+              return(
+                <div style={{marginTop:6,fontSize:9.5,color:SC.muted,
+                  fontFamily:"system-ui,sans-serif",lineHeight:1.45}}>
+                  C-rate derate <b style={{color:SC.text}}>{(100*d).toFixed(2)}%</b>
+                  {x!=null&&<> at <b style={{color:SC.text}}>{x.toFixed(2)}C</b> hover</>}
+                  {ov
+                    ? <span style={{color:SC.amber}}> — OVERRIDDEN by an explicit value; the sourced model is not in use</span>
+                    : <> — computed, not assumed.</>}
+                </div>);
+            })()}
             {/* ══ THE SINGLE BIGGEST REASON THESE AIRCRAFT COME OUT HEAVY ══
                 Three derates compound on the cell figure, and the result — not
                 the cell number — is what actually sizes the battery. Users
@@ -2091,8 +2110,12 @@ export default function App(){
                  raw 0.90 in here overstated the derate by about 10%, which is
                  the same convention mismatch the engine itself used to have. */
               const etaEff=SR?.etaBatEffective??(params.etaBat??0.90);
+              /* The C-rate derate is computed by the engine now, so read the
+                 APPLIED value. Falling back to a constant here would put a
+                 number on screen that the sizing never used. */
+              const cd=SR?.cRateDerate??0;
               const eff=(params.sedCell||300)*(1-(params.socMin??0.19))
-                       *(1-(params.cRateDerate??0.08))*etaEff;
+                       *(1-cd)*etaEff;
               const ratio=400/Math.max(1,eff);
               return(
                 <div style={{marginTop:8,padding:"7px 9px",borderRadius:5,
@@ -2104,7 +2127,7 @@ export default function App(){
                   <div style={{fontSize:9.5,color:SC.text,lineHeight:1.45,
                     fontFamily:"system-ui,sans-serif"}}>
                     {params.sedCell} cell × {(100*(1-(params.socMin??0.19))).toFixed(0)}% SoC
-                    × {(100*(1-(params.cRateDerate??0.08))).toFixed(0)}% C-rate
+                    × {(100*(1-cd)).toFixed(1)}% C-rate
                     × {(100*etaEff).toFixed(1)}% battery efficiency.
                     <br/>
                     <span style={{color:SC.muted}}>

@@ -74,7 +74,7 @@ const dynB = { payload:455, range:161, vCruise:50.4, cruiseAlt:1000, hoverHeight
   reserveMinutes:20, LD:5.8, AR:9, eOsw:0.85, taper:0.45, tc:0.15, wingLoadingNm2:1371,
   clCruiseMax:0.9, clDesign:0.55, twRatio:1.3, convTolExp:-6, etaHov:0.70, tipSpeed:167.64,
   etaSys:0.8, rateOfClimb:5.08, climbAngle:5, descentAngle:6, climbLDPenalty:0.13,
-  deltaISA:0, cRateDerate:0.08, sedCell:300, etaBat:0.9, socMin:0.19, ewf:0.5,
+  deltaISA:0, sedCell:300, etaBat:0.9, socMin:0.19, ewf:0.5,
   weightModel:"buildup", fusLen:5.87, fusDiam:1.65 };
 const sbsD = (() => {
   const d = CFGD.CONFIG_DEFAULTS.sideBySide;
@@ -102,7 +102,7 @@ const BIND = (() => {
     reserveMinutes:20, LD:5.8, AR:9, eOsw:0.85, taper:0.45, tc:0.15, wingLoadingNm2:1371,
     clCruiseMax:0.9, clDesign:0.55, twRatio:1.3, convTolExp:-6, etaHov:0.70, tipSpeed:167.64,
     etaSys:0.8, rateOfClimb:5.08, climbAngle:5, descentAngle:6, climbLDPenalty:0.13,
-    deltaISA:0, cRateDerate:0.08, sedCell:300, etaBat:0.9, socMin:0.19, ewf:0.5,
+    deltaISA:0, sedCell:300, etaBat:0.9, socMin:0.19, ewf:0.5,
     weightModel:"buildup", fusLen:5.87, fusDiam:1.65, vtCh:0.45, vtCv:0.032,
     vtGamma:45, vtAR:2.5 };
   const mk = (k, over) => {

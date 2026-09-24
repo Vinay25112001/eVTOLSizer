@@ -39,7 +39,10 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
     : `<span class="badge amber">⚠ CHECK DESIGN</span>`;
 
   // ── Battery dual-constraint vars — must be at top, used in multiple sections ──
-  const sedEffd = p.sedCell*(1-(p.cRateDerate??0.08));
+  // The C-rate derate is computed by the engine (Peukert, NDARC ch.26), so the
+  // report states the value that ACTUALLY sized the pack, not a constant.
+  const cDer    = SR.cRateDerate ?? 0;
+  const sedEffd = p.sedCell*(1-cDer);
   const WEd = SR.Etot*1000/((1-p.socMin)*sedEffd*p.etaBat);
   const WPd = SR.Phov/(p.spBattery||1.0);
 
@@ -256,7 +259,7 @@ export function generateReport(p, SR, branding={}, useImperial=false) {
 
   // ── 7. BATTERY ───────────────────────────────────────────────────────
   const s7 = sec("battery","7. Battery System Sizing",`
-  ${eq("\\text{SED}_{eff} = \\text{SED}_{cell}\\times(1-\\delta_{C}) = "+p.sedCell+"\\times(1-"+(p.cRateDerate??0.08)+") = "+fmt(sedEffd,1)+"\\text{ Wh/kg}","Effective SED after C-rate derating")}
+  ${eq("\\text{SED}_{eff} = \\text{SED}_{cell}\\times(1-\\delta_{C}) = "+p.sedCell+"\\times(1-"+fmt(cDer,4)+") = "+fmt(sedEffd,1)+"\\text{ Wh/kg}","Effective SED after C-rate derating — Peukert \\delta_C = 1-x^{-(k-1)} at x = "+fmt(SR.cRateSizing??0,2)+"C, k = "+(SR.peukertK??1.05)+" [SRC NDARC TP-2015-218751 ch.26]")}
   ${eq("W_E = \\frac{E_{total}\\times 1000}{(1-\\text{SoC}_{min})\\,\\text{SED}_{eff}\\,\\eta_{bat}} = \\frac{"+fmt(SR.Etot,3)+"\\times 1000}{(1-"+p.socMin+")\\times "+fmt(sedEffd,1)+"\\times "+p.etaBat+"} = "+fmt(WEd,1)+"\\text{ kg}","Energy-limited battery mass")}
   ${eq("W_P = \\frac{P_{hov}}{SP_{bat}} = \\frac{"+fmt(SR.Phov,1)+"}{"+((p.spBattery)||1.0)+"} = "+fmt(WPd,1)+"\\text{ kg},\\quad W_{bat} = \\max(W_E,W_P) = "+fmt(SR.Wbat,1)+"\\text{ kg}","Power-limited mass and dual-constraint result")}
   ${eq("\\text{SED}_{pack} = \\frac{E_{total}}{W_{bat}} = "+fmt(SR.SEDpack,1)+"\\text{ Wh/kg}","Pack-level specific energy density")}

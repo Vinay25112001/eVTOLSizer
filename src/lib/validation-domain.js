@@ -80,7 +80,7 @@ export default {
     "vCruise": 89.4,
     "MTOW": 2404,
     "errorPct": {
-     "MTOW": -1.9
+     "MTOW": -2.3
     },
     "errorModel": "validate.mjs, build-up weight model"
    },
@@ -95,7 +95,7 @@ export default {
     "vCruise": 66.9,
     "MTOW": 3175,
     "errorPct": {
-     "MTOW": -9.2
+     "MTOW": -11.6
     },
     "errorModel": "validate.mjs, build-up weight model"
    },
@@ -110,7 +110,7 @@ export default {
     "vCruise": 27.8,
     "MTOW": 900,
     "errorPct": {
-     "MTOW": 3.7
+     "MTOW": 2.5
     },
     "errorModel": "validate.mjs, build-up weight model"
    },

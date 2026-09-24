@@ -58,7 +58,18 @@ import { AIRCRAFT_CLASSES, CLASS_IDS, DEFAULT_CLASS, classOf, sizeDesign, classF
    reg-applicability.mjs section 2b asserts that runSizing with and without
    a declared VNO is identical character for character. The hash moved
    because a key was added; no sized result did. */
-const PINNED_DEFAULTS_HASH = "01a6293d5a8d1c";
+/* MOVED FOR THE C-RATE DERATE, AND THIS TIME THE SIZED RESULTS DID MOVE —
+   which is the one case the previous two notes did not cover, so it is
+   recorded differently. `cRateDerate:0.08` was REMOVED from DEFAULT_PARAMS and
+   `peukertK:1.05` added. The removal is the substantive half: the derate is now
+   COMPUTED from the C-rate each design demands (Peukert, [SRC] NDARC
+   TP-2015-218751 ch.26:10652), and any value left in DEFAULT_PARAMS would have
+   overridden that sourced model on every single run.
+   Every MTOW changed as a result — between -1.3% and -17.3% depending on
+   layout, because the flat 8% was too pessimistic at every rate the fleet
+   demands. golden-master was re-recorded deliberately, not to make a failure
+   go away. See validation/peukert-derate.mjs, which gates the replacement. */
+const PINNED_DEFAULTS_HASH = "17aac5c2e18684";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 let pass = 0, fail = 0;

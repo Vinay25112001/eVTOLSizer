@@ -190,7 +190,7 @@ export function paramsFor(v) {
     propDiam: 2 * v.radius_ft / FT,
     tipSpeed: v.tipSpeed_fts / FT,        // the engine reads p.tipSpeed, not p.TipSpd
     ewf: 0.50,                            // inert under buildup, but seeds round 1
-    socMin: 0.19, cRateDerate: 0.08, etaBat: 0.90,   // suppressed by sedBasis packUsable
+    socMin: 0.19, etaBat: 0.90,   // suppressed by sedBasis packUsable
     etaHov: v.FM,
     configType: v.configType,
     /* NASA's own battery basis: 400 Wh/kg installed usable pack. */

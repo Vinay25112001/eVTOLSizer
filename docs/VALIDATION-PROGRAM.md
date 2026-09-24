@@ -137,12 +137,22 @@ absent, not zero.
 Silva 2022 *"Internal resistance reduces battery efficiency at high
 discharge rates"*), Antcliff 2019 (*"Current delivery limits for cells are
 specified as a C-rate"*), NASA S3270 (*"C-rate never an active sizing
-constraint, even in vertical flight"*). *Open item already recorded:*
-`cRateDerate` is a flat 8% across a 1.17–3.92 C spread and carries 55%
-leverage on multicopter MTOW; no citable capacity-vs-C-rate curve is in
-the corpus. **That curve is the single highest-leverage missing source in
-the tool.** *Validate against:* Joby S4 pack (published), Table 12 pack
-energies (already scored: +212% on VX4 flagged as ours).
+constraint, even in vertical flight"*). **CLOSED.** `cRateDerate` was a flat
+8% across a 1.16–3.92 C spread carrying 55% leverage on multicopter MTOW, and
+was recorded here as *"the single highest-leverage missing source in the
+tool"* on the basis that no citable capacity-vs-C-rate curve was in the
+corpus. **The curve was in the corpus** — NDARC TP-2015-218751 ch.26:10652,
+the Peukert law with k = 1.01–1.05 for lithium-ion, in the manual this engine
+already leans on. The earlier verdict was not wrong about the search but about
+where to look: ch.26 had been READ and declined, because its equivalent-circuit
+half needs cell IR data not carried here. That objection never applied to the
+capacity half. The derate is now computed per design, `k` is a user input
+bounded to the published range, and `validation/peukert-derate.mjs` gates it
+(8 mutants, all killed). Note the three sources listed above all concern the
+VOLTAGE/efficiency side and belong to `etaBat` — treating them as candidates
+for the energy haircut would have been a category error. *Validate against:*
+Joby S4 pack (published), Table 12 pack energies (already scored: +212% on VX4
+flagged as ours).
 
 ### Phase C — Propeller / rotor (10 unverified) and rotor-count sensitivity
 

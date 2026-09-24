@@ -218,7 +218,14 @@ export const DEFAULT_PARAMS = {
     descentAngle:null,
     climbLDPenalty:0.13,   // fractional L/D derating during climb (induced drag increase)
     deltaISA:0,            // ISA deviation °C: 0=standard day, 15=hot day
-    cRateDerate:0.08,      // battery SED derate for C-rate: 8% default (~3-4C hover)
+    /* NO cRateDerate HERE, DELIBERATELY. The C-rate SED derate is no longer a
+       flat input: it is COMPUTED from the rate each design actually demands,
+       by the Peukert model [SRC] NDARC TP-2015-218751 ch.26 (see engine.js
+       peukertDerate). Putting a value back here would override the sourced
+       model on every run and silently restore the unsourced flat 8%.
+       `peukertK` below is the one knob, and its range IS its citation. */
+    peukertK:1.05,         // [SRC] NDARC ch.26: k = 1.01-1.05 for lithium-ion;
+                           // 1.05 = the pessimistic end, so it cannot flatter
     // ── Battery (2025 state-of-art; Joby claims ~300 Wh/kg cell-level) ──
     sedCell:300,etaBat:0.90,socMin:0.19,
     /* ── Weights ──────────────────────────────────────────────────────────

@@ -664,9 +664,40 @@ Inside the loop (`src/engine.js:1120-1123`):
 ```
 packUsable = (p.sedBasis === "packUsable")
 sed_eff    = sedCell                        if packUsable
-           = sedCell · (1 − cRateDerate)    otherwise      (cRateDerate default 0.08)
+           = sedCell · (1 − δ_C)            otherwise
 socFloor   = 0 if packUsable, else p.socMin
 ```
+
+where `δ_C` is the C-rate capacity derate, **computed rather than assumed**:
+
+```
+x   = min( P_hover / E_req , maxCRate / (1 − socMin) )      the demanded C-rate
+δ_C = 1 − x^−(k−1)                                          Peukert
+```
+
+[SRC] NDARC Theory Manual NASA/TP-2015-218751 ch.26 line 10652 — *"The
+Peukert model assumes I^k·T = constant … k = 1.01 to 1.05 for lithium-ion
+batteries (weak dependence). Thus the capacity C = IT ∝ 1/x^(k−1). An
+increase in current by a factor of 10 means a 2–11% reduction of capacity
+for lithium-ion batteries."* `x` is the C-rate on the **usable**-capacity
+basis, by the same chapter's line 10650.
+
+`k` is a user input whose range **is** its citation: the slider spans exactly
+NDARC's published 1.01–1.05 and the API clamps to it, so the tool cannot be
+set to an unsourced `k`. The default 1.05 is the pessimistic end, on the
+principle that where a source gives a range, sizing takes the end that cannot
+flatter the design.
+
+This is the **capacity** half of the rate response only. The **voltage** half
+(`V = V₀ − IR`) is carried by `etaBat`, scoped to vertical flight on NASA's
+RVLT convention — the two are not double-counting. NDARC's full
+equivalent-circuit form is declined here because it needs cell IR data this
+engine does not carry; that objection never applied to the capacity half.
+
+An explicitly supplied `cRateDerate` overrides the model — this is how a
+reference design declares "no derating" — and the engine then reports
+`cRateOverridden` so the substitution is on the record. Gated by
+`validation/peukert-derate.mjs`.
 
 `sedBasis:"packUsable"` declares that the entered specific energy is already
 net usable pack energy, as NASA quotes it (Johnson & Silva 2022 section 4.1).

@@ -28,7 +28,7 @@ const TOL = 1.0;                       // percent — the file is exact, so this
 const BASE = { payload:200, range:60, vCruise:60, cruiseAlt:1000, hoverHeight:15.24,
   reserveMinutes:20, LD:8.5, eOsw:0.85, clCruiseMax:0.90, clDesign:0.55, twRatio:1.3,
   convTolExp:-6, etaHov:0.74, tipSpeed:167.64, etaSys:0.80, rateOfClimb:5.08, climbAngle:5,
-  descentAngle:6, climbLDPenalty:0.13, deltaISA:0, cRateDerate:0.08, sedCell:300, etaBat:0.90,
+  descentAngle:6, climbLDPenalty:0.13, deltaISA:0, sedCell:300, etaBat:0.90,
   socMin:0.19, ewf:0.50, weightModel:"buildup", autoPositionWing:true, targetSM:0.15,
   fusDiam:1.3, vtGamma:45, vtCh:0.45, vtCv:0.032, vtAR:2.5 };
 const MISSION = { raven: { payload:200, range:60, M0:900 },

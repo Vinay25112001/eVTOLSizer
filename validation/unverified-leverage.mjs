@@ -23,7 +23,7 @@ const B = { payload:455, range:161, vCruise:50.4, cruiseAlt:1000, hoverHeight:15
   reserveMinutes:20, LD:5.8, AR:9, eOsw:0.85, taper:0.45, tc:0.15, wingLoadingNm2:1371,
   clCruiseMax:0.9, clDesign:0.55, twRatio:1.3, convTolExp:-6, etaHov:0.70, tipSpeed:167.64,
   etaSys:0.8, rateOfClimb:5.08, climbAngle:5, descentAngle:6, climbLDPenalty:0.13,
-  deltaISA:0, cRateDerate:0.08, sedCell:300, etaBat:0.9, socMin:0.19, ewf:0.5,
+  deltaISA:0, sedCell:300, etaBat:0.9, socMin:0.19, ewf:0.5,
   weightModel:"buildup", fusLen:5.87, fusDiam:1.65, vtCh:0.45, vtCv:0.032,
   vtGamma:45, vtAR:2.5 };
 
@@ -55,7 +55,12 @@ const PROBES = [
   ["rateOfClimb",   "rate of climb m/s",            [3.5, 7.6]],
   ["climbAngle",    "climb angle deg",              [4, 9]],
   ["descentAngle",  "descent angle deg",            [3, 9], 0],   // 0 => glide fallback
-  ["cRateDerate",   "C-rate SED derate",            [0.0, 0.15]],
+  /* cRateDerate LEFT THIS LIST — it is no longer an unverified input. It is
+     computed from the demanded rate by Peukert [SRC] NDARC ch.26, and its
+     replacement is gated by validation/peukert-derate.mjs. What remains
+     sweepable is `peukertK`, and its range is not a judgement call: it is the
+     published 1.01-1.05, so the sweep IS the source's own uncertainty. */
+  ["peukertK",      "Peukert coefficient k",        [1.01, 1.05]],
   ["fusDiam",       "fuselage diameter m",          [1.5, 1.9]],
   ["vtCh",          "horiz tail volume coeff",      [0.35, 0.70]],
   ["vtCv",          "vert tail volume coeff",       [0.020, 0.058]],
@@ -148,42 +153,67 @@ console.log("   range swing is an UPPER BOUND on default risk, not a measurement
 /* =====================================================================
    THE TOP-RANKED ASSUMPTION, LOOKED AT DIRECTLY
    =====================================================================
-   cRateDerate leads the ranking above, and its provenance entry reads
-   "8% SED derate; no source". The engine applies it as a flat haircut:
+   THIS SECTION'S OPEN ITEM IS NOW CLOSED, and the record of how is kept
+   rather than deleted.
+
+   cRateDerate USED TO LEAD THE RANKING ABOVE, with the provenance entry
+   "8% SED derate; no source", applied as a flat haircut
        SED_eff = SED_cell x (1 - cRateDerate)
-   with the code comment justifying the value as "default 8% for ~3-4C
-   hover". That justification is a claim about the operating point, so
-   the operating point is measurable -- and it is not one point.
+   justified in code as "default 8% for ~3-4C hover". That justification is
+   a claim about the operating point, so the operating point was measured
+   here -- and it was not one point but a factor-of-3.4 spread.
+
+   THE CURVE WAS FOUND, in the corpus this harness said did not have one.
+   It was in NDARC's own theory manual, which this engine already leans on:
+   TP-2015-218751 ch.26:10652 gives the Peukert law and k = 1.01-1.05 for
+   lithium-ion, and :10650 defines x as the C-rate on the usable-capacity
+   basis. The earlier "not found" verdict was not wrong about the search; it
+   was wrong about where to look -- the engine had already READ ch.26 and
+   declined it (engine.js), because its EQUIVALENT-CIRCUIT half needs cell
+   IR data this engine does not carry. That objection never applied to the
+   CAPACITY half, which needs only k and a rate the engine already computes.
+
+   The derate is now computed per design; validation/peukert-derate.mjs
+   gates it. What is checked below is no longer "is the spread unresolved"
+   but "is it RESOLVED" -- the same measurement, turned into a regression.
    ===================================================================== */
 console.log("\n" + "=".repeat(78));
-console.log("C-RATE ACTUALLY DEMANDED vs THE RATE THE DERATE ASSUMES\n");
-console.log("   layout          P_hover kW   nameplate kWh   C_hover   C_cruise");
+console.log("C-RATE DEMANDED, AND THE DERATE NOW MATCHED TO IT\n");
+console.log("   layout          P_hover kW   nameplate kWh   C_hover   C_cruise   derate %");
 const cr = [];
 for (const k of LAYOUTS) {
   const S = runSizing(build(k));
   if (!S || !(S.CrateHov > 0)) continue;
-  cr.push({ k, c: S.CrateHov });
+  cr.push({ k, c: S.CrateHov, d: S.cRateDerate ?? 0 });
   console.log("   " + k.padEnd(14)
     + S.Phov.toFixed(1).padStart(11)
     + (S.PackInstalledkWh ?? 0).toFixed(1).padStart(16)
     + S.CrateHov.toFixed(2).padStart(10)
-    + S.CrateCr.toFixed(2).padStart(11));
+    + S.CrateCr.toFixed(2).padStart(11)
+    + (100*(S.cRateDerate ?? 0)).toFixed(2).padStart(11));
 }
 const cs = cr.map(r => r.c);
 const lo = Math.min(...cs), hi = Math.max(...cs);
 console.log("\n   demanded hover C-rate spans " + lo.toFixed(2) + "C to " + hi.toFixed(2)
   + "C, a factor of " + (hi / lo).toFixed(1));
-console.log("   one flat 8% derate is applied to all of them");
+const ds = cr.map(r => r.d);
+const dlo = Math.min(...ds), dhi = Math.max(...ds);
+console.log("   the derate now spans " + (100*dlo).toFixed(2) + "% to "
+  + (100*dhi).toFixed(2) + "% — it TRACKS the rate instead of ignoring it");
 
-check(hi / lo > 2,
-  "the flat SED derate is applied across a C-rate spread it does not resolve",
-  "the derate is justified in code as 'for ~3-4C hover'; the layouts demand "
-  + lo.toFixed(2) + "C to " + hi.toFixed(2) + "C, so the lowest-rate layout is "
-  + "penalised at a rate it never reaches. NOT changed here: no citable "
-  + "capacity-vs-C-rate curve was found in the corpus, and removing the derate "
-  + "outright degrades the commercial benchmark from 14.0% to 15.1%, which means "
-  + "it is currently masking an under-prediction elsewhere. Sourcing the curve is "
-  + "the open item; the leverage above says it is worth 55% of multicopter MTOW.");
+check(hi / lo > 2 && (dhi - dlo) > 0.02,
+  "the derate resolves the C-rate spread it is applied across",
+  "the layouts demand " + lo.toFixed(2) + "C to " + hi.toFixed(2) + "C (factor "
+  + (hi/lo).toFixed(1) + "), and the derate answers with " + (100*dlo).toFixed(2)
+  + "%-" + (100*dhi).toFixed(2) + "%. Under the old flat 8% the spread was ZERO "
+  + "and the lowest-rate layout was penalised at a rate it never reaches.");
+
+check(dhi <= 0.08 + 1e-9,
+  "no layout is derated more than the flat 8% it replaced",
+  "at the pessimistic end of NDARC's published k the worst case is "
+  + (100*dhi).toFixed(2) + "%, so the old flat value was too harsh EVERYWHERE, "
+  + "not merely mis-shaped. The multicopter at " + lo.toFixed(2) + "C was "
+  + "over-penalised by roughly " + (0.08/Math.max(1e-9,dlo)).toFixed(0) + "x.");
 
 /* What the corpus DOES establish about C-rate, recorded so the next
    person does not re-derive it:
@@ -198,7 +228,13 @@ check(hi / lo > 2,
        (C-rate) for each mission segment is never an active sizing
        constraint, even in vertical flight."
    The delivery-limit check exists: CertificationTab tests C_hover <= 5.0C.
-   What is unsourced is the SEPARATE energy haircut. */
+   The SEPARATE energy haircut was the unsourced part, and it is now the
+   Peukert capacity term from the same NDARC chapter. Note that the three
+   sources above are all about the VOLTAGE/efficiency side, which is why
+   they never settled it: they belong to etaBat, not to this. Reading them
+   as candidates for the energy haircut would have been a category error --
+   worth recording, because a SUAVE resistance law (R = R0(1+C*f)) turned up
+   in the same search and is the same trap. */
 
 console.log("");
 console.log(fails.length ? `LEVERAGE GATE FAILED: ${fails.length} check(s)`

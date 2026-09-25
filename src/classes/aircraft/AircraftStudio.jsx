@@ -28,7 +28,7 @@ export const STUDIO_GROUPS = Object.freeze([
   { name: "Design", tabs: [["overview", "Overview", Tabs.OverviewTab], ["compare", "Compare types", Tabs.CompareTypesTab]] },
   { name: "Physics", tabs: [["constraints", "Matching chart", Tabs.ConstraintTab], ["mission", "Mission", Tabs.MissionTab],
                             ["weights", "Weights", Tabs.WeightsTab], ["structure", "Structure", Tabs.StructureTab],
-                            ["fuselage", "Fuselage", Tabs.FuselageTab], ["balance", "Balance", Tabs.BalanceTab], ["controls", "Controls", Tabs.ControlsTab],
+                            ["fuselage", "Fuselage", Tabs.FuselageTab], ["balance", "Balance", Tabs.BalanceTab], ["gear", "Landing gear", Tabs.LandingGearTab], ["controls", "Controls", Tabs.ControlsTab],
                             ["aero", "Aerodynamics", Tabs.AeroTab], ["airfoil", "Airfoil", Tabs.AirfoilTab], ["propulsion", "Propulsion", Tabs.PropulsionTab]] },
   { name: "Trades", tabs: [["payload-range", "Payload-range", Tabs.PayloadRangeTab], ["trade", "Trade study", Tabs.TradeTab],
                            ["sensitivity", "Sensitivity", Tabs.SensitivityTab]] },

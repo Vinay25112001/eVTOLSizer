@@ -29,11 +29,21 @@
      l₃ = T   the track
      h + r = E, the CG height above ground
 
-   Note that A and B here are SR-63's, and they are the opposite way
-   round from `gear/ground-loads.js`, which uses 14 CFR 25.493(e)'s
-   convention where A is the NOSE arm. Both modules are internally
-   consistent with the document they implement; this comment exists so
-   that nobody reconciles them by assuming.
+   AND THEY AGREE WITH `gear/ground-loads.js`, which matters because the
+   two modules pass these arms to each other. That module implements
+   14 CFR 25.493(e) and labels A the arm to the NOSE wheel and B the arm
+   to the MAIN wheels; mapping SR-63's l₂ and l₁ onto the same two arms
+   makes them the same quantities, so A and B cross between the modules
+   untranslated.
+
+   THIS COMMENT PREVIOUSLY SAID THE OPPOSITE — that the two were "the
+   opposite way round" — and it contradicted itself in the same sentence,
+   since it then stated correctly that 25.493(e) has A as the nose arm,
+   which is exactly what this module does. It was written from memory
+   rather than from the other file and shipped wrong. What it was reaching
+   for is the real hazard, and that survives: swapping A and B still
+   produces entirely plausible numbers, so the gate asserts A > B on every
+   tricycle rather than trusting any comment, including this one.
    ===================================================================== */
 
 const IN = 0.0254;

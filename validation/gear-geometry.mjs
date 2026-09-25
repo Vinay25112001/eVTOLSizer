@@ -143,13 +143,17 @@ console.log("\n5. The statics, and the symbols they are written in");
   const g = G[t];
   check(Math.abs(g.noseFraction - g.B / (g.A + g.B)) < 1e-12,
     `${t}: the nose fraction is B/(A+B), plain statics and nothing else`);
-  /* SR-63's A is the NOSE arm and is the long one. gear/ground-loads.js
-     uses 14 CFR 25.493(e)'s opposite convention. Getting them the wrong
-     way round still produces plausible numbers, which is exactly why
-     this is asserted rather than trusted. */
+  /* A is the arm to the NOSE wheel and is the long one, because the CG
+     sits just ahead of the mains. gear/ground-loads.js labels its arms
+     the SAME way, from 14 CFR 25.493(e), so the two modules pass A and B
+     to each other untranslated — which is only safe if neither has
+     swapped them. Swapping still produces entirely plausible numbers, so
+     it is asserted rather than trusted. */
   check(g.A > g.B,
-    `${t}: A is the long arm, so the symbols are SR-63's and not 25.493(e)'s`,
-    `A = ${g.A.toFixed(2)} m to the nose wheel, B = ${g.B.toFixed(2)} m to the mains`);
+    `${t}: A is the long arm to the nose wheel, as both 25.493(e) and SR-63 have it`,
+    `A = ${g.A.toFixed(2)} m to the nose wheel, B = ${g.B.toFixed(2)} m to the mains; `
+    + `nose load ${(g.noseFraction * 100).toFixed(1)} % — a swap would put `
+    + `${((g.A / (g.A + g.B)) * 100).toFixed(0)} % on the nose and still look like a number`);
 });
 
 /* ── 6. REPORTED, NOT ASSERTED ───────────────────────────────────────

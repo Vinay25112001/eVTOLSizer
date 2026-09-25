@@ -22,6 +22,8 @@ import { fuselageStructure } from "./fuselage-structure.js";
 import { FuselageProfile, FuselageSection } from "./FuselageViews.jsx";
 import { balanceOf, BALANCE_DEFAULTS } from "./balance.js";
 import { LoadingDiagram, StationDiagram } from "./BalanceViews.jsx";
+import { gearOf } from "./gear.js";
+import { TyreMargins, PavementBars } from "./GearViews.jsx";
 import { flightEnvelope } from "./flight-envelope.js";
 import { controlSurfaces } from "./control-surfaces.js";
 import { VnDiagram } from "./EnvelopeViews.jsx";
@@ -473,6 +475,135 @@ export function BalanceTab({ type, result }) {
 
 
 /* ── Control surfaces ────────────────────────────────────────────────── */
+
+/* =====================================================================
+   LANDING GEAR
+   =====================================================================
+   The plan listed two Phase A figures — a tyre selection table with
+   load-against-rating margins, and a pavement summary — and neither was
+   ever built, so G1 through G6 shipped invisible: reachable only from
+   the validation harnesses. This is the tab that shows them.
+
+   It leads with what the regulation actually says, because the whole
+   point of the tyre work is that the familiar "90 % on the mains, pick a
+   tyre that carries it" is a restatement of a typical outcome and not a
+   method. 25.733 is three separate rules with different factors, and
+   which one BINDS is a result, not an assumption.
+   ===================================================================== */
+export function LandingGearTab({ type, result }) {
+  const gear = useMemo(() => gearOf(result), [result]);
+
+  if (!gear.resolved) {
+    return (
+      <>
+        <Empty>{gear.why}</Empty>
+        <Card title="Why this class cannot be answered">
+          <Lead>
+            A single combined gear station is a mass centroid, not a wheelbase. Splitting
+            it into a nose arm and a main arm would require inventing where the wheels are,
+            and every load below depends on that split — so the module declines rather than
+            producing confident numbers from an assumption.
+          </Lead>
+        </Card>
+      </>
+    );
+  }
+
+  const { main, nose } = gear.tyres;
+  const g = gear.geometry;
+  const st = gear.strut;
+
+  return (
+    <>
+      <Card title="Tyre selection — 14 CFR 25.733 is three rules, not one">
+        <Lead>
+          The main tyre must be rated for its load, times <Q>1.07</Q> where more than one
+          wheel shares an axle (25.733(c)(1)). The nose tyre must carry its static load
+          outright, but the two decelerating cases are <em>allowed</em> to exceed the rating
+          by a factor of 1.5 (25.733(b)(2) and (b)(3)). So the heaviest load is not
+          necessarily the binding requirement.
+        </Lead>
+        <TyreMargins gear={gear} />
+        <div style={{ display: "flex", gap: S.lg, flexWrap: "wrap", marginTop: S.md }}>
+          <Kpi label="Main tyre" value={main.resolved ? main.tyre.size : "—"}
+               sub={main.resolved
+                 ? <><Q v={fmt(main.tyre.loadLb)} u="lb" /> rated · {gear.tyres.legs}×{gear.tyres.wheelsPerAxle} wheels</>
+                 : main.why} />
+          <Kpi label="Nose tyre" value={nose.resolved ? nose.tyre.size : "—"}
+               sub={nose.resolved ? `binding case: ${nose.binding.label}` : nose.why} />
+          <Kpi label="Main utilisation" value={main.resolved ? fmt(main.utilisation * 100, 1) : "—"}
+               unit={main.resolved ? "%" : ""} sub="required rating ÷ rating fitted" />
+        </div>
+        {nose.resolved && (
+          <Note>
+            The binding nose case here is <strong>{nose.binding.label}</strong>. On the real
+            737-8 the braked case binds; it does not on this aeroplane because the wheelbase
+            comes out {g.wheelbase.toFixed(2)} m against the TASOPT deck&rsquo;s own 15.68 m,
+            and a shorter wheelbase raises the static nose share. That shortfall is the wing
+            placement criterion, not the gear — see the Balance tab.
+          </Note>
+        )}
+      </Card>
+
+      <Card title="Pavement loads and pressure code">
+        <PavementBars gear={gear} />
+        <Note>
+          Pressure codes are FAA AC 150/5335-5C Table 4-2. <strong>No ACN is computed.</strong>
+          AC 150/5335-5D makes a real ACN a layered-elastic computation, and this tool does
+          not do one; quoting a number here would be inventing it.
+        </Note>
+      </Card>
+
+      <Card title="Gear geometry — NACA SR-63 (1937)">
+        <div style={{ display: "flex", gap: S.lg, flexWrap: "wrap" }}>
+          <Kpi label="CG height E" value={fmt(g.E, 2)} unit="m" sub="above the ground, loaded" />
+          <Kpi label="Wheelbase" value={fmt(g.wheelbase, 2)} unit="m"
+               sub={<>A <Q v={fmt(g.A, 2)} u="m" /> + B <Q v={fmt(g.B, 2)} u="m" /></>} />
+          <Kpi label="Static nose load" value={fmt(g.noseFraction * 100, 1)} unit="%"
+               sub="measured band 4.6–12.7 %" />
+          <Kpi label="Tip-back" value={fmt(g.tipBack.angleDeg, 1)} unit="°" sub="eq. (26)" />
+          <Kpi label="Tail strike" value={g.rotation.angleDeg != null ? fmt(g.rotation.angleDeg, 1) : "—"}
+               unit={g.rotation.angleDeg != null ? "°" : ""} sub="geometric half of 25.481(c)" />
+          <Kpi label="Minimum track" value={g.turnover.minimumTrackM != null ? fmt(g.turnover.minimumTrackM, 2) : "—"}
+               unit={g.turnover.minimumTrackM != null ? "m" : ""} sub="turnover, eq. (25), μ = 0.8" />
+        </div>
+        <Note>
+          The track is a <strong>floor</strong>, not a value — eq. (25) says how narrow the
+          aeroplane may be before it turns over, and a real one is wider. Nothing in this
+          tool sets a track, so nothing else is claimed. The tail-strike angle is only the
+          geometric half of 25.481(c); the regulation takes the lesser of it and the stalling
+          angle, which this module does not supply.
+          {g.porpoising && !g.porpoising.clears
+            && ` The nose load is below SR-63's 0.08 porpoising figure, which is a warning and not a failure — real aircraft fly at and below it.`}
+        </Note>
+      </Card>
+
+      <Card title="Strut, and the tyre efficiency the textbooks assert">
+        <div style={{ display: "flex", gap: S.lg, flexWrap: "wrap" }}>
+          <Kpi label="Stroke" value={st.resolved ? fmt(st.strokeM, 3) : "—"}
+               unit={st.resolved ? "m" : ""}
+               sub={st.resolved
+                 ? <>{gear.sink.cases[0].vFps} fps sink, N = {gear.reaction.N}</>
+                 : st.why} />
+          <Kpi label="η strut" value={st.resolved ? fmt(st.etaS, 2) : "—"}
+               sub="MIL-L-8552C §3.5.2 floor, variable orifice" />
+          <Kpi label="η tyre" value={gear.tyreEfficiency ? gear.tyreEfficiency.eta.toFixed(4) : "—"}
+               sub="derived, not quoted" />
+        </div>
+        <Note>
+          η<sub>tyre</sub> is <strong>computed for this tyre</strong>, by integrating NACA
+          TN 4110&rsquo;s measured force-deflection curve against MIL-L-8552C&rsquo;s own
+          efficiency definition. It is not a constant: it approaches 0.5 at both very small
+          and very large deflection and dips to 0.445 in between. The 0.47 every textbook
+          quotes is that curve at a deflection ratio of 0.407 — one sample, reported as a
+          property of tyres.
+          {" "}The reaction factor N is a <strong>design choice</strong>: Part 25 prescribes a
+          sink speed and a drop test, not a factor.
+        </Note>
+      </Card>
+    </>
+  );
+}
 
 export function ControlsTab({ type, result }) {
   const cs = useMemo(() => controlSurfaces(result), [result]);

@@ -1,6 +1,6 @@
 # Validation Report — eVTOL Conceptual Sizing Tool
 
-**Generated 2026-09-24 22:25 UTC from commit `f00a53b` (WORKING TREE DIRTY — this report does not describe a committed state).**
+**Generated 2026-09-25 00:45 UTC from commit `1b40169` (WORKING TREE DIRTY — this report does not describe a committed state).**
 
 This document is produced by `validation/report.mjs`, which runs every
 harness and captures what each one printed. It is not written by hand. If
@@ -113,7 +113,7 @@ level 2 permanently, regardless of any further work on the code.**
 | `bizjet.mjs` | Business jet: the jet method with business-jet inputs; Citation Latitude, Citation Longitude and Pilatus PC-24 against published operating weights and ranges. | pass |
 | `aircraft-engine.mjs` | The aircraft engine: one result for every fixed-wing type equal to the class's own numbers, and matching charts, payload-range, polars, trades, type comparison and reference aircraft consistent with the sizing. | pass |
 | `turboprop.mjs` | Turboprop: Scholz & Nita's ATR 72 design point, Hamilton Standard propeller weights, and three regional turboprops against published empty weights. | pass |
-| `paper-claims.mjs` | Every numeric claim in paper/ is re-derived from the harnesses. The paper argues that published figures drift from code; this is what stops its own doing so. | **FAIL** |
+| `paper-claims.mjs` | Every numeric claim in paper/ is re-derived from the harnesses. The paper argues that published figures drift from code; this is what stops its own doing so. | pass |
 | `vtol-autopilot.mjs` | A hybrid VTOL exported as an ArduPilot QuadPlane and a PX4 VTOL, and the parameters its SIZE puts out of reach. This is driven from the aircraft engine rather than the drone engine for a reason the gate checks first: every VTOL parameter of consequence is an airspeed - the transition speed, the fixed-wing floor, the stall speed, the cruise trim - and the drone engine sizes multirotors from thrust-stand data with no wing, no stall and no cruise, so a wingless configuration is refused outright rather than exported with invented numbers. The headline finding is that the autopilots' VTOL parameters are scoped to small UAVs while this engine sizes aircraft: PX4 publishes VT_ARSP_TRANS, the airspeed at which it switches to fixed wing, with a range of 0 to 30 m/s, and every aircraft here stalls above that, so the parameter is refused with the number that did not fit rather than clamped - a clamped value would load cleanly and describe a different aircraft. ArduPilot's battery compensation is published 6 to 53 V against packs near 800 V and is refused the same way. ArduPilot's own guidance can also contradict itself at this size: AIRSPEED_MAX is documented as BOTH slightly less than level flight speed at THR_MAX AND at least 50 percent above AIRSPEED_MIN, which a design whose dive speed is under 1.8x its stall speed cannot satisfy, so the exporter emits the value the aircraft gives and names the gap in m/s and what the documentation says it costs. Transition DURATION is refused on both sides because PX4's VT_F_TRANS_DUR is the whole front transition while ArduPilot's Q_TRANSITION_MS is only the tail after minimum airspeed, and the back transition is refused because a deceleration in m/s^2 and a duration in seconds are different physical quantities. Configurations map by MECHANISM: lift+cruise is a Standard VTOL and a tiltrotor is a Tiltrotor, while the two hybrid layouts that tilt some rotors and stop the others have no generic PX4 airframe at all and are refused rather than approximated with a neighbour. | pass |
 | `drone-frames.mjs` | Multirotor frame geometry generated from ArduPilot's own AP_MotorsMatrix.cpp: motor numbers are output channels and not the motor-test order, every motor states a rotation, CW and CCW counts balance, ordinary coaxial pairs counter-rotate and corotating frames genuinely corotate. | pass |
 | `drone-components.mjs` | Every catalogue part traces to a datasheet URL, and no motor is modelled on a resistance whose winding convention the vendor never stated -- an ambiguity worth a factor of three in copper loss. How many motors qualify is reported as a finding about the industry, not asserted as a target. | pass |
@@ -205,9 +205,9 @@ and are the right place to attribute a group error to a model.
 
 ```
 Scored metrics : 11
-Mean abs error : 28.2%   (ewf-fraction model)
-Mean abs error : 14.0%   (component buildup)
-Worst          : MTOW -52.8%
+Mean abs error : 28.0%   (ewf-fraction model)
+Mean abs error : 13.3%   (component buildup)
+Worst          : MTOW -52.1%
 ```
 
 The two mean errors are the same aircraft scored two ways — the fraction-based
@@ -223,15 +223,15 @@ output is emitted without one.
 
 | status | count | share |
 |---|---|---|
-| derived | 229 | 50% |
-| sourced | 140 | 30% |
+| derived | 234 | 50% |
+| sourced | 141 | 30% |
 | unverified | 70 | 15% |
 | validated | 16 | 3% |
 | calibrated | 5 | 1% |
 | assumed | 1 | 0% |
 
 **`validated` means one thing only: the value has been numerically compared
-to a published figure and the error is recorded.** 16 of 461 outputs
+to a published figure and the error is recorded.** 16 of 467 outputs
 (3%) meet that bar:
 
 `DL_lbft2`, `Etot`, `LDact`, `MTOW`, `PackkWh`, `Phov`, `Wbat`, `Wempty`, `bWing`, `dBA_100m`, `ewfImplied`, `fuelBurnKg`, `fuelMassKg`, `kNDARC`, `weightGroupsRaw`, `weightModel`
@@ -422,7 +422,7 @@ Required by [M&S 49].
 
 Everything below is captured from the run that produced this document.
 
-<details><summary><code>scope-check.mjs</code> — exit 0, 2105 ms</summary>
+<details><summary><code>scope-check.mjs</code> — exit 0, 1854 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
@@ -434,7 +434,7 @@ PASS — every referenced identifier is imported, declared or a runtime global,
 
 </details>
 
-<details><summary><code>tab-registry.mjs</code> — exit 0, 139 ms</summary>
+<details><summary><code>tab-registry.mjs</code> — exit 0, 149 ms</summary>
 
 ```
 TAB REGISTRY GATE
@@ -452,7 +452,7 @@ TAB REGISTRY GATE PASSED
 
 </details>
 
-<details><summary><code>units.mjs</code> — exit 0, 149 ms</summary>
+<details><summary><code>units.mjs</code> — exit 0, 108 ms</summary>
 
 ```
 UNITS GATE
@@ -526,7 +526,7 @@ UNITS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>constants.mjs</code> — exit 0, 276 ms</summary>
+<details><summary><code>constants.mjs</code> — exit 0, 220 ms</summary>
 
 ```
 PHYSICAL CONSTANTS GATE
@@ -562,7 +562,7 @@ PHYSICAL CONSTANTS GATE
 
 -- every source file in src/ --
   PASS  the scan actually read the tree
-          326 source files — a passing result from an empty walk is not a result
+          327 source files — a passing result from an empty walk is not a result
   PASS  no source file writes a physical constant with a value of its own
           6 named exceptions, each with a reason: src/classes/trainer/weights.js 32.2; src/lib/units.js 9.807; src/engine/constants.js 9.81; src/engine/constants.js 287.052874; src/engine/constants.js 287.053; src/engine/constants.js 287.058
 
@@ -588,65 +588,65 @@ CONSTANTS GATE PASSED (20 checks)
 
 </details>
 
-<details><summary><code>identities.mjs</code> — exit 0, 2923 ms</summary>
+<details><summary><code>identities.mjs</code> — exit 0, 2687 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
 IDENTITY & UNITS CHECK — 42 relations over 119 design points
 ════════════════════════════════════════════════════════════════════════════
- ok   direct drive charges no gearbox     63 pts
- ok   drive system = NDARC AFDD00         63 pts
- ok   gearbox + rotor shaft = drive system  63 pts
- ok   wing lift equation                  51 pts
- ok   cruise CL within ceiling            63 pts
- ok   span from aspect ratio              63 pts
- ok   root chord (trapezoid)              51 pts
- ok   tip chord = λ·Cr                    63 pts
- ok   mean aerodynamic chord              51 pts
- ok   wing loading                        51 pts
- ok   cruise Mach                         63 pts
- ok   wing Reynolds number                51 pts
- ok   induced drag coefficient            63 pts
- ok   total drag = CD0 + CDi              63 pts
- ok   L/D from coefficients               51 pts
- ok   disk loading (hover)                63 pts
- ok   reported download is the applied download  63 pts
- ok   disk loading (installed)            63 pts
- ok   momentum-theory hover power         63 pts
- ok   twin-rotor overlap factor           63 pts
- ok   rotor RPM from tip speed            63 pts
- ok   blade passage frequency             63 pts
- ok   motor shaft torque                  63 pts
- ok   stall speed                         63 pts
- ok   neutral point (with slope ratio + fuselage)  51 pts
- ok   tail/wing lift-slope ratio          63 pts
- ok   static margin definition            51 pts
-        worst 1.015e-3 of 1.424e-3 allowed (71% of the derived rounding bound), on tiltrotor MAC 0.966 SM -0.6553
- ok   wing AC from wing station           51 pts
- ok   auto-positioned wing hits target SM  63 pts
- ok   weight closure                      63 pts
- ok   takeoff energy                      63 pts
- ok   cruise energy                       63 pts
- ok   total mission energy                63 pts
- ok   pack energy from battery mass       63 pts
- ok   residual SoC equals the socMin floor when energy governs  63 pts
- ok   usable pack energy                  63 pts
- ok   hover T/W equals installed T/W      63 pts
- ok   OEI thrust available                63 pts
- ok   NDARC drag-area parameter k         63 pts
- ok   DL unit conversion (hover)          63 pts
- ok   DL unit conversion (installed)      63 pts
- ok   reported mass-balance gap is zero   63 pts
+ ok   direct drive charges no gearbox     61 pts
+ ok   drive system = NDARC AFDD00         61 pts
+ ok   gearbox + rotor shaft = drive system  61 pts
+ ok   wing lift equation                  49 pts
+ ok   cruise CL within ceiling            61 pts
+ ok   span from aspect ratio              61 pts
+ ok   root chord (trapezoid)              49 pts
+ ok   tip chord = λ·Cr                    61 pts
+ ok   mean aerodynamic chord              49 pts
+ ok   wing loading                        49 pts
+ ok   cruise Mach                         61 pts
+ ok   wing Reynolds number                49 pts
+ ok   induced drag coefficient            61 pts
+ ok   total drag = CD0 + CDi              61 pts
+ ok   L/D from coefficients               49 pts
+ ok   disk loading (hover)                61 pts
+ ok   reported download is the applied download  61 pts
+ ok   disk loading (installed)            61 pts
+ ok   momentum-theory hover power         61 pts
+ ok   twin-rotor overlap factor           61 pts
+ ok   rotor RPM from tip speed            61 pts
+ ok   blade passage frequency             61 pts
+ ok   motor shaft torque                  61 pts
+ ok   stall speed                         61 pts
+ ok   neutral point (with slope ratio + fuselage)  49 pts
+ ok   tail/wing lift-slope ratio          61 pts
+ ok   static margin definition            49 pts
+        worst 1.248e-3 of 1.748e-3 allowed (71% of the derived rounding bound), on hybridPusher MAC 0.725 SM -0.4622
+ ok   wing AC from wing station           49 pts
+ ok   auto-positioned wing hits target SM  61 pts
+ ok   weight closure                      61 pts
+ ok   takeoff energy                      61 pts
+ ok   cruise energy                       61 pts
+ ok   total mission energy                61 pts
+ ok   pack energy from battery mass       61 pts
+ ok   residual SoC equals the socMin floor when energy governs  61 pts
+ ok   usable pack energy                  61 pts
+ ok   hover T/W equals installed T/W      61 pts
+ ok   OEI thrust available                61 pts
+ ok   NDARC drag-area parameter k         61 pts
+ ok   DL unit conversion (hover)          61 pts
+ ok   DL unit conversion (installed)      61 pts
+ ok   reported mass-balance gap is zero   61 pts
 ════════════════════════════════════════════════════════════════════════════
- ok   diverged: gap = unmet residual      56 pts   (designs that do not close, checked rather than skipped)
-        worst 0.0500 kg of 0.06 kg allowed (83% of the rounding bound), on MTOW 10627 kg
+ ok   diverged: gap = unmet residual      58 pts   (designs that do not close, checked rather than skipped)
+        worst 0.0500 kg of 0.06 kg allowed (83% of the rounding bound), on MTOW 10858 kg
 ════════════════════════════════════════════════════════════════════════════
 PASS — all 43 relations hold to 0.2%.
 ```
 
 </details>
 
-<details><summary><code>golden-master.mjs</code> — exit 0, 3632 ms</summary>
+<details><summary><code>golden-master.mjs</code> — exit 0, 3148 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -658,7 +658,7 @@ PASS — no output moved by more than 1e-6 relative.
 
 </details>
 
-<details><summary><code>components.mjs</code> — exit 0, 107 ms</summary>
+<details><summary><code>components.mjs</code> — exit 0, 103 ms</summary>
 
 ```
 ==============================================================================
@@ -806,7 +806,7 @@ regardless of what the loop happens to converge to.
 
 </details>
 
-<details><summary><code>database-report.mjs</code> — exit 0, 105 ms</summary>
+<details><summary><code>database-report.mjs</code> — exit 0, 89 ms</summary>
 
 ```
 ======================================================================================
@@ -912,33 +912,33 @@ NASA CONCEPT VEHICLES — the only full weight statements in the field
 
 </details>
 
-<details><summary><code>analysis-layers.mjs</code> — exit 0, 7021 ms</summary>
+<details><summary><code>analysis-layers.mjs</code> — exit 0, 6492 ms</summary>
 
 ```
 ANALYSIS-LAYER GATE
 
-  PASS  default profile reproduces the loop energy   Etot 149.41 vs profile 149.41 kWh (0.0000%)
+  PASS  default profile reproduces the loop energy   Etot 153.25 vs profile 153.25 kWh (0.0007%)
   PASS  an over-long profile is reported infeasible and located   runs dry 42.3 min in
   PASS  a distance on a hover segment is rejected, not treated as zero
-  PASS  the off-design polar reproduces Pcr at the design speed   211.9 vs 211.9 kW (0.01%)
+  PASS  the off-design polar reproduces Pcr at the design speed   217.4 vs 217.4 kW (0.01%)
   PASS  the constraint diagram declares its wing limit to be a fit, not a derivation
   PASS  implied transition speed for the design wing loading is physically sane   W/S 1371 N/m2 -> 37.0-45.3 m/s (CLmax 1.8-1.2)
   PASS  implied transition speed falls with wing loading, as sqrt(W/S) must   1371 -> 37.0 m/s vs 800 -> 28.3 m/s
   PASS  hover is the binding constraint for a winged eVTOL   binding hover
   PASS  a rotor-borne layout gets the hover line alone, not a fabricated wing limit
-  PASS  no perturbation leaves a bounded quantity outside its physical range   23 inputs perturbed
+  PASS  no perturbation leaves a bounded quantity outside its physical range   22 inputs perturbed
   PASS  user requirements are excluded from the error bar   excluded 7
-  PASS  the band is asymmetric, as a clamped sizing loop must be   -203 / +325 kg
-  PASS  all six configurations close on one mission   liftcruise 2699, hybrid 2508, hybridPusher 2626, tiltrotor 2866, multicopter 2815, sideBySide 1881
+  PASS  the band is asymmetric, as a clamped sizing loop must be   -195 / +300 kg
+  PASS  all six configurations close on one mission   liftcruise 2709, hybrid 2539, hybridPusher 2649, tiltrotor 2922, multicopter 2815, sideBySide 1881
   PASS  an interconnected layout is not scored on Table 4's un-shafted columns   sideBySide kind=indeterminate
   PASS  mixed control reports as indeterminate, not as a shortfall   hybrid kind=indeterminate ok=true
   PASS  a pure rpm, independent-rotor layout still reports the real shortfall   liftcruise ok=false
   PASS  the multicopter still reports the real shortfall
   PASS  advisories and omissions are not counted as hard failures   4 of 6 layouts feasible
-  PASS  battery efficiency is applied to vertical flight only, not the whole mission   etaBat 0.90 -> effective 0.9937 (vertical 8.6 of 149.4 kWh)
-  PASS  the superseded whole-mission form is still selectable and still heavier   mission-scope MTOW 2748 vs vertical-scope 2509 kg
+  PASS  battery efficiency is applied to vertical flight only, not the whole mission   etaBat 0.90 -> effective 0.9937 (vertical 8.7 of 153.2 kWh)
+  PASS  the superseded whole-mission form is still selectable and still heavier   mission-scope MTOW 2792 vs vertical-scope 2540 kg
   PASS  sedBasis packUsable suppresses the battery efficiency term   effective 1
-  PASS  hover is the high-discharge-rate state that justifies the scoping   hover 3.38C vs cruise 1.4C
+  PASS  hover is the high-discharge-rate state that justifies the scoping   hover 3.36C vs cruise 1.4C
 
   NOTE - items reported across most layouts (a mission or model
   property, not a per-layout one):
@@ -950,7 +950,7 @@ ANALYSIS-LAYER GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-models.mjs</code> — exit 0, 2339 ms</summary>
+<details><summary><code>vsp-models.mjs</code> — exit 0, 2255 ms</summary>
 
 ```
 NASA OpenVSP MODEL REPLICATION GATE
@@ -961,8 +961,8 @@ NASA OpenVSP MODEL REPLICATION GATE
   PASS  swft: rotors sit outboard of the wingtip, as modelled   rotor half-span 10.889 m vs wing half-span 10.449 m
 
 ── NASA RAVEN v01_003
-  PASS  raven: replication converged   closed at 981.12 kg in 9 iteration(s)
-   gross weight 981 kg and cruise 63.9 m/s are RESULTS — the .vsp3 publishes no mass, power or mission
+  PASS  raven: replication converged   closed at 984.64 kg in 9 iteration(s)
+   gross weight 985 kg and cruise 64.0 m/s are RESULTS — the .vsp3 publishes no mass, power or mission
      Rotor diameter        1.8898      1.890       0%
      Rotor count                6      6.000       0%
      Disk area            16.8296     16.833       0%
@@ -973,14 +973,14 @@ NASA OpenVSP MODEL REPLICATION GATE
      Blade chord           0.1306      0.131       0%
   PASS  raven: every published geometry reproduced within 1%   worst 0.1% on Wing area
 ── NASA RAVEN SWFT
-  PASS  swft: replication converged   closed at 6824.89 kg in 8 iteration(s)
-   gross weight 6825 kg and cruise 60.0 m/s are RESULTS — the .vsp3 publishes no mass, power or mission
+  PASS  swft: replication converged   closed at 6848.14 kg in 7 iteration(s)
+   gross weight 6848 kg and cruise 60.0 m/s are RESULTS — the .vsp3 publishes no mass, power or mission
      Rotor diameter        5.9436      5.944       0%
      Rotor count                6      6.000       0%
      Disk area           166.4716    166.494       0%
      Wing span            20.8971     20.900       0%
-     Wing area            58.1211     58.120       0%
-     Wing aspect ratio     7.5134      7.516       0%
+     Wing area            58.1211     58.110       0%
+     Wing aspect ratio     7.5134      7.517       0%
      Fuselage length      15.6566     15.657       0%
      Blade chord           0.5278      0.528       0%
   PASS  swft: every published geometry reproduced within 1%   worst 0.0% on 
@@ -990,7 +990,7 @@ VSP GATE PASSED
 
 </details>
 
-<details><summary><code>geometry-export.mjs</code> — exit 0, 36608 ms</summary>
+<details><summary><code>geometry-export.mjs</code> — exit 0, 71326 ms</summary>
 
 ```
 GEOMETRY & EXPORT GATE
@@ -1047,7 +1047,7 @@ GEOMETRY & EXPORT GATE PASSED
 
 </details>
 
-<details><summary><code>fuselage-outline.mjs</code> — exit 0, 220 ms</summary>
+<details><summary><code>fuselage-outline.mjs</code> — exit 0, 145 ms</summary>
 
 ```
 FUSELAGE OUTLINE GATE
@@ -1151,7 +1151,7 @@ FUSELAGE OUTLINE GATE PASSED (50 checks)
 
 </details>
 
-<details><summary><code>nasa-configs.mjs</code> — exit 0, 292 ms</summary>
+<details><summary><code>nasa-configs.mjs</code> — exit 0, 220 ms</summary>
 
 ```
 ======================================================================================
@@ -1211,7 +1211,7 @@ source: NASA/TM-20210017971 Table 12 · mission 75 nm, 1200 lb payload, 400 Wh/k
    energy            400.0 kWh     273.3 kWh    -31.7%    (no AFDD reference)
    liftPower         103.7 kW       77.9 kW     -24.9%    (no AFDD reference)
    fusDq               1.7 ft2       1.3 ft2    -25.9%    (no AFDD reference)
-   totalDq            16.9 ft2      11.9 ft2    -29.6%    (no AFDD reference)
+   totalDq            16.9 ft2      12.2 ft2    -28.1%    (no AFDD reference)
 
 ======================================================================================
 ROTOR GROUP - equation error vs sizing divergence
@@ -1245,7 +1245,7 @@ PASS: 39 published comparisons, mean 14.5%, worst -46.7%
 
 </details>
 
-<details><summary><code>validate.mjs</code> — exit 0, 934 ms</summary>
+<details><summary><code>validate.mjs</code> — exit 0, 846 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════════
@@ -1257,40 +1257,40 @@ Only high/medium-confidence published figures are scored.
 ── NASA UAM Lift+Cruise (electric)   [Lift + cruise, 8 lift rotors + pusher]
    using the source's own stated technology assumptions
    metric        published  |  ewf-fraction        err  |   buildup        err
-   MTOW             4301 kg |   2031.86 kg    -52.8%  |  3158.12 kg    -26.6%
-   Pack energy       373 kWh|    188.77 kWh   -49.4%  |   281.45 kWh   -24.5%
-   EWF            0.6556    |       0.5       -23.7%  |   0.6049        -7.7%
-   mission bracket: 195-281 kWh (no reserve, favourable day -> full 20-min reserve, sizing day) vs published 373 kWh  OUTSIDE - not reconcilable with any reserve convention
-   buildup predicts EWF = 0.6049   (published MTOW needs 0.6545)
-   implied EWF to hit published MTOW: 0.6545   [baseline assumes 0.5]
-   L/D input 10.62 vs engine-computed 8.4   ·  Etot 188.771 kWh  ·  Phov 357.57 kW
+   MTOW             4301 kg |   2061.92 kg    -52.1%  |  3267.45 kg      -24%
+   Pack energy       373 kWh|    194.78 kWh   -47.8%  |    300.7 kWh   -19.4%
+   EWF            0.6556    |       0.5       -23.7%  |   0.6034          -8%
+   mission bracket: 206-301 kWh (no reserve, favourable day -> full 20-min reserve, sizing day) vs published 373 kWh  OUTSIDE - not reconcilable with any reserve convention
+   buildup predicts EWF = 0.6034   (published MTOW needs 0.6438)
+   implied EWF to hit published MTOW: 0.6438   [baseline assumes 0.5]
+   L/D input 10.62 vs engine-computed 8.28   ·  Etot 194.784 kWh  ·  Phov 365.54 kW
    feasibility FAILS: Cruise duty < 80% of continuous rating | Climb gradient >= 2.5% (MOC VTOL.2120, Category enhanced) | Controllable after a single rotor failure | Hover load factor n_z >= 1.35 (continuous motor torque) | Cruise L/D >= 9.5 (NASA lift+cruise class) | Hover download
 
 ── Joby S4   [Tiltrotor, 6 rotors, V-tail]
    using the source's own stated technology assumptions
    metric        published  |  ewf-fraction        err  |   buildup        err
-   MTOW             2404 kg |   1879.12 kg    -21.8%  |  2349.65 kg     -2.3%
-   Pack energy       165 kWh|    134.96 kWh   -18.2%  |   159.94 kWh    -3.1%
-   Wing span        11.8 m  |     10.69 m      -9.4%  |    11.96 m      +1.4%
+   MTOW             2404 kg |   1882.61 kg    -21.7%  |  2367.44 kg     -1.5%
+   Pack energy       165 kWh|    135.45 kWh   -17.9%  |   162.67 kWh    -1.4%
+   Wing span        11.8 m  |      10.7 m      -9.3%  |       12 m      +1.7%
    wing model alone (span at the PUBLISHED MTOW): 12.1 m vs 11.8 m  ->  2.5%   [isolates engine/wing.js from the mass model]
-   mission bracket: 186-160 kWh (no reserve, favourable day -> full 20-min reserve, sizing day) vs published 165 kWh  OUTSIDE - not reconcilable with any reserve convention
+   mission bracket: 190-163 kWh (no reserve, favourable day -> full 20-min reserve, sizing day) vs published 165 kWh  OUTSIDE - not reconcilable with any reserve convention
    acoustics @100 m: 53.9 dBA vs published max 65 dBA  PASS  (margin 11.1 dB)
-   buildup predicts EWF = 0.5594   (published MTOW needs 0.5648)
-   implied EWF to hit published MTOW: 0.5648   [baseline assumes 0.5]
-   L/D input 14 vs engine-computed 10.89   ·  Etot 107.969 kWh  ·  Phov 447.81 kW
+   buildup predicts EWF = 0.5586   (published MTOW needs 0.562)
+   implied EWF to hit published MTOW: 0.562   [baseline assumes 0.5]
+   L/D input 14 vs engine-computed 10.87   ·  Etot 108.362 kWh  ·  Phov 449.06 kW
    feasibility FAILS: SM -10–25% MAC (Full-authority fly-by-wire) — advisory | Controllable after a single rotor failure | Hover load factor n_z >= 1.35 (continuous motor torque)
 
 ── Archer Midnight   [Partial tilt-rotor, 12 rotors (6 tilt / 6 lift-only), V-tail]
    using the source's own stated technology assumptions
    metric        published  |  ewf-fraction        err  |   buildup        err
-   MTOW             3175 kg |   2266.79 kg    -28.6%  |  2805.59 kg    -11.6%
-   Pack energy       142 kWh|    194.72 kWh   +37.1%  |   227.38 kWh   +60.1%
-   Wing span        14.3 m  |     11.75 m     -17.8%  |    13.07 m      -8.6%
+   MTOW             3175 kg |   2278.09 kg    -28.2%  |  2826.96 kg      -11%
+   Pack energy       142 kWh|    196.34 kWh   +38.3%  |   230.97 kWh   +62.7%
+   Wing span        14.3 m  |     11.78 m     -17.6%  |    13.12 m      -8.3%
    wing model alone (span at the PUBLISHED MTOW): 13.9 m vs 14.3 m  ->  -2.8%   [isolates engine/wing.js from the mass model]
-   mission bracket: 132-227 kWh (no reserve, favourable day -> full 20-min reserve, sizing day) vs published 142 kWh  INSIDE - explained by reserve convention, not a model error
-   buildup predicts EWF = 0.5529   (published MTOW needs 0.5785)
-   implied EWF to hit published MTOW: 0.5785   [baseline assumes 0.5]
-   L/D input 14 vs engine-computed 8.88   ·  Etot 155.772 kWh  ·  Phov 358.32 kW
+   mission bracket: 133-231 kWh (no reserve, favourable day -> full 20-min reserve, sizing day) vs published 142 kWh  INSIDE - explained by reserve convention, not a model error
+   buildup predicts EWF = 0.5518   (published MTOW needs 0.575)
+   implied EWF to hit published MTOW: 0.575   [baseline assumes 0.5]
+   L/D input 14 vs engine-computed 8.85   ·  Etot 157.076 kWh  ·  Phov 361.01 kW
    feasibility FAILS: SM -10–25% MAC (Full-authority fly-by-wire) — advisory | Cruise duty < 80% of continuous rating | Hover load factor n_z >= 1.35 (continuous motor torque) | Cruise L/D >= 9.5 (NASA lift+cruise class) | AR vs LD compatible | Rotors fit within the span
 
 ── Volocopter VoloCity   [Coplanar multicopter, 18 fixed-pitch rotors on a ring, no wing]
@@ -1308,12 +1308,12 @@ Only high/medium-confidence published figures are scored.
 ── Vertical Aerospace VX4   [Partial tilt-rotor, 8 rotors (4 tilt / 4 lift-only), V-tail]
    using the source's own stated technology assumptions
    metric        published  |  ewf-fraction        err  |   buildup        err
-   Pack energy       160 kWh|    214.16 kWh   +33.8%  |   246.22 kWh   +53.9%
-   Wing span          15 m  |     12.11 m     -19.3%  |    13.31 m     -11.3%
-   mission bracket: 178-246 kWh (no reserve, favourable day -> full 20-min reserve, sizing day) vs published 160 kWh  OUTSIDE - not reconcilable with any reserve convention
-   buildup predicts EWF = 0.5444
+   Pack energy       160 kWh|    217.33 kWh   +35.8%  |   252.19 kWh   +57.6%
+   Wing span          15 m  |     12.17 m     -18.9%  |    13.39 m     -10.7%
+   mission bracket: 180-252 kWh (no reserve, favourable day -> full 20-min reserve, sizing day) vs published 160 kWh  OUTSIDE - not reconcilable with any reserve convention
+   buildup predicts EWF = 0.5431
    implied EWF to hit published MTOW: n/a (no MTOW)   [baseline assumes 0.5]
-   L/D input 14 vs engine-computed 12.1   ·  Etot 171.328 kWh  ·  Phov 481.35 kW
+   L/D input 14 vs engine-computed 12.03   ·  Etot 173.867 kWh  ·  Phov 488.04 kW
    feasibility FAILS: Mission matches the reference aircraft (Archer Midnight) | SM -10–25% MAC (Full-authority fly-by-wire) — advisory | Controllable after a single rotor failure | Hover load factor n_z >= 1.35 (continuous motor torque)
 
 ══════════════════════════════════════════════════════════════════════════════
@@ -1321,20 +1321,20 @@ Only high/medium-confidence published figures are scored.
 ACCURACY BY CONFIGURATION — component buildup
 
   configuration   aircraft scored                      metrics   MAE
-  liftcruise      NASA UAM Lift+Cruise (electric)          3   19.6%
-  hybrid          Archer Midnight, Vertical Aerospace      4   21.3%
+  liftcruise      NASA UAM Lift+Cruise (electric)          3   17.1%
+  hybrid          Archer Midnight, Vertical Aerospace      4   21.9%
   hybridPusher    (no commercial aircraft published)         0     --
-  tiltrotor       Joby S4                                  3   2.3%
+  tiltrotor       Joby S4                                  3   1.5%
   multicopter     Volocopter VoloCity                      1   2.5%
   sideBySide      (no commercial aircraft published)         0     --
 
   4 of 6 configurations have ANY commercial aircraft to score against.
-  best tiltrotor at 2.3%, worst hybrid at 21.3% — a factor of 9.4. A pooled mean describes neither.
+  best tiltrotor at 1.5%, worst hybrid at 21.9% — a factor of 14.3. A pooled mean describes neither.
 ACCURACY BY METRIC CLASS — component buildup
 
-  Geometry (span)      3 metric(s)   MAE 7.1%
-  Mass (MTOW, EWF)     5 metric(s)   MAE 10.1%
-  Energy (pack)        3 metric(s)   MAE 27.2%
+  Geometry (span)      3 metric(s)   MAE 6.9%
+  Mass (MTOW, EWF)     5 metric(s)   MAE 9.4%
+  Energy (pack)        3 metric(s)   MAE 26.1%
 
   NOTE: span from a full run confounds the wing model with the mass
   model — a 20% MTOW error is ~10% of span on its own. The per-aircraft
@@ -1343,13 +1343,13 @@ ACCURACY BY METRIC CLASS — component buildup
   Wing model alone: MAE 2.6% over 2 aircraft.
 
 EXCLUDED as mission-convention artefacts (NOT model error, NOT in the gate):
-   Archer Midnight Pack energy: buildup +60.1% vs published 142 kWh — but the mission-convention bracket is 132-227 kWh (+/-5% tol), which reaches the published value, so this measures a mission difference, not the model
+   Archer Midnight Pack energy: buildup +62.7% vs published 142 kWh — but the mission-convention bracket is 133-231 kWh (+/-5% tol), which reaches the published value, so this measures a mission difference, not the model
    Re-run with EVTOL_STRICT=1 to score them anyway and see the unadjusted number.
 
 Scored metrics : 11
-Mean abs error : 28.2%   (ewf-fraction model)
-Mean abs error : 14.0%   (component buildup)
-Worst          : MTOW -52.8%
+Mean abs error : 28.0%   (ewf-fraction model)
+Mean abs error : 13.3%   (component buildup)
+Worst          : MTOW -52.1%
 ══════════════════════════════════════════════════════════════════════════════
 
 PASS: within the 40% gate
@@ -1357,7 +1357,7 @@ PASS: within the 40% gate
 
 </details>
 
-<details><summary><code>tab-visibility.mjs</code> — exit 0, 1062 ms</summary>
+<details><summary><code>tab-visibility.mjs</code> — exit 0, 774 ms</summary>
 
 ```
 TAB VISIBILITY GATE
@@ -1383,7 +1383,7 @@ TAB VISIBILITY GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-run.mjs</code> — exit 0, 52630 ms</summary>
+<details><summary><code>vsp-run.mjs</code> — exit 0, 54349 ms</summary>
 
 ```
 OPENVSP SCRIPT-RUN GATE
@@ -1403,31 +1403,31 @@ OPENVSP SCRIPT-RUN GATE PASSED — every configuration builds in OpenVSP
 
 </details>
 
-<details><summary><code>vspaero.mjs</code> — exit 0, 12255 ms</summary>
+<details><summary><code>vspaero.mjs</code> — exit 0, 10836 ms</summary>
 
 ```
 VSPAERO GATE — vortex-lattice polar on the exported model
 ============================================================================
   OpenVSP: C:\Users\w451vxs\Downloads\eVTOL\OpenVSP-3.51.3-win64-Python3.13\OpenVSP-3.51.3-win64\vspscript.exe
-  liftcruise: Sref 18.22 m2, b 12.80 m, AR 8.992
+  liftcruise: Sref 18.35 m2, b 12.85 m, AR 8.999
 
   PASS  VSPAERO returns a converged polar on the exported model   6 alpha points solved
 
     alpha      CL        CDi       CDtot     CDi/CL^2
-        0    0.2591    0.00233    0.00966     0.0347
-        2    0.4481    0.00674    0.01488     0.0336
-        4    0.6369    0.01377    0.02310     0.0339
-        6    0.8284    0.02374    0.03466     0.0346
-        8    1.0217    0.03696    0.04983     0.0354
-        8    1.0217    0.03696    0.04983     0.0354
+        0    0.2592    0.00233    0.00966     0.0347
+        2    0.4482    0.00674    0.01488     0.0336
+        4    0.6371    0.01377    0.02310     0.0339
+        6    0.8287    0.02374    0.03466     0.0346
+        8    1.0220    0.03695    0.04983     0.0354
+        8    1.0220    0.03695    0.04983     0.0354
 
   PASS  induced drag is positive at every alpha   the mixed thin/thick solve gave NEGATIVE CDi at four of five alphas, which is impossible and is why the fuselage is excluded — see tools/vspaero-polar.vspscript
-  PASS  CDi/CL^2 is constant across the polar — the signature of a converged solve   0.0347, 0.0336, 0.0339, 0.0346, 0.0354, 0.0354, spread 5.3% — induced drag follows CL^2 as it must, which a diverging solve does not do
+  PASS  CDi/CL^2 is constant across the polar — the signature of a converged solve   0.0347, 0.0336, 0.0339, 0.0346, 0.0354, 0.0354, spread 5.2% — induced drag follows CL^2 as it must, which a diverging solve does not do
     span efficiency e:  VSPAERO 1.023   engine assumes 0.85
-  PASS  the computed span efficiency is physical   e = 1/(pi AR CDi/CL^2) = 1.023 at AR 8.99 — an inviscid VLM should land near the ideal 1.0, and above it would mean the solve is wrong
+  PASS  the computed span efficiency is physical   e = 1/(pi AR CDi/CL^2) = 1.023 at AR 9.00 — an inviscid VLM should land near the ideal 1.0, and above it would mean the solve is wrong
     lift slope:  VSPAERO 5.46 /rad   Helmbold 5.04 /rad
-  PASS  and the lift-curve slope agrees with finite-wing theory   5.46 against Helmbold's 5.04 /rad at AR 8.99, 8% apart — the tail also lifts on the wing's reference area, so the solver reading above theory is expected
-  PASS  the wing makes lift at ZERO incidence — the exported camber is real   CL(0) = 0.2591 on a NACA 65(2)-415 section. Before the airfoil fix this exporter wrote Camber 0 and this number would have been ~0: the defect is now visible to a solver, not just to a reader of the file
+  PASS  and the lift-curve slope agrees with finite-wing theory   5.46 against Helmbold's 5.04 /rad at AR 9.00, 8% apart — the tail also lifts on the wing's reference area, so the solver reading above theory is expected
+  PASS  the wing makes lift at ZERO incidence — the exported camber is real   CL(0) = 0.2592 on a NACA 65(2)-415 section. Before the airfoil fix this exporter wrote Camber 0 and this number would have been ~0: the defect is now visible to a solver, not just to a reader of the file
 
   WHAT THIS SETTLES:
     The exported model is not merely well-formed, it is AERODYNAMICALLY
@@ -1441,7 +1441,7 @@ VSPAERO GATE PASSED
 
 </details>
 
-<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 68 ms</summary>
+<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 73 ms</summary>
 
 ```
 ROTORCRAFT TAIL GATE
@@ -1461,7 +1461,7 @@ ROTORCRAFT TAIL GATE PASSED
 
 </details>
 
-<details><summary><code>drive-failure.mjs</code> — exit 0, 69 ms</summary>
+<details><summary><code>drive-failure.mjs</code> — exit 0, 70 ms</summary>
 
 ```
 DRIVE-SYSTEM FAILURE GATE
@@ -1489,7 +1489,7 @@ DRIVE-SYSTEM FAILURE GATE PASSED
 
 </details>
 
-<details><summary><code>autorotation.mjs</code> — exit 0, 2336 ms</summary>
+<details><summary><code>autorotation.mjs</code> — exit 0, 1829 ms</summary>
 
 ```
 AUTOROTATION GATE
@@ -1507,10 +1507,10 @@ AUTOROTATION GATE
 
   MEASURED, NOT ASSERTED — every layout at its design point:
     layout          N   D (m)     AI   entry        verdict
-    liftcruise     4    3.66   6.31   NO       low — large-helicopter end of the band
-    hybrid        12    2.09   4.02   unknown  BELOW every helicopter in the published population
-    hybridPusher   6    3.04    5.3   unknown  low — large-helicopter end of the band
-    tiltrotor      6    3.01    2.7   unknown  BELOW every helicopter in the published population
+    liftcruise     4    3.67   6.32   NO       low — large-helicopter end of the band
+    hybrid        12    2.10   4.03   unknown  BELOW every helicopter in the published population
+    hybridPusher   6    3.06   5.32   unknown  low — large-helicopter end of the band
+    tiltrotor      6    3.03   2.71   unknown  BELOW every helicopter in the published population
     multicopter    4    8.18  27.62   NO       within the helicopter population
     sideBySide     2    8.37  21.43   yes      within the helicopter population
 
@@ -1532,7 +1532,7 @@ AUTOROTATION GATE PASSED
 
 </details>
 
-<details><summary><code>whirl-flutter.mjs</code> — exit 0, 2475 ms</summary>
+<details><summary><code>whirl-flutter.mjs</code> — exit 0, 1895 ms</summary>
 
 ```
 WHIRL-FLUTTER GATE
@@ -1578,7 +1578,7 @@ WHIRL-FLUTTER GATE PASSED
 
 </details>
 
-<details><summary><code>load-cases.mjs</code> — exit 0, 2153 ms</summary>
+<details><summary><code>load-cases.mjs</code> — exit 0, 1580 ms</summary>
 
 ```
 STRUCTURAL LOAD CASE GATE
@@ -1595,10 +1595,10 @@ STRUCTURAL LOAD CASE GATE
 
   MEASURED, NOT ASSERTED — every winged layout at its design point:
     layout        W/S(N/m2)    mu      K_g    dN worst  nLimit  governing
-    liftcruise       1450    32.1   0.7554     1.584    3.50   symmetric manoeuvre 3.5g
-    hybrid           1371    30.7   0.7505     1.936    3.50   symmetric manoeuvre 3.5g
-    hybridPusher     1450    33.0   0.7581     1.850    3.50   symmetric manoeuvre 3.5g
-    tiltrotor        1524    35.3   0.7652     2.371    3.50   symmetric manoeuvre 3.5g
+    liftcruise       1450    32.0   0.7550     1.584    3.50   symmetric manoeuvre 3.5g
+    hybrid           1371    30.5   0.7498     1.935    3.50   symmetric manoeuvre 3.5g
+    hybridPusher     1450    32.8   0.7575     1.848    3.50   symmetric manoeuvre 3.5g
+    tiltrotor        1524    35.1   0.7645     2.368    3.50   symmetric manoeuvre 3.5g
     multicopter    — no wing, so no wing gust case
     sideBySide     — no wing, so no wing gust case
 
@@ -1615,7 +1615,7 @@ STRUCTURAL LOAD CASE GATE PASSED
 
 </details>
 
-<details><summary><code>reg-applicability.mjs</code> — exit 0, 2406 ms</summary>
+<details><summary><code>reg-applicability.mjs</code> — exit 0, 1885 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -1624,11 +1624,11 @@ REGULATORY APPLICABILITY GATE — does the document govern this aircraft?
 
 1. AN OUT-OF-SCOPE DESIGN GETS NO VERDICTS
   PASS  the engine really does produce an out-of-scope design from one slider
-        payload 900 kg (the slider maximum) → MTOW 5883.5 kg, 1.03x the 5700 kg MCTOM
+        payload 900 kg (the slider maximum) → MTOW 5786.2 kg, 1.02x the 5700 kg MCTOM
   PASS  VTOL.2005(a) withdraws the document rather than failing a row
         applies=false; the MCTOM gate reports "out"
   PASS  a design inside every stated gate is in scope but NOT yet complete
-        MTOW 2008.8 kg, 4 seats → applies=true, undecided: VTOL.2000(d)
+        MTOW 2016.3 kg, 4 seats → applies=true, undecided: VTOL.2000(d)
   PASS  an undeclared VNO is offered as something the reader CAN close
         fixable=[VTOL.2000(d)] — MOC-1 (c) has the applicant define VNO, so asking is the correct move
   PASS  declare a seat count AND a VNO and the applicability test COMPLETES
@@ -1660,7 +1660,7 @@ REGULATORY APPLICABILITY GATE — does the document govern this aircraft?
 
 2b. THE DECLARATION IS INERT — it gates, it does not size
   PASS  declaring a VNO changes no sized result, byte for byte
-        runSizing with and without VNO 250 KCAS → identical (104913 chars)
+        runSizing with and without VNO 250 KCAS → identical (105350 chars)
   PASS  the engine derives no VNO of its own
         src/engine.js assigns no VNO — it is read from the parameters or absent
 
@@ -1676,13 +1676,13 @@ REGULATORY APPLICABILITY GATE — does the document govern this aircraft?
   PASS  EASA SC-VTOL / Blade tip Mach responds to the design
         3 distinct value(s) across 13 designs, e.g. 0.4983, 0.6539, 0.5102
   PASS  EASA SC-VTOL / Static margin, lower responds to the design
-        10 distinct value(s) across 13 designs, e.g. 0.1282, 0.1509, 0.1272, 0.1627
+        10 distinct value(s) across 13 designs, e.g. 0.1285, 0.1509, 0.1272, 0.164
   PASS  EASA SC-VTOL / Static margin, upper responds to the design
-        10 distinct value(s) across 13 designs, e.g. 0.1282, 0.1509, 0.1272, 0.1627
+        10 distinct value(s) across 13 designs, e.g. 0.1285, 0.1509, 0.1272, 0.164
   PASS  Category limits / Maximum certificated take-off mass responds to the design
-        11 distinct value(s) across 13 designs, e.g. 2008.83, 1987.92, 1779.88, 1985.42
+        11 distinct value(s) across 13 designs, e.g. 2016.27, 1986.64, 1779.88, 1984.49
   PASS  Category limits / Battery mass fraction responds to the design
-        10 distinct value(s) across 13 designs, e.g. 18, 16.5, 25.5, 18.6
+        10 distinct value(s) across 13 designs, e.g. 18.1, 16.5, 25.5, 18.6
   PASS  Category limits / Hover thrust-to-weight responds to the design
         2 distinct value(s) across 13 designs, e.g. 1.3, 1.05
 
@@ -1716,7 +1716,7 @@ REGULATORY APPLICABILITY GATE — does the document govern this aircraft?
   PASS  the category-conditioned requirements NOT modelled are named, not dropped
         4 listed: VTOL.2240, VTOL.2250(f), VTOL.2510(c), VTOL.2515
   PASS  and the category is a real sizing lever, not a label
-        Basic 1963.6 kg vs Enhanced 2008.8 kg — 45.3 kg of avionics redundancy
+        Basic 1970.7 kg vs Enhanced 2016.3 kg — 45.6 kg of avionics redundancy
   PASS  the compliance panel finally reads the category the engine already honoured
         RegTrackerPanel.jsx references vtolCategory
 
@@ -1724,9 +1724,9 @@ REGULATORY APPLICABILITY GATE — does the document govern this aircraft?
   PASS  nSeats defaults to absent
         DEFAULT_PARAMS.nSeats = null
   PASS  null and absent size identically, so the golden master cannot move
-        both 2008.830000 kg
+        both 2016.270000 kg
   PASS  and a stated seat count still sizes
-        4 seats → 2008.8 kg (cabin check honours the integer)
+        4 seats → 2016.3 kg (cabin check honours the integer)
 
 8. THE LANGUAGE-MODEL PROMPT
   PASS  the model is never asked to state its own training cutoff
@@ -1754,7 +1754,7 @@ REGULATORY APPLICABILITY GATE — does the document govern this aircraft?
   PASS  and a consistent declaration shows no such notice
         VNO 200 KCAS renders no conflict
   PASS  an out-of-scope design is told the document does not apply
-        MTOW 5883.5 kg → the notice is rendered
+        MTOW 5786.2 kg → the notice is rendered
   PASS  and NOT ONE rule group is rendered for it
         0 of 2 rule groups in the markup
   PASS  no ALL PASS or FAIL verdict badge survives out of scope
@@ -1784,7 +1784,7 @@ REGULATORY APPLICABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>blade-twist.mjs</code> — exit 0, 2731 ms</summary>
+<details><summary><code>blade-twist.mjs</code> — exit 0, 1867 ms</summary>
 
 ```
 BLADE TWIST GATE
@@ -1826,7 +1826,7 @@ BLADE TWIST GATE PASSED
 
 </details>
 
-<details><summary><code>control-authority.mjs</code> — exit 0, 2261 ms</summary>
+<details><summary><code>control-authority.mjs</code> — exit 0, 1933 ms</summary>
 
 ```
 FAILURE-MODE CONTROLLABILITY GATE
@@ -1843,10 +1843,10 @@ FAILURE-MODE CONTROLLABILITY GATE
 
   MEASURED, NOT ASSERTED — real rotor stations from engine/geometry.js:
     layout        N   healthy   worst single failure   survivable
-    liftcruise    4    1933.6    -5806.8 (yaw)      0 of 4
-    hybrid       12     953.8      208.4 (yaw)      12 of 12
-    hybridPusher  6    1390.4    -2440.6 (yaw)      0 of 6
-    tiltrotor     6    1409.0    -4756.6 (thrust)   0 of 6
+    liftcruise    4    1973.9    -5927.5 (yaw)      0 of 4
+    hybrid       12     970.8      212.1 (yaw)      12 of 12
+    hybridPusher  6    1415.9    -2482.6 (yaw)      0 of 6
+    tiltrotor     6    1441.8    -4835.9 (thrust)   0 of 6
     multicopter   4    2681.7    -8053.1 (yaw)      0 of 4
     sideBySide    2   — fewer than 4 rotors: the 4-axis allocation cannot be spanned at all, so no failure is survivable by this test
 
@@ -1866,7 +1866,7 @@ FAILURE-MODE CONTROLLABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>hover-dynamics.mjs</code> — exit 0, 1501 ms</summary>
+<details><summary><code>hover-dynamics.mjs</code> — exit 0, 1263 ms</summary>
 
 ```
 HOVER DYNAMICS GATE
@@ -1914,7 +1914,7 @@ HOVER DYNAMICS GATE PASSED
 
 </details>
 
-<details><summary><code>render-freeze.mjs</code> — exit 0, 7238 ms</summary>
+<details><summary><code>render-freeze.mjs</code> — exit 0, 5748 ms</summary>
 
 ```
 RENDER FREEZE GATE
@@ -1952,7 +1952,7 @@ PASS: all 27 views render exactly as committed
 
 </details>
 
-<details><summary><code>design-file.mjs</code> — exit 0, 2766 ms</summary>
+<details><summary><code>design-file.mjs</code> — exit 0, 2221 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -1960,33 +1960,33 @@ DESIGN FILE — reproducible saved designs
 ════════════════════════════════════════════════════════════════════════
 
 1. A saved design reopens to the same result
-  PASS  default: identical after save → JSON → open  — 442 outputs compared, status identical
-  PASS  config liftcruise: identical after save → JSON → open  — 443 outputs compared, status identical
-  PASS  config hybrid: identical after save → JSON → open  — 442 outputs compared, status identical
-  PASS  config hybridPusher: identical after save → JSON → open  — 442 outputs compared, status identical
-  PASS  config tiltrotor: identical after save → JSON → open  — 442 outputs compared, status identical
-  PASS  config multicopter: identical after save → JSON → open  — 341 outputs compared, status identical
-  PASS  config sideBySide: identical after save → JSON → open  — 341 outputs compared, status identical
-  PASS  reserve by distance: identical after save → JSON → open  — 442 outputs compared, status identical
-  PASS  manoeuvre load factor set: identical after save → JSON → open  — 442 outputs compared, status identical
-  PASS  a record compares the whole fingerprint, not a handful of headline numbers  — smallest comparison 341 outputs
-  PASS  stored MTOW is the engine's MTOW for the stored inputs (reserve transform included)  — 2428.87 vs 2428.87
-  PASS  …and the transform matters (running the raw state gives a different aircraft)  — raw 2008.83 vs transformed 2428.87
+  PASS  default: identical after save → JSON → open  — 448 outputs compared, status identical
+  PASS  config liftcruise: identical after save → JSON → open  — 449 outputs compared, status identical
+  PASS  config hybrid: identical after save → JSON → open  — 448 outputs compared, status identical
+  PASS  config hybridPusher: identical after save → JSON → open  — 448 outputs compared, status identical
+  PASS  config tiltrotor: identical after save → JSON → open  — 448 outputs compared, status identical
+  PASS  config multicopter: identical after save → JSON → open  — 347 outputs compared, status identical
+  PASS  config sideBySide: identical after save → JSON → open  — 347 outputs compared, status identical
+  PASS  reserve by distance: identical after save → JSON → open  — 448 outputs compared, status identical
+  PASS  manoeuvre load factor set: identical after save → JSON → open  — 448 outputs compared, status identical
+  PASS  a record compares the whole fingerprint, not a handful of headline numbers  — smallest comparison 347 outputs
+  PASS  stored MTOW is the engine's MTOW for the stored inputs (reserve transform included)  — 2449.44 vs 2449.44
+  PASS  …and the transform matters (running the raw state gives a different aircraft)  — raw 2016.27 vs transformed 2449.44
 
 2. Inputs a record lacks come from fixed defaults, never the session
   PASS  a legacy bare-params design resolves over DEFAULT_PARAMS
-  PASS  …and is flagged legacy with the inputs it lacked listed  — 49 missing
+  PASS  …and is flagged legacy with the inputs it lacked listed  — 48 missing
   PASS  resolveInputs drops the embedded _design block and undefined values
 
 3. The custom airfoil is saved and hashed
-  PASS  changing only the custom airfoil changes the input hash  — 1906ebb4d9f5ab vs 112e157b0a8791
+  PASS  changing only the custom airfoil changes the input hash  — 0057d2e3d1386c vs 0c551792380799
   PASS  the custom airfoil survives the round trip
   PASS  changing one input changes the input hash
   PASS  key order does not change the hash (canonical JSON)
 
 4. Continuity: a changed engine is reported, platform noise is not
-  PASS  an internal engine default moving is reported as changed  — 193 outputs moved
-  PASS  …with take-off mass listed first  — first: MTOW 2612.66 → 2721.07
+  PASS  an internal engine default moving is reported as changed  — 199 outputs moved
+  PASS  …with take-off mass listed first  — first: MTOW 2641.66 → 2771.02
   PASS  …and the message says the engine changed, not the inputs
   PASS  last-bit noise (3e-8 relative) is NOT reported
   PASS  a 2e-5 relative change IS reported
@@ -2034,7 +2034,7 @@ DESIGN FILE: 54 passed, 0 failed
 
 </details>
 
-<details><summary><code>validation-domain.mjs</code> — exit 0, 1526 ms</summary>
+<details><summary><code>validation-domain.mjs</code> — exit 0, 1260 ms</summary>
 
 ```
 VALIDATION DOMAIN GATE
@@ -2043,9 +2043,9 @@ VALIDATION DOMAIN GATE
    multicopter   NASA quadrotor, all-electric  (MTOW 2939 kg, 544.3 kg, 138.9 km; MTOW error -0.3%)
    sideBySide    NASA side-by-side helicopter, all-electric  (MTOW 2223 kg, 544.3 kg, 138.9 km; MTOW error -11.5%)
    liftcruise    NASA lift+cruise, all-electric  (MTOW 3724 kg, 544.3 kg, 138.9 km; MTOW error -23.9%)
-   liftcruise    NASA UAM Lift+Cruise (electric)  (MTOW 4301 kg, 544 kg, 139 km; MTOW error -26.6%)
-   tiltrotor     Joby S4  (MTOW 2404 kg, 453 kg, 161 km; MTOW error -2.3%)
-   hybrid        Archer Midnight  (MTOW 3175 kg, 454 kg, 100 km; MTOW error -11.6%)
+   liftcruise    NASA UAM Lift+Cruise (electric)  (MTOW 4301 kg, 544 kg, 139 km; MTOW error -24%)
+   tiltrotor     Joby S4  (MTOW 2404 kg, 453 kg, 161 km; MTOW error -1.5%)
+   hybrid        Archer Midnight  (MTOW 3175 kg, 454 kg, 100 km; MTOW error -11%)
    multicopter   Volocopter VoloCity  (MTOW 900 kg, 200 kg, 35 km; MTOW error 2.5%)
    liftcruise    NASA lift+cruise, turboelectric (Silva 2018)  (MTOW 2727 kg, 544.3 kg, 138.9 km; MTOW error -19.2%)
    Payload        200 - 544.3 kg
@@ -2058,7 +2058,7 @@ PASS  the app's domain file matches the harnesses
 
 </details>
 
-<details><summary><code>result-warnings.mjs</code> — exit 0, 2075 ms</summary>
+<details><summary><code>result-warnings.mjs</code> — exit 0, 2044 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -2109,7 +2109,7 @@ RESULT WARNINGS — NASA-STD-7009B [M&S 26], [M&S 32]-[M&S 34]
 6. [M&S 33]/[M&S 34] every output has an uncertainty statement
   PASS  every registered output gets a statement and a method
   PASS  outputs never compared with an aircraft say no estimate is available
-  PASS  take-off mass states a measured error over the validated aircraft  — Measured against 7 published aircraft: mean absolute take-off-mass error 11.2%; 1 of them tilt+lift hybrid: -11.6%.
+  PASS  take-off mass states a measured error over the validated aircraft  — Measured against 7 published aircraft: mean absolute take-off-mass error 10.7%; 1 of them tilt+lift hybrid: -11.0%.
   PASS  a turboelectric design is judged only against turboelectric aircraft  — Measured against 1 published turboelectric aircraft: mean absolute take-off-mass error 19.2%; 1 of them lift+cruise: -19.2%.
   PASS  …and says so when no aircraft of the layout exists
 
@@ -2126,7 +2126,7 @@ RESULT WARNINGS: 41 passed, 0 failed
 
 </details>
 
-<details><summary><code>provenance-report.mjs</code> — exit 0, 1143 ms</summary>
+<details><summary><code>provenance-report.mjs</code> — exit 0, 1222 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
@@ -2137,21 +2137,21 @@ INPUTS — 85 registered
   validated     3    4%  █
   calibrated    8    9%  ████
   sourced      31   36%  ███████████████
-  derived      15   18%  ███████
-  unverified   28   33%  █████████████
+  derived      16   19%  ████████
+  unverified   27   32%  █████████████
 
-OUTPUTS — 461 registered
+OUTPUTS — 467 registered
   validated    16    3%  █
   calibrated    5    1%  
-  sourced     140   30%  ████████████
-  derived     229   50%  ████████████████████
+  sourced     141   30%  ████████████
+  derived     234   50%  ████████████████████
   unverified   70   15%  ██████
 
 ══════════════════════════════════════════════════════════════════════════
-Engine emits 461 distinct keys over 16 runs (461 on the reference run); 461 are registered.
+Engine emits 467 distinct keys over 16 runs (467 on the reference run); 467 are registered.
 Every emitted output is classified.
 
-Bottom line: 16 of 461 engine outputs (3%) have been
+Bottom line: 16 of 467 engine outputs (3%) have been
 compared numerically against published aircraft data.
 
 ══════════════════════════════════════════════════════════════════════════
@@ -2160,7 +2160,7 @@ PROVENANCE GATE PASSED - every output any layout emits is classified.
 
 </details>
 
-<details><summary><code>api.mjs</code> — exit 0, 3603 ms</summary>
+<details><summary><code>api.mjs</code> — exit 0, 3079 ms</summary>
 
 ```
 ENGINE API GATE
@@ -2170,16 +2170,16 @@ ENGINE API GATE
   PASS  size() returns warnings and the domain with the numbers
   PASS  sizeMany() sizes each case
   PASS  a design that does not close reports converged: false
-  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"f00a53b43c8a","dirty":true,"builtAt":null,"mode":"node-api"}
+  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"1b4016963f9f","dirty":true,"builtAt":null,"mode":"node-api"}
   PASS  reopen() reproduces a record
   PASS  engineVersion() reports the package and format versions
   PASS  docs/API.md documents every export  — 19 exports
-  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit f00a53b43c8a, uncommitted changes; API 1; design format 1)
+  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit 1b4016963f9f, uncommitted changes; API 1; design format 1)
   PASS  a clean design exits 0
   PASS  a design that does not close exits 1
   PASS  unreadable input exits 2
   PASS  an array gives one JSON line per case, each with its warnings
-  PASS  --reopen reproduces a saved design file and exits 0  — identical: 0 of 442 stored outputs moved
+  PASS  --reopen reproduces a saved design file and exits 0  — identical: 0 of 448 stored outputs moved
   PASS  no app module imports src/api.js (it uses node:fs)
   PASS  package.json exports the API and the command
 
@@ -2188,7 +2188,7 @@ ENGINE API GATE PASSED (17 checks)
 
 </details>
 
-<details><summary><code>turboelectric.mjs</code> — exit 0, 1773 ms</summary>
+<details><summary><code>turboelectric.mjs</code> — exit 0, 1542 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -2227,15 +2227,15 @@ TURBOELECTRIC POWERTRAIN
   PASS  δ√θ at 6,000 ft ISA is 0.785 (δ 0.8014, θ 0.9588)  — 0.7847
   PASS  a hot day raises √θ (δ unchanged at sea level)
   PASS  a battery aircraft reports no fuel and no turboshaft
-  PASS  hot and high needs a bigger turboshaft (lapse is applied)  — 479.3 -> 808.7 kW
-  PASS  a longer mission carries more fuel but not a bigger emergency pack in proportion  — fuel 38.28 -> 62.35 kg, pack 75.05 -> 77.4 kg
+  PASS  hot and high needs a bigger turboshaft (lapse is applied)  — 479.6 -> 809.4 kW
+  PASS  a longer mission carries more fuel but not a bigger emergency pack in proportion  — fuel 38.55 -> 62.83 kg, pack 75.07 -> 77.46 kg
   PASS  payload-range: less payload buys no range (tank is full), more payload costs range
 
 4. Badges and summaries follow the powertrain
 
   PASS  the pack and mission energy are not VAL on a turboelectric design
   PASS  the fuel outputs are not VAL on a battery design (they are zero)
-  PASS  the take-off-mass card quotes the measured error for its own powertrain  — -19.2% on the one published turboelectric aircraft | ±11.2% mean error over 7 published aircraft
+  PASS  the take-off-mass card quotes the measured error for its own powertrain  — -19.2% on the one published turboelectric aircraft | ±10.7% mean error over 7 published aircraft
   PASS  the card no longer types its own accuracy figure
   PASS  every chip reads the powertrain of the design on screen
   PASS  the Cost tab says it does not price fuel
@@ -2247,7 +2247,7 @@ TURBOELECTRIC GATE PASSED (24 checks)
 
 </details>
 
-<details><summary><code>cpacs-export.mjs</code> — exit 0, 1495 ms</summary>
+<details><summary><code>cpacs-export.mjs</code> — exit 0, 1380 ms</summary>
 
 ```
 CPACS AND TRACEABILITY EXPORT GATE
@@ -2261,10 +2261,10 @@ CPACS AND TRACEABILITY EXPORT GATE
   PASS  multicopter: valid CPACS 3.5.1
   PASS  sideBySide: valid CPACS 3.5.1
   PASS  …and the validator rejects a document missing a required mass
-  PASS  liftcruise: take-off mass, OEM + payload, and group sums all agree with the engine  — MTOM 3560.29, OEM 3105.29 + payload 455
-  PASS  hybrid: take-off mass, OEM + payload, and group sums all agree with the engine  — MTOM 2612.66, OEM 2157.66 + payload 455
-  PASS  hybridPusher: take-off mass, OEM + payload, and group sums all agree with the engine  — MTOM 2691.51, OEM 2236.52 + payload 455
-  PASS  tiltrotor: take-off mass, OEM + payload, and group sums all agree with the engine  — MTOM 2300.68, OEM 1845.68 + payload 455
+  PASS  liftcruise: take-off mass, OEM + payload, and group sums all agree with the engine  — MTOM 3647.03, OEM 3192.03 + payload 455
+  PASS  hybrid: take-off mass, OEM + payload, and group sums all agree with the engine  — MTOM 2641.66, OEM 2186.66 + payload 455
+  PASS  hybridPusher: take-off mass, OEM + payload, and group sums all agree with the engine  — MTOM 2725.09, OEM 2270.09 + payload 455
+  PASS  tiltrotor: take-off mass, OEM + payload, and group sums all agree with the engine  — MTOM 2320.93, OEM 1865.93 + payload 455
   PASS  multicopter: take-off mass, OEM + payload, and group sums all agree with the engine  — MTOM 2706.05, OEM 2251.05 + payload 455
   PASS  sideBySide: take-off mass, OEM + payload, and group sums all agree with the engine  — MTOM 2044.31, OEM 1589.31 + payload 455
   PASS  names are XML-escaped
@@ -2283,7 +2283,7 @@ EXPORT GATE PASSED (25 checks)
 
 </details>
 
-<details><summary><code>release.mjs</code> — exit 0, 147 ms</summary>
+<details><summary><code>release.mjs</code> — exit 0, 162 ms</summary>
 
 ```
 RELEASE GATE
@@ -2309,7 +2309,7 @@ RELEASE GATE PASSED (0.2.0-dev, in preparation)
 
 </details>
 
-<details><summary><code>aircraft-classes.mjs</code> — exit 0, 550 ms</summary>
+<details><summary><code>aircraft-classes.mjs</code> — exit 0, 531 ms</summary>
 
 ```
 AIRCRAFT-CLASS GATE
@@ -2324,8 +2324,8 @@ AIRCRAFT-CLASS GATE
   PASS  class "transport" is complete
   PASS  class "bizjet" is complete
   PASS  class "turboprop" is complete
-  PASS  eVTOL DEFAULT_PARAMS unchanged (content hash)  — now 0bbf25325c7d59, pinned 0bbf25325c7d59
-  PASS  sizeDesign(eVTOL) equals the app's own call in every output  — 442 outputs
+  PASS  eVTOL DEFAULT_PARAMS unchanged (content hash)  — now 159dfff349a567, pinned 159dfff349a567
+  PASS  sizeDesign(eVTOL) equals the app's own call in every output  — 448 outputs
   PASS  an unknown class ("glider") is refused
   PASS  an unknown class ("") is refused
   PASS  an unknown class ("toString") is refused
@@ -2348,7 +2348,7 @@ AIRCRAFT-CLASS GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>trainer.mjs</code> — exit 0, 149 ms</summary>
+<details><summary><code>trainer.mjs</code> — exit 0, 154 ms</summary>
 
 ```
 TRAINER GATE
@@ -2418,7 +2418,7 @@ TRAINER GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>transport.mjs</code> — exit 0, 1421 ms</summary>
+<details><summary><code>transport.mjs</code> — exit 0, 1092 ms</summary>
 
 ```
 TRANSPORT GATE
@@ -2502,7 +2502,7 @@ TRANSPORT GATE PASSED (60 checks)
 
 </details>
 
-<details><summary><code>transport-mission.mjs</code> — exit 0, 354 ms</summary>
+<details><summary><code>transport-mission.mjs</code> — exit 0, 264 ms</summary>
 
 ```
 TRANSPORT MISSION AND LAYOUT GATE
@@ -2565,7 +2565,7 @@ TRANSPORT MISSION GATE PASSED (44 checks)
 
 </details>
 
-<details><summary><code>transport-aero.mjs</code> — exit 0, 2446 ms</summary>
+<details><summary><code>transport-aero.mjs</code> — exit 0, 1907 ms</summary>
 
 ```
 TRANSPORT DRAG BUILD-UP GATE
@@ -2622,7 +2622,7 @@ TRANSPORT DRAG GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>bizjet.mjs</code> — exit 0, 449 ms</summary>
+<details><summary><code>bizjet.mjs</code> — exit 0, 355 ms</summary>
 
 ```
 BUSINESS-JET GATE
@@ -2656,7 +2656,7 @@ BUSINESS-JET GATE PASSED (15 checks)
 
 </details>
 
-<details><summary><code>aircraft-engine.mjs</code> — exit 0, 1459 ms</summary>
+<details><summary><code>aircraft-engine.mjs</code> — exit 0, 1100 ms</summary>
 
 ```
 AIRCRAFT ENGINE GATE
@@ -2867,7 +2867,7 @@ AIRCRAFT ENGINE GATE PASSED (166 checks)
 
 </details>
 
-<details><summary><code>turboprop.mjs</code> — exit 0, 170 ms</summary>
+<details><summary><code>turboprop.mjs</code> — exit 0, 138 ms</summary>
 
 ```
 TURBOPROP GATE
@@ -2952,22 +2952,22 @@ TURBOPROP GATE PASSED (59 checks)
 
 </details>
 
-<details><summary><code>paper-claims.mjs</code> — exit 1, 13137 ms</summary>
+<details><summary><code>paper-claims.mjs</code> — exit 0, 14752 ms</summary>
 
 ```
 PAPER CLAIM GATE
 ========================================================================
 Checking 2 document(s): README.md, VFS-Forum-83-abstract.md
 
-  ok   binding: lift+cruise ratio at 161 km 0.747
+  ok   binding: lift+cruise ratio at 161 km 0.745
   ok   binding: multicopter ratio at 161 km 0.236
-  ok   binding: hybrid ratio at 161 km  0.791
-  ok   binding: lift+cruise crossover   114.6 km
-  ok   binding: hybrid crossover        122.0 km
-  ok   binding: hybrid pusher crossover 110.5 km
-  ok   binding: tiltrotor crossover     114.0 km
-  ok   binding: lift+cruise ratio at 10 km 1.485
-  ok   binding: tiltrotor ratio at 10 km 1.110
+  ok   binding: hybrid ratio at 161 km  0.777
+  ok   binding: lift+cruise crossover   114.3 km
+  ok   binding: hybrid crossover        120.2 km
+  ok   binding: hybrid pusher crossover 109.3 km
+  ok   binding: tiltrotor crossover     112.4 km
+  ok   binding: lift+cruise ratio at 10 km 1.482
+  ok   binding: tiltrotor ratio at 10 km 1.093
   ok   binding: multicopter ratio at 10 km 0.548
   ok   binding: side-by-side ratio at 10 km 0.755
   ok   binding: multicopter at 5-min reserve 1.059
@@ -2988,26 +2988,22 @@ Checking 2 document(s): README.md, VFS-Forum-83-abstract.md
   ok   quadrotor rotor error            −14.5%
   ok   rotor model MAE, 8 variants      25.1%
   ok   best rotor model in sweep        24.7%
-  MISS registered outputs               461
+  ok   registered outputs               467
   ok   validated outputs                16
   ok   golden master cases              277
 
-FAIL: 1 claim(s) in paper/ no longer match the harnesses
-  - registered outputs: expected "461" (not found in any paper document)
-
-The paper argues that published accuracy figures drift from the code.
-Update paper/ with the measured values before submitting it.
+PASS: all 32 numeric claims in paper/ are reproduced by the harnesses
 ```
 
 </details>
 
-<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 1853 ms</summary>
+<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 379 ms</summary>
 
 ```
 VTOL AUTOPILOT GATE
 ==============================================================================
 
-  4 winged configurations sized: liftcruise 10052 kg / Vs 41 · tiltrotor 10765 kg / Vs 43 · hybrid 2508 kg / Vs 40 · hybridPusher 2629 kg / Vs 41
+  4 winged configurations sized: liftcruise 9260 kg / Vs 41 · tiltrotor 10113 kg / Vs 43 · hybrid 2539 kg / Vs 40 · hybridPusher 2662 kg / Vs 41
 
   A WING IS THE PRECONDITION
   PASS  a configuration with no wing is refused, not exported  — a multirotor has no transition to describe; the drone half exports those
@@ -3035,7 +3031,7 @@ VTOL AUTOPILOT GATE
   DIFFERENT QUANTITIES, NOT DIFFERENT NAMES
   PASS  neither transition DURATION is emitted, and the refusal says why they differ  — PX4's is the whole transition; ArduPilot's is only the tail after minimum airspeed
   PASS  the back transition is refused on BOTH sides, as different physical quantities  — a deceleration and a duration cannot be cross-converted
-  PASS  mass goes to PX4 and is reported as a gap for ArduPilot  — 10052 kg has nowhere to go in ArduPilot
+  PASS  mass goes to PX4 and is reported as a gap for ArduPilot  — 9260 kg has nowhere to go in ArduPilot
   PASS  the hover-throttle refusal is the same one the multirotor exporter makes
 
   CONFIGURATION, MAPPED BY MECHANISM
@@ -3059,7 +3055,7 @@ VTOL AUTOPILOT GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-frames.mjs</code> — exit 0, 88 ms</summary>
+<details><summary><code>drone-frames.mjs</code> — exit 0, 62 ms</summary>
 
 ```
 DRONE FRAME GATE
@@ -3082,7 +3078,7 @@ DRONE FRAME GATE PASSED (12 checks)
 
 </details>
 
-<details><summary><code>drone-components.mjs</code> — exit 0, 100 ms</summary>
+<details><summary><code>drone-components.mjs</code> — exit 0, 75 ms</summary>
 
 ```
 DRONE COMPONENT CATALOGUE GATE
@@ -3124,7 +3120,7 @@ DRONE COMPONENT CATALOGUE GATE PASSED (13 checks)
 
 </details>
 
-<details><summary><code>drone-rotor.mjs</code> — exit 0, 135 ms</summary>
+<details><summary><code>drone-rotor.mjs</code> — exit 0, 110 ms</summary>
 
 ```
 DRONE ROTOR GATE
@@ -3184,7 +3180,7 @@ DRONE ROTOR GATE PASSED (14 checks)
 
 </details>
 
-<details><summary><code>drone-motor.mjs</code> — exit 0, 116 ms</summary>
+<details><summary><code>drone-motor.mjs</code> — exit 0, 76 ms</summary>
 
 ```
 DRONE MOTOR GATE
@@ -3280,7 +3276,7 @@ DRONE MOTOR GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-esc.mjs</code> — exit 0, 117 ms</summary>
+<details><summary><code>drone-esc.mjs</code> — exit 0, 83 ms</summary>
 
 ```
 DRONE ESC GATE
@@ -3346,7 +3342,7 @@ DRONE ESC GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-battery.mjs</code> — exit 0, 99 ms</summary>
+<details><summary><code>drone-battery.mjs</code> — exit 0, 83 ms</summary>
 
 ```
 DRONE BATTERY GATE
@@ -3408,7 +3404,7 @@ DRONE BATTERY GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>drone-sizing.mjs</code> — exit 0, 124 ms</summary>
+<details><summary><code>drone-sizing.mjs</code> — exit 0, 108 ms</summary>
 
 ```
 DRONE SIZING GATE
@@ -3459,7 +3455,7 @@ DRONE SIZING GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-trade.mjs</code> — exit 0, 961 ms</summary>
+<details><summary><code>drone-trade.mjs</code> — exit 0, 782 ms</summary>
 
 ```
 DRONE TRADE GATE
@@ -3507,7 +3503,7 @@ DRONE TRADE GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-airframe.mjs</code> — exit 0, 102 ms</summary>
+<details><summary><code>drone-airframe.mjs</code> — exit 0, 85 ms</summary>
 
 ```
 DRONE AIRFRAME GATE
@@ -3565,7 +3561,7 @@ DRONE AIRFRAME GATE PASSED (33 checks)
 
 </details>
 
-<details><summary><code>drone-dynamics.mjs</code> — exit 0, 1730 ms</summary>
+<details><summary><code>drone-dynamics.mjs</code> — exit 0, 1267 ms</summary>
 
 ```
 DRONE DYNAMICS GATE
@@ -3634,7 +3630,7 @@ DRONE DYNAMICS GATE PASSED (38 checks)
 
 </details>
 
-<details><summary><code>drone-playback.mjs</code> — exit 0, 574 ms</summary>
+<details><summary><code>drone-playback.mjs</code> — exit 0, 459 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -3739,7 +3735,7 @@ DRONE PLAYBACK GATE PASSED
 
 </details>
 
-<details><summary><code>drone-risk.mjs</code> — exit 0, 163 ms</summary>
+<details><summary><code>drone-risk.mjs</code> — exit 0, 138 ms</summary>
 
 ```
 DRONE RISK GATE
@@ -3792,7 +3788,7 @@ DRONE RISK GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-avionics.mjs</code> — exit 0, 104 ms</summary>
+<details><summary><code>drone-avionics.mjs</code> — exit 0, 89 ms</summary>
 
 ```
 DRONE AVIONICS GATE
@@ -3843,7 +3839,7 @@ DRONE AVIONICS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>drone-autopilot.mjs</code> — exit 0, 155 ms</summary>
+<details><summary><code>drone-autopilot.mjs</code> — exit 0, 126 ms</summary>
 
 ```
 DRONE AUTOPILOT GATE
@@ -3924,7 +3920,7 @@ DRONE AUTOPILOT GATE PASSED (52 checks)
 
 </details>
 
-<details><summary><code>drone-obstacles.mjs</code> — exit 0, 93 ms</summary>
+<details><summary><code>drone-obstacles.mjs</code> — exit 0, 72 ms</summary>
 
 ```
 DRONE OBSTACLE GATE
@@ -4014,7 +4010,7 @@ DRONE OBSTACLE GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 6758 ms</summary>
+<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 5727 ms</summary>
 
 ```
 DRONE FLIGHT ENERGY GATE
@@ -4062,7 +4058,7 @@ DRONE FLIGHT ENERGY GATE PASSED (29 checks)
 
 </details>
 
-<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 6075 ms</summary>
+<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 5069 ms</summary>
 
 ```
 DRONE FLIGHT WORKER GATE
@@ -4092,7 +4088,7 @@ DRONE FLIGHT WORKER GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-regulatory.mjs</code> — exit 0, 96 ms</summary>
+<details><summary><code>drone-regulatory.mjs</code> — exit 0, 87 ms</summary>
 
 ```
 DRONE REGULATORY GATE

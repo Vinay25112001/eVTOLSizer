@@ -112,7 +112,7 @@ Battery mass is sized as the heavier of two requirements — energy for the
 mission, and power to hover: `W_battery = max(W_E, W_P)`. Reporting that a tool
 applies "dual energy and power constraints" says nothing about which of them
 ever governs. Measured across all six configurations at the reference mission,
-**energy binds on every one**, with W_P/W_E between 0.236 and 0.791. The `max`
+**energy binds on every one**, with W_P/W_E between 0.236 and 0.777. The `max`
 never selects W_P, so no weight difference at that mission is attributable to
 the power constraint, however prominently the dual formulation is described.
 
@@ -121,10 +121,10 @@ mission variables, not one:
 
 | configuration | W_P/W_E at 161 km | crossover range | W_P/W_E at 10 km |
 |---|---|---|---|
-| lift+cruise | 0.747 | 114.6 km | 1.485 |
-| hybrid (tilt+lift) | 0.791 | 122.0 km | 1.437 |
-| hybrid pusher | 0.726 | 110.5 km | 1.314 |
-| tiltrotor | 0.753 | 114.0 km | 1.110 |
+| lift+cruise | 0.745 | 114.3 km | 1.482 |
+| hybrid (tilt+lift) | 0.777 | 120.2 km | 1.417 |
+| hybrid pusher | 0.719 | 109.3 km | 1.302 |
+| tiltrotor | 0.742 | 112.4 km | 1.093 |
 | side-by-side | 0.329 | none in 2–161 km | 0.755 |
 | multicopter | 0.236 | none in 2–161 km | 0.548 |
 
@@ -177,7 +177,7 @@ around it. This is the only construction that can distinguish a bad model from a
 bad convergence, and it is what allowed the −46.7% to be attributed to the
 equation rather than to the tool.
 
-**Machine-readable provenance on every output.** All 461 registered engine
+**Machine-readable provenance on every output.** All 467 registered engine
 outputs carry a status — validated, sourced, calibrated, derived, or assumed —
 with its citation, and continuous integration fails if any output is emitted
 without one. `validated` has a single meaning: the value has been numerically
@@ -324,7 +324,7 @@ The Call for Papers weighs completion status, so it is stated precisely.
 the seventeen-harness verification suite, all gated in continuous integration; the
 39 published comparisons reported in §2; component-level testing of every
 weight model against all eight NASA concept variants; provenance registration of
-all 461 outputs; the generated validation report with its staleness gate; and the
+all 467 outputs; the generated validation report with its staleness gate; and the
 NASA-STD-7009B assessment; and the analysis layers of §6, including an
 inertia tensor built from the drawn geometry, hover attitude dynamics after
 Malpica et al., and the robustness testing that decides which comparisons may

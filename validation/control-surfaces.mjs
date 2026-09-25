@@ -21,7 +21,8 @@ import * as CFG from "../src/engine/configuration.js";
 import { tauEffectiveness, tauEffectivenessNASA, tailThickness,
          requiredChordFraction, TAIL_TC_MIN, TAIL_TC_MAX,
          TAIL_TC_WING_FRACTION, RUDDERVATOR_CHORD_FRAC_MIN,
-         RUDDERVATOR_CHORD_FRAC_MAX, ELEVATOR_DEFLECTION_MAX_DEG }
+         RUDDERVATOR_CHORD_FRAC_MAX, ELEVATOR_DEFLECTION_MAX_DEG,
+         tailParasiteAreas }
   from "../src/engine/control-surfaces.js";
 import { DEFAULT_PARAMS } from "../src/lib/defaults.js";
 
@@ -181,6 +182,110 @@ check(Math.abs(t30.MAC_vt - rows[0].r.MAC_vt) > 1e-4,
   `taper 0.40 -> MAC_vt ${rows[0].r.MAC_vt}, taper 0.30 -> ${t30.MAC_vt}`);
 check(DEFAULT_PARAMS.vtRuddervatorChordFrac === 0.30,
   "vtRuddervatorChordFrac is a registered input inside its published band");
+
+/* ── 8. THE SIZED TAIL REACHES THE DRAG TOTAL ────────────────────────────
+   This is the property that was absent. Both drag build-ups took tail wetted
+   area as a fixed fraction of WING area and applied a bare 1.05 form factor
+   with no thickness term, so the entire tail-sizing chain changed the drawn
+   aircraft and the weights and changed the drag by nothing at all. The test
+   is behavioural rather than structural: double the tail volume coefficients
+   and the aircraft must get heavier. Before the fix this moved MTOW by
+   0.00%. */
+console.log("\n8. Tail size now reaches the drag total:\n");
+console.log("   layout          MTOW   CD0tot    2x tail volume -> dMTOW");
+let minMove = Infinity;
+for (const k of WINGED) {
+  const a = runSizing(build(k));
+  const b = runSizing(build(k, { vtCh: 0.90, vtCv: 0.064 }));
+  const d = (b.MTOW - a.MTOW) / a.MTOW * 100;
+  minMove = Math.min(minMove, d);
+  console.log("   " + k.padEnd(14) + (a.MTOW ?? NaN).toFixed(0).padStart(7)
+    + (a.CD0tot ?? NaN).toFixed(5).padStart(10) + (d >= 0 ? "+" : "") + d.toFixed(2).padStart(12) + "%");
+}
+check(minMove > 1.0,
+  "doubling the tail volume coefficients makes the aircraft heavier",
+  `smallest move ${minMove.toFixed(2)}% — it was 0.00% when the tail drag used a fixed fraction of wing area`);
+
+/* THE ABOVE IS NOT ENOUGH ON ITS OWN, and a mutant proved it: a bigger tail
+   is also a HEAVIER tail, so MTOW moves through the weight path even when the
+   drag path is still decoupled. Reverting the in-loop copy to the fixed
+   fraction left that check green. What isolates the drag path is the tail
+   drag AREA THE SIZING LOOP ITSELF USED, which the engine now reports. */
+console.log("\n   isolating the DRAG path — tail area used by the sizing loop:\n");
+console.log("   layout          fDqTail   2x volume   ratio   resolved");
+let minRatio = Infinity, allResolved = true;
+for (const k of WINGED) {
+  const a = runSizing(build(k));
+  const b = runSizing(build(k, { vtCh: 0.90, vtCv: 0.064 }));
+  const ratio = b.fDqTailSizing / a.fDqTailSizing;
+  minRatio = Math.min(minRatio, ratio);
+  allResolved = allResolved && a.tailDragResolved === true;
+  console.log("   " + k.padEnd(14) + (a.fDqTailSizing ?? NaN).toFixed(4).padStart(8)
+    + (b.fDqTailSizing ?? NaN).toFixed(4).padStart(11) + ratio.toFixed(3).padStart(9)
+    + String(a.tailDragResolved).padStart(10));
+}
+check(minRatio > 1.5,
+  "the SIZING LOOP's own tail drag responds to the tail volume coefficients",
+  `smallest ratio ${minRatio.toFixed(3)} — this is the check that a fixed wing fraction fails`);
+check(allResolved,
+  "and it resolved from the real geometry on every winged layout",
+  "resolved:false would mean it fell back to the fixed fraction");
+
+/* And it must respond to the tail THICKNESS, which reaches it only through
+   the sourced wing-to-tail rule. A mutant that pinned the drag-side t/c back
+   at the old 0.09 survived until this check existed. */
+const thinTail = runSizing(build("liftcruise", { tc: 0.10 }));   // -> tail t/c 0.090
+const thickTail = runSizing(build("liftcruise", { tc: 0.15 }));  // -> tail t/c 0.120
+/* NOT a bare "drag went up" check, for the same reason as above: a thicker
+   WING makes a heavier aircraft and therefore a bigger tail, so the tail drag
+   rises even when its thickness is pinned — a mutant that froze the drag-side
+   t/c at the old 0.09 survived exactly that test. What isolates thickness is
+   the FORM FACTOR the drag used, which depends on t/c and nothing else. */
+const ffExpected = (tc) => (1 + (0.6 / 0.30) * tc + 100 * tc ** 4) * 1.05;
+check(Math.abs(thinTail.tailDragFF - ffExpected(tailThickness(0.10))) < 1e-5
+   && Math.abs(thickTail.tailDragFF - ffExpected(tailThickness(0.15))) < 1e-5,
+  "the drag's form factor is the Raymer FF at the COMPUTED tail thickness",
+  `wing t/c 0.10 -> tail ${tailThickness(0.10).toFixed(3)}, FF ${thinTail.tailDragFF.toFixed(4)};`
+  + ` wing t/c 0.15 -> tail ${tailThickness(0.15).toFixed(3)}, FF ${thickTail.tailDragFF.toFixed(4)}`);
+check(thickTail.tailDragFF > thinTail.tailDragFF,
+  "so a thicker tail section really does cost more drag",
+  "and it moves because of THICKNESS, not because the aircraft grew");
+
+/* The helper must REFUSE a degenerate arm rather than divide by it. */
+const degenerate = tailParasiteAreas({ Swing: 20, MAC: 1.4, span: 13, lv: -2,
+  Ch: 0.45, Cv: 0.032, tc: 0.12, taper: 0.4 });
+const good = tailParasiteAreas({ Swing: 20, MAC: 1.4, span: 13, lv: 3.8,
+  Ch: 0.45, Cv: 0.032, tc: 0.12, taper: 0.4 });
+/* A CALLER THAT NEVER DECLARED A TAIL. Several harnesses build a bare
+   parameter object with no vtCh/vtCv at all. While the tail drag was a fixed
+   fraction of wing area that was harmless, because the coefficients reached
+   nothing that mattered. Coupling the tail to drag made a missing coefficient
+   fatal: Ch*S*MAC/lv went NaN, the mission energy followed, the battery mass
+   collapsed to NaN and MTOW fell 40% — and the inertia gate caught it, because
+   a NaN mass is skipped by the tensor and shows up as 10% of the aircraft
+   going missing. Falling back is right here rather than substituting a default
+   tail volume: a caller who did not declare a tail has not asked for one to be
+   invented. */
+const noTail = tailParasiteAreas({ Swing: 20, MAC: 1.4, span: 13, lv: 3.8,
+  Ch: undefined, Cv: undefined, tc: 0.12, taper: 0.4 });
+check(noTail.resolved === false
+   && Number.isFinite(noTail.Swh) && Number.isFinite(noTail.Swv) && noTail.Swh > 0,
+  "undeclared tail volume coefficients fall back FINITE, and say they did not resolve",
+  "a missing coefficient used to reach the mission energy as NaN and take MTOW 40% with it");
+const bareRun = runSizing({ ...build("liftcruise"), vtCh: undefined, vtCv: undefined });
+check(Number.isFinite(bareRun.MTOW) && Number.isFinite(bareRun.Wbat) && bareRun.Wbat > 0,
+  "and a whole sizing run with no declared tail still closes with a finite battery",
+  `MTOW ${bareRun.MTOW?.toFixed(1)}, Wbat ${bareRun.Wbat?.toFixed(1)} — both NaN before this guard`);
+
+check(degenerate.resolved === false && degenerate.Swh > 0,
+  "a non-positive tail arm falls back and SAYS it did not resolve",
+  "a drag model that silently returns infinity is worse than one that says it could not decide");
+check(good.resolved === true && Math.abs(good.Sh - 0.45 * 20 * 1.4 / 3.8) < 1e-9,
+  "a good arm gives the volume-coefficient area exactly",
+  `Sh = Ch*S*MAC/lv = ${good.Sh.toFixed(4)} m2`);
+check(good.FF > 1.25 && Math.abs(good.FF - (1 + 2 * 0.12 + 100 * 0.12 ** 4) * 1.05) < 1e-9,
+  "and the Raymer form factor on the tail's own thickness, not a bare 1.05",
+  `FF = ${good.FF.toFixed(4)} at t/c 0.12, against the 1.05 that carried no thickness at all`);
 
 console.log("\n" + "=".repeat(78));
 if (fails.length) {

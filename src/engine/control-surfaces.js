@@ -99,6 +99,69 @@ export const RUDDERVATOR_CHORD_FRAC_MAX = 0.40;
    it trim consumes, so a reader can apply their own margin knowingly. */
 export const ELEVATOR_DEFLECTION_MAX_DEG = 15;
 
+/* =====================================================================
+   TAIL PARASITE DRAG FROM THE TAIL THAT WAS ACTUALLY SIZED
+   =====================================================================
+   THE SIZED TAIL USED NOT TO REACH THE DRAG TOTAL AT ALL. Both drag
+   build-ups -- the one inside the sizing loop and the one that reports --
+   took tail wetted area as FIXED FRACTIONS OF WING AREA (18% horizontal,
+   12% vertical) and applied a bare form factor of 1.05 with no thickness
+   term, where the wing beside them used the full Raymer FF on its own t/c.
+   So the whole tail-sizing chain -- volume coefficients, Sh_req/Sv_req, the
+   panel geometry -- changed the drawn aircraft and the weights, and changed
+   the drag not at all.
+
+   It was measurable: correcting the V-tail section thickness moved that
+   block's own CD0vt by 6.7% and MTOW by exactly nothing, because CD0vt is
+   computed near the tail block and then only RETURNED -- it never appears in
+   CD0tot. Two tail drag calculations existed and the careful one was thrown
+   away.
+
+   This is the one both call sites now use, so they cannot drift apart again;
+   the duplicated-constant defect is the one this codebase keeps hitting.
+
+   THE AREAS COME FROM THE VOLUME COEFFICIENTS, which is where tail area
+   comes from in the first place:
+       Sh = Ch * S * MAC / lv        Sv = Cv * S * b / lv
+   and the wetted area of a lifting surface is the same expression the wing
+   and the V-tail panel already use, 2 S (1 + 0.25 t/c (1 + taper/4)), with
+   the Raymer form factor FF = (1 + (0.6/(x/c)) t/c + 100 (t/c)^4) * 1.05 at
+   x/c = 0.30 for a 4-digit section.
+
+   WHEN THE GEOMETRY IS DEGENERATE -- no wing, or a tail arm that has gone
+   non-positive because the wing sits behind the tail station -- this returns
+   `resolved:false` and the caller keeps the old fixed-fraction estimate
+   rather than dividing by a bad arm. A drag model that silently returns
+   infinity is worse than one that says it could not decide. */
+export function tailParasiteAreas({ Swing, MAC, span, lv, Ch, Cv, tc, taper,
+    fallbackH = 0.18, fallbackV = 0.12 }) {
+  const wetted = (S) => 2 * S * (1 + 0.25 * tc * (1 + taper * 0.25));
+  const FF = (1 + (0.6 / 0.30) * tc + 100 * tc ** 4) * 1.05;
+  /* THE VOLUME COEFFICIENTS ARE PART OF THE VALIDITY TEST, not just the
+     geometry. A caller that never declared a tail passes them as undefined --
+     several harnesses build a bare parameter object and do exactly that --
+     and Ch * Swing * MAC / lv is then NaN. Before this fed the DRAG that was
+     harmless, because the tail drag was a fixed fraction of wing area and the
+     coefficients reached nothing that mattered; once the tail was coupled to
+     drag, a missing coefficient propagated NaN into the mission energy and
+     collapsed the battery mass to NaN, taking MTOW 40% with it. Falling back
+     is the honest answer here rather than substituting 0.45/0.032: a caller
+     who did not declare a tail has not asked for one to be invented, and
+     `resolved:false` says which answer was given. */
+  const ok = Swing > 0 && MAC > 0 && span > 0 && lv > 0
+    && Number.isFinite(Swing) && Number.isFinite(MAC)
+    && Number.isFinite(span) && Number.isFinite(lv)
+    && Number.isFinite(Ch) && Number.isFinite(Cv) && Ch > 0 && Cv > 0;
+  if (!ok) {
+    return { resolved: false, FF: 1.05,
+      Sh: Swing * fallbackH, Sv: Swing * fallbackV,
+      Swh: 2 * Swing * fallbackH, Swv: 2 * Swing * fallbackV };
+  }
+  const Sh = Ch * Swing * MAC / lv;
+  const Sv = Cv * Swing * span / lv;
+  return { resolved: true, FF, Sh, Sv, Swh: wetted(Sh), Swv: wetted(Sv) };
+}
+
 /* Thin-airfoil control-surface effectiveness. `cfc` is the surface chord as a
    fraction of the surface-plus-fixed chord. Exact at both limits. */
 export function tauEffectiveness(cfc) {

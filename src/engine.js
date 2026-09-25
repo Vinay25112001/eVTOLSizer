@@ -20,7 +20,7 @@ import { cabinAdequacy, OCCUPANT_MASS_KG, CABIN_FLOOR_PER_OCCUPANT_M2,
          equivalentDiameter } from "./engine/cabin.js";
 import { atmosphereSet, viscosity, applySizingDay, SIZING_DAYS } from "./engine/atmosphere.js";
 import { selectAirfoil } from "./engine/airfoils.js";
-import { tauEffectiveness, tailThickness, requiredChordFraction,
+import { tauEffectiveness, tailThickness, requiredChordFraction, tailParasiteAreas,
          RUDDERVATOR_CHORD_FRAC_MIN, RUDDERVATOR_CHORD_FRAC_MAX,
          ELEVATOR_DEFLECTION_MAX_DEG }
   from "./engine/control-surfaces.js";
@@ -28,7 +28,8 @@ import { rotorcraftDragCD0, DRAG_CONSTANTS } from "./engine/drag.js";
 import { componentWeights, WEIGHT_CONSTANTS } from "./engine/weights.js";
 import { componentCG, staticMarginCriterion, CG_STATIONS, ROTOR_STATIONS, STABILITY_AUGMENTATION } from "./engine/cg.js";
 import { solveWingPosition, WING_FRAC_MIN, WING_FRAC_MAX } from "./engine/wingPosition.js";
-import { wingArea, WING_LOADING_DEFAULT_NM2, CL_CRUISE_MAX_DEFAULT } from "./engine/wing.js";
+import { wingArea, WING_LOADING_DEFAULT_NM2, CL_CRUISE_MAX_DEFAULT,
+         oswaldEfficiency } from "./engine/wing.js";
 import { wingBox, WINGBOX_MATERIALS, WINGBOX_CONSTANTS } from "./engine/wingbox.js";
 import { loadCases, SC_VTOL_GUSTS, airframeLoadFactors, manoeuvreLimits, thrustBorneLimitFactor,
          SC_VTOL_N_LIMIT_FLOOR, SC_VTOL_N_NEG_FLOOR } from "./engine/loadcases.js";
@@ -721,6 +722,24 @@ function runSizingCore(p0) {
   let solidityReqOut=p.solidity??0.10;   // unclamped requirement, for the buildability check
   let spBattery=0, WE_out=0, WP_out=0;   // battery sizing values escaping the loop
   let sedEffOut=0, packUsableOut=false;
+  /* The tail parasite drag AREA the SIZING LOOP actually used, captured at
+     convergence. Exposed because the reported tail drag is a SECOND
+     computation: without this, a check on the reported value passes even
+     when the in-loop copy has drifted back to a fixed fraction of wing
+     area — which is exactly what a mutant demonstrated. */
+  let fDqTailSizingOut=0, tailDragResolvedOut=false, tailDragFFOut=0;
+  /* ── OSWALD SPAN EFFICIENCY, COMPUTED ────────────────────────────────
+     e was a flat 0.85 input and ranked THIRD of thirteen unverified inputs
+     by leverage, at 6.9% of MTOW. It is not a free constant: it follows
+     from aspect ratio, taper, thickness, sweep and Mach, all of which this
+     engine already knows. [SRC] Howe 2000 eq.6.14a via Scholz ch.13
+     eq.13.26-27 -- see engine/wing.js. An explicitly supplied p.eOsw is an
+     OVERRIDE and is honoured, the same idiom as p.spBattery, and the run
+     reports which applied so a substitution cannot pass in silence. */
+  const machCr_=p.vCruise/Math.sqrt(1.4*287.05287*(288.15-0.0065*(p.cruiseAlt??0)));
+  const oswald_=oswaldEfficiency({AR:p.AR,taper:p.taper,tc:p.tc,mach:machCr_});
+  const eOswUsed=p.eOsw!=null?p.eOsw:(oswald_.e??0.85);
+  const eOswOverridden=p.eOsw!=null;
   let cHoverOut=null, cDerateOut=0, kPeukertOut=PEUKERT_K_DEFAULT, cOverriddenOut=false;
   let etaBatEffOut=1, EvertOut=0;
   let groupSumsOut=null, gearOut=null, avOut=null, sizeCondOut=null, PmotInstalledOut=null, nzWeightsOut=null;
@@ -793,7 +812,15 @@ function runSizingCore(p0) {
        spheroid below, where Raymer collapses to zero. A pod's drag had been
        computed on that collapsed area. */
     const Swf_i=fuselageWettedArea(fL_i,fD_i);
-    const Swhs_i=2*Swing_i*0.18,Swvs_i=2*Swing_i*0.12;
+    /* THE TAIL THAT WAS SIZED, NOT A FRACTION OF THE WING. The arm is
+       formable here: Xac follows from Cr_i/MAC_i just above, and wingLEfrac
+       is an input with a default rather than a solved quantity at this point,
+       so nothing has to move. */
+    const Xac_ii=Cr_i-MAC_i+0.25*MAC_i;
+    const lv_i=fusLenEff*0.88-(fusLenEff*(p.wingLEfrac??0.2589)+Xac_ii);
+    const tailD_i=tailParasiteAreas({Swing:Swing_i,MAC:MAC_i,span:bW_i,lv:lv_i,
+      Ch:p.vtCh,Cv:p.vtCv,tc:tailThickness(p.tc),taper:p.vtTaper??0.4});
+    const Swhs_i=tailD_i.Swh,Swvs_i=tailD_i.Swv;
     const Swn_i=p.nPropHover*0.10*Math.PI*Math.pow(propDiamEff/2,2);
     const Cfw_i=0.455/Math.log10(Re_i)**2.58/(1+0.144*(p.vCruise/aCr)**2)**0.65;
     const Cff_i=0.455/Math.log10(rhoCr*p.vCruise*fL_i/muCr)**2.58/(1+0.144*(p.vCruise/aCr)**2)**0.65;
@@ -841,7 +868,9 @@ function runSizingCore(p0) {
        reported `wing` entry stays null (the honest value); the SUM uses 0. */
     const fDqWing_i =(Swing_i>0 && isFinite(Swing_i)) ? Cfw_i*FFw_i*Sww_i : 0;   // wing, m^2
     const fDqFus_i  =Cff_i*FFf_i*Swf_i;               // fuselage
-    const fDqTail_i =Cfw_i*1.05*(Swhs_i+Swvs_i);      // horizontal + vertical tail
+    const fDqTail_i =Cfw_i*tailD_i.FF*(Swhs_i+Swvs_i); // tail, Raymer FF on tail t/c
+    fDqTailSizingOut=fDqTail_i; tailDragResolvedOut=tailD_i.resolved;
+    tailDragFFOut=tailD_i.FF;
     const fDqNac_i  =Cfw_i*1.30*Swn_i;                // nacelles
     /* Dimensional areas straight from drag.js — no wing round-trip. */
     const fDqRotor_i=(extra_i.hubArea||0)+(extra_i.stoppedArea||0)
@@ -861,7 +890,7 @@ function runSizingCore(p0) {
        it, and L/D from the polar. Wingless: none of these three quantities
        exist, and the cruise efficiency is the calibrated rotor-borne value. */
     const CLcr_i=hasWing?W/(qCr_i*Swing_i):null;
-    const CDi_i =hasWing?CLcr_i**2/(Math.PI*p.AR*p.eOsw):null;
+    const CDi_i =hasWing?CLcr_i**2/(Math.PI*p.AR*eOswUsed):null;
     const LDact_i=hasWing?CLcr_i/(CD0_i+CDi_i):rotorborneLoD;
     /* CLOSE THE LOOP.
        LDact_i used to be computed here and then thrown away: cruise and reserve
@@ -1026,7 +1055,7 @@ function runSizingCore(p0) {
         const q  = 0.5*rhoMid*V*V;
         if(!(q>0)||!(Swing_i>0)) return LDcruise_i;
         const CL = W*Math.cos(gammaDeg*Math.PI/180)/(q*Swing_i);
-        const CD = CD0_i + CL*CL/(Math.PI*p.AR*p.eOsw);
+        const CD = CD0_i + CL*CL/(Math.PI*p.AR*eOswUsed);
         return CD>0 ? CL/CD : LDcruise_i;
       };
       LDcl = p.flatClimbPenalty===true
@@ -1659,7 +1688,10 @@ function runSizingCore(p0) {
      earlier, which has convergence consequences and is its own item rather
      than a line to change in passing. Registered here so the next reader
      meets it at the code rather than in a note somewhere else. */
-  const Swhs=2*Swing*0.18, Swvs=2*Swing*0.12;
+  const tailD=tailParasiteAreas({Swing,MAC,span:bWing,
+    lv:fL*0.88-(fL*(p.wingLEfrac??0.2589)+Xac),
+    Ch:p.vtCh,Cv:p.vtCv,tc:tailThickness(p.tc),taper:p.vtTaper??0.4});
+  const Swhs=tailD.Swh, Swvs=tailD.Swv;
   // Nacelle wetted area: proportional to rotor radius² (not fixed arbitrary constants)
   // S_wet_nac ≈ N_rot × K_nac × π × R² where K_nac≈0.10 (nacelle/fairing ≈ 10% of disk area)
   const Swn=p.nPropHover * 0.10 * Math.PI * Math.pow(propDiamEff/2, 2);
@@ -1677,7 +1709,7 @@ function runSizingCore(p0) {
   const FFw=(1+(0.6/xc_maxthick)*p.tc+100*p.tc**4)*1.05;  // Raymer Eq 12.35
   const FFf=1+60/(fL/fD)**3+(fL/fD)/400;
   const CD0w=Cfw*FFw*Sww/Swing,CD0f=Cff*FFf*Swf/Swing;
-  const CD0h=Cfw*1.05*Swhs/Swing,CD0v=Cfw*1.05*Swvs/Swing;
+  const CD0h=Cfw*tailD.FF*Swhs/Swing,CD0v=Cfw*tailD.FF*Swvs/Swing;
   const CD0n=Cfw*1.30*Swn/Swing;
   // Landing gear drag: eVTOL with retractable/folding gear uses CD0g ≈ 0.003
   // Raymer Table 12.6: fixed gear = 0.015; retractable = 0.003; fully faired = 0.001
@@ -1693,7 +1725,7 @@ function runSizingCore(p0) {
   // Induced drag — Oswald efficiency method (Raymer §12.6)
   // NOTE: rotor-wing aerodynamic interference not modelled (can add 5-15% to CDi for eVTOL)
   // Non-planar lift effects (winglets, distributed lift) also neglected
-  const CDi=hasWing?CLcruise**2/(Math.PI*p.AR*p.eOsw):null;
+  const CDi=hasWing?CLcruise**2/(Math.PI*p.AR*eOswUsed):null;
   const CDtot=hasWing?CD0tot+CDi:null;
   /* Wing-borne aircraft: L/D from the polar. Rotor-borne: the CALIBRATED
      effective L/De — see the note at rotorborneLoD. It is deliberately the same
@@ -2331,7 +2363,7 @@ function runSizingCore(p0) {
   const rpFerryPoint={payload:0,range:ferryRange,segment:"ferry"};
 
   /* Aerodynamic polar — uses fitted kPolar for custom airfoils, Oswald for library */
-  const k_polar=selAF.kPolar || 1/(Math.PI*p.AR*p.eOsw);
+  const k_polar=selAF.kPolar || 1/(Math.PI*p.AR*eOswUsed);
   const polarData=Array.from({length:81},(_,i)=>{
     const alpha=-4+i*0.25,CL=0.40+2*Math.PI*(1+0.77*selAF.tc)*alpha*Math.PI/180;
     const CD=selAF.CDmin+k_polar*(CL-CLcruise)**2;
@@ -3894,6 +3926,10 @@ function runSizingCore(p0) {
     bvt_panel:+bvt_panel.toFixed(3),Cr_vt:+Cr_vt.toFixed(3),Ct_vt:+Ct_vt.toFixed(3),MAC_vt:+MAC_vt.toFixed(3),
     sweep_vt:+sweep_vt.toFixed(2),Srv:+Srv.toFixed(3),Wvt_total:+Wvt_total.toFixed(1),
     CD0vt:+CD0vt.toFixed(6),SM_vt:+SM_vt.toFixed(4),delta_rv_deg:+delta_rv_deg.toFixed(2),
+    fDqTailSizing:+fDqTailSizingOut.toFixed(6), tailDragResolved:tailDragResolvedOut,
+    eOsw:+eOswUsed.toFixed(6), eOswOverridden:eOswOverridden,
+    eOswInDomain:oswald_.inDomain,
+    tailDragFF:+tailDragFFOut.toFixed(6),
     /* The three constants that used to be hardcoded, now reported so the
        geometry can be audited from the output alone, plus the effectiveness
        that converts a lift requirement into a deflection. */

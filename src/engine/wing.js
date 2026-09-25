@@ -1,4 +1,67 @@
 /* =====================================================================
+   OSWALD SPAN EFFICIENCY — COMPUTED, NOT ASSUMED
+   =====================================================================
+   e was a flat input defaulting to 0.85, and it ranked THIRD of thirteen in
+   validation/unverified-leverage.mjs at 6.9% of MTOW across its plausible
+   range. A wing's span efficiency is not a free constant: it follows from
+   the planform.
+
+   [SRC] Howe, D., "Aircraft Conceptual Design Synthesis" (2000) eq.6.14a,
+   reproduced as eqs.13.26-13.27 of Scholz, D., "Aircraft Design", HAW
+   Hamburg / HOOU open courseware, ch.13 "Drag":
+
+     "According to Howe 2000 (equation 6.14a), the Oswald factor e can be
+      estimated for the subsonic range and for transonic flows (M < 0.95)
+      for aircraft with a wing aspect ratio of A > 5 from
+
+          e = 1 / { (1 + 0.12 M^6)
+                    [ 1 + (0.142 + f(L) A (10 t/c)^0.33)/(cos Phi_25)^2
+                        + 0.1 (3 Ne + 1)/(4 + A)^0.8 ] }
+
+      In this equation M is the flight Mach number, A is the (effective)
+      aspect ratio, t/c is the relative airfoil thickness, Phi_25 is the wing
+      sweep of the 25% line, Ne is the number of engines on the wing (if
+      none, then Ne = 0).
+
+          f(L) = 0.005 (1 + 1.5 (L - 0.6)^2)
+
+      In this equation L is the wing taper. A typical value for f(L) is
+      0.0062."
+
+   So e depends on aspect ratio, taper, thickness, sweep and Mach — every one
+   of which this engine already knows. At the tool's defaults (A 9, taper
+   0.45, t/c 0.15, M 0.15, unswept, no wing-mounted engines) it returns 0.828
+   against the 0.85 that was assumed.
+
+   Ne = 0 HERE, AND THAT IS PHYSICS RATHER THAN AN OMISSION. Howe's term
+   describes the interference of podded engine NACELLES on a wing. A
+   distributed-electric eVTOL carries rotors on booms, not turbofan pods, and
+   no source in the corpus extends the term to them. Applying it would be a
+   transfer, not a citation; it is exposed as an input so a configuration
+   with genuine wing-mounted nacelles can declare them.
+
+   OUT OF DOMAIN IS REPORTED, NOT EXTRAPOLATED. Howe states A > 5 and
+   M < 0.95. Below or above that the fit is outside its stated range, and
+   this says so rather than returning a number that looks like the others. */
+export const OSWALD_MIN_AR = 5;     // [SRC] Howe via Scholz: "aspect ratio of A > 5"
+export const OSWALD_MAX_MACH = 0.95; // [SRC] same: "transonic flows (M < 0.95)"
+
+export function oswaldTaperTerm(taper) {
+  return 0.005 * (1 + 1.5 * (taper - 0.6) ** 2);
+}
+
+export function oswaldEfficiency({ AR, taper, tc, mach = 0, sweep25Deg = 0, nWingEngines = 0 }) {
+  const inDomain = AR > OSWALD_MIN_AR && mach < OSWALD_MAX_MACH
+    && taper > 0 && tc > 0 && Number.isFinite(AR);
+  if (!(AR > 0) || !(taper > 0) || !(tc > 0)) return { e: null, inDomain: false };
+  const cos2 = Math.cos(sweep25Deg * Math.PI / 180) ** 2;
+  const planform = (0.142 + oswaldTaperTerm(taper) * AR * Math.pow(10 * tc, 0.33)) / cos2;
+  const nacelle = 0.1 * (3 * nWingEngines + 1) / Math.pow(4 + AR, 0.8);
+  const e = 1 / ((1 + 0.12 * mach ** 6) * (1 + planform + nacelle));
+  return { e, inDomain };
+}
+
+/* =====================================================================
    WING AREA — sized by constraint, not by asserting a cruise CL
    =====================================================================
    WHAT WAS WRONG

@@ -131,7 +131,12 @@ export const DEFAULT_PARAMS = {
        same from either end. */
     reserveMinutes:20, reserveBasis:"time", reserveDistanceKm:60,
     // ── Aerodynamics (calibrated vs Joby S4 / Archer Midnight / NASA NDARC) ──
-    LD:8.50,AR:9,eOsw:0.85,taper:0.45,tc:0.15,   // L/De [SRC NASA L+C-E]; see CONFIG_DEFAULTS.LD_target
+    /* NO eOsw HERE, DELIBERATELY — same reason cRateDerate is absent. The
+       Oswald span efficiency is now COMPUTED from the planform (Howe 2000 via
+       Scholz ch.13; see engine/wing.js), and any value left here would
+       override that on every run and silently restore the flat 0.85. It
+       survives as an explicit override for a caller who has a better number. */
+    LD:8.50,AR:9,taper:0.45,tc:0.15,   // L/De [SRC NASA L+C-E]; see CONFIG_DEFAULTS.LD_target
 
     /* WING SIZING — W/S is the design variable (Raymer ch.5 constraint
        diagram) and cruise CL is DERIVED from the wing the aircraft ends up

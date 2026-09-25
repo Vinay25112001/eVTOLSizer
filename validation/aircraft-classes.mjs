@@ -82,7 +82,15 @@ import { AIRCRAFT_CLASSES, CLASS_IDS, DEFAULT_CLASS, classOf, sizeDesign, classF
    the corrected deflections; MTOW is unchanged, because that build-up turns
    out not to reach the drag total at all (see the note at the tail wetted
    areas). */
-const PINNED_DEFAULTS_HASH = "0bbf25325c7d59";
+/* MOVED FOR THE OSWALD FACTOR, and by a REMOVAL again. `eOsw:0.85` left
+   DEFAULT_PARAMS because the span efficiency is now COMPUTED from the
+   planform (Howe 2000 eq.6.14a via Scholz ch.13; see engine/wing.js), and any
+   value left here would have overridden that on every run exactly as it did
+   before -- the same trap `cRateDerate` set. It survives as an explicit
+   override, reported through eOswOverridden. Sized results moved: the
+   computed 0.828 costs slightly more induced drag than the assumed 0.85, and
+   the tail drag coupling in the same change moves them further. */
+const PINNED_DEFAULTS_HASH = "159dfff349a567";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 let pass = 0, fail = 0;

@@ -377,8 +377,19 @@ export function groundStance({ type, mtowKg, fusH, wingZ, mainOleo }) {
      trunnion rides at the wing's vertical station. That station is a
      convention, so this is too. */
   const trunnionZ = wingZ;
+  const z = trunnionZ - oleo - tyreRadius;
+  /* PROVENANCE, in this module's own vocabulary, because a drawing reads
+     it to decide whether it may put a dimension line on the overall
+     height. `sourced` is the category made for exactly this: not a
+     result, not a bare convention, but a value a published source gives
+     a range for and which sits inside it — dimensionable PROVIDED the
+     drawing says whose number it is. Where there is no published range
+     the stance is `drawn`, and a drawn quantity carries no dimension. */
+  const cite = "ground line checked against Boeing 737-7 ACAP §2.3.1 "
+             + "(fuselage bottom 1.27–1.55 m, top 5.05–5.51 m)";
   return {
-    z: trunnionZ - oleo - tyreRadius,
+    z,
+    zProvenance: type === "transport" ? sourced(z, cite) : drawn(z, "the ground line is a convention for this class"),
     terms: { trunnionZ, oleo, tyreRadius, nominalNose },
     tyre: pick ? pick.tyre : null,
     /* Height of the lowest fuselage point above the ground. Reported, but

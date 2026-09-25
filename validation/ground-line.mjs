@@ -274,6 +274,39 @@ console.log("\n5. What is checked and what is only drawn");
   check(MAIN_WHEELS_PER_AXLE.trainer === 1
      && ["transport", "bizjet", "turboprop"].every((t) => MAIN_WHEELS_PER_AXLE[t] === 2),
     "the trainer is single-wheel and the Part 25 classes are dual");
+
+  /* ── WHAT THE DRAWING IS ALLOWED TO DIMENSION ──────────────────────
+     The general arrangement dimensions OVERALL HEIGHT to the ground
+     line, and its title block promises "dimensioned features are
+     sized". The ground line is not sized on any class — it is a
+     construction on the wing station, which the same title block lists
+     as a convention. So the drawing was contradicting itself on all
+     four classes, and it is the `sourced` category that resolves it:
+     dimensionable where a published range exists to sit inside,
+     provided the source is named; otherwise no dimension.
+
+     This is checked here rather than in the render gate because the
+     PERMISSION is a property of the geometry, not of the SVG. */
+  check(GA.transport.stance.zProvenance.sourced === true
+     && GA.transport.stance.zProvenance.sized !== true,
+    "the transport's ground line is `sourced` — dimensionable, but not a result");
+
+  check(/Boeing 737-7 ACAP/.test(GA.transport.stance.zProvenance.cite || ""),
+    "and it carries the citation the drawing is required to render",
+    GA.transport.stance.zProvenance.cite);
+
+  check(unchecked.every((t) => {
+    const p = GA[t].stance.zProvenance;
+    return p.sourced !== true && p.sized !== true && typeof p.why === "string";
+  }), "the other three are plain `drawn`, so the drawing must omit the height dimension",
+    "a drawn quantity carries no dimension — the same rule the wing station already obeys");
+
+  /* The provenance must agree with the value it wraps, or the drawing
+     would dimension one number and the model would hold another. */
+  TYPES.forEach((t) => {
+    check(Math.abs(GA[t].stance.zProvenance.value - GA[t].stance.z) < 1e-12,
+      `${t}: the dimensioned ground line is the one the model computed`);
+  });
 }
 
 console.log("\n" + "=".repeat(78));

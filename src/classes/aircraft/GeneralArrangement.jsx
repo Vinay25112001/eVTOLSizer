@@ -250,8 +250,20 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
         ))}
         <line x1={sX(-m * 0.5)} y1={sZ(zBot)} x2={sX(L + m * 0.5)} y2={sZ(zBot)}
               stroke={SC.muted} strokeWidth={u * 2.4} />
-        <Dim x1={sX(-u * 30)} y1={sZ(vtTop)} x2={sX(-u * 30)} y2={sZ(zBot)} vertical
-             label={`height  ${both(vtTop - zBot)}`} />
+        {/* OVERALL HEIGHT is measured to the GROUND LINE, so it is only as
+            good as the stance — and the stance is not sized, it is a
+            construction resting on the wing station, which this drawing
+            lists as a convention. So the dimension is drawn only where
+            the ground line has a published range to sit inside, and the
+            title block names the source. Everywhere else it is omitted,
+            which is the same rule the nose fineness and the wing station
+            already obey. Before this the height was dimensioned on every
+            class while the title block said "dimensioned features are
+            sized", which was not true of any of them. */}
+        {g.stance.zProvenance.sourced && (
+          <Dim x1={sX(-u * 30)} y1={sZ(vtTop)} x2={sX(-u * 30)} y2={sZ(zBot)} vertical
+               label={`height  ${both(vtTop - zBot)}`} />
+        )}
         {viewLabel(sX(0), sideTop - u * 8, "SIDE", `fin ${g.vt.area.toFixed(1)} m²  ·  tailplane ${g.ht.area.toFixed(1)} m²`)}
       </g>
 
@@ -321,6 +333,12 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
               Dimensioned features are sized. Tail section thickness {(tailTC * 100).toFixed(1)} % is computed off the
               wing (Scholz ch.9). Nose and tail-cone fineness, wing station longitudinal and vertical, dihedral, tail
               sweep and the tailplane and fin root stations are drawing conventions, not results, and carry no dimension.
+              {g.stance.zProvenance.sourced
+                ? ` Overall height is measured to the ground line, which is not sized either: it is the wing station
+                    less the oleo length less the tyre static loaded radius, and it is dimensioned here only because
+                    that construction is ${g.stance.zProvenance.cite}.`
+                : " The ground line is a construction on the wing station and has no published range for this class, so"
+                  + " overall height carries no dimension."}
             </text>
           </g>
         );

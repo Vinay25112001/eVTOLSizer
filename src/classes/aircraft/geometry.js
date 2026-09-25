@@ -28,7 +28,9 @@
      z  up
    ===================================================================== */
 
-const FT = 0.3048, IN = 0.0254;
+import { selectMainTyre, selectLightAircraftTyre } from "../../engine/gear/tyre-select.js";
+
+const FT = 0.3048, IN = 0.0254, LB_PER_KG = 2.20462262;
 
 const sized = (value) => ({ value, sized: true });
 const drawn = (value, why) => ({ value, sized: false, why });
@@ -251,6 +253,155 @@ function trainerGeometry(result) {
 
 /* ── the arrangement ─────────────────────────────────────────────────── */
 
+/* ── THE GROUND LINE ──────────────────────────────────────────────────
+   How high the aeroplane stands. This was one term and it was the wrong
+   one: the previous version set the belly-to-ground distance equal to the
+   FLOPS oleo length, `-(fusH/2 + mainOleo)`. That is a category error
+   twice over.
+
+   `mainGearOleoIn` is FLOPS's oleo LENGTH, the strut from the TRUNNION to
+   the AXLE — LANDING-GEAR.md section 2 says so in as many words — so it is
+   measured from neither the belly nor the ground. And an aeroplane stands
+   on its TYRES, not on its axles: section 1.5 puts the axle one static
+   loaded radius up. Stacked properly there are three terms:
+
+       ground = trunnion station − oleo length − static loaded radius
+
+   WHY THIS WAS WORTH FIXING BEFORE THE GEAR GEOMETRY (G6) IS BUILT. The
+   old form put the transport's fuselage centreline 4.118 m up. Boeing's
+   737-7 ground-clearance table (ACAP D6-38A004 Rev K section 2.3.1, PDF
+   page 29) gives fuselage BOTTOM 1.27–1.55 m and TOP 5.05–5.51 m, i.e. a
+   centreline at 3.16–3.53 m. The drawn stance was 17–30 % too tall, and
+   the vertical CG, the turnover criterion and the tip-back angle are all
+   measured from it.
+
+   ADDING THE MISSING TYRE ALONE MAKES IT WORSE — 4.118 m becomes 4.679 m.
+   That is what identifies the REFERENCE, not the missing tyre, as the
+   dominant error, and it is checked in the gate so the reasoning cannot
+   quietly rot.
+
+   WHAT IS SOURCED HERE AND WHAT IS NOT, because they are not the same:
+     - the oleo length is the class's own input (on the transport, the
+       Boeing deck's own 84 in, marked `sourced` in its defaults);
+     - the static loaded radius is the selected tyre's tabulated `slrIn`,
+       from the Goodyear data book;
+     - the TRUNNION STATION is sized nowhere in this tool. Main gear on
+       these classes hangs off the wing, so it is taken at the wing's
+       vertical station — which is itself a drawing convention (see
+       `wingZ`). It is not smuggled in: Boeing's published clearance
+       implies a trunnion 0.56–0.93 m below the 737-7's centreline, and
+       `wingZ` puts it at 0.635 m, inside that. One published band is a
+       check on this term, not a derivation of it, and the whole result
+       stays `drawn`.
+
+   THE SPLIT WE CANNOT COMPUTE YET, AND WHY IT DOES NOT BIND. Selecting a
+   main tyre needs the static load split, which needs the gear stations A
+   and B, which is G6 and is not built. It does not bind, but not for the
+   comfortable reason: swept across the measured nose-load band the tyre's
+   loaded radius moves 12.5 % on the transport, 0.456 m to 0.513 m. What
+   saves it is that 0.057 m is small against the 0.37 m width of Boeing's
+   own published band, so EVERY pick in the band lands inside it. The gate
+   sweeps the band and checks that, rather than checking two ends.
+
+   WHY THE RADIUS IS JUMPY, WHICH IS A PROPERTY OF THE SELECTOR AND WORTH
+   KNOWING DOWNSTREAM. `smallestTyre` picks the least-OVER-RATED tyre — it
+   minimises rated load, not size — and the Goodyear book is not monotone
+   in size against rating: an H49x19.0-22 is rated 41,000 lb and an
+   H44.5x16.5-21, four and a half inches smaller, is rated 44,700 lb. So
+   which tyre comes back is sharp in LOAD and incidental in GEOMETRY. That
+   is the right reading of a regulation that is a load rule, and it is
+   what G1–G4 were validated on; but anything geometric downstream — this
+   ground line, and G7's stowage volume, which is driven by outside
+   diameter — has to know it is reading an incidental number.
+
+   For the same reason, loading the mains with the WHOLE aeroplane as a
+   "conservative bound" is not admissible: it returns a 20.00-20, 19 %
+   larger in radius than the 737-800's actual tyre. It happens to land
+   inside the clearance band anyway, which is exactly why the gate leans
+   on reproducing the published TYRE and not only on the band. */
+
+/* Static nose-load fractions actually flown, LANDING-GEAR.md section 3.4:
+   seven 737 and 777 rows, 4.6 % (777-200 at the aft CG) to 12.7 % (the
+   same aeroplane at the forward CG).
+
+   NOTE A DRIFT IN THE NOTE ITSELF. Its summary table (section 3.7) quotes
+   this band as "5.6–12.7 %", which drops the 777 row that sets the
+   minimum, and `src/engine/gear/ground-loads.js` copied the summary. The
+   DATA table is the authority and is what is used here; the summary and
+   the copy are wrong at the low end. */
+export const NOSE_LOAD_BAND = Object.freeze({ min: 0.046, max: 0.127 });
+
+/* Wheels per main axle. Two main legs throughout. Dual wheels on the three
+   Part 25 classes and a single wheel on the trainer: the trainer is not in
+   dispute (the Cessna 172 of section 3.6 has one wheel a side), and the
+   other three are a CONVENTION, checked only by its consequence — the tyre
+   it produces is compared against the published exemplar for the class. */
+export const MAIN_WHEELS_PER_AXLE = Object.freeze({
+  transport: 2, bizjet: 2, turboprop: 2, trainer: 1,
+});
+
+/* The trainer is sized by pressure, not by load. Section 3.6 is explicit:
+   "The tool must not size GA tyres to the section 25.733 limit — it will
+   pick a tyre two sizes too small", and measures the Cessna 172's main
+   tyre at 69 % of its rating. 42 psi is that aeroplane's own 6.00-6 6PR
+   inflation and the low end of the 42–55 psi band section 3.7 gives for
+   trainers. It is a declared cap, and it reproduces the 172's published
+   tyre, which is the only check available. */
+export const TRAINER_MAX_PSI = 42;
+
+/* The main tyre the stance stands on, at a given nose-load fraction.
+   Exported so the gate can sweep the fraction rather than trust one. */
+export function stanceMainTyre(type, mtowKg, noseFraction) {
+  if (!(mtowKg > 0)) return null;
+  const wheelsPerAxle = MAIN_WHEELS_PER_AXLE[type] ?? 2;
+  const legs = 2;
+  const mainLoadLb = mtowKg * LB_PER_KG * (1 - noseFraction);
+  const pick = type === "trainer"
+    ? selectLightAircraftTyre({ loadPerTyreLb: mainLoadLb / (legs * wheelsPerAxle),
+                                maxPsi: TRAINER_MAX_PSI })
+    : selectMainTyre({ mainLoadTotalLb: mainLoadLb, legs, wheelsPerAxle });
+  return pick.resolved ? pick : null;
+}
+
+/* The ground plane, in the drawing's own axes (z up, origin on the
+   fuselage centreline). Returns the terms as well as the answer, because
+   a drawing that cannot say WHICH term it is unsure of cannot be audited
+   — and because G6 will replace the trunnion term first. */
+export function groundStance({ type, mtowKg, fusH, wingZ, mainOleo }) {
+  const oleo = Math.max(mainOleo || 0, 0.3);   // a class that reports no gear still stands on something
+  const band = NOSE_LOAD_BAND;
+  const nominalNose = (band.min + band.max) / 2;
+  const pick = stanceMainTyre(type, mtowKg, nominalNose);
+  const tyreRadius = pick ? pick.tyre.slrIn * IN : 0;
+  /* Main gear hangs off the wing on every class this tool draws, so the
+     trunnion rides at the wing's vertical station. That station is a
+     convention, so this is too. */
+  const trunnionZ = wingZ;
+  return {
+    z: trunnionZ - oleo - tyreRadius,
+    terms: { trunnionZ, oleo, tyreRadius, nominalNose },
+    tyre: pick ? pick.tyre : null,
+    /* Height of the lowest fuselage point above the ground. Reported, but
+       the CENTRELINE height is what the gate checks: belly clearance is
+       centreline minus the fuselage RADIUS, and this tool's transport
+       fuselage is 3.969 m deep against the real 737's 3.76 m, so the two
+       published targets cannot both be met by a correct stance. The
+       centreline figure is the one this model predicts; the belly figure
+       carries somebody else's 0.21 m. */
+    bellyClearance: -(trunnionZ - oleo - tyreRadius) - fusH / 2,
+    /* Only the transport has a published ground-clearance table in this
+       corpus to be checked against: the three ACAPs held here (737 MAX,
+       777, A320) are all jet transports, and no turboprop or trainer
+       clearance data was obtainable. The other three classes carry the
+       same construction and no external check, and say so. */
+    validated: type === "transport",
+    why: type === "transport"
+      ? "checked against Boeing 737-7 ACAP section 2.3.1 fuselage bottom 1.27–1.55 m"
+      : "no published ground-clearance table for this class is held in the corpus; "
+      + "the construction is the transport's and is unchecked here",
+  };
+}
+
 export function generalArrangement(result) {
   if (!result || !Number.isFinite(result.spanM) || !Number.isFinite(result.wingAreaM2)) return null;
   const type = result.type;
@@ -356,10 +507,13 @@ export function generalArrangement(result) {
         : nacelles.filter((n) => n.kind === "pod").map((n) => ({ x: n.x, y: n.y, z: n.z, d: raw.propeller.diameter })))
     : [];
 
-  /* Ground line. The wheels are not sized yet, so the stance comes from the
-     oleo lengths, which are real inputs, and the drawing does not dimension
-     the track or the wheelbase until a gear model sizes them. */
-  const groundZ = -(val(fusH) / 2 + Math.max(raw.gear.mainOleo, 0.3));
+  /* Ground line — see THE GROUND LINE above. The drawing still does not
+     dimension the track or the wheelbase; those need G6. */
+  const stance = groundStance({
+    type, mtowKg: result.mtowKg, fusH: val(fusH),
+    wingZ: val(wingZ), mainOleo: raw.gear.mainOleo,
+  });
+  const groundZ = stance.z;
 
   return {
     type, label: result.typeLabel || type,
@@ -370,7 +524,7 @@ export function generalArrangement(result) {
           sweepDeg: drawn(wing.sweepDeg + 4, "tail sweep is not sized") },
     vt: { area: raw.vt.area, height: vtHeight, ...vtC, rootLE: vtRootLE,
           sweepDeg: drawn(wing.sweepDeg + 12, "fin sweep is not sized") },
-    nacelles, props, groundZ, tTail: raw.tTail, engines: raw.engines,
+    nacelles, props, groundZ, stance, tTail: raw.tTail, engines: raw.engines,
     engineLocation: raw.engineLocation,
     /* Everything a dimension line may legitimately be drawn against. */
     dimensions: {

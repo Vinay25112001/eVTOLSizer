@@ -26,7 +26,9 @@
 
    That is the whole reason a nose gear carries so little: B is small
    because the CG sits just ahead of the main gear. LANDING-GEAR.md
-   section 3.4 measures 5.6-12.7 % on flown aircraft. The ADP-style "90/10
+   section 3.4 measures 4.6-12.7 % on flown aircraft (its SUMMARY table
+   in section 3.7 says 5.6 %, dropping the 777-200 aft-CG row that sets
+   the minimum; the data table is the authority). The ADP-style "90/10
    rule of thumb" is a restatement of a typical outcome, not a method, and
    it is not used here.
 

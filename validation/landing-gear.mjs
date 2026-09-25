@@ -212,8 +212,21 @@ console.log("\n-- 25.733(b)(2) is a LANDING-weight case, and it matters --");
 }
 
 /* ── 5. THE STATIC SPLIT AGAINST AIRCRAFT THAT FLY ────────────────────
-   LANDING-GEAR.md section 3.4: measured nose-load fractions run 5.6 % to
+   LANDING-GEAR.md section 3.4: measured nose-load fractions run 4.6 % to
    12.7 % of maximum design taxi weight across the 737 and 777 families.
+
+   THE LOW END WAS WRONG HERE AND IS CORRECTED. This band was written as
+   5.6-12.7 %, taken from the note's SUMMARY table (section 3.7). The
+   note's own DATA table has a 4.6 % row — the 777-200 at 447,000 lb at
+   its aft CG — which the summary drops, and this gate and
+   src/engine/gear/ground-loads.js both copied the summary. 4.6 % is the
+   measured minimum and is what the band says now.
+
+   It mattered: the A320 case below lands at 5.85 %, which cleared the old
+   5.6 % floor by a quarter of a point. A bound that close to a CORRECT
+   result is a coin flip, not a gate. The check keeps its teeth from the
+   swap case that follows, which is the failure this band exists for and
+   which misses by an order of magnitude, not by a quarter point.
    The A320 ACAP gives "load on one main gear leg 47.0 %", i.e. 94 % on
    the mains and 6 % on the nose. A split outside that band means A and B
    have been swapped, which otherwise produces entirely plausible numbers. */
@@ -221,8 +234,8 @@ console.log("\n-- the static split lands where real aeroplanes land --");
 
 {
   const r = staticReactions({ weight: 73900, noseArmA: 11.9, mainArmB: 0.74 });
-  check(r.resolved && r.noseFraction > 0.056 && r.noseFraction < 0.127,
-    "A320-like geometry puts the nose load inside the measured 5.6-12.7 % band",
+  check(r.resolved && r.noseFraction > 0.046 && r.noseFraction < 0.127,
+    "A320-like geometry puts the nose load inside the measured 4.6-12.7 % band",
     r.resolved ? `nose ${pct(r.noseFraction)}, one main leg ${pct((1 - r.noseFraction) / 2)} `
                + `against the ACAP's 47.0 %` : r.why);
 

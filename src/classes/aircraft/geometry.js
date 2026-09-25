@@ -308,6 +308,16 @@ export function generalArrangement(result) {
   const wingRootLE = drawn(type === "trainer" ? 0.26 * L : 0.38 * L,
                            "wing longitudinal position needs a balance model (audit Gap 6)");
 
+  /* Wing VERTICAL station on the body. It lives here for the same reason
+     the fuselage outline does: the side view drew the wing at −0.18H and
+     the front view at −0.16H, so the same aeroplane carried its wing at two
+     heights depending on which view you read. Hoisting it is the fix — one
+     number, one place, both views. It is a CONVENTION and stays one:
+     nothing in this tool sizes a wing's height on the fuselage, and the
+     0.16 is chosen only to match the tail's existing htZ fraction so the
+     drawing is internally consistent rather than differently arbitrary. */
+  const wingZ = drawn(-val(fusH) * 0.16, "wing vertical station on the body is not sized");
+
   const htSpan = spanOf(raw.ht.area, raw.ht.ar), htC = chords(raw.ht.area, htSpan, raw.ht.taper);
   /* A vertical tail's "span" is its height, and its area is counted once,
      so the aspect ratio is defined on that single surface. */
@@ -354,7 +364,7 @@ export function generalArrangement(result) {
   return {
     type, label: result.typeLabel || type,
     fuselage: { length: fusLen, width: fusW, height: fusH, noseLength: noseLen, tailLength: tailLen },
-    wing: { ...wing, ...wc, rootLE: wingRootLE,
+    wing: { ...wing, ...wc, rootLE: wingRootLE, z: wingZ,
             dihedralDeg: drawn(type === "trainer" ? 2 : 5, "dihedral is not sized") },
     ht: { area: raw.ht.area, span: htSpan, ...htC, rootLE: htRootLE, z: htZ,
           sweepDeg: drawn(wing.sweepDeg + 4, "tail sweep is not sized") },

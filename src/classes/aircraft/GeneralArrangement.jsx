@@ -32,6 +32,7 @@ import {
   generalArrangement, val, leSweepRad,
   fuselageSideOutline, fuselagePlanOutline, outlinePath,
 } from "./geometry.js";
+import { tailThickness } from "../../engine/control-surfaces.js";
 
 const FT = 0.3048;
 const LOCATION_WORDS = {
@@ -121,12 +122,21 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
   const wingHalves = [1, -1].map((s) => halfPlanform({
     rootLE: wingLE, root: g.wing.root, tip: g.wing.tip, semi, sweepLE: wingSweepLE, side: s, y0: W / 2 * 0.98 }));
 
-  const htSemi = g.ht.span / 2, htSweepLE = leSweep(val(g.ht.sweepDeg), g.ht.span ** 2 / Math.max(g.ht.area, 1e-6), 0.4);
+  /* The taper is READ from the chords the planform is actually built from —
+     geometry.js sets them per class — rather than restated as a literal
+     here. It was a hardcoded 0.4 on both tails while the chords came from
+     the class's own taper (0.3 on a jet, 0.45/0.5 on a trainer, 0.6/0.5 on
+     a turboprop), so the leading edge this helper returned did not bound
+     the planform drawn beside it. That is the same drift the sweep helper
+     was hoisted to fix, one argument to the left of it. */
+  const taperOf = (s) => (s.root > 0 ? s.tip / s.root : 1);
+
+  const htSemi = g.ht.span / 2, htSweepLE = leSweep(val(g.ht.sweepDeg), g.ht.span ** 2 / Math.max(g.ht.area, 1e-6), taperOf(g.ht));
   const htHalves = [1, -1].map((s) => halfPlanform({
     rootLE: g.ht.rootLE, root: g.ht.root, tip: g.ht.tip, semi: htSemi, sweepLE: htSweepLE, side: s,
     y0: g.tTail ? 0 : W / 2 * 0.6 }));
 
-  const vtSweepLE = leSweep(val(g.vt.sweepDeg), g.vt.height ** 2 / Math.max(g.vt.area, 1e-6), 0.4);
+  const vtSweepLE = leSweep(val(g.vt.sweepDeg), g.vt.height ** 2 / Math.max(g.vt.area, 1e-6), taperOf(g.vt));
   const vtProfile = [
     [sX(g.vt.rootLE), sZ(H / 2)],
     [sX(g.vt.rootLE + g.vt.height * Math.tan(vtSweepLE)), sZ(vtTop)],
@@ -135,6 +145,18 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
   ];
 
   const dih = rad(val(g.wing.dihedralDeg));
+
+  /* Tail section thickness, computed off the wing's per Scholz ch.9 and
+     clamped to his published 9–12% band — the SAME sourced relation the
+     engine already uses (engine/control-surfaces.js, TAIL_TC_WING_FRACTION).
+     This drawing carried four different unsourced literals for it instead:
+     0.13 for the tailplane in side view against 0.09 for the same tailplane
+     in front view, and 0.11 / 0.055 / 0.06 for the fin. */
+  const tailTC = tailThickness(g.wing.tc);
+
+  /* One wing height for both views — see geometry.js. The side view used
+     −0.18H and the front view −0.16H. */
+  const wingZ = val(g.wing.z);
 
   /* ── dimension helper: extension lines, arrows, metric over imperial ── */
   const Dim = ({ x1, y1, x2, y2, label, off = 0, vertical = false, tick = u * 7 }) => {
@@ -186,7 +208,7 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
         ))}
         <path d={planFus} {...fillS} {...line} />
         {/* the fin, seen from above, is a narrow sliver on the centreline */}
-        <path d={sliver(pX(g.vt.rootLE), g.vt.root, pY(0), g.vt.root * 0.11)} {...fillS} {...thin} />
+        <path d={sliver(pX(g.vt.rootLE), g.vt.root, pY(0), g.vt.root * tailTC)} {...fillS} {...thin} />
         {g.nacelles.filter((n) => n.kind === "pod").map((n, i) => (
           <g key={`np${i}`}>
             <rect x={pX(n.x)} y={pY(n.y + n.d / 2)} width={n.l} height={n.d} rx={n.d * 0.42}
@@ -214,9 +236,9 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
         <line x1={sX(-m * 0.4)} y1={sZ(0)} x2={sX(L + m * 0.4)} y2={sZ(0)} {...centre} />
         <polygon points={pts(vtProfile)} {...fillS} {...line} />
         <path d={sideFus} {...fillS} {...line} />
-        <path d={sliver(sX(wingLE), g.wing.root, sZ(-H * 0.18), g.wing.root * g.wing.tc)}
+        <path d={sliver(sX(wingLE), g.wing.root, sZ(wingZ), g.wing.root * g.wing.tc)}
               {...fillS} stroke={SC.primary} strokeWidth={u * 1.3} />
-        <path d={sliver(sX(g.ht.rootLE), g.ht.root, sZ(g.ht.z), g.ht.root * 0.13)}
+        <path d={sliver(sX(g.ht.rootLE), g.ht.root, sZ(g.ht.z), g.ht.root * tailTC)}
               fill={SC.inset} fillOpacity={0.9} stroke={SC.primary} strokeWidth={u * 1.6} />
         {g.nacelles.map((n, i) => (
           <rect key={`sn${i}`} x={sX(n.x)} y={sZ(n.z + n.d / 2)} width={n.l} height={n.d} rx={n.d * 0.42}
@@ -238,17 +260,20 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
         <line x1={fY(0)} y1={sZ(zTop + m * 0.2)} x2={fY(0)} y2={sZ(zBot - m * 0.2)} {...centre} />
         {[1, -1].map((s) => (
           <polygon key={`fw${s}`} {...fillS} {...line}
-            points={pts([[fY(s * W * 0.45), fZ(-H * 0.16)],
-                         [fY(s * semi), fZ(-H * 0.16 + semi * Math.tan(dih))],
-                         [fY(s * semi), fZ(-H * 0.16 + semi * Math.tan(dih) - g.wing.tip * g.wing.tc)],
-                         [fY(s * W * 0.45), fZ(-H * 0.16 - g.wing.root * g.wing.tc)]])} />
+            points={pts([[fY(s * W * 0.45), fZ(wingZ)],
+                         [fY(s * semi), fZ(wingZ + semi * Math.tan(dih))],
+                         [fY(s * semi), fZ(wingZ + semi * Math.tan(dih) - g.wing.tip * g.wing.tc)],
+                         [fY(s * W * 0.45), fZ(wingZ - g.wing.root * g.wing.tc)]])} />
         ))}
         <polygon key="fht" {...fillS} {...line}
           points={pts([[fY(-g.ht.span / 2), fZ(g.ht.z)], [fY(g.ht.span / 2), fZ(g.ht.z)],
-                       [fY(g.ht.span / 2), fZ(g.ht.z - g.ht.root * 0.09)], [fY(-g.ht.span / 2), fZ(g.ht.z - g.ht.root * 0.09)]])} />
+                       [fY(g.ht.span / 2), fZ(g.ht.z - g.ht.root * tailTC)], [fY(-g.ht.span / 2), fZ(g.ht.z - g.ht.root * tailTC)]])} />
+        {/* The fin seen head-on is a section half-width either side of the
+            centreline, so it is tailTC/2 — the same thickness the plan view
+            draws it at, not a second number. */}
         <polygon key="fvt" {...fillS} {...line}
-          points={pts([[fY(-g.vt.root * 0.055), fZ(H / 2)], [fY(-g.vt.tip * 0.06), fZ(vtTop)],
-                       [fY(g.vt.tip * 0.06), fZ(vtTop)], [fY(g.vt.root * 0.055), fZ(H / 2)]])} />
+          points={pts([[fY(-g.vt.root * tailTC / 2), fZ(H / 2)], [fY(-g.vt.tip * tailTC / 2), fZ(vtTop)],
+                       [fY(g.vt.tip * tailTC / 2), fZ(vtTop)], [fY(g.vt.root * tailTC / 2), fZ(H / 2)]])} />
         <ellipse cx={fY(0)} cy={fZ(0)} rx={W / 2} ry={H / 2} {...fillS} {...line} />
         {g.nacelles.filter((n) => n.kind !== "nose").map((n, i) => (
           <ellipse key={`fn${i}`} cx={fY(n.y)} cy={fZ(n.z + (n.kind === "pod" && n.eta ? n.eta * semi * Math.tan(dih) : 0))}
@@ -271,7 +296,12 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
           ["designation", g.label],
           ["wing area · aspect ratio", `${g.wing.area.toFixed(1)} m²  ·  ${(b * b / g.wing.area).toFixed(2)}`],
           ["span · length", `${b.toFixed(2)} m  ·  ${L.toFixed(2)} m`],
-          ["drawn to", `1 : ${Math.round(sheetW / 0.28)} on a 280 mm sheet`],
+          /* NOT a scale ratio. This sheet renders at width:100%, so its
+             printed size is whatever the container is and "1 : N on a
+             280 mm sheet" asserted a number no reader could ever measure.
+             What IS true, and what the idiom actually buys the reader, is
+             that the three views share one scale and can be compared. */
+          ["drawn to", "one scale, all three views"],
         ];
         let x = m;
         return (
@@ -288,8 +318,9 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
               );
             })}
             <text x={m} y={tY + tH + u * 22} {...txt} fontSize={u * 9.5} fill={SC.subtle} opacity={0.75}>
-              Dimensioned features are sized. Nose and tail-cone fineness, wing station, dihedral and tail sweep are
-              drawing conventions, not results, and carry no dimension.
+              Dimensioned features are sized. Tail section thickness {(tailTC * 100).toFixed(1)} % is computed off the
+              wing (Scholz ch.9). Nose and tail-cone fineness, wing station longitudinal and vertical, dihedral, tail
+              sweep and the tailplane and fin root stations are drawing conventions, not results, and carry no dimension.
             </text>
           </g>
         );

@@ -191,6 +191,27 @@ const ALLOWED = [
          "without writing them down; never excused on the declaration itself.",
     notOnLineMatching: /export\s+const\s+R_GAS/,
   })),
+  /* A MEASURED DIMENSION THAT COLLIDES WITH A CONSTANT, not a constant.
+     The 11.00-12 10PR tyre has an outside diameter of 32.2 INCHES, printed
+     in the Goodyear data book and corroborated against the PDF by
+     tools/extract-tyres.py. It lands exactly on the upper edge of the
+     imperial gravity band (32.20), which is the same collision the band
+     comment above already anticipates for 287: a real data column sitting
+     where a constant would.
+
+     MEASURED, so this stays narrow: of 294 tyres x 13 numeric fields, this
+     is the ONLY value in the whole table that falls inside any band. One
+     exact exception, not a silenced file.
+
+     The fence is the inverse of the ones above: excused ONLY on a tyre data
+     row. The lookahead matches any line that does NOT open a tyre record, so
+     a `const G0 = 32.2` smuggled into this generated file would still fire. */
+  {
+    file: "src/data/tyres.js", value: "32.2",
+    why: "outside diameter of the 11.00-12 10PR tyre, in inches, from the Goodyear " +
+         "data book; the only value in the generated table that lands in any band.",
+    notOnLineMatching: /^(?!\s*\{ size:)/,
+  },
 ];
 const excused = (file, value, lineText) =>
   ALLOWED.some((a) =>

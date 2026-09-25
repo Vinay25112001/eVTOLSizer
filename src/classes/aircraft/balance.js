@@ -85,6 +85,7 @@
 
 import { generalArrangement, val, macOf, leSweepRad } from "./geometry.js";
 import { fuselageStructure } from "./fuselage-structure.js";
+import { loadingDiagram } from "./loading-diagram.js";
 
 const FT = 0.3048, LB = 0.45359237;
 const RHO0 = 1.225;                                   // kg/m³, ISA sea level
@@ -207,6 +208,42 @@ export function balanceOf(result, opts = {}) {
 
   /* Resolve every station now that the wing is placed. */
   for (const i of items) i.x = i.group === "wing" ? xWingCg + i.xRelWingCg : i.xFixed;
+  const mItems = items.reduce((t, i) => t + i.kg, 0);
+  const xCgItems = items.reduce((t, i) => t + i.kg * i.x, 0) / mItems;
+
+  /* THE ITEMISED MASSES DO NOT ALWAYS ADD UP TO THE REPORTED OPERATING
+     EMPTY WEIGHT, and the loading diagram is what made that visible: the
+     transport's design load condition came out 207 kg lighter than its
+     own MTOW. The cause is the FLOPS empty-weight margin — 0.514 % on
+     this deck — which the weight model adds as a SCALAR. It has no
+     weight item, so it had no station, so the moment sum was over
+     43,375 kg of a 43,583 kg aeroplane and nothing said so.
+
+     A margin is a uniform allowance on the whole airframe, so its
+     centroid IS the centroid of everything it is an allowance on. Adding
+     it there is provably CG-neutral — it cannot move a mean it is placed
+     at — and it makes the mass close. Computed as a residual against the
+     reported figure rather than by re-deriving the margin, so that
+     anything else the weight model adds without itemising is caught by
+     the same line.
+
+     It is deliberately NOT in the Scholz wing-group / fuselage-group
+     split above: a mass with no station of its own cannot inform where
+     the wing goes, and adding it to either group would move the wing on
+     the strength of an accounting residual. So groups.wing + groups.
+     fuselage is the itemised mass, and oew.massKg is the aeroplane. */
+  const residualKg = Number.isFinite(result.oewKg) ? result.oewKg - mItems : 0;
+  if (Math.abs(residualKg) > 0.5) {
+    items.push({
+      name: "Unitemised balance of the operating empty weight", kg: residualKg,
+      group: "fuselage", xFixed: xCgItems, xRelWingCg: null, x: xCgItems, residual: true,
+      why: "The weight model reports an operating empty weight "
+         + `${Math.abs(residualKg).toFixed(1)} kg ${residualKg > 0 ? "above" : "below"} the sum of its own `
+         + "itemised masses — on the transport deck this is the FLOPS empty-weight margin, a scalar with no "
+         + "component behind it. Placed at the centroid of the itemised masses, where a uniform allowance "
+         + "belongs and where it moves the centre of gravity by exactly nothing.",
+    });
+  }
   const mOEW = items.reduce((t, i) => t + i.kg, 0);
   const xCgOew = items.reduce((t, i) => t + i.kg * i.x, 0) / mOEW;
 
@@ -234,6 +271,25 @@ export function balanceOf(result, opts = {}) {
   const cgAft = zeroFuel.reduce((a, p) => (p.pctMac > a.pctMac ? p : a), zeroFuel[0]);
   const mTow = mOEW + payloadKg + fuelKg;
   const xCgTow = (mOEW * xCgOew + payloadKg * xCabin + fuelKg * xFuel) / mTow;
+
+  /* ── B3: the explicit loading diagram ─────────────────────────────
+     The sweep above is TASOPT's analytic form and STAYS: its critical
+     load fractions reproduce Drela's converged 737 run, which is a real
+     external agreement and is asserted as one. What it cannot do is
+     model a cabin that has a first row, a hold, or a fill order, so B3
+     is built beside it rather than in place of it, and the two are
+     reported together. Where they disagree, the disagreement is the
+     finding. */
+  const loadingB3 = loadingDiagram({
+    type: result.type, inputs: result.raw?.inputs ?? {},
+    mOEW, xCgOew, mac: m.mac, xLemac, xCabin, lCabin, fuselageLengthM: L,
+    xWingRootLE, rootChord: m.rootChord, tipChord: m.tipChord, span: b,
+    tanLeSweep: Math.tan(leSweepRad(sweepC4, m.ar, taper)),
+    fuselageWidthM: val(ga.fuselage.width),
+    shellFwd: shell ? shell.fwd : xCabin - lCabin / 2,
+    shellAft: shell ? shell.aft : xCabin + lCabin / 2,
+    payloadKg, fuelKg, fuelCapacityKg: result.fuelCapacityKg ?? fuelKg,
+  });
 
   /* ── B4: neutral point ────────────────────────────────────────────── */
   const mach = result.cruise?.mach ?? 0.78;
@@ -385,7 +441,10 @@ export function balanceOf(result, opts = {}) {
       fwd: { ...cgFwd }, aft: { ...cgAft },
       rangePctMac: (cgAft.pctMac - cgFwd.pctMac) * 100,
       loading,
+      basis: "TASOPT (A.280)-(A.282), the analytic payload-centroid sweep: a CONTINUUM cabin, so its extremes "
+           + "place payload at the pressure bulkheads themselves. It is the unrestricted bound, not a loading.",
     },
+    loadingDiagram: loadingB3,
     neutralPoint: {
       dClhDcl, clAlpha, lH, xAcWing, xAcTail,
       tailOnly: { xM: xNpTailOnly, pctMac: pctMac(xNpTailOnly), staticMargin: smTailOnly },

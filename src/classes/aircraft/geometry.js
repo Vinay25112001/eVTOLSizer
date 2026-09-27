@@ -29,6 +29,7 @@
    ===================================================================== */
 
 import { selectMainTyre, selectLightAircraftTyre } from "../../engine/gear/tyre-select.js";
+import { nacelleEtas } from "./control-surface-stations.js";
 
 const FT = 0.3048, IN = 0.0254, LB_PER_KG = 2.20462262;
 
@@ -317,6 +318,46 @@ export function sectionStringerPoints({ count, width, height, steps = 4000 }) {
   }
   const port = starboard.slice().reverse().map(([y, z]) => [-y, z]);
   return [...starboard, ...onKeel, ...port];
+}
+
+/* A trailing-edge control surface on a straight-tapered half-surface, in
+   plan, as a closed polygon in BODY coordinates. `eta0`/`eta1` are
+   fractions of the SEMISPAN from the centreline — the frame the stations
+   are measured in — and are clipped to the part of the surface that is
+   actually outside the body, so a station measured on an aircraft with a
+   different fuselage width cannot draw a panel inside this one's.
+   `chordFrac` is the surface's chord as a fraction of the LOCAL chord,
+   forward from the trailing edge, so the panel tapers with the surface it
+   sits on, as a real one does.
+
+   The leading edge and the chord are built exactly the way the planform
+   itself builds them, from y0 outboard, so a panel cannot drift off the
+   surface it is drawn on. That is the same failure the outline functions
+   above were hoisted to stop. */
+export function surfacePanelPlan({ rootLE, root, tip, semi, sweepLE, side = 1, y0 = 0,
+                                   eta0, eta1, chordFrac }) {
+  const lo = Math.min(eta0, eta1) * semi, hi = Math.max(eta0, eta1) * semi;
+  const yA = Math.min(Math.max(lo, y0), semi), yB = Math.min(Math.max(hi, y0), semi);
+  const span = Math.max(semi - y0, 1e-9);
+  const chordAt = (y) => root + (tip - root) * ((y - y0) / span);
+  const teAt = (y) => rootLE + (y - y0) * Math.tan(sweepLE) + chordAt(y);
+  const cA = chordAt(yA), cB = chordAt(yB);
+  return [
+    [teAt(yA) - chordFrac * cA, side * yA],
+    [teAt(yA), side * yA],
+    [teAt(yB), side * yB],
+    [teAt(yB) - chordFrac * cB, side * yB],
+  ];
+}
+
+/* The same surface as a trailing-edge RUN rather than a panel: its two end
+   points on the trailing edge. A flap and a spoiler have a measured SPAN
+   and no sourced chord, so what gets drawn for them is the run they
+   occupy and nothing deeper — the same rule that lists an unsourced member
+   instead of drawing it. */
+export function trailingEdgeRun({ rootLE, root, tip, semi, sweepLE, side = 1, y0 = 0, eta0, eta1 }) {
+  const p = surfacePanelPlan({ rootLE, root, tip, semi, sweepLE, side, y0, eta0, eta1, chordFrac: 0 });
+  return [p[1], p[2]];
 }
 
 /* Body coordinates to an SVG path, through the caller's own two mappers. */
@@ -650,8 +691,15 @@ export function generalArrangement(result) {
     for (const s of [-1, 1]) nacelles.push({ x: L - val(tailLen) * 0.95, y: s * (val(fusW) / 2 + nD * 0.62),
                                              z: val(fusH) * 0.16, d: nD, l: nL, kind: "pod" });
   } else {
+    /* Wing pod stations. These were an unsourced drawing convention until
+       the B-747's were measured off CR-2144's scaled general arrangement;
+       nacelleEtas() hands the measurement back ONLY for a layout with the
+       same number of engines a side, because where a four-engine
+       aeroplane's inboard pod sits is not evidence about where a twin's
+       single pod sits. See control-surface-stations.js. */
+    const pods = nacelleEtas(type, perSide);
     for (const s of [-1, 1]) for (let i = 0; i < perSide; i++) {
-      const eta = perSide === 1 ? 0.34 : 0.30 + 0.27 * i;
+      const eta = pods.etas[i] ?? pods.etas[pods.etas.length - 1];
       const y = s * eta * wing.span / 2;
       const leAt = val(wingRootLE) + Math.abs(y) * Math.tan(wing.sweepDeg * Math.PI / 180);
       nacelles.push({ x: leAt - nL * 0.58, y, z: -Math.max(nD * 0.30, 0.25), d: nD, l: nL, kind: "pod", eta });

@@ -42,6 +42,34 @@ version. `validation/release.mjs` checks that these agree.
   centreline: that is upsweep, and it is measured.
 
 ### Added
+- Control surfaces on the general arrangement, from measured stations. The
+  drawing carried no ailerons, flaps, spoilers, elevator or rudder, because
+  `control-surfaces.js` holds no spanwise geometry: no airport-planning
+  manual publishes any, and the 737 and 747 type certificates decline to.
+  NASA CR-2144 does, on a scaled three-view, so the B-747's stations were
+  measured off it at 600 dpi — inboard aileron 0.382–0.436 of semispan,
+  outboard 0.722–0.940, two flap runs, six spoiler panels and two nacelles —
+  with the scale cross-checked against the drawing's own scale bar to
+  0.078 % and both wings measured independently. The surfaces were
+  identified by the drawing's own topology rather than by a label: CR-2144
+  describes "an inboard aileron between the inboard and outboard flaps",
+  and the isolated panel does exactly fill the gap between the two measured
+  flap runs. Every other class falls back to Howe's table, labelled as a
+  third-hand convention and drawn without a dimension. Ailerons are drawn
+  as panels because their chord ratio is sourced; flaps and spoilers as the
+  run they occupy along the trailing edge and no deeper, because their span
+  is measured and their chord is not. The elevator and rudder are drawn
+  full span at their sourced chord ratios, which makes them 30 % and 32 %
+  of the surfaces they sit on rather than the 33 % and 38 % the separate
+  area convention states — the two conventions come from different samples
+  and together imply surfaces 1.10 and 1.19 times longer than their
+  parents, so both cannot be drawn, and the title block says which was
+  chosen. Nothing computed changed: the hinge moment still comes from the
+  area convention, which is what 25.415 asks for.
+- Wing nacelle stations for a four-engine transport are now the measured
+  0.396 and 0.703 of semispan rather than the unsourced 0.30 and 0.57. The
+  measurement is refused where it does not apply: the 747 has two engines a
+  side, so a transport with one a side keeps the convention and says why.
 - Tail-cone closure measured from the manufacturers' drawings: the keel and
   crown at the tail-cone tip were read off the dimensioned side views in the
   Boeing 737, Airbus A320 and Bombardier Dash 8-400 airport-planning manuals

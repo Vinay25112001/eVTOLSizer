@@ -31,8 +31,11 @@ import { MONO, SANS } from "../../ui/tokens.js";
 import {
   generalArrangement, val, leSweepRad,
   fuselageSideOutline, fuselagePlanOutline, outlinePath,
+  surfacePanelPlan, trailingEdgeRun,
 } from "./geometry.js";
 import { tailThickness } from "../../engine/control-surfaces.js";
+import { SURFACE_CONVENTIONS } from "./control-surfaces.js";
+import { surfaceStations, TAIL_SURFACE_SPAN_IMPLIED } from "./control-surface-stations.js";
 
 const FT = 0.3048;
 const LOCATION_WORDS = {
@@ -146,6 +149,44 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
 
   const dih = rad(val(g.wing.dihedralDeg));
 
+  /* ── control surfaces ──────────────────────────────────────────────────
+     The drawing had none at all, because control-surfaces.js deliberately
+     holds no spanwise geometry: no airport-planning manual publishes any.
+     NASA CR-2144 does, on a scaled three-view, so the B-747's stations are
+     MEASURED and every other class falls back to a labelled convention.
+     See control-surface-stations.js.
+
+     WHAT GETS DRAWN AND WHAT DOES NOT follows the same rule as the rest of
+     this sheet. An aileron is drawn as a PANEL, because its chord ratio is
+     sourced as well as its station. A flap and a spoiler have a measured
+     SPAN and no sourced chord anywhere in the corpus, so they are drawn as
+     the RUN they occupy along the trailing edge and no deeper — inventing a
+     depth for them would be exactly the plausible-line-with-no-provenance
+     this drawing refuses elsewhere. */
+  const stations = surfaceStations(g.type);
+  const wingGeom = { rootLE: wingLE, root: g.wing.root, tip: g.wing.tip, semi,
+                     sweepLE: wingSweepLE, y0: W / 2 * 0.98 };
+  const htGeom = { rootLE: g.ht.rootLE, root: g.ht.root, tip: g.ht.tip, semi: htSemi,
+                   sweepLE: htSweepLE, y0: g.tTail ? 0 : W / 2 * 0.6 };
+  const ailC = SURFACE_CONVENTIONS.aileron.chordRatio;
+  const elevC = SURFACE_CONVENTIONS.elevator.chordRatio;
+  const rudC = SURFACE_CONVENTIONS.rudder.chordRatio;
+  const surf = { fill: SC.primary, fillOpacity: 0.26, stroke: SC.primary, strokeWidth: u * 1.2 };
+  const runLine = { stroke: SC.advisory, strokeWidth: u * 3.2, strokeLinecap: "butt", opacity: 0.95 };
+  const spoilLine = { stroke: SC.caution, strokeWidth: u * 2.2, strokeLinecap: "butt", opacity: 0.85 };
+
+  /* The rudder, in the SIDE view, is the aft fraction of the fin's local
+     chord over its full height. The fin is drawn there as a trapezoid, so
+     the rudder is built from the same four corners rather than from a
+     second idea of where the fin is. */
+  const vtTipLE = g.vt.rootLE + g.vt.height * Math.tan(vtSweepLE);
+  const rudderProfile = [
+    [sX(g.vt.rootLE + g.vt.root - rudC * g.vt.root), sZ(H / 2)],
+    [sX(g.vt.rootLE + g.vt.root), sZ(H / 2)],
+    [sX(vtTipLE + g.vt.tip), sZ(vtTop)],
+    [sX(vtTipLE + g.vt.tip - rudC * g.vt.tip), sZ(vtTop)],
+  ];
+
   /* Tail section thickness, computed off the wing's per Scholz ch.9 and
      clamped to his published 9–12% band — the SAME sourced relation the
      engine already uses (engine/control-surfaces.js, TAIL_TC_WING_FRACTION).
@@ -206,6 +247,33 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
         {htHalves.map((h, i) => (
           <polygon key={`h${i}`} points={pts(h.map(([x, y]) => [pX(x), pY(y)]))} {...fillS} {...line} />
         ))}
+        {/* control surfaces, both wings, from the measured or conventional
+            stations — panels where the chord is sourced, runs where it is not */}
+        {[1, -1].map((s) => (
+          <g key={`cs${s}`}>
+            {stations && stations.aileron.map(([e0, e1], i) => (
+              <polygon key={`ail${i}`} {...surf}
+                points={pts(surfacePanelPlan({ ...wingGeom, side: s, eta0: e0, eta1: e1, chordFrac: ailC })
+                  .map(([x, y]) => [pX(x), pY(y)]))} />
+            ))}
+            {(stations?.flap ?? []).map(([e0, e1], i) => {
+              const r = trailingEdgeRun({ ...wingGeom, side: s, eta0: e0, eta1: e1 });
+              return <line key={`fl${i}`} x1={pX(r[0][0])} y1={pY(r[0][1])}
+                           x2={pX(r[1][0])} y2={pY(r[1][1])} {...runLine} />;
+            })}
+            {(stations?.spoiler ?? []).map(([e0, e1], i) => {
+              const r = trailingEdgeRun({ ...wingGeom, side: s, eta0: e0, eta1: e1 });
+              return <line key={`sp${i}`} x1={pX(r[0][0])} y1={pY(r[0][1])}
+                           x2={pX(r[1][0])} y2={pY(r[1][1])} {...spoilLine} />;
+            })}
+            {/* the elevator spans the tailplane at its sourced chord ratio —
+                see TAIL_SURFACE_SPAN_IMPLIED for why full span and not the
+                area convention's */}
+            <polygon key={`elev${s}`} {...surf}
+              points={pts(surfacePanelPlan({ ...htGeom, side: s, eta0: htGeom.y0 / htSemi, eta1: 1,
+                                             chordFrac: elevC }).map(([x, y]) => [pX(x), pY(y)]))} />
+          </g>
+        ))}
         <path d={planFus} {...fillS} {...line} />
         {/* the fin, seen from above, is a narrow sliver on the centreline */}
         <path d={sliver(pX(g.vt.rootLE), g.vt.root, pY(0), g.vt.root * tailTC)} {...fillS} {...thin} />
@@ -228,6 +296,18 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
              label={`length  ${both(L)}`} />
         <Dim x1={pX(L) + u * 26} y1={pY(semi)} x2={pX(L) + u * 26} y2={pY(-semi)} vertical
              label={`span  ${both(b)}`} />
+        {/* The outboard aileron carries a span dimension ONLY where its
+            station was measured off a drawing. On a class that falls back
+            to Howe's table the surface is still drawn, because a labelled
+            convention may be drawn, but it carries no dimension — the same
+            rule the nose fineness and the wing station already obey. */}
+        {stations?.measured && (() => {
+          const [e0, e1] = stations.aileron[stations.aileron.length - 1];
+          return (
+            <Dim x1={pX(L) + u * 52} y1={pY(e1 * semi)} x2={pX(L) + u * 52} y2={pY(e0 * semi)} vertical
+                 label={`outboard aileron  ${both((e1 - e0) * semi)}`} />
+          );
+        })()}
         {viewLabel(pX(0), planTop - u * 8, "PLAN", `wing ${g.wing.area.toFixed(1)} m²  ·  sweep ${g.wing.sweepDeg.toFixed(1)}° at c/4`)}
       </g>
 
@@ -235,6 +315,7 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
       <g>
         <line x1={sX(-m * 0.4)} y1={sZ(0)} x2={sX(L + m * 0.4)} y2={sZ(0)} {...centre} />
         <polygon points={pts(vtProfile)} {...fillS} {...line} />
+        <polygon points={pts(rudderProfile)} {...surf} />
         <path d={sideFus} {...fillS} {...line} />
         <path d={sliver(sX(wingLE), g.wing.root, sZ(wingZ), g.wing.root * g.wing.tc)}
               {...fillS} stroke={SC.primary} strokeWidth={u * 1.3} />
@@ -335,6 +416,22 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
                 ? `keel ${g.fuselage.closure.keelTipZ.toFixed(3)} H above the centreline, measured from ${g.fuselage.closure.aircraft.join(" and ")} airport-planning drawings`
                   + (g.fuselage.closure.crownMeasured ? `; crown ${g.fuselage.closure.crownTipZ.toFixed(3)} H measured` : `; crown ${g.fuselage.closure.crownTipZ} H is a convention (the fin hides it)`)
                 : `a drawing convention (no dimensioned side view of this class is on disk; its keel value sits below every measured aircraft)`}.
+              Control surfaces: {stations
+                ? (stations.measured
+                    ? `aileron, flap, spoiler and nacelle stations measured off ${stations.drawing}, `
+                      + `both wings, ±${stations.etaUncertainty} of semispan`
+                    : `aileron station is a convention (${stations.row.label}, Howe 2000 Table 8.2 via Coene 2008 — `
+                      + `third-hand), so it is drawn but not dimensioned; no flap or spoiler station is sourced for this class`)
+                : "no station is sourced for this class, so none is drawn"}.
+              Flaps and spoilers are drawn as the run they occupy along the trailing edge and no deeper, because their
+              span is measured and their chord is not sourced anywhere. Elevator and rudder are drawn full span at their
+              sourced chord ratios ({(elevC * 100).toFixed(0)} % and {(rudC * 100).toFixed(0)} % of local chord), which
+              makes them {(elevC * 100).toFixed(0)} % and {(rudC * 100).toFixed(0)} % of the surfaces they sit on —
+              not the {(TAIL_SURFACE_SPAN_IMPLIED.elevator.areaFraction * 100).toFixed(0)} % and
+              {" "}{(TAIL_SURFACE_SPAN_IMPLIED.rudder.areaFraction * 100).toFixed(0)} % the separate area convention
+              states, because the two conventions come from different samples and together imply a surface
+              {" "}{TAIL_SURFACE_SPAN_IMPLIED.elevator.impliedSpanFraction.toFixed(2)}× and
+              {" "}{TAIL_SURFACE_SPAN_IMPLIED.rudder.impliedSpanFraction.toFixed(2)}× longer than its parent.
               Nose and tail-cone fineness, wing station longitudinal and vertical, dihedral, tail
               sweep and the tailplane and fin root stations are drawing conventions, not results, and carry no dimension.
               {g.stance.zProvenance.sourced

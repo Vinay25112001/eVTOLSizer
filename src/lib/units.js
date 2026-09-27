@@ -61,6 +61,9 @@ export const UNIT_TABLE = Object.freeze({
   "N·m":     { system: "SI",  to: "lbf·ft", k: 1 / (4.4482216152605 * 0.3048) },
   "kN·m":    { system: "SI",  to: "lbf·ft", k: 1000 / (4.4482216152605 * 0.3048) },
   "MN·m":    { system: "SI",  to: "lbf·ft", k: 1e6 / (4.4482216152605 * 0.3048) },
+  /* force per length: the shear flow round a fuselage section (F4). */
+  "N/m":     { system: "SI",  to: "lbf/in", k: 0.0254 / 4.4482216152605 },
+  "kN/m":    { system: "SI",  to: "lbf/in", k: 1000 * 0.0254 / 4.4482216152605 },
   /* ── areal loading: FORCE per area and MASS per area are different
      quantities and now have different imperial names ──────────────────
      "lb/ft²" used to be the imperial counterpart of N/m², while kg/m² was
@@ -83,6 +86,7 @@ export const UNIT_TABLE = Object.freeze({
   "kW":      { system: "SI",  to: "hp",     k: 1000 / 745.6998715822702 },
   "W":       { system: "SI",  to: "hp",     k: 1 / 745.6998715822702 },
   "lbf":     { system: "IMP", to: "N",      k: 4.4482216152605 },
+  "lbf/in":  { system: "IMP", to: "N/m",    k: 4.4482216152605 / 0.0254 },
   "lbf·ft":  { system: "IMP", to: "N·m",    k: 4.4482216152605 * 0.3048 },
   "lbf/ft²": { system: "IMP", to: "N/m²",   k: 4.4482216152605 / 0.09290304 },
   "lbm/ft²": { system: "IMP", to: "kg/m²",  k: 0.45359237 / 0.09290304 },

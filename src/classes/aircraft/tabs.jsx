@@ -23,6 +23,7 @@ import { fuselageStructure } from "./fuselage-structure.js";
 import { fuselageLoads } from "./fuselage-structure-loads.js";
 import { fuselagePressureShell, PA_PER_PSI } from "./fuselage-pressure-shell.js";
 import { fuselageBendingMaterial } from "./fuselage-bending-material.js";
+import { fuselageShearFlow } from "./fuselage-shear-flow.js";
 import { FuselageProfile, FuselageSection } from "./FuselageViews.jsx";
 import { balanceOf, BALANCE_DEFAULTS } from "./balance.js";
 import { LoadingDiagram, StationDiagram } from "./BalanceViews.jsx";
@@ -705,6 +706,8 @@ export function FuselageTab({ type, result }) {
                      [result, dpPa, shellMat]);
   const bm = useMemo(() => fuselageBendingMaterial(result, { deltaPPa: dpPa, material: shellMat }),
                      [result, dpPa, shellMat]);
+  const sf = useMemo(() => fuselageShearFlow(result, { deltaPPa: dpPa, material: shellMat }),
+                     [result, dpPa, shellMat]);
   if (!f) return <Empty>This type does not report a fuselage length, width and height, which the arrangement needs.</Empty>;
   const IN_ = 0.0254;
   const inches = (v) => `${(v / IN_).toFixed(2)} in`;
@@ -892,6 +895,48 @@ export function FuselageTab({ type, result }) {
                 <Note>{bm.sources.allowable}</Note>
                 <ul style={{ margin: `${S.sm}px 0 0`, paddingLeft: 18, fontSize: T.label, color: SC.muted, lineHeight: 1.7 }}>
                   {bm.caveats.map((c, i) => <li key={i}>{c}</li>)}
+                </ul>
+              </>
+            );
+          })()}
+        </Card>
+      ) : null}
+
+      {sf && ps && ps.applies ? (
+        <Card title="Shear flow round the section — derived, not cited">
+          {!sf.evaluated ? <Lead>{sf.reason}</Lead> : (() => {
+            const sc = sf.scenarios.find((s) => s.id === sf.governing);
+            const ring = sc.ring;
+            const shown = ring.panels.filter((_, i) => i % Math.max(1, Math.round(ring.nBooms / 8)) === 0);
+            return (
+              <>
+                <Lead>
+                  F1's transverse shear at its peak station is distributed round F2's ring by the boom idealisation:
+                  axial equilibrium of the skin gives a jump Δq = −(S_y/I)·B·y at each boom, the running sum closes by
+                  moment equilibrium, and the gate demands the resultant equal S_y and the flow converge on the thin-ring
+                  q = (S_y/πR)·cos θ. No source is cited for it: the research found none vendored and the derivation is
+                  in the module header.
+                </Lead>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: S.md }}>
+                  <Kpi label="Peak transverse shear" value={fmt(Math.abs(sc.peakShearN) / 1e3, 0)} unit="kN"
+                       sub={<>{sc.label} at <Q v={fmt(sc.peakShearXM, 2)} u="m" /></>} />
+                  <Kpi label="Peak shear flow" value={fmt(sc.qMaxNPerM / 1e3, 1)} unit="kN/m"
+                       sub={<>= S_y/(πR) on the neutral axis · {ring.nBooms} booms</>} />
+                  <Kpi label="Peak skin shear stress" value={fmt(sc.tauMaxPa / 1e6, 1)} unit="MPa"
+                       sub={<>q_max over t_skin <Q v={fmt(sf.section.tSkinM * 1e3, 2)} u="mm" /></>} />
+                  <Kpi label="Margin to F_su" value={fmt(100 * sc.marginShearUltimate, 0)} unit="%"
+                       sub={<>{sf.section.material.id} F_su <Q v={fmt(sf.section.material.fsuPa / 1e6, 0)} u="MPa" /> · shear alone, not combined</>} />
+                </div>
+                <Table head={["Panel at θ", "q, boom idealisation", "q, thin ring", "difference"]}
+                       rows={shown.map((p) => [`${fmt(p.thetaMidRad * 180 / Math.PI, 0)}°`, `${fmt(p.qNPerM / 1e3, 2)} kN/m`,
+                                                `${fmt(p.thinRingNPerM / 1e3, 2)} kN/m`,
+                                                `${fmt(100 * (p.qNPerM - p.thinRingNPerM) / Math.max(ring.thinRingQMaxNPerM, 1e-9), 2)} % of peak`])} />
+                <Table head={["Scenario", "n", "Peak S_y", "at x", "τ_max", "margin to F_su"]}
+                       rows={sf.scenarios.map((s) => [s.label, fmt(s.nFactor, 2), `${fmt(Math.abs(s.peakShearN) / 1e3, 0)} kN`,
+                                                       `${fmt(s.peakShearXM, 2)} m`, `${fmt(s.tauMaxPa / 1e6, 1)} MPa`,
+                                                       `${fmt(100 * s.marginShearUltimate, 0)} %`])} />
+                <ul style={{ margin: `${S.sm}px 0 0`, paddingLeft: 18, fontSize: T.label, color: SC.muted, lineHeight: 1.7 }}>
+                  {sf.caveats.map((c, i) => <li key={i}>{c}</li>)}
                 </ul>
               </>
             );

@@ -415,10 +415,13 @@ export function paramsFor(v) {
          trap the header of this file warns about, and it cost +22.6% on MTOW.
 
          ⚠ SEPARATE FINDING, STILL OPEN: our drag model computes an
-         aerodynamic L/D of ~11.5 for this aircraft. Against NDARC's published
-         9.90 for the closely-related design that is ~16% optimistic — a real
-         gap in engine/drag.js, now visible rather than buried in the energy
-         error. It does not affect the numbers here because L/De is forced. */
+         aerodynamic L/D above NDARC's published 9.90 for the closely-related
+         design: ~11.5 (~16% optimistic) when this was written, 10.56 (~7%)
+         measured once the rotor group took the deck inputs — a real gap in
+         engine/drag.js, now visible rather than buried in the energy error.
+         It does not affect the numbers here because L/De is forced;
+         validate.mjs prints input against computed L/D for every validated
+         aircraft. */
       useTargetLD: true,
       autoPositionWing: true, targetSM: 0.15,
     }),

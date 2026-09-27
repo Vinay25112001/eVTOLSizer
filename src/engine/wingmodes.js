@@ -157,6 +157,9 @@ export function wingModes(SR = {}, inertia = {}, p = {}) {
   return {
     applicable: true,
     trim: { CL: dp(CL, 4), CD: dp(CD, 5), q_Pa: dp(q, 1), U_ms: dp(U, 2) },
+    /* n/alpha = CL_alpha q S / W, g per rad: the normal-acceleration sensitivity
+       MIL-F-8785C Figures 1-3 plot the short-period frequency against. */
+    nAlpha_gPerRad: dp(CLaW * q * S / (m * G), 3),
     phugoid:     { wn: dp(wnPh), zeta: dp(zPh), period_s: dp(TPh, 2),
                    zetaClassic: dp(zPhClassic), zetaFromThrustLapse: dp(dZeta),
                    dTdV_NsPerM: dp(dTdV, 1),

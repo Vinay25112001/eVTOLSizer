@@ -25,6 +25,22 @@ version. `validation/release.mjs` checks that these agree.
 
 ## [Unreleased]
 
+### Fixed
+- The fuselage cross-section is symmetric about the aeroplane's vertical
+  plane again. The stringers were placed inside the view by walking the
+  perimeter from the side and putting stringer `i` at arc fraction `i/n`,
+  whose mirror sits at `1 - i/n` — in the set only when `n` is even. The
+  count is `round(perimeter / pitch)` and is odd about half the time, so the
+  drawing broke its own left-right symmetry on half the inputs: at the
+  trainer's 17 stringers the worst one missed its mirror by a fifth of the
+  semi-width. The placement now lives in `geometry.js` beside the outline it
+  belongs with, measures arc length from the crown at `(i + 0.5)/n`, and
+  builds the port half as the exact sign flip of the starboard half, so the
+  symmetry is exact rather than close. An odd count puts one stringer on the
+  keel, which is its own mirror. The stringer count and pitch the tab reports
+  are unchanged. The tail cone remains deliberately asymmetric about the
+  centreline: that is upsweep, and it is measured.
+
 ### Added
 - Tail-cone closure measured from the manufacturers' drawings: the keel and
   crown at the tail-cone tip were read off the dimensioned side views in the

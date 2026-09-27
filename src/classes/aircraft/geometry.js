@@ -263,6 +263,62 @@ export function fuselagePlanOutline({ length, width, noseLength, tailLength }) {
   return [...starboard, ...port];
 }
 
+/* Stringer positions around one cross-section, in BODY coordinates: y
+   starboard, z up from the centreline, both in metres.
+
+   Spaced by ARC LENGTH. Parameterising the ellipse by angle and stepping
+   the angle bunches the stringers at the ends of the major axis, which is
+   not what a stiffened shell looks like.
+
+   MEASURED FROM THE CROWN, AT HALF-STEP OFFSETS, AND MIRRORED BY
+   CONSTRUCTION. A cross-section is symmetric about the aeroplane's
+   vertical plane and has no equivalent of upsweep, so any left-right
+   asymmetry here is a defect. Walking the perimeter from the SIDE (y = +a)
+   and placing stringer i at arc fraction i/n put its mirror at fraction
+   1 - i/n, which is in the set only when n is EVEN — at an odd count the
+   drawn stringers missed their mirrors by up to a fifth of the semi-width,
+   and the count is a rounded quantity that is odd about half the time (the
+   trainer's 17 is one). Measuring from the crown and placing stringer i at
+   (i + 0.5)/n makes the mirror of i exactly (n - 1 - i) for EVERY n. Only
+   the starboard half is walked; the port half is the sign flip of it and is
+   built that way rather than walked again, so the symmetry is exact rather
+   than merely close. An odd count puts one stringer on the keel, which is
+   its own mirror.
+
+   The arc length here is numerical and is used for SPACING ONLY. The pitch
+   the tab reports stays fuselage-structure.js's Ramanujan perimeter over
+   the count; the two are not the same number and neither depends on the
+   other. */
+export function sectionStringerPoints({ count, width, height, steps = 4000 }) {
+  const n = Math.max(1, Math.round(count));
+  const a = width / 2, b = height / 2;
+  /* Cumulative arc from the crown (0, b) going starboard to the keel
+     (0, -b): y = a sin t, z = b cos t, t over [0, PI]. */
+  const s = [0];
+  let py = 0, pz = b;
+  for (let i = 1; i <= steps; i++) {
+    const t = (Math.PI * i) / steps;
+    const qy = a * Math.sin(t), qz = b * Math.cos(t);
+    s.push(s[i - 1] + Math.hypot(qy - py, qz - pz));
+    py = qy; pz = qz;
+  }
+  const half = s[steps];                       // crown to keel, half the perimeter
+  const at = (arc) => {                        // starboard point at this arc from the crown
+    let k = 0;
+    while (k < steps && s[k] < arc) k++;
+    const t = (Math.PI * k) / steps;
+    return [a * Math.sin(t), b * Math.cos(t)];
+  };
+  const starboard = [], onKeel = [];
+  for (let i = 0; i < n; i++) {
+    const f = (i + 0.5) / n;                   // fraction of the FULL perimeter
+    if (f < 0.5) starboard.push(at(2 * f * half));
+    else if (f === 0.5) onKeel.push([0, -b]);
+  }
+  const port = starboard.slice().reverse().map(([y, z]) => [-y, z]);
+  return [...starboard, ...onKeel, ...port];
+}
+
 /* Body coordinates to an SVG path, through the caller's own two mappers. */
 export function outlinePath(segments, X, Z) {
   return segments

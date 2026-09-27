@@ -38,7 +38,7 @@
    ===================================================================== */
 import { readFileSync } from "node:fs";
 import {
-  fuselageSideOutline, fuselagePlanOutline, outlinePath,
+  fuselageSideOutline, fuselagePlanOutline, outlinePath, sectionStringerPoints,
   FUSELAGE_FINENESS, FUSELAGE_CONVENTION, FUSELAGE_UPSWEEP_MEASURED, fuselageClosure,
   generalArrangement, val,
 } from "../src/classes/aircraft/geometry.js";
@@ -319,6 +319,69 @@ const fsT = readFileSync(new URL("../src/classes/aircraft/fuselage-structure.js"
 check(/closure: ga\.fuselage\.closure/.test(fsT),
   "the fuselage-structure shell carries the closure the general arrangement chose, so the fuselage tab draws the same tip",
   "");
+
+/* -- 10. THE CROSS-SECTION STRINGERS MIRROR ---------------------------
+   Same argument as section 3, one view along. A cross-section is
+   symmetric about the aeroplane's vertical plane and has nothing like
+   upsweep, so any left-right asymmetry is a defect.
+
+   THIS IS A REGRESSION GATE ON A REAL DEFECT. The stringers used to be
+   placed inside FuselageViews.jsx by walking the perimeter from the SIDE
+   and putting stringer i at arc fraction i/n. The mirror of that point is
+   at 1 - i/n, which is only in the set when n is EVEN. The count is
+   Math.round(perimeter / pitch) and is odd about half the time, so the
+   drawing broke its own symmetry on half the inputs; the trainer's 17
+   stringers missed by a fifth of the semi-width. The placement now lives
+   in geometry.js, measures from the crown at (i + 0.5)/n, and builds the
+   port half as the sign flip of the starboard half.
+
+   The odd counts are the ones that matter, so they are tested explicitly
+   and the check is exact, not a tolerance. */
+console.log("\n-- the cross-section stringers are symmetric about the vertical plane --");
+
+const SECT = { width: 3.76, height: 4.01 };        // the same deliberately unround body
+const oddCounts = [5, 17, 31, 53], evenCounts = [4, 16, 30, 52];
+let worstMiss = 0, worstAt = 0;
+for (const count of [...oddCounts, ...evenCounts]) {
+  const pts = sectionStringerPoints({ count, ...SECT });
+  const miss = Math.max(...pts.map(([y, z]) =>
+    Math.min(...pts.map(([u, v]) => Math.hypot(u + y, v - z)))));
+  if (miss > worstMiss) { worstMiss = miss; worstAt = count; }
+}
+check(worstMiss <= 1e-12,
+  "every stringer has an exact mirror twin, at both odd and even counts",
+  `worst miss ${worstMiss.toExponential(1)} m at n = ${worstAt}, over counts ${[...oddCounts, ...evenCounts].join(", ")}`);
+
+check([...oddCounts, ...evenCounts].every((count) =>
+        sectionStringerPoints({ count, ...SECT }).length === count),
+  "and the count drawn is the count asked for",
+  "an odd count keeps its keel stringer, which is its own mirror");
+
+const odd17 = sectionStringerPoints({ count: 17, ...SECT });
+check(odd17.filter(([y]) => Math.abs(y) < 1e-12).length === 1
+      && odd17.filter(([y]) => y > 0).length === 8
+      && odd17.filter(([y]) => y < 0).length === 8,
+  "an odd count splits 8 / 1 on the keel / 8, not 9 / 8",
+  "the unpaired stringer is ON the plane of symmetry rather than beside it");
+
+/* The spacing must still be by ARC LENGTH, or the stringers bunch at the
+   ends of the major axis. Equal arc length means equal neighbour gaps. */
+const ring = sectionStringerPoints({ count: 52, ...SECT });
+const gaps = ring.map(([y, z], i) => {
+  const [u, v] = ring[(i + 1) % ring.length];
+  return Math.hypot(u - y, v - z);
+});
+const spread = (Math.max(...gaps) - Math.min(...gaps)) / (gaps.reduce((s, g) => s + g, 0) / gaps.length);
+check(spread < 0.02,
+  "the stringers are spaced by arc length, not by angle",
+  `chord spread ${(100 * spread).toFixed(2)} % of the mean gap (stepping the ANGLE instead gives 6.4 % on this section)`);
+
+/* Tie the drawing to the hoisted function, the way section 6 ties the
+   three side views to the shared outline. */
+const fvSrc = readFileSync(new URL("../src/classes/aircraft/FuselageViews.jsx", import.meta.url), "utf8");
+check(/sectionStringerPoints\(/.test(fvSrc) && !/2 \* Math\.PI \* i/.test(fvSrc),
+  "the cross-section view calls the hoisted placement and no longer walks the ellipse itself",
+  "a view that rolls its own placement can break the symmetry again without this gate noticing");
 
 console.log("");
 console.log(fails.length ? `FUSELAGE OUTLINE GATE FAILED: ${fails.length} check(s)`

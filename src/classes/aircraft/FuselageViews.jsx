@@ -27,7 +27,7 @@
 
 import { SC } from "../../lib/theme.js";
 import { MONO } from "../../ui/tokens.js";
-import { fuselageSideOutline, outlinePath } from "./geometry.js";
+import { fuselageSideOutline, outlinePath, sectionStringerPoints } from "./geometry.js";
 
 const IN = 0.0254;
 
@@ -146,30 +146,15 @@ export function FuselageSection({ fus, height = 300 }) {
   const txt = { fill: SC.subtle, fontFamily: MONO, fontSize: u * 15 };
   const small = { ...txt, fontSize: u * 12, fill: SC.dim };
 
-  /* Stringers, evenly spaced around the perimeter. Parameterising the
-     ellipse by angle would bunch them at the ends, so the spacing is done
-     by arc length: walk the perimeter in equal steps. */
+  /* Stringers, spaced by arc length and mirrored about the vertical plane.
+     The placement is in geometry.js so that a gate can reach it: drawn
+     here, it walked the perimeter from the side and came out asymmetric at
+     every ODD count — the trainer's 17 stringers missed their mirrors by a
+     fifth of the semi-width, which is exactly the symmetry a cross-section
+     is not allowed to break. */
   const n = fus.stringers.count;
-  const pts = [];
-  {
-    const STEPS = 4000;
-    const xs = [];
-    let s = 0, px = a, py = 0;
-    for (let i = 1; i <= STEPS; i++) {
-      const t = (2 * Math.PI * i) / STEPS;
-      const qx = a * Math.cos(t), qy = b * Math.sin(t);
-      s += Math.hypot(qx - px, qy - py);
-      xs.push({ s, x: qx, y: qy });
-      px = qx; py = qy;
-    }
-    const total = s;
-    let k = 0;
-    for (let i = 0; i < n; i++) {
-      const target = (total * i) / n;
-      while (k < xs.length - 1 && xs[k].s < target) k++;
-      pts.push([cx + xs[k].x, cy - xs[k].y]);
-    }
-  }
+  const pts = sectionStringerPoints({ count: n, width: w, height: h })
+    .map(([y, z]) => [cx + y, cy - z]);
 
   const floorZ = fus.floor.present ? fus.floor.zM : null;
   /* Half-width of the floor where it cuts the ellipse. */

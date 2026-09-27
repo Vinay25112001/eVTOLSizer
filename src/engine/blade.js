@@ -1,3 +1,4 @@
+import { bladeCountFor } from "./rotorgroup.js";
 /* =====================================================================
    BLADE PITCH AND SOLIDITY FOR THE EXPORTED ROTOR
    =====================================================================
@@ -63,7 +64,7 @@ export function bladeDesign(SR = {}, p = {}) {
     beta34Deg: b34,
     solidity: +solidity.toFixed(4),
     ctSigma: +ctSigma.toFixed(4),
-    nBlades: Math.max(2, Math.round(p.nBlades ?? 3)),
+    nBlades: bladeCountFor(p),
     tipSpeed: Number(p.tipSpeed) || null,
     basis: `blade element/momentum in hover: CT/sigma ${ctSigma.toFixed(4)}, `
          + `sigma ${solidity.toFixed(4)} -> theta(0.75R) ${b34.toFixed(2)} deg`,

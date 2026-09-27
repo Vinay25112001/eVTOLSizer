@@ -49,14 +49,43 @@
        sigma = N_blade c / (pi R)   =>   c = sigma pi R / N_blade
    so the chord is derived rather than assumed whenever solidity is known.
 
-   ── TWO INPUTS ARE NOT PUBLISHED, AND THAT IS THE HONEST LIMITATION ──
-   * N_blade — NASA's Table 12 does not give blade count for the concept
-     vehicles. Default 3.
-   * nu (flap natural frequency, per rev) — not published per vehicle either.
-     Default 1.25, from Johnson & Silva 2022: "design CT/sigma = 0.10 and flap
-     frequency of 1.25/rev (typical of hingeless helicopter rotors)", in the
-     same paper's rotor-weight trade study. That is the right authors and the
-     right vehicle class, but it is a TRADE-STUDY value, not a per-vehicle one.
+   ── THE INPUTS ARE PUBLISHED AFTER ALL: NASA'S OWN NDARC DECKS ───────
+   Table 12 does not give blade count or flap frequency, and this module
+   used to say they were unpublished. They are not. NASA distributes the
+   NDARC input deck of every reference vehicle (nasa.gov/reference/uam-refs,
+   vendored 2026-09-27 as eVTOL_Sizing_Research/sources/nasa-uam-ndarc-decks
+   with sha256), and Silva & Johnson 2018 Table 3 carries the SAME rotor
+   group weights as Table 12 for the quadrotor, side-by-side and L+C-E, so
+   the decks, the paper and the referents are one vintage. The decks say:
+
+     quadrotorE6.list   :114 nblade=3   :116 KIND_hub=1, flapfreq=1.03
+                        :115 SET_chord=2, taper=0.75   :149 Usupt=2.
+     sidebysideE6.list  :115 nblade=4   :118 KIND_hub=1, flapfreq=1.035
+                        :116-117 SET_chord=3, fchord 1,1,.6 at r 0,.94,1
+     lift-cruiseE6.list :210 nblade=2   :212 KIND_hub=2, flapfreq=1.25 (hingeless)
+                        :211 SET_chord=2, taper=.75    :252 dWrsupt=35. per rotor
+     QSMRE.list         :114 nblade=4   :117 flapfreq=1.035
+     every deck         TECH_blade=0.916, TECH_hub=0.759  (e.g. quadrotorE6 :320)
+     no deck sets MODEL_Wblade/hub -> NDARC default 1 = AFDD82 (Input manual
+                        S0231 :5861-5863); flapfreq_blade/_hub 0 -> use flapfreq
+
+   And NDARC's rotor group CONTAINS rotor support (theory TP-2015-218751
+   :9667-9670, W_supt = chi (f_supt W_MTO + U_supt R) :15555), which the
+   quadrotor carries at 2 lb/ft x R per rotor and the L+C as 35 lb per lift
+   rotor ("1/2 of boom weight"). This engine models supports in booms.js and
+   the nacelle pylon, so they are NOT added here; the harnesses subtract
+   NASA's from the published line instead (group boundary first).
+
+   The blade equation's c is the mean GEOMETRIC chord (NDARC Table 29-3);
+   Table 12 publishes THRUST-WEIGHTED solidity, and NDARC relates them by
+   f = sigma_t/sigma_g "including root cutout" (Input manual :4950-4953):
+   integrating each deck's own chord law from xroot to the tip gives f =
+   0.9483 (quad), 0.9418 (L+C), 0.9791 (SbS/SMR), so c_geo = c_tw / f.
+
+   Measured with all of that and NOTHING tuned (validation/rotor-group.mjs):
+   SMR +0.1 %, Quad TS -1.5 %, Quad E -2.2 %, SbS TS -0.3 %, SbS E -0.8 %;
+   the lift+cruise is +15 % and is REPORTED as a residual, not fitted.
+   Research: eVTOL_Sizing_Research/benchmarks/nasa-ndarc-decks.md.
 
    **nu enters at the 2.51 power, so this is the most sensitive input in the
    module**: 1.05 vs 1.25 changes blade weight by a factor of 1.55. Any use of
@@ -72,8 +101,79 @@
    selectable is what makes the comparison auditable instead of a claim.
    ===================================================================== */
 
+import { configKeyFor } from "./configuration.js";
+
 const LB = 2.20462;
 const FT = 3.28084;
+
+/* ── WHAT NASA'S DECKS SET, PER CONFIGURATION ────────────────────────
+   One home for the rotor inputs NASA ran. Each row is read from the vendored
+   NDARC deck named in `src`; the multicopter row is the quadrotor's and is
+   the default for any multicopter layout (override p.nBlades etc.).
+   `sigmaTwToGeo` is f = sigma_t/sigma_g for the deck's chord law, integrated
+   from its root cutout to the tip (thrust-weighted mean uses r^2 weighting,
+   NDARC theory :7473-7483); the gate recomputes it from the chord law.
+   `supportLbPerFt` / `supportLbPerRotor` are NDARC's rotor-support terms, for
+   the HARNESSES to remove from the published rotor group — not applied here. */
+export const ROTOR_DECK_BY_CONFIG = Object.freeze({
+  multicopter: { nBlades: 3, flapFreq: 1.03, hub: "articulated", chordLaw: "linear taper 0.75, root cutout 0.15",
+                 sigmaTwToGeo: 0.9483, supportLbPerFt: 2.0,
+                 src: "[SRC] NASA NDARC deck quadrotorE6.list :114 nblade=3, :116 flapfreq=1.03, :115 taper=0.75, :149 Usupt=2." },
+  sideBySide:  { nBlades: 4, flapFreq: 1.035, hub: "articulated", chordLaw: "constant, tip tapered to 0.6 from 0.94R, root cutout 0.15",
+                 sigmaTwToGeo: 0.9791, supportLbPerFt: 0,
+                 src: "[SRC] NASA NDARC deck sidebysideE6.list :115 nblade=4, :118 flapfreq=1.035, :116-117 SET_chord=3 fchord 1,1,.6" },
+  helicopter:  { nBlades: 4, flapFreq: 1.035, hub: "articulated", chordLaw: "constant, tip tapered to 0.6 from 0.94R, root cutout 0.15",
+                 sigmaTwToGeo: 0.9791, supportLbPerFt: 0,
+                 src: "[SRC] NASA NDARC deck QSMRE.list :114 nblade=4, :117 flapfreq=1.035, :115-116 SET_chord=3 fchord 1,1,.6" },
+  liftcruise:  { nBlades: 2, flapFreq: 1.25, hub: "hingeless", chordLaw: "linear taper 0.75, root cutout 0.10",
+                 sigmaTwToGeo: 0.9418, supportLbPerRotor: 35,
+                 src: "[SRC] NASA NDARC deck lift-cruiseE6.list :210 nblade=2, :212 KIND_hub=2 flapfreq=1.25, :211 taper=.75, :252 dWrsupt=35." },
+});
+
+/* The deck row for a layout, or null when NASA published no deck for it.
+   Hybrids that stop rotors are lift+cruise-like for the STOPPED rotors and
+   are resolved by the caller; a tiltrotor/tiltwing gets null on purpose:
+   NASA weighs tilting proprotors with the auxiliary-thrust (propeller) model
+   (tiltwing6.list :220 MODEL_config=3), which this engine does not implement. */
+export function rotorDeckFor(configType) {
+  return ROTOR_DECK_BY_CONFIG[configType] ?? null;
+}
+
+/* The deck row for a PARAMETER SET. A configType that names a deck row is
+   taken as written (the harnesses pass "helicopter", which is not an engine
+   layout); otherwise the key is resolved exactly as the engine resolves it
+   (configuration.js configKeyFor), so the default layout - lift+cruise -
+   gets the lift+cruise deck and not a fallback. */
+export function rotorDeckForParams(p) {
+  return ROTOR_DECK_BY_CONFIG[p?.configType] ?? rotorDeckFor(configKeyFor(p));
+}
+
+/* NASA's rotor technology factors, applied as W = chi * w_model (NDARC Input
+   manual :5347). Identical in every reference-vehicle deck. They are NASA's
+   ASSUMPTION for advanced composite rotors with crashworthiness (Johnson &
+   Silva 2022 :503), and the referents this engine is scored against are
+   NDARC outputs that carry them; scoring without them compares two
+   technology levels. Override p.rotorBladeTechFactor / p.rotorHubTechFactor. */
+export const NASA_ROTOR_TECH = Object.freeze({
+  blade: 0.916, hub: 0.759,
+  src: "[SRC] NASA NDARC decks: TECH_blade=0.916, TECH_hub=0.759 (quadrotorE6.list :320, sidebysideE6.list :363, lift-cruiseE6.list :1027, QSMRE.list :335)",
+});
+
+/* Blade count: the ONE place it is decided. blade.js, flightcontrols.js and
+   geometry.js used to each default `p.nBlades ?? 3`, so a lift+cruise was
+   weighed, controlled and DRAWN with three blades while NASA's has two. */
+export function bladeCountFor(p = {}) {
+  if (Number.isFinite(p.nBlades) && p.nBlades > 0) return Math.max(2, Math.round(p.nBlades));
+  return rotorDeckForParams(p)?.nBlades ?? 3;
+}
+
+/* Thrust-weighted to geometric chord, NDARC theory :7473-7483 with the root
+   cutout the manual says to include: c_geo = c_tw / f. 1 for a layout whose
+   chord law NASA did not publish (untapered). Override p.sigmaTwToGeo. */
+export function sigmaTwToGeoFor(p = {}) {
+  if (Number.isFinite(p.sigmaTwToGeo) && p.sigmaTwToGeo > 0) return p.sigmaTwToGeo;
+  return rotorDeckForParams(p)?.sigmaTwToGeo ?? 1.0;
+}
 
 /* =====================================================================
    BLADE LOADING — the check this engine did not make
@@ -244,6 +344,9 @@ export const ROTOR_FLAP_FREQ = {
 };
 
 export function flapFreqFor(p) {
+  /* A deck value is the vehicle's own number and wins over the type value. */
+  const deck = rotorDeckForParams(p);
+  if (deck) return deck.flapFreq;
   const key = p?.configType;
   const stops = (p?.nRotorsStopped ?? 0) > 0
     || key === "liftcruise" || key === "hybrid" || key === "hybridPusher";
@@ -252,6 +355,8 @@ export function flapFreqFor(p) {
 
 export function flapFreqBasis(p) {
   if (p?.rotorFlapFreq != null) return "explicit input";
+  const deck = rotorDeckForParams(p);
+  if (deck) return `${deck.hub}, the reference vehicle's own deck value. ${deck.src}`;
   const nu = flapFreqFor(p);
   return nu === ROTOR_FLAP_FREQ.hingeless.nu
     ? `hingeless/rigid — this layout stops rotors in cruise, so the blade must survive edgewise flow as a cantilever. ${ROTOR_FLAP_FREQ.hingeless.src}`
@@ -283,14 +388,19 @@ export const F_TILT = 1.17940;
 /**
  * Rotor group mass (blades + hub and hinge), all rotors.
  *
- * @param {object} p reads `rotorMassModel` ("afdd00" default | "afdd82" |
- *   "diskArea"), `nBlades`, `rotorFlapFreq`, `solidity`, `rotorTechFactor`,
- *   `bladeChord_m`.
+ * @param {object} p reads `rotorMassModel` ("afdd82" default | "afdd00" |
+ *   "diskArea"), `nBlades`, `rotorFlapFreq`, `solidity` (thrust-weighted),
+ *   `sigmaTwToGeo`, `rotorBladeTechFactor`, `rotorHubTechFactor`,
+ *   `rotorTechFactor` (legacy overall multiplier), `bladeChord_m` (geometric),
+ *   `configType` (selects NASA's deck defaults).
  * @param {object} g { nRotors, radius_m, tipSpeed_ms, diskArea_m2, isTilting }
  * @param {number} calKgPerM2 the legacy [CAL] disk-area constant.
  */
 export function rotorGroup(p = {}, g = {}, calKgPerM2 = 2.0) {
-  const model = p.rotorMassModel ?? "afdd00";
+  /* AFDD82 is what NASA ran: no reference-vehicle deck overrides NDARC's
+     default MODEL_Wblade = 1. AFDD00 is the model the theory's correlation
+     SUMMARY is written on, which is where the old default came from. */
+  const model = p.rotorMassModel ?? "afdd82";
   const nRotor = Math.max(1, g.nRotors ?? 1);
   const R_m = Math.max(1e-6, g.radius_m ?? 0);
   const vTip = Math.max(1e-6, g.tipSpeed_ms ?? 0);
@@ -303,23 +413,21 @@ export function rotorGroup(p = {}, g = {}, calKgPerM2 = 2.0) {
           + `tip speed or flap frequency dependence` };
   }
 
-  const nBlade = Math.max(2, Math.round(p.nBlades ?? 3));
-  /* [CAL] Flap natural frequency, per rev — the weakest input in this module,
-     and it enters at the 2.51 power. NOT published for the NASA reference
-     vehicles, and NDARC states no typical value.
-     1.10 represents a HINGELESS rotor, the right class for small stiff eVTOL
-     lift rotors. Articulated rotors sit near 1.02-1.04; Johnson & Silva quote
-     1.25 as "typical of hingeless helicopter rotors", but for large helicopter
-     blades in a trade study, not for these vehicles.
-     MEASURED against NASA Table 12 (validation/components.mjs), AFDD82 3-blade:
-        nu 1.03 -> MAE 25.5%    nu 1.10 -> 29.1%    nu 1.25 -> 64.4%
-     1.03 scores best and is deliberately NOT chosen for that reason. */
+  const deck = rotorDeckForParams(p);
+  const nBlade = bladeCountFor(p);
+  /* Flap natural frequency, per rev, at the 2.53 power: the most sensitive
+     input here. It is the reference vehicle's own deck value where NASA
+     published a deck for the layout, the published rotor-type value
+     otherwise, and never a bare guess. */
   const nu = Math.max(1.0, p.rotorFlapFreq ?? flapFreqFor(p));
-  /* Chord from solidity when available, else an explicit chord, else fall back
-     to the [CAL] model rather than inventing a chord. */
+  /* Chord from THRUST-WEIGHTED solidity (what Table 12 and the sizing loop
+     carry), converted to the mean GEOMETRIC chord the equation wants; an
+     explicit chord is taken as geometric; no chord at all falls back to the
+     [CAL] model rather than inventing one. */
   const sigma = p.solidity;
-  const c_m = p.bladeChord_m != null ? p.bladeChord_m
-            : (sigma > 0 ? sigma * Math.PI * R_m / nBlade : null);
+  const fTw = sigmaTwToGeoFor(p);
+  const cTw_m = sigma > 0 ? sigma * Math.PI * R_m / nBlade : null;
+  const c_m = p.bladeChord_m != null ? p.bladeChord_m : (cTw_m !== null ? cTw_m / fTw : null);
   if (!(c_m > 0)) {
     const mass = tf * nRotor * calKgPerM2 * Math.max(0, g.diskArea_m2 ?? 0);
     return { mass, bladeKg: null, hubKg: null, model: "diskArea(fallback)", chord_m: null,
@@ -329,20 +437,34 @@ export function rotorGroup(p = {}, g = {}, calKgPerM2 = 2.0) {
 
   const R_ft = R_m * FT, c_ft = c_m * FT, vTip_fts = vTip * FT;
   const fTilt = g.isTilting ? F_TILT : 1.0;
+  const chiBlade = Math.max(0, p.rotorBladeTechFactor ?? NASA_ROTOR_TECH.blade);
+  const chiHub = Math.max(0, p.rotorHubTechFactor ?? NASA_ROTOR_TECH.hub);
 
-  const wBlade = model === "afdd82"
+  /* W_blade = chi_blade w_blade; the hub equation is fed that FACTORED blade
+     weight (NDARC 29-2 writes the hub term in W_blade, and states that using
+     the actual blade weight "is best for advanced technology rotors"). */
+  const wBladeRaw = model === "afdd82"
     ? afdd82Blade(nRotor, nBlade, R_ft, c_ft, vTip_fts, nu)
     : afdd00Blade(nRotor, nBlade, R_ft, c_ft, vTip_fts, nu, fTilt);
-  const wHub = model === "afdd82"
+  const wBlade = chiBlade * wBladeRaw;
+  const wHub = chiHub * (model === "afdd82"
     ? afdd82Hub(nRotor, nBlade, R_ft, vTip_fts, nu, wBlade)
-    : afdd00Hub(nRotor, nBlade, R_ft, vTip_fts, nu, wBlade);
+    : afdd00Hub(nRotor, nBlade, R_ft, vTip_fts, nu, wBlade));
 
   return {
     mass: tf * (wBlade + wHub) / LB,
     bladeKg: tf * wBlade / LB,
     hubKg: tf * wHub / LB,
-    model, chord_m: c_m, nBlades: nBlade, flapFreq: nu, fTilt,
-    note: `${model.toUpperCase()} blades+hub, ${nBlade} blades, chord `
-        + `${c_m.toFixed(3)} m, nu=${nu} per rev`,
+    model, chord_m: c_m, chordTw_m: cTw_m, sigmaTwToGeo: fTw, nBlades: nBlade, flapFreq: nu, fTilt,
+    chiBlade, chiHub,
+    deck: deck ? deck.src : null,
+    referenceModelNote: g.isTilting
+      ? "NASA weighs tilting proprotors with NDARC's auxiliary-thrust (propeller) model, not a rotor-group "
+        + "equation (tiltwing6.list :220 MODEL_config=3); this engine has no propeller weight model, so the "
+        + "rotor equation is used and this is a departure from the reference method."
+      : null,
+    note: `${model.toUpperCase()} blades+hub, ${nBlade} blades, geometric chord `
+        + `${c_m.toFixed(3)} m (thrust-weighted ${cTw_m === null ? "n/a" : cTw_m.toFixed(3) + " m"}), nu=${nu} per rev, `
+        + `chi ${chiBlade}/${chiHub}`,
   };
 }

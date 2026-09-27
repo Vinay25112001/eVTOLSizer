@@ -33,13 +33,14 @@
    controls. Table 12's ROTOR GROUP line is the ground truth for the rotor
    model; the drive system line for the drive model; and so on.
 
-   Nothing here is fitted. Where an input is not published (blade count, flap
-   frequency) the harness SWEEPS it and reports the range, rather than picking
-   the value that scores best.
+   Nothing here is fitted. Blade count and flap frequency were SWEPT here
+   while they were thought unpublished; NASA's own NDARC decks publish them
+   (engine/rotorgroup.js header), and the row after the sweep uses the deck
+   values, with the sweep kept as the record of what a guess would have cost.
 
      node validation/components.mjs
    ===================================================================== */
-import { rotorGroup } from "../src/engine/rotorgroup.js";
+import { rotorGroup, ROTOR_DECK_BY_CONFIG } from "../src/engine/rotorgroup.js";
 import { driveSystem } from "../src/engine/drivesystem.js";
 import { nacelleGroup } from "../src/engine/nacelle.js";
 import { flightControls } from "../src/engine/flightcontrols.js";
@@ -87,8 +88,10 @@ console.log(bar);
    The headline comparison this file was built for: an invented [CAL]
    constant against NDARC's published regression, on the same 8 aircraft. */
 console.log(`\n── ROTOR GROUP  (NASA Table 12 "Rotor group weight", 8 variants)`);
-console.log(`   nu (flap frequency) and blade count are NOT published per vehicle,`);
-console.log(`   so both are SWEPT and the range reported rather than chosen.\n`);
+console.log(`   Blade count and flap frequency are SWEPT below, as they were when this`);
+console.log(`   harness was written and thought them unpublished. They are published, in`);
+console.log(`   NASA's own NDARC decks; the row after the sweep uses those values.
+`);
 
 /* ── nu BY PUBLISHED ROTOR TYPE, NOT SWEPT ────────────────────────────
    NASA publish BOTH the values and which vehicle uses which:
@@ -151,6 +154,42 @@ console.log(`\n   best over the swept grid: ${best.model.toUpperCase()}, ${best.
 console.log(`   (BOUND for a single UNIFORM nu. A best-fit uniform nu would be a fit;`);
 console.log(`    nu BY PUBLISHED ROTOR TYPE is not — NASA give 1.03 flapping /`);
 console.log(`    1.25 hingeless AND say which vehicle uses which.)`);
+
+/* ── NASA'S OWN DECK INPUTS, NOTHING SWEPT ────────────────────────────
+   The sweep above exists because blade count and flap frequency were
+   thought unpublished. They are published: NASA distributes the NDARC deck
+   of every reference vehicle (vendored, see engine/rotorgroup.js header).
+   This row uses the deck's blade count, flap frequency, chord law and
+   technology factors and removes NDARC's rotor-support term from the
+   published line, since this engine books supports in booms/pylons. The
+   tiltwing is excluded here on the source's own terms: its deck weighs the
+   proprotors with the propeller model (tiltwing6.list :220). */
+const DECK_CFG = { "SMR-TS": "helicopter", "Quad-TS": "multicopter", "Quad-E": "multicopter",
+  "SbS-TS": "sideBySide", "SbS-E": "sideBySide", "L+C-E": "liftcruise", "L+C-TE": "liftcruise" };
+const supportLb = (v) => {
+  const d = ROTOR_DECK_BY_CONFIG[DECK_CFG[v.key]];
+  return d.supportLbPerRotor != null ? v.nRotors * d.supportLbPerRotor : v.nRotors * d.supportLbPerFt * v.R_ft;
+};
+console.log(`\n   NASA's OWN DECK INPUTS (AFDD82, deck blades and nu, chi 0.916/0.759, geometric chord;`);
+console.log(`   scored as blades+hub against Table 12 less the deck's rotor-support term):`);
+const deckErrs = [];
+for (const v of VEHICLES.filter((x) => DECK_CFG[x.key])) {
+  const R_m = v.R_ft / FT;
+  const out = rotorGroup({ configType: DECK_CFG[v.key], solidity: v.solidity },
+    { nRotors: v.nRotors, radius_m: R_m, tipSpeed_ms: v.tip / FT,
+      diskArea_m2: v.nRotors * Math.PI * R_m * R_m, isTilting: false }, K.rotorMassPerDiskAreaKgM2);
+  const sup = supportLb(v), target = v.rotor_lb - sup;
+  const e = pct(out.mass * LB, target), eWhole = pct(out.mass * LB + sup, v.rotor_lb);
+  deckErrs.push(e);
+  console.log(`   ${v.key.padEnd(8)} ${out.nBlades} bl nu ${out.flapFreq}  blades+hub ${(out.mass * LB).toFixed(0).padStart(4)} lb`
+    + ` vs ${target.toFixed(0).padStart(4)} (= ${v.rotor_lb} - support ${sup.toFixed(0)})  ${f1(e).padStart(7)}`
+    + `   whole group ${f1(eWhole).padStart(7)}`);
+}
+console.log(`   MAE ${(deckErrs.reduce((a, b) => a + Math.abs(b), 0) / deckErrs.length).toFixed(1)}% over ${deckErrs.length} vehicles, nothing tuned.`);
+console.log(`   THE LIFT+CRUISE DOES NOT REPRODUCE and is reported, not fitted: Silva & Johnson`);
+console.log(`   2018 Table 3 carries the same 948 lb as Table 12, so it is not a vintage gap;`);
+console.log(`   the pusher (propulsion group), spinner (none), taper direction, nu and tip speed`);
+console.log(`   are excluded; the sized solidity and the 2018 run's boom increment are not checkable.`);
 
 /* ── SYSTEMS GROUP ────────────────────────────────────────────────────
    ADDED 2026-08-31 because nothing tested it and it turned out to be the

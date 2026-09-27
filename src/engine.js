@@ -40,7 +40,7 @@ import { coaxialInterference, COAX_THRUST_RATIO_DEFAULT, rotorStations, coaxialC
 import { acai, ringRotors, failRotor, torqueToThrustRatio } from "./engine/controlauthority.js";
 import { rotorcraftTailArea, ROTORCRAFT_BODY_LEN_OVER_R as SBS_BODY_LEN_OVER_R,
          SBS_TAIL_ARM_OVER_R } from "./engine/rotorcrafttail.js";
-import { designSolidity, designSolidityRaw, SOLIDITY_MAX, bladeLoading, DESIGN_CT_SIGMA, designCTsigmaFor } from "./engine/rotorgroup.js";
+import { designSolidity, designSolidityRaw, SOLIDITY_MAX, bladeLoading, DESIGN_CT_SIGMA, designCTsigmaFor, bladeCountFor } from "./engine/rotorgroup.js";
 /* The certification basis is a DESIGN CONSTRAINT, not an afterthought check.
    See engine/certification.js — and note it is a parameter, because NASA's own
    lift+cruise concept (3,724 kg) sits above the SC-VTOL small-category ceiling. */
@@ -2177,7 +2177,7 @@ function runSizingCore(p0) {
      it, where the A-weighting curve bites. Real eVTOL practice runs higher:
      Joby uses 5-bladed high-solidity props specifically to allow lower tip
      speed (Joby/NASA acoustic design papers). Override with p.nBlades. */
-  const Nbld=Math.max(2,Math.round(p.nBlades??3));
+  const Nbld=bladeCountFor(p);   // one home: engine/rotorgroup.js, NASA deck value per layout
   /* Design solidity is now a parameter shared with engine/drag.js and
      engine/rotorgroup.js — it was hardcoded 0.10 in two separate places. */
   const solidityDesign=solidityEff;

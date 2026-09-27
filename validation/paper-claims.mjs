@@ -54,8 +54,15 @@ const quadRotorErr = quadRows.rotor ? quadRows.rotor.err : null;
 const summary = nasa.match(/^PASS: (\d+) published comparisons, mean ([\d.]+)%/m);
 const provTotal = Object.keys(OUTPUTS).length;
 const validated = Object.values(OUTPUTS).filter(o => o?.status === "validated").length;
-const rotorMAE = (comp.match(/AFDD00 3 bl nu BY TYPE.*?([\d.]+)%\s*$/m) || [])[1];
+/* THE ROTOR CLAIMS CHANGED WITH THE FINDING. The paper used to quote the rotor
+   model's MAE with a guessed uniform blade count ("25.1%") as the state of the
+   art; that number was the cost of guessed inputs. It now quotes the MAE with
+   NASA's own deck inputs, the sweep's best as the cost of guessing, and the
+   two population statistics the benchmark prints. */
+const rotorDeckMAE = (comp.match(/MAE ([\d.]+)% over 7 vehicles, nothing tuned/) || [])[1];
 const bestSweep = (comp.match(/best over the swept grid:.*?MAE ([\d.]+)%/) || [])[1];
+const withinAFDD = (nasa.match(/^Against AFDD's own in-population error: (\d+) of 21 groups/m) || [])[1];
+const degradation = (nasa.match(/Mean out-of-population degradation: x([\d.]+)/) || [])[1];
 const goldCases = (gold.match(/GOLDEN MASTER — (\d+) cases/) || [])[1];
 
 /* implied remainder: structures minus the rotor group, both sides */
@@ -147,6 +154,14 @@ const CLAIMS = [
   ["binding: side-by-side ratio at 10 km",   BIND.sideBySide?.r10],
   ["binding: multicopter at 5-min reserve",  BIND.multicopter?.r10res5],
   ["binding: side-by-side at 5-min reserve", BIND.sideBySide?.r10res5],
+  /* The table in section 2.1 has eighteen numbers; thirteen were gated and
+     five were not, and the five had drifted with the rotor change while the
+     gate stayed green on them. Every number in that table is now a claim. */
+  ["binding: hybrid ratio at 10 km",         BIND.hybrid?.r10],
+  ["binding: hybrid pusher ratio at 161 km", BIND.hybridPusher?.r161],
+  ["binding: hybrid pusher ratio at 10 km",  BIND.hybridPusher?.r10],
+  ["binding: tiltrotor ratio at 161 km",     BIND.tiltrotor?.r161],
+  ["binding: side-by-side ratio at 161 km",  BIND.sideBySide?.r161],
 
   ["side-by-side pitch damping Mq", sbsD.Mq == null ? null : `−${Math.abs(sbsD.Mq).toFixed(2)}`],
   ["side-by-side roll damping Lp",  sbsD.Lp == null ? null : `−${Math.abs(sbsD.Lp).toFixed(2)}`],
@@ -182,8 +197,10 @@ const CLAIMS = [
   ["implied remainder error",           `${remErr >= 0 ? "+" : "−"}${f1(Math.abs(remErr))}%`],
   ["quadrotor rotor error",             quadRotorErr == null ? null
                                         : `${quadRotorErr > 0 ? "+" : "−"}${Math.abs(quadRotorErr).toFixed(1)}%`],
-  ["rotor model MAE, 8 variants",       rotorMAE ? `${rotorMAE}%` : null],
-  ["best rotor model in sweep",         bestSweep ? `${bestSweep}%` : null],
+  ["rotor model MAE with NASA's deck inputs, 7 vehicles", rotorDeckMAE ? `${rotorDeckMAE}%` : null],
+  ["best rotor model in sweep (the cost of guessing)", bestSweep ? `${bestSweep}%` : null],
+  ["groups at or better than AFDD in population", withinAFDD],
+  ["mean out-of-population degradation", degradation ? `×${degradation}` : null],
   ["registered outputs",                String(provTotal)],
   ["validated outputs",                 String(validated)],
   ["golden master cases",               goldCases],

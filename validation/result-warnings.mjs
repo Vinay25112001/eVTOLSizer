@@ -55,12 +55,35 @@ check("all eight [M&S 32] categories a-h are defined", CATEGORIES.map(c => c[0])
 
 /* ── 2. domains ─────────────────────────────────────────────────── */
 console.log("\n2. [M&S 26] domain placards");
+/* THE PLACARD IS TESTED AGAINST AN INDEPENDENT COMPARISON, NOT AGAINST
+   WHERE THE FIXTURE HAPPENS TO SIT. This used to assert that every default
+   layout with a validated case lies INSIDE the validated envelope. That was
+   a fact about the defaults, not about the placard, and it stopped being a
+   fact when the rotor group was weighed with NASA's own deck inputs: the
+   default lift+cruise (twelve 2.37 m two-bladed hingeless rotors) went from
+   3,647 kg to 4,481 kg, above the heaviest validated lift+cruise (4,301 kg),
+   and the placard correctly said so. A check that fails when a warning
+   fires correctly is testing the wrong thing. Now: the recorded box is
+   compared directly here, and the placard has to agree with that comparison
+   in both directions, and a design outside the box has to carry a category-c
+   warning naming the variable. Where each default sits is REPORTED. */
 for (const c of LAYOUTS) {
   const p = { ...DEFAULT_PARAMS, configType: c };
-  const d = assessDomain(p, size(p));
-  const expectValidated = Array.isArray(DOMAIN.validation.layouts[c]);
-  check(`default ${c}: inside the verified domain; ${expectValidated ? "inside" : "OUTSIDE"} the validated one`,
-        d.insideVerification && d.insideValidation === expectValidated,
+  const R = size(p);
+  const d = assessDomain(p, R);
+  const PT = DOMAIN.validation.byPowertrain?.battery ?? { envelope: {} };
+  const vals = { payload: p.payload, range_km: p.range, vCruise: p.vCruise, MTOW: R?.MTOW };
+  const outOfBox = Object.entries(PT.envelope)
+    .filter(([k, e]) => !(vals[k] >= e.min && vals[k] <= e.max))
+    .map(([k, e]) => `${k} ${Number(vals[k]).toFixed(0)} vs ${e.min}-${e.max}`);
+  const layoutValidated = Array.isArray(DOMAIN.validation.layouts[c]);
+  const expectValidated = layoutValidated && outOfBox.length === 0;
+  const placardNames = outOfBox.every(s => d.excursions.some(x => x.domain === "validation" && s.startsWith(x.key)));
+  const w = resultWarnings({ params: p, R });
+  const warnsC = expectValidated || w.items.some(i => i.cat === "c");
+  check(`default ${c}: verified-domain placard says inside; validated-domain placard agrees with a direct check of the recorded box`
+        + ` (${layoutValidated ? (outOfBox.length ? "OUTSIDE on " + outOfBox.join("; ") : "inside") : "no validated case for this layout"})`,
+        d.insideVerification && d.insideValidation === expectValidated && placardNames && warnsC,
         d.excursions.map(x => `${x.domain}:${x.key}`).join(", ") || "no excursions");
 }
 {

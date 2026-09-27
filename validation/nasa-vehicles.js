@@ -32,6 +32,9 @@ export const NASA_VEHICLES = [
     gearRatio: 13.3,
     published: { DGW_lb: 6480, empty_lb: 5270, pack_lb: 2040,
                  structures_lb: 1640, rotor_lb: 628, propulsion_lb: 2670,
+                 /* NDARC rotor SUPPORT inside the published rotor group: deck quadrotorE6.list :149
+                    Usupt=2 lb/ft x R 13.1 ft x 4 rotors = 104.8 lb (validation/rotor-group.mjs pins it) */
+                 rotorSupport_lb: 104.8,
                  drive_lb: 397, systems_lb: 536, capacity_MJ: 1330 , fc_lb: 108,
                  mrp_hp_lifter: 168, nLift: 4, wpp_lb_hp: 14.0 },
   },
@@ -44,6 +47,7 @@ export const NASA_VEHICLES = [
     gearRatio: 14.1,                     // 12.1-16.1 by the same recovery
     published: { DGW_lb: 4900, empty_lb: 3690, pack_lb: 1290,
                  structures_lb: 1240, rotor_lb: 345, propulsion_lb: 1690,
+                 rotorSupport_lb: 0,                  // deck sidebysideE6.list sets no Usupt/dWrsupt
                  drive_lb: 255, systems_lb: 507, capacity_MJ: 846 , fc_lb: 93,
                  mrp_hp_lifter: 214, nLift: 2, wpp_lb_hp: 12.6 },
   },
@@ -90,6 +94,8 @@ export const NASA_VEHICLES = [
     gearRatio: 3.85,
     published: { DGW_lb: 8210, empty_lb: 7000, pack_lb: 2200,
                  structures_lb: 2580, rotor_lb: 948, propulsion_lb: 3190,
+                 /* deck lift-cruiseE6.list :252 dWrsupt=35 lb per lift rotor ("1/2 of boom weight") x 8 */
+                 rotorSupport_lb: 280,
                  drive_lb: 358, systems_lb: 540, capacity_MJ: 1440 , fc_lb: 152,
                  mrp_hp_lifter: 139, nLift: 8, wpp_lb_hp: 7.4 },
   },

@@ -14,9 +14,9 @@ export default {
     "vCruise": 50.42,
     "MTOW": 2939,
     "errorPct": {
-     "MTOW": -0.3,
-     "empty": -0.2,
-     "struct": 8.2
+     "MTOW": -1.4,
+     "empty": -1.5,
+     "struct": 6.1
     },
     "errorModel": "nasa-configs.mjs (NASA technology inputs)"
    },
@@ -31,9 +31,9 @@ export default {
     "vCruise": 50.42,
     "MTOW": 2223,
     "errorPct": {
-     "MTOW": -11.5,
-     "empty": -15,
-     "struct": -22.3
+     "MTOW": -13.5,
+     "empty": -17.7,
+     "struct": -26.9
     },
     "errorModel": "nasa-configs.mjs (NASA technology inputs)"
    },
@@ -48,9 +48,9 @@ export default {
     "vCruise": 57.62,
     "MTOW": 3724,
     "errorPct": {
-     "MTOW": -23.9,
-     "empty": -27.9,
-     "struct": -25.9
+     "MTOW": -11.7,
+     "empty": -13.5,
+     "struct": -5.2
     },
     "errorModel": "nasa-configs.mjs (NASA technology inputs)"
    },
@@ -65,7 +65,7 @@ export default {
     "vCruise": 42.7,
     "MTOW": 4301,
     "errorPct": {
-     "MTOW": -24
+     "MTOW": -0.3
     },
     "errorModel": "validate.mjs, build-up weight model"
    },
@@ -80,7 +80,7 @@ export default {
     "vCruise": 89.4,
     "MTOW": 2404,
     "errorPct": {
-     "MTOW": -1.5
+     "MTOW": 0.6
     },
     "errorModel": "validate.mjs, build-up weight model"
    },
@@ -95,7 +95,7 @@ export default {
     "vCruise": 66.9,
     "MTOW": 3175,
     "errorPct": {
-     "MTOW": -11
+     "MTOW": -8.9
     },
     "errorModel": "validate.mjs, build-up weight model"
    },
@@ -110,7 +110,7 @@ export default {
     "vCruise": 27.8,
     "MTOW": 900,
     "errorPct": {
-     "MTOW": 2.5
+     "MTOW": 3.5
     },
     "errorModel": "validate.mjs, build-up weight model"
    },
@@ -125,9 +125,9 @@ export default {
     "vCruise": 62.76,
     "MTOW": 2727,
     "errorPct": {
-     "MTOW": -19.2,
-     "empty": -28,
-     "fuel": -5.9
+     "MTOW": -10.7,
+     "empty": -17.8,
+     "fuel": 1.8
     },
     "errorModel": "validation/turboelectric.mjs (NASA technology inputs)"
    }

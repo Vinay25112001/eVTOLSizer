@@ -62,7 +62,7 @@ Mapped onto this repository:
 |---|---|---|
 | **Data pedigree** | every constant traces to a primary source, with the source's own stated uncertainty | 135 `[SRC]` tags; 68 outputs and 28 inputs without one |
 | **Verification** | the code computes what the cited formula says (the golden master, the components harness, the identities gate) | 42 gates; `components.mjs` tests models at published inputs; `citations.mjs` checks every regulatory paragraph against the corpus |
-| **Validation** | the model's outputs agree with real aircraft | 14 outputs, NASA Table 12 (39 comparisons, 14.5% mean), commercial (11 metrics, 14.0%) |
+| **Validation** | the model's outputs agree with real aircraft | 14 outputs, NASA Table 12 (39 comparisons, 10.4% mean), commercial (11 metrics, 14.0%) |
 | **Technical review** | an independent reader has checked the method against the literature | the research-before-engineering rule; paper reviewers; this document |
 | **Process management** | changes are traceable, tests run before deploy, results reproduce | 125 commits, gated deploy, `paper-claims.mjs` |
 
@@ -233,7 +233,7 @@ progress metric.
   all automated fetches. Web search is budget-limited per session.
 - **The tool is conceptual-design fidelity.** NDARC-class methods carry
   5–10% error on the aircraft they were fitted to (AFDD, 42 helicopters)
-  and this tool sits at 14.5% on eVTOLs that are outside that population.
+  and this tool sits at 10.4% on eVTOLs that are outside that population.
   A manufacturer's "every millimetre" review is a preliminary-design
   activity with CFD, FEA and test behind it. This tool's job is to be
   *honest* about which of its numbers are which — and the provenance census

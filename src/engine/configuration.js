@@ -129,8 +129,16 @@ export const CONFIGURATIONS = {
  * @param p parameter set
  * @param nRotors total hover rotors
  */
+/* The ONE place a missing or unknown configType becomes a layout key. Every
+   per-configuration default (rotor deck values, capabilities) must resolve
+   through this, or a caller that omits configType gets the fallback of one
+   module and the lift+cruise of another. */
+export function configKeyFor(p) {
+  return CONFIGURATIONS[p?.configType] ? p.configType : "liftcruise";
+}
+
 export function resolveConfiguration(p, nRotors) {
-  const key = CONFIGURATIONS[p.configType] ? p.configType : "liftcruise";
+  const key = configKeyFor(p);
   const c   = CONFIGURATIONS[key];
   const N   = Math.max(0, nRotors ?? p.nPropHover ?? 0);
 

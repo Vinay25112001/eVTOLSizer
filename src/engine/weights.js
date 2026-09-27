@@ -10,7 +10,7 @@ import { motorTransientRequirement } from "./motor.js";
 import { driveSystem } from "./drivesystem.js";
 import { nacelleGroup } from "./nacelle.js";
 import { motorMass } from "./motormass.js";
-import { ROTOR_FLAP_FREQ, rotorGroup } from "./rotorgroup.js";
+import { ROTOR_FLAP_FREQ, rotorGroup, rotorDeckForParams } from "./rotorgroup.js";
 import { flightControls as flightControlsGroup } from "./flightcontrols.js";
 
 /* =====================================================================
@@ -550,17 +550,22 @@ export function componentWeights(p, g, K = WEIGHT_CONSTANTS) {
     { nRotors: n, radius_m: p.propDiam / 2, tipSpeed_ms: p.tipSpeed ?? 167.64,
       diskArea_m2: perRotorArea * n, isTilting: !!tilts },
     K.rotorMassPerDiskAreaKgM2);
+  /* The free rotors' flap frequency is the reference vehicle's own deck value
+     where NASA published a deck for this layout (quadrotor 1.03, side-by-side
+     1.035, lift+cruise 1.25), the published rotor-type value otherwise. Stopped
+     rotors are hingeless by necessity, and the lift+cruise deck agrees (1.25). */
+  const nuFree = rotorDeckForParams(p)?.flapFreq ?? ROTOR_FLAP_FREQ.flapping.nu;
   const rotorStopOut = nRotStopped > 0
     ? rotorCall(nRotStopped, ROTOR_FLAP_FREQ.hingeless.nu, false) : null;
   const rotorFreeOut = nRotFree > 0
-    ? rotorCall(nRotFree, ROTOR_FLAP_FREQ.flapping.nu, cfgTilts) : null;
+    ? rotorCall(nRotFree, nuFree, cfgTilts) : null;
   const rotorOut = rotorStopOut && rotorFreeOut
     ? { mass: rotorStopOut.mass + rotorFreeOut.mass,
         model: rotorStopOut.model,
         note: `${nRotStopped} stopping rotor(s) at nu=${ROTOR_FLAP_FREQ.hingeless.nu} `
             + `(hingeless — must be rigid to stop in edgewise flow) + ${nRotFree} `
-            + `free rotor(s) at nu=${ROTOR_FLAP_FREQ.flapping.nu} (flapping)` }
-    : (rotorStopOut ?? rotorFreeOut ?? rotorCall(nRotTotal, ROTOR_FLAP_FREQ.flapping.nu));
+            + `free rotor(s) at nu=${nuFree}` }
+    : (rotorStopOut ?? rotorFreeOut ?? rotorCall(nRotTotal, nuFree));
   const rotors    = rotorOut.mass;
   /* Booms carry the LIFT rotors. A tiltrotor mounts its rotors on the wing and
      tail and has no separate lift booms, so charging every configuration for

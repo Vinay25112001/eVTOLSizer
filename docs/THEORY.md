@@ -2194,9 +2194,13 @@ this manual observed a limitation directly in the code, the item says so.
     cruise propulsor, drive shafts or rotor brake. The rotor shaft at
     direct drive is absorbed by the rotor constant
     (`src/engine/drivesystem.js:69-86`).
-13. **Rotor group inputs.** Blade count and flap frequency are not published
-    for the reference vehicles, and the flap frequency enters at about the
-    2.5 power (`src/engine/rotorgroup.js:52-67`).
+13. **Rotor group inputs.** Blade count, flap frequency, chord law and
+    technology factors come from NASA's own NDARC decks per configuration
+    (`src/engine/rotorgroup.js`, `ROTOR_DECK_BY_CONFIG`); a layout NASA
+    published no deck for falls back to 3 blades, the rotor-type flap
+    frequency and an untapered chord, and the flap frequency enters at about
+    the 2.5 power. The lift+cruise rotor group is +15 % against Table 12 with
+    every deck input and is reported as a residual (`validation/rotor-group.mjs`).
 14. **Motor mass fit.** The motor mass is extrapolated above 546 N·m
     (`src/engine/motormass.js:57-74`).
 

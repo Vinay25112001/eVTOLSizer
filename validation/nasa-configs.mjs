@@ -108,7 +108,7 @@
    Run: node validation/nasa-configs.mjs
    ===================================================================== */
 import { runSizing } from "../src/engine.js";
-import { rotorGroup, flapFreqFor } from "../src/engine/rotorgroup.js";
+import { rotorGroup, flapFreqFor, bladeCountFor } from "../src/engine/rotorgroup.js";
 import { twRatioFor } from "../src/engine/configuration.js";
 
 const LB = 2.20462, FT = 3.28084, KT = 0.514444;
@@ -244,7 +244,14 @@ for (const v of NASA_VEHICLES) {
     struct: pub.structures_lb / LB,                          // includes rotor group
     motDrv: (pub.propulsion_lb - pub.pack_lb) / LB,          // propulsion less fuel system
     driveSys: pub.drive_lb / LB,
-    rotor:  pub.rotor_lb / LB,
+    /* GROUP BOUNDARY: NDARC's rotor group holds blades, hub AND rotor support
+       (theory TP-2015-218751 :9667-9670), and NASA's decks give the support
+       explicitly (quadrotorE6.list :149 Usupt=2 lb/ft per rotor; lift-cruiseE6
+       :252 dWrsupt=35 lb per lift rotor). This engine carries supports in
+       booms.js and the nacelle pylon, inside `struct`, so the rotor line is
+       scored against blades+hub = published less NASA's own support term.
+       `struct` is unchanged: it contains the support on both sides. */
+    rotor:  (pub.rotor_lb - (pub.rotorSupport_lb ?? 0)) / LB,
     systems: pub.systems_lb / LB,
     fltCtrl: pub.fc_lb / LB,
     energy: pub.capacity_MJ / 3.6,
@@ -330,9 +337,11 @@ for (const v of NASA_VEHICLES) {
    the first version of this block used the by-published-rotor-type flap
    frequency from components.mjs and reported "14-19 points of implementation
    error". That was comparing two different MODELLING CHOICES and calling the
-   difference a defect - the engine deliberately does not set nu from the
-   published rotor type, because nu is unpublished for these aircraft and
-   choosing it by type is fitting an unpublished parameter to the benchmark.
+   difference a defect. At the time nu was thought unpublished for these
+   aircraft. It is published, in NASA's own NDARC decks, and the engine now
+   takes blade count, nu, chord law and technology factors from them per
+   configuration (engine/rotorgroup.js ROTOR_DECK_BY_CONFIG), so the equation
+   here is evaluated with the ENGINE'S settings, which ARE the deck's.
    Like has to be compared with like or the number is worse than useless. */
 console.log(`\n${bar}`);
 console.log("ROTOR GROUP - equation error vs sizing divergence");
@@ -344,15 +353,16 @@ for (const v of NASA_VEHICLES) {
   if (!row || row.e == null) continue;
   const R_m = v.radius_ft / FT2;
   const det = GEO_USED[v.key]?.det || null;
-  const nB = det?.nBlades ?? 3;
+  const nB = det?.nBlades ?? bladeCountFor({ configType: v.configType });
   const alone = rotorGroup(
-    { rotorMassModel: det?.model ?? "afdd00", nBlades: nB,
+    { rotorMassModel: det?.model ?? "afdd82", nBlades: nB, configType: v.configType,
       rotorFlapFreq: det?.flapFreq ?? flapFreqFor({ configType: v.configType }),
       solidity: v.solidity },
     { nRotors: v.nRotors, radius_m: R_m, tipSpeed_ms: v.tipSpeed_fts / FT2,
       diskArea_m2: v.nRotors * Math.PI * R_m * R_m, isTilting: !!v.tilting },
     2.0);
-  const want = v.published.rotor_lb / LB;
+  /* blades+hub, the same boundary the loop row is scored on */
+  const want = (v.published.rotor_lb - (v.published.rotorSupport_lb ?? 0)) / LB;
   const eAlone = 100 * (alone.mass - want) / want;
   DIVERGENCE.push(Math.abs(row.e - eAlone));
   const cPub = (v.solidity * Math.PI * R_m) / nB;

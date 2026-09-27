@@ -38,6 +38,7 @@
      side-by-side   non-overlap radius
    ===================================================================== */
 import { resolveConfiguration } from "./configuration.js";
+import { bladeCountFor } from "./rotorgroup.js";
 import { COAX_DISK_GAP_OVER_D, ringRadiusFor, hubSpacingFor, interleavedFor,
          SBS_HUB_SEP_OVER_D, MC_AFT_RISE_OVER_D } from "./coaxial.js";
 import { landingGear, GEAR_CONSTANTS } from "./landinggear.js";
@@ -984,7 +985,7 @@ export function aircraftGeometry(p = {}, SR = null) {
          mesh must not draw a second one on the disc axis */
       hasStack: true,
       ...(hinge ? { hinge } : {}),
-      blades: Math.max(2, Math.round(p.nBlades ?? 3)),
+      blades: bladeCountFor(p),
       solidity: Number(p.solidity) || 0.10 });
   };
 
@@ -2224,7 +2225,7 @@ export function aircraftGeometry(p = {}, SR = null) {
         radius: Math.max(0.05 * dP, 0.06) });
       bodies.push({ kind: "pusher", label: "Cruise pusher", x: xPush, y: 0,
         z: zAxis, radius: dP / 2,
-        blades: Math.max(2, Math.round(p.nBlades ?? 3)) });
+        blades: bladeCountFor(p) });
     }
   }
 

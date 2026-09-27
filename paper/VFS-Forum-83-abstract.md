@@ -42,31 +42,38 @@ commercial types.
 Three NASA all-electric concept vehicles are sized from their own published
 parameters, with no per-vehicle tuning, and **ten groups** of each published
 weight statement are scored — rather than the three or four usually reported.
-39 published comparisons result, with a mean absolute error of 14.5%.
+39 published comparisons result, with a mean absolute error of 10.4%.
 
 Those comparisons are not scored against a single self-chosen tolerance. Each
 group is compared against **AFDD's own published error for that group on the
 conventional rotorcraft the equations were regressed on** (NDARC Theory Manual,
 Table 27-21 and §27-13): 5.3% for the parametric total, 6.1% for the structural
 group, 8.6% for the rotor group, 10.9% for propulsion, 8.7% for flight
-controls. Seven of the twenty-one groups that have such a reference are at or
+controls. Eleven of the twenty-one groups that have such a reference are at or
 better than the method achieves in its own population, and the mean
-out-of-population degradation is **×2.1**. That number is the useful one: these
-correlations transfer to eVTOLs far better than might be feared — **except in
-one place.**
+out-of-population degradation is **×1.4**. That number is the useful one: these
+correlations transfer to eVTOLs far better than might be feared — and the place
+they appeared not to is the subject of this paper.
 
 The finding is what happens to one vehicle when the reporting granularity
 changes. For the NASA lift+cruise all-electric concept:
 
 | group scored | published | predicted | error | AFDD's own in-population error |
 |---|---|---|---|---|
-| **structures (aggregate, as usually reported)** | 1170.3 kg | 867.2 kg | **−25.9%** | 6.1% |
-| ↳ rotor group (a component of the above) | 430.0 kg | 229.4 kg | **−46.7%** | 8.6% |
-| ↳ remaining structural groups (implied) | 740.3 kg | 637.8 kg | **−13.8%** | — |
+| **structures (aggregate, as usually reported)** | 1170.3 kg | 1109.1 kg | **−5.2%** | 6.1% |
+| ↳ rotor group, blades and hub (a component of the above) | 303.0 kg | 367.8 kg | **+21.4%** | 8.6% |
+| ↳ remaining structural groups (implied) | 867.3 kg | 741.3 kg | **−14.5%** | — |
 
-**This row read −0.7% two revisions ago, and nothing in the structures model
-has changed since.** The rotor group has sat at −46.7% throughout. What moved,
-twice, were groups the structures total does not even contain:
+The rotor line is blades and hub against the published rotor group less the
+rotor-support term NASA's own NDARC deck carries inside it (8 × 35 lb of boom
+halves), because this tool books supports in its structures line; the aggregate
+contains the support on both sides and is unaffected.
+
+**This row read −0.7% three revisions ago, then −25.9%, and now −5.2% — inside
+AFDD's in-population error once more — and nothing in the structures models
+has changed at any of those steps.** The rotor group sat at −46.7% through the
+first three revisions and now reads +21.4%. What moved were, twice, groups the
+structures total does not even contain, and then the rotor group's INPUTS:
 
 | revision | what was corrected | structures total | implied remainder |
 |---|---|---|---|
@@ -74,34 +81,48 @@ twice, were groups the structures total does not even contain:
 | propulsion margin removed | installed motor rating set by a flat 1.30 thrust margin (1.482 in power) against the 1.45 / 1.10 / 1.00 NASA publish per vehicle | **−9.8%** | +11.6% |
 | boom load factor corrected | booms sized at an ultimate 5.25 (1.5 × 3.5 g) against MOC SC-VTOL Issue 2 (12 May 2021), MOC VTOL.2200(f), which requires the limit manoeuvring load factors to "be defined based on the maximum capability of the aircraft" with "the positive load factor … not less than 2.0" — 3.00 for rotors that produce 1.3 g. The paragraph is in the *Means of Compliance*; VTOL.2200 of the Special Condition itself (SC-VTOL-02 Issue 2, 10 June 2024) runs only to (e) | −19.9% | −4.4% |
 | fuselage audit | one wetted area where the weight and drag models had used two (37.3 vs 26.1 m²); NASA's own fuselage factors in NDARC §29-4's structure, χ_basic 0.76 and an additive crashworthiness term χ_cw 0.90 · f_cw, with f_cw 15% on the quadrotor and 6% otherwise; and six published drag areas scored for the first time | **−25.8%** | **−13.7%** |
+| rotor inputs read from NASA's own NDARC decks | the reference's decks are public: two blades on the lift rotors, not three; AFDD82 (NDARC's default, which no deck overrides), not AFDD00; technology factors 0.916 on blades and 0.759 on hubs; the mean geometric chord the equation is written in, not the thrust-weighted one; and the rotor-support term NASA books inside the rotor group removed from the scored line | **−5.2%** | −14.5% |
 
-Each correction removed a load the aircraft cannot generate. Each made the
-headline worse. Together they show that the original −0.7% — a figure an order
-of magnitude inside AFDD's own 6.1% in-population error, and by any
-conventional reading a validation success — was manufactured by two unrelated
-over-weight errors in groups nobody was scoring.
+The first three corrections each removed a load the aircraft cannot generate,
+and each made the headline worse. The fourth removed a set of guessed inputs
+and made the headline better again — to −5.2%, inside AFDD's own 6.1%, and by
+any conventional reading a validation success for the second time. It is not:
+the aggregate is now built from a rotor group 21.4% heavy and a remainder 14.5%
+light, and the two cancel. The original −0.7% was manufactured by two unrelated
+over-weight errors in groups nobody was scoring; the present −5.2% is
+manufactured inside the group itself.
 
 **What is left is not yet a clean diagnosis, and the paper says so.** After
 the propulsion and boom corrections the remaining structural groups sat at
 −4.4%, inside AFDD's own error, and this section briefly read that the
 lift+cruise had one bad group. The fuselage audit that followed — one wetted
 area in place of two, NASA's own fuselage factors, and drag areas scored
-against the published values — moved the remainder to −13.7%. The rotor group
-is still the largest single error in the benchmark at −46.7%, but the
-remaining structures are now also under-predicted, and the fuselage drag rows
-that were scored for the first time show the Raymer buildup implying a drag
-coefficient on wetted area of 0.0036–0.0042 against the 0.0045 NASA assume.
-Each correction has made the aggregate worse and the picture more honest;
-none of them has yet made it complete.
+against the published values — moved the remainder to −13.7%, and the fuselage
+drag rows that were scored for the first time show the Raymer buildup implying
+a drag coefficient on wetted area of 0.0036–0.0042 against the 0.0045 NASA
+assume. The rotor group then sat at −46.7% through three revisions and was
+written up, in an earlier draft of this abstract, as the published equation
+operating outside its fitting population. It was not. NASA distributes the
+NDARC input deck of every reference vehicle, and the decks publish what the
+weight statement does not: blade count, flap frequency, chord law, technology
+factors, and the model NDARC ran. With those inputs and nothing tuned, AFDD82
+reproduces five of the seven reference rotor groups it applies to within 2.2%
+and the single main rotor to 0.1%. The lift+cruise is the one that does not
+reproduce, at +21.4% on blades and hub, and that residual is reported rather
+than fitted — a uniform four blades would score better across the set, by
+contradicting the source on the one vehicle NASA say "can only have two".
+Each correction has made the picture more honest; none has yet made it
+complete.
 
 **The general claim.** An aggregate can sit inside the source method's
 in-population accuracy while a component beneath it is wrong by half, and it
 can do so because of errors in groups the aggregate does not contain. Nothing
 in a conventionally reported weight statement would reveal this; only scoring
 every group, and only re-scoring after each unrelated correction, did. The
-authors did not go looking for it — it appeared twice, from two independent
-fixes, and is reported because the alternative was to keep a better-looking
-number that was better for the wrong reason.
+authors did not go looking for it — it appeared three times, from three
+independent fixes, the last of which restored the flattering aggregate, and is
+reported because the alternative was to keep a better-looking number that was
+better for the wrong reason.
 
 ### 2.1 The same concealment in a different place: a constraint that never binds
 
@@ -112,7 +133,7 @@ Battery mass is sized as the heavier of two requirements — energy for the
 mission, and power to hover: `W_battery = max(W_E, W_P)`. Reporting that a tool
 applies "dual energy and power constraints" says nothing about which of them
 ever governs. Measured across all six configurations at the reference mission,
-**energy binds on every one**, with W_P/W_E between 0.236 and 0.777. The `max`
+**energy binds on every one**, with W_P/W_E between 0.236 and 0.780. The `max`
 never selects W_P, so no weight difference at that mission is attributable to
 the power constraint, however prominently the dual formulation is described.
 
@@ -121,12 +142,12 @@ mission variables, not one:
 
 | configuration | W_P/W_E at 161 km | crossover range | W_P/W_E at 10 km |
 |---|---|---|---|
-| lift+cruise | 0.745 | 114.3 km | 1.482 |
-| hybrid (tilt+lift) | 0.777 | 120.2 km | 1.417 |
-| hybrid pusher | 0.719 | 109.3 km | 1.302 |
-| tiltrotor | 0.742 | 112.4 km | 1.093 |
+| lift+cruise | 0.754 | 115.5 km | 1.497 |
+| hybrid (tilt+lift) | 0.780 | 120.8 km | 1.422 |
+| hybrid pusher | 0.724 | 109.9 km | 1.310 |
+| tiltrotor | 0.744 | 112.7 km | 1.097 |
 | side-by-side | 0.329 | none in 2–161 km | 0.755 |
-| multicopter | 0.236 | none in 2–161 km | 0.548 |
+| multicopter | 0.236 | none in 2–161 km | 0.547 |
 
 Crossovers are located by bisection to 0.5 km. A coarse sweep over a fixed list
 of ranges returned 90–120 km for these — the lower bracket of each containing
@@ -137,7 +158,7 @@ The second variable is the reserve, and it changes the answer qualitatively. A
 fixed 20-minute reserve is a large constant floor under mission energy: as range
 falls, E_total does not fall towards zero but towards the reserve. At a 10 km
 mission the two rotor-borne layouts are energy-governed at a 20-minute reserve
-(0.548 and 0.755) and **power-governed at five minutes** (1.059 and 1.433). So
+(0.547 and 0.755) and **power-governed at five minutes** (1.059 and 1.433). So
 "this configuration is never power-limited" is a statement about the assumed
 reserve, not about the configuration — and it is true or false depending on a
 parameter that is often not reported at all.
@@ -152,15 +173,17 @@ branch bound and under what assumption.
 the reserve sensitivity as an inset]*
 
 **This is not an artefact of the sizing loop.** The same rotor model, evaluated
-alone at the published rotor radius, tip speed, blade count and design thrust,
-with no sizing iteration around it, predicts the same −46.7%. Loop-level and
-component-level agree to better than 0.1 percentage points, which establishes
-that the error belongs to the published weight equation operating outside its
-fitting population, not to the tool's convergence. Across all eight NASA concept
-variants the same rotor model scores a mean absolute error of 25.1%, and the best
-model found in a systematic sweep of blade counts and flap frequencies still
-scores 24.7% — so this is a property of the state of the art in rotor-group
-weight prediction for eVTOL rotors, not a defect peculiar to one implementation.
+alone at the published rotor radius, tip speed, solidity and the deck's blade
+count, with no sizing iteration around it, predicts the same +21.4%. Loop-level
+and component-level agree to 0.0 percentage points, which establishes that the
+residual belongs to the weight equation and its inputs, not to the tool's
+convergence. Across the seven NASA concept variants NASA weigh with a rotor-group
+equation, the model with the decks' own inputs scores a mean absolute error of
+7.9% on blades and hub; the same model with guessed inputs — a uniform blade
+count and a flap frequency by rotor type, the best of a systematic sweep — scores
+23.6%. The difference between those two numbers is not the state of the art in
+rotor-group weight prediction; it is the cost of not reading the reference's
+input deck, and an earlier draft of this abstract paid it.
 
 *[figure: per-group error, three vehicles, ten groups, with the aggregate
 structures bar overlaid on its components — the visual statement of the paper]*
@@ -174,8 +197,9 @@ mechanism generalises.
 **Component-level testing separated from loop-level testing.** A harness
 evaluates each weight model alone, at published inputs, with no sizing loop
 around it. This is the only construction that can distinguish a bad model from a
-bad convergence, and it is what allowed the −46.7% to be attributed to the
-equation rather than to the tool.
+bad convergence. It is what allowed the −46.7% to be attributed to the
+equation rather than to the tool — and, once the reference's own input decks
+were read, to the inputs rather than to the equation, which is where it belonged.
 
 **Machine-readable provenance on every output.** All 467 registered engine
 outputs carry a status — validated, sourced, calibrated, derived, or assumed —
@@ -232,9 +256,9 @@ stated before any result is presented, because a reader who conflates the two
 will over-trust every number that follows — including the ones that agree.
 
 This bears directly on the principal result. If the reference weight statements
-are model output, then a component-level disagreement of −46.7% is a disagreement
-between two implementations of related empirical methods, and the question of
-which is closer to a real rotor is open. That is a stronger reason to report
+are model output, then a component-level disagreement of +21.4% is a disagreement
+between two implementations of the same empirical method fed the same inputs,
+and the question of which is closer to a real rotor is open. That is a stronger reason to report
 component granularity, not a weaker one.
 
 ## 5. Expected key conclusions
@@ -249,15 +273,16 @@ component granularity, not a weaker one.
    to it is caused by something else. Which branch binds, and under which
    mission and reserve assumptions, is a reportable result rather than a
    modelling detail.
-3. **Rotor-group weight prediction is the dominant open problem for lift+cruise
-   eVTOL sizing**, at 25.1% mean absolute error across the concept-vehicle set
-   for the best available published formulation. This is a call for a better
-   correlation, supported by measurement of how the existing ones fail and on
-   which configurations.
+3. **A reference's inputs are part of the reference.** The rotor group that
+   read −46.7% for three revisions reads within 2.2% on five of seven NASA
+   variants once the inputs NASA's own NDARC decks publish are used, and the
+   lift+cruise residual of +21.4% is the open problem, not the equation. This is
+   a call to read a reference's input deck before its weight statement is used
+   to indict a method — and to publish the deck alongside the statement.
 4. **The errors are configuration-dependent in a structured way**, not random:
-   the same model that misses lift+cruise rotors by −46.7% is within ×1.7 of
-   AFDD's own in-population error on the quadrotor (−14.5% against 8.6%). The
-   paper will characterise the dependence.
+   the same model that misses lift+cruise rotors by +21.4% is inside AFDD's own
+   in-population error on the quadrotor (−2.6% against 8.6%) and on the
+   side-by-side. The paper will characterise the dependence.
 5. **A group that agrees for the wrong reason is worse than one that
    disagrees.** Decomposing group error into *equation error at the published
    rotor* and *sizing divergence* found that this tool's quadrotor rotor group
@@ -305,7 +330,7 @@ these are not marginal differences. Two results follow that no absolute value
 was needed to obtain:
 
 - a **side-by-side layout has almost no rotor-derived pitch damping**
-  (M_q = −0.45 against L_p = −5.37), because two rotors abreast have no
+  (M_q = −0.49 against L_p = −5.70), because two rotors abreast have no
   fore-aft separation. It falls out of the geometry; nothing was assumed.
 - the damping and agility rankings are **strongly inverted** across the six
   layouts (Spearman ρ = −0.94), which is the stability-versus-manoeuvrability

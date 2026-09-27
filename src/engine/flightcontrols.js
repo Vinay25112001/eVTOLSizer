@@ -1,3 +1,4 @@
+import { bladeCountFor } from "./rotorgroup.js";
 /* =====================================================================
    FLIGHT CONTROLS GROUP
    =====================================================================
@@ -107,7 +108,7 @@ export function flightControls(p = {}, g = {}, baseFrac = 0.025) {
 
   if (model === "afdd") {
     const wMTO_lb = MTOW * LB;
-    const nBlade = Math.max(2, Math.round(p.nBlades ?? 3));
+    const nBlade = bladeCountFor(p);
     const R_ft = Math.max(1e-6, (g.radius_m ?? 0) * FT);
     const sigma = p.solidity ?? 0.10;
     const c_ft = sigma * Math.PI * R_ft / nBlade;

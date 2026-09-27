@@ -340,6 +340,63 @@ console.log(`   NASA's own, recovered by inverting their motor-group weights.
   console.log(`    power at the family's specific power rather than extrapolating.)`);
 }
 
+/* ── CERTIFIED HARDWARE ───────────────────────────────────────────────
+   THE ONE MEASURED ELECTRIC-PROPULSION REFERENT. Nothing above is a weighed
+   aircraft: NASA's weight statements are NDARC output and the commercial
+   figures are brochures, and as of September 2026 no type-certified eVTOL
+   has a public weight statement (the EH216-S data sheet sits inside CAAC's
+   AMOS system; Joby's certificate is expected late 2026). What IS certified
+   and weighed is the first electric aero engine and its propeller:
+
+     EASA.E.234 Issue 01 (18 May 2020), Pipistrel E-811-268MVLC.
+       section 5 Dry Weight: motor 22.7 kg, power controller 7 kg.
+       section 6 Ratings: MTOP 57.6 kW at 2500 rpm (90 s), MCP 49.2 kW at
+       2350 rpm; torque 220 N·m at MTOP, 200 N·m at MCP.
+     EASA.A.573 Issue 13 (19 Nov 2025), Velis Electro section 7 Propeller:
+       Pipistrel P-812 / 164-F3A, three blades, 1640 mm, 4.88 kg.
+
+   Both data sheets are vendored with sha256 in the research corpus
+   (eVTOL_Sizing_Research/sources/type-certificates/), and the numbers here
+   were re-read from the PDFs, not from a note.
+
+   REPORTED, NOT FITTED. One motor is a point, not a population: a 2020
+   axial-flux liquid-cooled design certified with margins, where the EMRAX
+   fit describes 2024 datasheets. The propeller row is the first measured
+   number the [CAL] per-disk-area constant has ever met. Neither is refit
+   on one point; each row says where the model lands. */
+console.log(`
+── CERTIFIED HARDWARE  (EASA.E.234 §5-6 E-811 motor; EASA.A.573 §7 P-812 propeller)`);
+console.log(`   the only measured, authority-certified hardware on the eVTOL side; not a VTOL.
+`);
+{
+  const E811 = { motorKg: 22.7, controllerKg: 7, mtopKW: 57.6, mtopRpm: 2500, tauMtopNm: 220,
+                 mcpKW: 49.2, mcpRpm: 2350, tauMcpNm: 200 };
+  const P812 = { blades: 3, diam_m: 1.640, kg: 4.88 };
+  const MODELS = ["emraxTorque", "nasaTorque", "torqueDensity", "specificPower"];
+  const rad = (rpm) => rpm * 2 * Math.PI / 60;
+  for (const [tag, P_kW, rpm, tauPub] of [["MTOP", E811.mtopKW, E811.mtopRpm, E811.tauMtopNm],
+                                          ["MCP ", E811.mcpKW,  E811.mcpRpm,  E811.tauMcpNm]]) {
+    const omega = rad(rpm), tau = P_kW * 1000 / omega;
+    console.log(`   ${tag} ${P_kW} kW at ${rpm} rpm = ${tau.toFixed(0)} N·m (certificate ${tauPub} N·m)` +
+                `   certified motor ${E811.motorKg} kg, + ${E811.controllerKg} kg controller`);
+    for (const m of MODELS) {
+      const r = motorMass({ model: m, P_kW, omega, gearRatio: 1, K });
+      console.log(`         ${m.padEnd(14)} ${r.kg.toFixed(1).padStart(5)} kg  ${f1(pct(r.kg, E811.motorKg))} vs motor` +
+                  `  ${f1(pct(r.kg, E811.motorKg + E811.controllerKg))} vs motor+controller` +
+                  `${m === "emraxTorque" ? "   <- DEFAULT" : ""}`);
+    }
+  }
+  const sp = (kw, kg) => (kw / kg).toFixed(2);
+  console.log(`   certified specific power: ${sp(E811.mtopKW, E811.motorKg)} kW/kg motor, ` +
+              `${sp(E811.mtopKW, E811.motorKg + E811.controllerKg)} kW/kg with controller (MTOP, 90 s); ` +
+              `MCP ${sp(E811.mcpKW, E811.motorKg)} / ${sp(E811.mcpKW, E811.motorKg + E811.controllerKg)}`);
+  const propKg = K.rotorMassPerDiskAreaKgM2 * Math.PI * Math.pow(P812.diam_m / 2, 2);
+  console.log(`   propeller: P-812 ${P812.blades} blades, ${P812.diam_m} m, certified ${P812.kg} kg;` +
+              ` this engine's cruise propeller at that diameter ${propKg.toFixed(2)} kg ${f1(pct(propKg, P812.kg))}` +
+              ` ([CAL] ${K.rotorMassPerDiskAreaKgM2} kg/m2 of disk, its first measured comparison)`);
+  console.log(`   Reported, not fitted: one certified motor and one propeller are points, not populations.`);
+}
+
 /* ── INSTALLED MOTOR MARGIN ───────────────────────────────────────────
    WHY THE MOTOR GROUP IS WRONG, AND IT IS NOT THE MASS MODEL.
 

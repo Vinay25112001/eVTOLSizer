@@ -17,8 +17,10 @@ import { ConstraintChart, PayloadRangeChart, PolarChart, HBarChart, ReferenceSca
 import { GeneralArrangement } from "./GeneralArrangement.jsx";
 import { uncertaintyOf } from "./uncertainty.js";
 import { wingBox, MATERIALS, MATERIAL_IDS } from "./wing-structure.js";
-import { ShearMomentDiagram, StressMarginPlot, BoxSection, StructuralPlanform } from "./StructureViews.jsx";
+import { ShearMomentDiagram, StressMarginPlot, BoxSection, StructuralPlanform,
+         FuselageLoadDiagram } from "./StructureViews.jsx";
 import { fuselageStructure } from "./fuselage-structure.js";
+import { fuselageLoads } from "./fuselage-structure-loads.js";
 import { FuselageProfile, FuselageSection } from "./FuselageViews.jsx";
 import { balanceOf, BALANCE_DEFAULTS } from "./balance.js";
 import { LoadingDiagram, StationDiagram } from "./BalanceViews.jsx";
@@ -690,6 +692,7 @@ export function ControlsTab({ type, result }) {
 
 export function FuselageTab({ type, result }) {
   const f = useMemo(() => fuselageStructure(result), [result]);
+  const fl = useMemo(() => fuselageLoads(result), [result]);
   if (!f) return <Empty>This type does not report a fuselage length, width and height, which the arrangement needs.</Empty>;
   const IN_ = 0.0254;
   const inches = (v) => `${(v / IN_).toFixed(2)} in`;
@@ -759,6 +762,37 @@ export function FuselageTab({ type, result }) {
         </Lead>
         <Table head={["Feature", "Why it is not drawn"]} rows={f.notDrawn.map((n) => [n.feature, n.why])} />
       </Card>
+
+      {fl && !fl.unavailable ? (() => {
+        const sc = fl.scenarios.find((s) => s.id === fl.governing);
+        return (
+          <Card title="Shear force and bending moment along the fuselage">
+            <Lead>
+              TASOPT Appendix A's fuselage bending model, on the mass stations the balance diagram already
+              places. The solid line is those stations; the dashed line is the source's own closed form
+              (A.79), which smears the same mass uniformly over the shell. Fed identical assumptions the two
+              agree to floating point — that is what the gate checks — so where they part here, the
+              difference is the mass distribution, not the arithmetic.
+            </Lead>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: S.md }}>
+              <Kpi label="Peak bending moment" value={fmt(sc.peakMomentNm / 1e6, 3)} unit="MN·m"
+                   sub={<>at x = <Q v={fmt(sc.peakMomentXM, 2)} u="m" />, the wing box</>} />
+              <Kpi label="Peak shear" value={fmt(sc.peakShearN / 1e3, 0)} unit="kN"
+                   sub={<>at x = <Q v={fmt(sc.peakShearXM, 2)} u="m" /></>} />
+              <Kpi label="Against (A.79)" value={`${sc.atWing.deltaPct >= 0 ? "+" : ""}${fmt(sc.atWing.deltaPct, 1)}`}
+                   unit="%" sub={<>carrying <Q v={fmt(sc.smearedBasis.omittedKg, 0)} u="kg" /> the closed form omits</>} />
+              <Kpi label="Load case" value={sc.label} unit=""
+                   sub={`n = ${fmt(sc.nFactor, 2)} ultimate · ${sc.basis}`} />
+            </div>
+            <FuselageLoadDiagram loads={fl} />
+            <Note>{sc.stationedBasis.why}</Note>
+            <Note>{sc.smearedBasis.omittedWhy}</Note>
+            {fl.tailAero.evaluated
+              ? <Note>{fl.tailAero.basis}. {fl.tailAero.vdNote}</Note>
+              : <Lead>{fl.tailAero.why}</Lead>}
+          </Card>
+        );
+      })() : null}
 
       <Card title="What this view is, and is not">
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: T.label, color: SC.muted, lineHeight: 1.7 }}>

@@ -79,6 +79,67 @@ export function ShearMomentDiagram({ box, height = 200 }) {
   );
 }
 
+/* ── fuselage shear and bending moment, Phase E / F1 ──────────────────
+   Two lines per panel, deliberately. The solid one is the stationed
+   route - the tool's own mass stations; the dashed one is TASOPT
+   (A.79)'s closed form on the same aeroplane. They are the two
+   independent routes the gate compares, so showing only one would hide
+   the only thing on this figure that can be checked by eye.
+
+   The vertical markers are the two stations the model is anchored to:
+   the wing box, where both cantilevers meet and the moment peaks, and
+   the lumped tail at x_tail. If the peak ever drifts off the wing
+   marker, the two integrations have been stitched together wrongly and
+   the figure says so before any number does. */
+export function FuselageLoadDiagram({ loads, scenarioId, height = 210 }) {
+  if (!loads || loads.unavailable) return null;
+  const sc = loads.scenarios.find((s) => s.id === (scenarioId ?? loads.governing));
+  if (!sc) return null;
+  const data = sc.stations.map((s) => ({
+    x: r3(s.x),
+    shear: r3(s.shearN / 1e3),                 // kN
+    moment: r3(s.momentNm / 1e6),              // MN.m
+    smeared: r3(s.smearedMomentNm / 1e6),      // MN.m, TASOPT (A.79)
+  }));
+  const marks = [
+    { x: loads.geometry.xWing, label: "wing box", colour: SC.nominal },
+    { x: loads.geometry.xTail, label: "x_tail", colour: SC.caution },
+  ];
+  const panel = (key, colour, label, unit, extra = []) => (
+    <div style={{ marginBottom: 6 }}>
+      <ResponsiveContainer width="100%" height={height}>
+        <ComposedChart data={data} margin={{ top: 8, right: 16, left: 4, bottom: 18 }}>
+          <CartesianGrid {...grid()} />
+          <XAxis dataKey="x" {...axis()} label={xT("fuselage station x from the nose (m)")}
+                 interval="preserveStartEnd" minTickGap={44}
+                 tickFormatter={(v) => v.toFixed(1)} />
+          <YAxis {...axis()} label={yT(`${label} (${unit})`)} width={74} />
+          <Tooltip {...tooltip()} />
+          <Legend {...topLegend()} />
+          <ReferenceLine y={0} stroke={SC.dim} />
+          {marks.map((m) => (
+            <ReferenceLine key={m.label} x={r3(m.x)} stroke={m.colour} strokeDasharray="3 3"
+                           label={{ value: m.label, fill: m.colour, fontSize: 10, position: "top" }} />
+          ))}
+          {extra}
+          <Line type="monotone" dataKey={key} name={label} stroke={colour} strokeWidth={2}
+                dot={false} isAnimationActive={false} />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+  return (
+    <div>
+      {panel("shear", SC.primary, "shear force V", "kN")}
+      {panel("moment", SC.warning, "bending moment M", "MN·m", [
+        <Line key="smeared" type="monotone" dataKey="smeared" name="TASOPT (A.79), smeared"
+              stroke={SC.advisory} strokeWidth={1} strokeDasharray="4 3" dot={false}
+              isAnimationActive={false} />,
+      ])}
+    </div>
+  );
+}
+
 /* ── cap stress against the two allowables ────────────────────────────── */
 export function StressMarginPlot({ box, height = 260 }) {
   if (!box) return null;

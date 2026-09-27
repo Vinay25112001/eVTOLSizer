@@ -142,20 +142,98 @@ export const FUSELAGE_CONVENTION = Object.freeze({
   planNoseControlX: [0.42, 0.76], planTailControlX: [0.38, 0.12], planNoseY: 0.30,
 });
 
+/* =====================================================================
+   THE TAIL-CONE CLOSURE, MEASURED FROM THE MANUFACTURERS' OWN DRAWINGS
+   =====================================================================
+   The convention above answered "where does the tail-cone tip sit" with a
+   number nobody had measured. The airport-planning manuals this project is
+   built from print a dimensioned side view to scale, and a drawing is a
+   datum the texts never agreed on: the fuselage centreline of the constant
+   section, in the drawing's own coordinates. So the closure was MEASURED
+   from three of them (research corpus, classes/cross-class/FUSELAGE-UPSWEEP.md;
+   the script is harness/measure-upsweep.py and its full output is logged
+   beside the note): the vector side view rasterised at 600 dpi, the outline
+   colour masked, the keel and crown read per column, the scale taken from a
+   printed dimension and CROSS-CHECKED against a second one. Values are
+   fractions of the constant-section height H, z up from its centreline.
+     - keelTipZ: the keel at the tail-cone tip (last 1 % of the printed
+       fuselage length). Measured on all three.
+     - crownTipZ: the crown at the tip. Measurable only where the fin does
+       not hide it — the A320 (the 737's dorsal fin and the Dash 8's T-tail
+       root cover the crown aft of ~72 % of the length).
+   The three keel values are 0.098, 0.146 and 0.243 H ABOVE the centreline.
+   The old convention's 0.05 lies below every measured aircraft; it is kept
+   only for the classes with no drawing on disk, and says so. */
+export const FUSELAGE_UPSWEEP_MEASURED = Object.freeze([
+  Object.freeze({
+    aircraft: "Boeing 737-100", class: "transport",
+    drawing: "Boeing D6-58325-6 (Feb 2006) §2.2.1 General Dimensions, p. 28 (PDF index 31)",
+    method: "600 dpi, blue outline; scale from the 94 ft (28.65 m) overall length; reference section 18-28 % of length",
+    crossCheck: "reference height reads 3.997 m against the printed 13 ft 2 in (4.01 m): 0.3 %",
+    resolutionM: 0.0134, fuselageLengthM: 27.61, heightM: 3.997,
+    keelTipZ: 0.098, crownTipZ: null, coneStartLf: 0.658, coneLengthH: 2.36, keelChordDeg: 14.2,
+  }),
+  Object.freeze({
+    aircraft: "Airbus A320-200", class: "transport",
+    drawing: "Airbus AC A320 (Jun 2024) 2-2-0 p. 2, FIGURE-2-2-0-991-004-A01 (PDF index 39)",
+    method: "600 dpi, fill colour; scale from the printed 4.14 m fuselage height; reference section 17-28 % of length",
+    crossCheck: "outline extent reads 38.20 m against the 37.57 m overall length (the fill includes the fin tip): 1.7 %",
+    resolutionM: 0.0152, fuselageLengthM: 37.57, heightM: 4.14,
+    keelTipZ: 0.146, crownTipZ: 0.389, coneStartLf: 0.564, coneLengthH: 3.96, keelChordDeg: 9.3,
+  }),
+  Object.freeze({
+    aircraft: "Bombardier Dash 8-400", class: "turboprop",
+    drawing: "Bombardier D84APM R5 (Jan 2017) ch. 2 p. 5, Figure 2-2 Aircraft Dimensions (PDF index 26)",
+    method: "600 dpi, black lines, nose and tail tip pinned to the 101 ft 10 in (31.04 m) fuselage length; crown window 62-68 %, keel window 66-72 %",
+    crossCheck: "reference height reads 2.760 m against Bombardier's 2.79 m external fuselage height: 1.1 %",
+    resolutionM: 0.0100, fuselageLengthM: 31.04, heightM: 2.760,
+    keelTipZ: 0.243, crownTipZ: null, coneStartLf: 0.740, coneLengthH: 2.93, keelChordDeg: 14.2,
+  }),
+]);
+
+/* The closure a class draws with. Transport: the mean of the two measured
+   airliners for the keel (range stated), the one measured crown. Turboprop:
+   the Dash 8 keel, the crown unmeasured so the convention's crown stays and
+   is labelled. Everything else: the convention, labelled as below the
+   measured range. `measured` says which numbers came from a drawing. */
+export function fuselageClosure(type) {
+  const rows = FUSELAGE_UPSWEEP_MEASURED.filter((r) => r.class === type);
+  const C = FUSELAGE_CONVENTION;
+  if (rows.length === 0) {
+    return Object.freeze({
+      crownTipZ: C.crownTipZ, keelTipZ: C.keelTipZ, measured: false,
+      source: `drawing convention: no dimensioned side view of a ${type} is on disk; the keel value ${C.keelTipZ} H `
+            + `lies below every measured aircraft (${FUSELAGE_UPSWEEP_MEASURED.map((r) => r.keelTipZ).join(", ")} H)`,
+    });
+  }
+  const keel = rows.reduce((s, r) => s + r.keelTipZ, 0) / rows.length;
+  const crowns = rows.filter((r) => r.crownTipZ != null);
+  const crown = crowns.length ? crowns.reduce((s, r) => s + r.crownTipZ, 0) / crowns.length : C.crownTipZ;
+  const keelRange = [Math.min(...rows.map((r) => r.keelTipZ)), Math.max(...rows.map((r) => r.keelTipZ))];
+  return Object.freeze({
+    crownTipZ: crown, keelTipZ: keel, measured: true, crownMeasured: crowns.length > 0,
+    keelRange, n: rows.length, aircraft: rows.map((r) => r.aircraft),
+    source: `keel ${keel.toFixed(3)} H measured from ${rows.map((r) => r.aircraft).join(" and ")} `
+          + `(${keelRange.map((v) => v.toFixed(3)).join("-")} H); crown `
+          + (crowns.length ? `${crown.toFixed(3)} H measured from ${crowns.map((r) => r.aircraft).join(" and ")}`
+                           : `${crown} H is the convention: the fin hides the crown at the tip on the measured drawing`),
+  });
+}
+
 /* Side elevation, in BODY coordinates: x aft from the nose, z up from the
    centreline, both in metres. The caller maps them to its own sheet.
 
    The keel rises further than the crown falls — that difference IS the
    upsweep, and it is what gives an aeroplane its profile and its rotation
    clearance. A symmetric tail cone would draw a dart. */
-export function fuselageSideOutline({ length, height, noseLength, tailLength }) {
+export function fuselageSideOutline({ length, height, noseLength, tailLength, closure = FUSELAGE_CONVENTION }) {
   const L = length, H = height, n = noseLength, t = tailLength, C = FUSELAGE_CONVENTION;
   return [
     ["M", [0, 0]],
     ["Q", [n * C.noseControlX, H / 2], [n, H / 2]],
     ["L", [L - t, H / 2]],
-    ["Q", [L - t * C.crownControlX, H / 2], [L, H * C.crownTipZ]],
-    ["L", [L, H * C.keelTipZ]],
+    ["Q", [L - t * C.crownControlX, H / 2], [L, H * closure.crownTipZ]],
+    ["L", [L, H * closure.keelTipZ]],
     ["Q", [L - t * C.keelControlX, -H / 2], [L - t, -H / 2]],
     ["L", [n, -H / 2]],
     ["Q", [n * C.noseControlX, -H / 2], [0, 0]],
@@ -544,7 +622,8 @@ export function generalArrangement(result) {
 
   return {
     type, label: result.typeLabel || type,
-    fuselage: { length: fusLen, width: fusW, height: fusH, noseLength: noseLen, tailLength: tailLen },
+    fuselage: { length: fusLen, width: fusW, height: fusH, noseLength: noseLen, tailLength: tailLen,
+                closure: fuselageClosure(type) },
     wing: { ...wing, ...wc, rootLE: wingRootLE, z: wingZ,
             dihedralDeg: drawn(type === "trainer" ? 2 : 5, "dihedral is not sized") },
     ht: { area: raw.ht.area, span: htSpan, ...htC, rootLE: htRootLE, z: htZ,

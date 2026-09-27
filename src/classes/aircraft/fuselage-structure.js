@@ -327,7 +327,7 @@ export function fuselageStructure(result, opts = {}) {
     shell: { lengthM: L, widthM: W, heightM: H, lengthSized, sectionSized: widthSized,
              crossSectionM2, crossSectionFt2: crossSectionM2 / M2_PER_FT2,
              perimeterM, equivDiaM, fineness: L / equivDiaM,
-             noseLengthM: noseL, tailConeLengthM: tailL },
+             noseLengthM: noseL, tailConeLengthM: tailL, closure: ga.fuselage.closure },
     frames, stringers, panel, heavy, pressure, floor, notDrawn, caveats,
     sources: {
       framePitch: fp.source, stringerPitch: sp.source, floor: FLOOR.source,

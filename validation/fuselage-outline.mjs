@@ -39,7 +39,8 @@
 import { readFileSync } from "node:fs";
 import {
   fuselageSideOutline, fuselagePlanOutline, outlinePath,
-  FUSELAGE_FINENESS, FUSELAGE_CONVENTION, generalArrangement, val,
+  FUSELAGE_FINENESS, FUSELAGE_CONVENTION, FUSELAGE_UPSWEEP_MEASURED, fuselageClosure,
+  generalArrangement, val,
 } from "../src/classes/aircraft/geometry.js";
 import * as E from "../src/classes/aircraft/engine.js";
 
@@ -155,15 +156,18 @@ check(/Torenbeek/.test(FUSELAGE_FINENESS.cite) && /3\.5\.1/.test(FUSELAGE_FINENE
   "the citation names the author and the section, not just a number",
   FUSELAGE_FINENESS.cite);
 
-/* ── 5. THE UPSWEEP IS STILL DECLARED UNSOURCED ──────────────────────
+/* ── 5. THE CONVENTION IS STILL A CONVENTION; THE MEASUREMENT IS SEPARATE ──
    The failure this guards is somebody attaching one of the published
-   upsweep angles to it. They are all measured from different datums. */
-console.log("\n-- the upsweep is still carried as an unsourced convention --");
+   upsweep ANGLES to the convention. They are all measured from different
+   datums. What replaced the convention for the measured classes is not an
+   angle from a text but a closure read off the manufacturers' own drawings,
+   and it lives in its own table with its pages (section 9). */
+console.log("\n-- the fallback convention is still uncited, and the measurement is a separate table --");
 
 check(!("cite" in FUSELAGE_CONVENTION) && !("source" in FUSELAGE_CONVENTION),
-  "the closure convention carries NO citation, because none exists",
+  "the closure convention carries NO citation, because none exists for it",
   "CABIN-LAYOUT.md section 5: \"Tail-cone upsweep angle. Not sourced anywhere. "
-  + "... Do not invent one.\"");
+  + "... Do not invent one.\" -- the measured closures are in FUSELAGE_UPSWEEP_MEASURED, not here");
 
 const geomSrc = readFileSync(new URL("../src/classes/aircraft/geometry.js", import.meta.url), "utf8");
 check(/Do not invent one/.test(geomSrc) && /ESDU 80006/.test(geomSrc),
@@ -252,6 +256,69 @@ const scaled = outlinePath(side, (x) => 2 * x, (z) => 10 - z);
 check(scaled.includes(`${2 * BODY.length} `),
   "the caller's own mappers are the only thing applied",
   `x doubled reaches ${2 * BODY.length}`);
+
+/* ── 9. THE MEASURED CLOSURES ARE THE DRAWINGS' NUMBERS, AND EACH CLASS DRAWS ITS OWN ──
+   Three manufacturers' dimensioned side views were measured (research
+   corpus, classes/cross-class/FUSELAGE-UPSWEEP.md; harness/measure-upsweep.py;
+   log FUSELAGE-UPSWEEP-measurements.txt). LOG is a second, independent
+   reading of that log; the table in geometry.js must equal it, every row
+   must carry its drawing and a cross-check against a printed dimension,
+   and the class closures must be built from the rows and nothing else. */
+console.log("\n-- the measured closures equal the measurement log, and each class draws its own --");
+const LOG = [   // aircraft, keelTipZ (H above CL), crownTipZ or null, coneStartLf, coneLengthH, keelChordDeg, cross-check %
+  ["Boeing 737-100",       0.098, null,  0.658, 2.36, 14.2, 0.3],
+  ["Airbus A320-200",      0.146, 0.389, 0.564, 3.96,  9.3, 1.7],
+  ["Bombardier Dash 8-400", 0.243, null,  0.740, 2.93, 14.2, 1.1],
+];
+check(FUSELAGE_UPSWEEP_MEASURED.length === 3 && LOG.every(([name, k, c, s, l, a]) => {
+    const r = FUSELAGE_UPSWEEP_MEASURED.find((x) => x.aircraft === name);
+    return r && near(r.keelTipZ, k, 1e-12) && (c == null ? r.crownTipZ === null : near(r.crownTipZ, c, 1e-12))
+        && near(r.coneStartLf, s, 1e-12) && near(r.coneLengthH, l, 1e-12) && near(r.keelChordDeg, a, 1e-12);
+  }),
+  "the three measured rows equal the measurement log (keel, crown, cone start, cone length, chord angle)",
+  LOG.map(([n, k, c]) => `${n}: keel +${k} H, crown ${c == null ? "hidden by the fin" : "+" + c + " H"}`).join("; "));
+check(FUSELAGE_UPSWEEP_MEASURED.every((r) => /p\. \d+|PDF index \d+/.test(r.drawing) && /\d+(\.\d+)? %/.test(r.crossCheck) && r.resolutionM > 0 && r.resolutionM < 0.02),
+  "every row names its drawing page, states a cross-check against a printed dimension, and a pixel resolution under 2 cm",
+  FUSELAGE_UPSWEEP_MEASURED.map((r) => `${r.aircraft}: ${r.crossCheck}`).join(" | "));
+check(FUSELAGE_UPSWEEP_MEASURED.every((r) => r.keelTipZ > FUSELAGE_CONVENTION.keelTipZ),
+  "every measured keel tip sits ABOVE the old convention's 0.05 H -- the convention was low, and is now only a labelled fallback",
+  `measured ${FUSELAGE_UPSWEEP_MEASURED.map((r) => r.keelTipZ).join(", ")} H against ${FUSELAGE_CONVENTION.keelTipZ} H`);
+const tr = fuselageClosure("transport"), tp = fuselageClosure("turboprop"), bj = fuselageClosure("bizjet"), tn = fuselageClosure("trainer");
+check(tr.measured && near(tr.keelTipZ, (0.098 + 0.146) / 2, 1e-12) && near(tr.crownTipZ, 0.389, 1e-12) && tr.n === 2 && tr.crownMeasured,
+  "transport: keel is the mean of the 737 and A320 (0.122 H), crown the A320's (0.389 H), n = 2, range stated",
+  tr.source);
+check(tp.measured && near(tp.keelTipZ, 0.243, 1e-12) && !tp.crownMeasured && near(tp.crownTipZ, FUSELAGE_CONVENTION.crownTipZ, 1e-12) && /fin hides/.test(tp.source),
+  "turboprop: keel is the Dash 8's (0.243 H); the crown stays the convention and the reason is stated",
+  tp.source);
+check(!bj.measured && !tn.measured && near(bj.keelTipZ, FUSELAGE_CONVENTION.keelTipZ, 1e-12) && /below every measured/.test(bj.source) && /below every measured/.test(tn.source),
+  "bizjet and trainer: no drawing on disk, the convention is used and labelled as below the measured range",
+  bj.source.slice(0, 90) + "...");
+const sideT = fuselageSideOutline({ ...BODY, closure: tr });
+check(near(sideT[4][1][1], BODY.height * tr.keelTipZ, 1e-12) && near(sideT[3][2][1], BODY.height * tr.crownTipZ, 1e-12)
+   && sideT[4][1][1] > 0 && sideT[3][2][1] > sideT[4][1][1] && (sideT[4][1][1] + BODY.height / 2) > (BODY.height / 2 - sideT[3][2][1]),
+  "an outline drawn with the transport closure puts the tip where the drawings do, and section 2's asymmetry still holds",
+  `keel +${sideT[4][1][1].toFixed(3)} m, crown +${sideT[3][2][1].toFixed(3)} m on a ${BODY.height} m body`);
+check(near(side[4][1][1], BODY.height * FUSELAGE_CONVENTION.keelTipZ, 1e-12),
+  "an outline drawn with no closure still uses the convention -- callers must pass the class closure to get the measurement",
+  "");
+const gaT = generalArrangement(E.designAircraft({ type: "transport" }));
+const gaP = generalArrangement(E.designAircraft({ type: "turboprop" }));
+check(gaT.fuselage.closure.measured && near(gaT.fuselage.closure.keelTipZ, tr.keelTipZ, 1e-12)
+   && gaP.fuselage.closure.measured && near(gaP.fuselage.closure.keelTipZ, tp.keelTipZ, 1e-12),
+  "the general arrangement carries the class closure, so every view draws the same measured tip",
+  `transport keel ${gaT.fuselage.closure.keelTipZ.toFixed(3)} H, turboprop ${gaP.fuselage.closure.keelTipZ.toFixed(3)} H`);
+const viewFiles = ["GeneralArrangement.jsx", "FuselageViews.jsx", "BalanceViews.jsx"];
+const passesClosure = viewFiles.filter((f) => {
+  const s = readFileSync(new URL(`../src/classes/aircraft/${f}`, import.meta.url), "utf8");
+  return /fuselageSideOutline\(\{[^}]*closure:/.test(s);
+});
+check(passesClosure.length === viewFiles.length,
+  "all three views that draw the side outline pass the class closure (a view that omits it silently draws the convention)",
+  passesClosure.join(", "));
+const fsT = readFileSync(new URL("../src/classes/aircraft/fuselage-structure.js", import.meta.url), "utf8");
+check(/closure: ga\.fuselage\.closure/.test(fsT),
+  "the fuselage-structure shell carries the closure the general arrangement chose, so the fuselage tab draws the same tip",
+  "");
 
 console.log("");
 console.log(fails.length ? `FUSELAGE OUTLINE GATE FAILED: ${fails.length} check(s)`

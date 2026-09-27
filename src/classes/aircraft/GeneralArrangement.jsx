@@ -115,7 +115,7 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
      was written out by hand. The magnitudes are an unsourced drawing
      convention and are stated as one in geometry.js. */
   const sideFus = outlinePath(
-    fuselageSideOutline({ length: L, height: H, noseLength: noseL, tailLength: tailL }), sX, sZ);
+    fuselageSideOutline({ length: L, height: H, noseLength: noseL, tailLength: tailL, closure: g.fuselage.closure }), sX, sZ);
 
   /* ── lifting surfaces ──────────────────────────────────────────────── */
   const wingSweepLE = leSweep(g.wing.sweepDeg, g.wing.area > 0 ? b * b / g.wing.area : 9, g.wing.taper);
@@ -331,7 +331,11 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
             })}
             <text x={m} y={tY + tH + u * 22} {...txt} fontSize={u * 9.5} fill={SC.subtle} opacity={0.75}>
               Dimensioned features are sized. Tail section thickness {(tailTC * 100).toFixed(1)} % is computed off the
-              wing (Scholz ch.9). Nose and tail-cone fineness, wing station longitudinal and vertical, dihedral, tail
+              wing (Scholz ch.9). Tail-cone closure: {g.fuselage.closure.measured
+                ? `keel ${g.fuselage.closure.keelTipZ.toFixed(3)} H above the centreline, measured from ${g.fuselage.closure.aircraft.join(" and ")} airport-planning drawings`
+                  + (g.fuselage.closure.crownMeasured ? `; crown ${g.fuselage.closure.crownTipZ.toFixed(3)} H measured` : `; crown ${g.fuselage.closure.crownTipZ} H is a convention (the fin hides it)`)
+                : `a drawing convention (no dimensioned side view of this class is on disk; its keel value sits below every measured aircraft)`}.
+              Nose and tail-cone fineness, wing station longitudinal and vertical, dihedral, tail
               sweep and the tailplane and fin root stations are drawing conventions, not results, and carry no dimension.
               {g.stance.zProvenance.sourced
                 ? ` Overall height is measured to the ground line, which is not sized either: it is the wing station

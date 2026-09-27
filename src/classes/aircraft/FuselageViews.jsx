@@ -59,7 +59,7 @@ export function FuselageProfile({ fus, height = 300 }) {
      dimension line. Straight-sided cones drawn from the same numbers read
      as a dart rather than an aeroplane. */
   const outline = outlinePath(
-    fuselageSideOutline({ length: L, height: H, noseLength: nose, tailLength: tail }), X, Z);
+    fuselageSideOutline({ length: L, height: H, noseLength: nose, tailLength: tail, closure: fus.shell.closure }), X, Z);
 
   const fwdX = fus.pressure.applies ? fus.pressure.fwdX : nose;
   const aftX = fus.pressure.applies ? fus.pressure.aftX : L - tail;

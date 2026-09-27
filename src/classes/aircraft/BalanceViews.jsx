@@ -96,7 +96,7 @@ export function StationDiagram({ bal, fus, height = 300 }) {
   /* Same body, same curve as the profile and the general arrangement —
      from geometry.js rather than a third hand-written copy. */
   const outline = outlinePath(
-    fuselageSideOutline({ length: L, height: H, noseLength: nose, tailLength: tail }), X, Z);
+    fuselageSideOutline({ length: L, height: H, noseLength: nose, tailLength: tail, closure: fus?.shell?.closure }), X, Z);
 
   const maxKg = Math.max(...bal.items.map((i) => i.kg));
   const rOf = (kg) => Math.max(u * 3, Math.sqrt(kg / maxKg) * H * 0.30);

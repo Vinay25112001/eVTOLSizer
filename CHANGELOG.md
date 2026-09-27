@@ -26,6 +26,15 @@ version. `validation/release.mjs` checks that these agree.
 ## [Unreleased]
 
 ### Added
+- Tail-cone closure measured from the manufacturers' drawings: the keel and
+  crown at the tail-cone tip were read off the dimensioned side views in the
+  Boeing 737, Airbus A320 and Bombardier Dash 8-400 airport-planning manuals
+  at 600 dpi, each scaled by one printed dimension and cross-checked against
+  another (0.3 %, 1.7 %, 1.1 %). Transports now draw the mean of the two
+  airliners (keel 0.122 H above the centreline, crown 0.389 H), turboprops
+  the Dash 8's keel; business jets and trainers keep the old convention and
+  the title block says it sits below every measured aircraft. The upsweep
+  that was visible in the drawing was right in sign and too small.
 - Wing-borne modes measured on real aircraft: NASA CR-2144's manufacturer-
   supplied derivatives and modes for the Boeing 747, Lockheed Jetstar,
   Convair 880M and Lockheed C-5A (36 flight conditions), transcribed with

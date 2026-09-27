@@ -190,3 +190,203 @@ export function uncertaintyBand(size, p, opts = {}) {
       + "wherever physics stops an input moving one way.",
   };
 }
+
+/* =====================================================================
+   SAMPLED PROPAGATION - the same bands, drawn together instead of one at a time
+   =====================================================================
+   uncertaintyBand() above perturbs each tagged input alone and combines the
+   excursions by root-sum-square, which assumes the effects add and cannot see
+   an interaction between two inputs. This function draws EVERY tagged input at
+   once from the same [LAY] bands, truncated to the same PHYSICAL_BOUNDS, and
+   re-runs the sizing loop per draw, so the spread of the outcomes is the
+   propagation the OAT approximates. Nothing here adds an assumption the OAT
+   does not already carry; it removes one (additivity).
+
+   What is deliberately the same as the OAT: the input set, the band per
+   provenance status, the physical bounds, the requirement exclusion. What is
+   different, and stated:
+
+     - Sampling scheme. Latin hypercube (Helton & Davis, SAND2001-0417 p.13):
+       each input's interval is cut into N equal strata, one draw per stratum,
+       strata paired across inputs by random permutation. Chosen over plain
+       Monte Carlo because it removes sample-to-sample wobble in the
+       percentiles; the model is cheap, so it buys no accuracy plain MC would
+       not (SAND2001-0417 p.55, quoted in the research corpus).
+     - Uniform within each band. A band with no stated shape is an interval;
+       the uniform is the maximum-entropy law on it, and anything peaked would
+       assert information the registry does not hold. The OUTPUT is therefore
+       a RANGE over assumed input ranges, and its percentiles are positions in
+       that range, NOT a confidence interval; the note says so.
+     - Truncation, not clamping. Where a band crosses a physical bound the
+       draw is uniform on the intersection, so no probability piles up on the
+       bound. Which inputs were truncated is reported, as the OAT reports
+       clamping.
+     - Counts are excluded. Rotor count and the like are integers and a draw
+       of 10.4 rotors is not an aircraft (UNCERTAINTY-AND-RISK.md 1.4, trap 2).
+       They are named in COUNT_KEYS because an integer VALUE does not identify
+       one: aspect ratio 9 and wing loading 1371 N/m2 are continuous.
+     - Non-converged draws are COUNTED and shown, never dropped silently;
+       the percentiles are over the converged draws and say how many.
+     - Replicates. Five independent replicates of N/5 with their own seeds,
+       pooled for the headline and reported separately, so the reader can see
+       whether the percentiles are stable at this N (SAND2001-0417 p.55: the
+       only defensible way to judge sample size is to replicate and look).
+     - Deterministic. A seeded LCG (the golden master's) drives every draw, so
+       the same seed reproduces the same numbers bit for bit.
+
+   THE SPLIT THE CORPUS INSISTS ON. UNCERTAINTY-AND-RISK.md 1.3 point 4: only
+   parameters the designer cannot choose belong in an uncertainty sample -
+   physics and technology constants; design variables belong in the trade
+   grid. The OAT's tagged set mixes the two (fuselage length, aspect ratio,
+   rotor diameter are decisions, not unknowns). DESIGN_VARIABLE_KEYS names
+   that split so the sample can be run both ways; the default keeps the OAT's
+   set so the two are comparable, and the result lists which design variables
+   it sampled. The classification is a reading of the corpus rule, [LAY].
+   ===================================================================== */
+
+/* Integer and categorical inputs: never drawn continuously. */
+export const COUNT_KEYS = new Set([
+  "nPropHover", "nRotorsStopped", "nBlades", "boomCount", "nSeats", "nOccupants",
+  "nPax", "hops", "nNoseWheels", "nMainWheels",
+]);
+
+/* Decisions the designer makes, per UNCERTAINTY-AND-RISK.md 1.3 point 4. [LAY]
+   reading of that rule: geometry, layout, mission-profile and operating-rule
+   choices. Technology and physics constants (efficiencies, cell energy,
+   empty-weight calibration, model constants) are NOT here. */
+export const DESIGN_VARIABLE_KEYS = new Set([
+  "fusLen", "fusDiam", "AR", "taper", "tc", "propDiam", "wingLoadingNm2",
+  "vtCh", "vtCv", "vtAR", "vtGamma", "climbAngle", "descentAngle", "rateOfClimb",
+  "targetSM", "socMin", "hoverTimeTakeoffS", "hoverTimeLandingS", "tipSpeed",
+]);
+
+/* Same generator as validation/golden-master.mjs, so a seed means one thing. */
+export function lcg(seed) {
+  let s = seed >>> 0;
+  return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+}
+
+/* Latin hypercube on the unit cube: N rows, d columns, each column a
+   permutation of the N strata with one uniform draw inside each stratum. */
+export function latinHypercube(N, d, rand) {
+  const cols = [];
+  for (let k = 0; k < d; k++) {
+    const perm = Array.from({ length: N }, (_, i) => i);
+    for (let i = N - 1; i > 0; i--) {              // Fisher-Yates on the strata
+      const j = Math.floor(rand() * (i + 1));
+      const t = perm[i]; perm[i] = perm[j]; perm[j] = t;
+    }
+    cols.push(perm.map((stratum) => (stratum + rand()) / N));
+  }
+  return Array.from({ length: N }, (_, i) => cols.map((c) => c[i]));
+}
+
+const quantile = (sorted, q) => {
+  if (!sorted.length) return null;
+  const pos = (sorted.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+};
+
+export function sampledBand(size, p, opts = {}) {
+  const {
+    objective = "MTOW", bands = BANDS, N = 200, replicates = 5, seed = 20260927,
+    includeRequirements = false, excludeDesignVariables = false, keys = null,
+  } = opts;
+
+  const base = size(p);
+  const base0 = base?.[objective];
+  if (base0 == null || !isFinite(base0))
+    return { error: "baseline did not produce a finite " + objective };
+
+  const all = keys ?? Object.keys(p);
+  const inputs = [], truncated = [], designVariablesSampled = [], designVariablesHeld = [];
+  for (const k of all) {
+    if (!isNumericInput(p[k])) continue;
+    if (!includeRequirements && REQUIREMENT_KEYS.has(k)) continue;
+    if (COUNT_KEYS.has(k)) continue;
+    const st = INPUTS[k]?.status, w = bands[st];
+    if (st == null || w == null) continue;
+    if (DESIGN_VARIABLE_KEYS.has(k)) {
+      if (excludeDesignVariables) { designVariablesHeld.push(k); continue; }
+      designVariablesSampled.push(k);
+    }
+    const v0 = p[k];
+    let lo = v0 * (1 - w), hi = v0 * (1 + w);
+    if (lo > hi) [lo, hi] = [hi, lo];              // a negative base value
+    const b = PHYSICAL_BOUNDS[k];
+    const tLo = b ? Math.max(lo, b[0]) : lo, tHi = b ? Math.min(hi, b[1]) : hi;
+    if (b && (tLo !== lo || tHi !== hi)) truncated.push({ key: k, low: tLo !== lo, high: tHi !== hi });
+    if (!(tHi > tLo)) continue;                    // zero band, or bound-pinned: hold
+    inputs.push({ key: k, status: st, band: w, baseValue: v0, lo: tLo, hi: tHi,
+                  isDesignVariable: DESIGN_VARIABLE_KEYS.has(k) });
+  }
+
+  const R = Math.max(1, Math.floor(replicates));
+  const perRep = Math.max(1, Math.floor(N / R));
+  const samples = [];            // every draw, converged or not, in order
+  const reps = [];
+  for (let r = 0; r < R; r++) {
+    const rand = lcg(seed + 7919 * r);
+    const cube = latinHypercube(perRep, inputs.length, rand);
+    const vals = [];
+    for (let i = 0; i < perRep; i++) {
+      const q = { ...p };
+      inputs.forEach((inp, k) => { q[inp.key] = inp.lo + cube[i][k] * (inp.hi - inp.lo); });
+      let y = null;
+      try { const out = size(q); y = (out && !out.r2Diverged && isFinite(out[objective])) ? out[objective] : null; }
+      catch { y = null; }
+      samples.push({ replicate: r, value: y, converged: y != null, u: cube[i] });
+      if (y != null) vals.push(y);
+    }
+    const sorted = vals.slice().sort((a, b) => a - b);
+    reps.push({ replicate: r, drawn: perRep, converged: vals.length,
+                p5: quantile(sorted, 0.05), p50: quantile(sorted, 0.5), p95: quantile(sorted, 0.95) });
+  }
+  const converged = samples.filter((s) => s.converged).map((s) => s.value).sort((a, b) => a - b);
+  const drawn = R * perRep;      // PLANNED, so a draw that vanishes from `samples` is visible
+  const p5 = quantile(converged, 0.05), p50 = quantile(converged, 0.5), p95 = quantile(converged, 0.95);
+  const spread = (f) => {
+    const xs = reps.map(f).filter((x) => x != null);
+    return xs.length ? Math.max(...xs) - Math.min(...xs) : null;
+  };
+
+  return {
+    objective, base: base0, seed, N: drawn, replicates: R, perReplicate: perRep,
+    drawn, converged: converged.length, failed: drawn - converged.length,
+    failedPct: drawn ? 100 * (drawn - converged.length) / drawn : 0,
+    p5, p50, p95, min: converged[0] ?? null, max: converged[converged.length - 1] ?? null,
+    p5Pct: p5 != null ? 100 * (p5 - base0) / base0 : null,
+    p50Pct: p50 != null ? 100 * (p50 - base0) / base0 : null,
+    p95Pct: p95 != null ? 100 * (p95 - base0) / base0 : null,
+    replicateResults: reps,
+    replicateSpread: { p5: spread((r) => r.p5), p50: spread((r) => r.p50), p95: spread((r) => r.p95) },
+    inputs, inputsSampled: inputs.length,
+    truncatedByPhysics: truncated,
+    designVariablesSampled, designVariablesHeld,
+    inputsSkipped: {
+      requirements: includeRequirements ? [] : [...REQUIREMENT_KEYS].filter((k) => k in p),
+      counts: [...COUNT_KEYS].filter((k) => k in p && isNumericInput(p[k])),
+      untagged: all.filter((k) => isNumericInput(p[k]) && INPUTS[k]?.status == null),
+      derived:  all.filter((k) => isNumericInput(p[k]) && INPUTS[k]?.status === "derived"),
+    },
+    samples,
+    note:
+      "A RANGE over assumed input ranges, not a confidence interval: each tagged "
+      + "input is drawn uniformly within its [LAY] band (the same band widths as "
+      + "the one-at-a-time screen), truncated to physical bounds, all inputs at "
+      + "once by Latin hypercube, and the sizing loop re-run per draw. The "
+      + "percentiles are positions in the outcome range under those bands and "
+      + "carry no probability beyond them. Inputs are drawn independently; "
+      + "correlations between them are not known and not modelled. Draws that "
+      + "do not converge are counted, not dropped. Untagged and derived inputs "
+      + "and user requirements are held fixed and listed; so are counts. "
+      + (designVariablesSampled.length
+          ? "Design variables (" + designVariablesSampled.join(", ") + ") are "
+            + "sampled here to match the one-at-a-time screen; UNCERTAINTY-AND-"
+            + "RISK.md 1.3 says they are decisions, not unknowns, and the run "
+            + "with excludeDesignVariables shows the band without them. "
+          : "Design variables are held at their values. ")
+      + "Five replicates of N/5 are reported so the stability of the "
+      + "percentiles at this N can be seen rather than assumed.",
+  };
+}

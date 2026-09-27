@@ -1,6 +1,6 @@
 # Validation Report — eVTOL Conceptual Sizing Tool
 
-**Generated 2026-09-27 13:18 UTC from commit `03e8d5c` (WORKING TREE DIRTY — this report does not describe a committed state).**
+**Generated 2026-09-27 13:44 UTC from commit `832bc3d` (WORKING TREE DIRTY — this report does not describe a committed state).**
 
 This document is produced by `validation/report.mjs`, which runs every
 harness and captures what each one printed. It is not written by hand. If
@@ -422,11 +422,11 @@ Required by [M&S 49].
 
 Everything below is captured from the run that produced this document.
 
-<details><summary><code>scope-check.mjs</code> — exit 0, 2484 ms</summary>
+<details><summary><code>scope-check.mjs</code> — exit 0, 2664 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
-SCOPE CHECK — 242 file(s) parsed
+SCOPE CHECK — 243 file(s) parsed
 ══════════════════════════════════════════════════════════════════════════
 PASS — every referenced identifier is imported, declared or a runtime global,
        and no component calls a hook below an early return.
@@ -434,7 +434,7 @@ PASS — every referenced identifier is imported, declared or a runtime global,
 
 </details>
 
-<details><summary><code>tab-registry.mjs</code> — exit 0, 153 ms</summary>
+<details><summary><code>tab-registry.mjs</code> — exit 0, 210 ms</summary>
 
 ```
 TAB REGISTRY GATE
@@ -452,7 +452,7 @@ TAB REGISTRY GATE PASSED
 
 </details>
 
-<details><summary><code>units.mjs</code> — exit 0, 143 ms</summary>
+<details><summary><code>units.mjs</code> — exit 0, 142 ms</summary>
 
 ```
 UNITS GATE
@@ -526,7 +526,7 @@ UNITS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>constants.mjs</code> — exit 0, 324 ms</summary>
+<details><summary><code>constants.mjs</code> — exit 0, 341 ms</summary>
 
 ```
 PHYSICAL CONSTANTS GATE
@@ -562,7 +562,7 @@ PHYSICAL CONSTANTS GATE
 
 -- every source file in src/ --
   PASS  the scan actually read the tree
-          349 source files — a passing result from an empty walk is not a result
+          351 source files — a passing result from an empty walk is not a result
   PASS  no source file writes a physical constant with a value of its own
           7 named exceptions, each with a reason: src/classes/trainer/weights.js 32.2; src/lib/units.js 9.807; src/engine/constants.js 9.81; src/engine/constants.js 287.052874; src/engine/constants.js 287.053; src/engine/constants.js 287.058; src/data/tyres.js 32.2
 
@@ -588,7 +588,7 @@ CONSTANTS GATE PASSED (20 checks)
 
 </details>
 
-<details><summary><code>identities.mjs</code> — exit 0, 3611 ms</summary>
+<details><summary><code>identities.mjs</code> — exit 0, 3654 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -646,7 +646,7 @@ PASS — all 43 relations hold to 0.2%.
 
 </details>
 
-<details><summary><code>golden-master.mjs</code> — exit 0, 4761 ms</summary>
+<details><summary><code>golden-master.mjs</code> — exit 0, 4271 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -658,7 +658,7 @@ PASS — no output moved by more than 1e-6 relative.
 
 </details>
 
-<details><summary><code>components.mjs</code> — exit 0, 103 ms</summary>
+<details><summary><code>components.mjs</code> — exit 0, 111 ms</summary>
 
 ```
 ==============================================================================
@@ -806,7 +806,7 @@ regardless of what the loop happens to converge to.
 
 </details>
 
-<details><summary><code>database-report.mjs</code> — exit 0, 85 ms</summary>
+<details><summary><code>database-report.mjs</code> — exit 0, 102 ms</summary>
 
 ```
 ======================================================================================
@@ -912,7 +912,7 @@ NASA CONCEPT VEHICLES — the only full weight statements in the field
 
 </details>
 
-<details><summary><code>analysis-layers.mjs</code> — exit 0, 7805 ms</summary>
+<details><summary><code>analysis-layers.mjs</code> — exit 0, 7584 ms</summary>
 
 ```
 ANALYSIS-LAYER GATE
@@ -950,7 +950,7 @@ ANALYSIS-LAYER GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-models.mjs</code> — exit 0, 2568 ms</summary>
+<details><summary><code>vsp-models.mjs</code> — exit 0, 2876 ms</summary>
 
 ```
 NASA OpenVSP MODEL REPLICATION GATE
@@ -990,7 +990,7 @@ VSP GATE PASSED
 
 </details>
 
-<details><summary><code>geometry-export.mjs</code> — exit 0, 35556 ms</summary>
+<details><summary><code>geometry-export.mjs</code> — exit 0, 39857 ms</summary>
 
 ```
 GEOMETRY & EXPORT GATE
@@ -1047,7 +1047,7 @@ GEOMETRY & EXPORT GATE PASSED
 
 </details>
 
-<details><summary><code>fuselage-outline.mjs</code> — exit 0, 177 ms</summary>
+<details><summary><code>fuselage-outline.mjs</code> — exit 0, 204 ms</summary>
 
 ```
 FUSELAGE OUTLINE GATE
@@ -1151,7 +1151,7 @@ FUSELAGE OUTLINE GATE PASSED (50 checks)
 
 </details>
 
-<details><summary><code>nasa-configs.mjs</code> — exit 0, 238 ms</summary>
+<details><summary><code>nasa-configs.mjs</code> — exit 0, 286 ms</summary>
 
 ```
 ======================================================================================
@@ -1245,7 +1245,7 @@ PASS: 39 published comparisons, mean 14.5%, worst -46.7%
 
 </details>
 
-<details><summary><code>validate.mjs</code> — exit 0, 942 ms</summary>
+<details><summary><code>validate.mjs</code> — exit 0, 1060 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════════
@@ -1357,7 +1357,7 @@ PASS: within the 40% gate
 
 </details>
 
-<details><summary><code>tab-visibility.mjs</code> — exit 0, 1279 ms</summary>
+<details><summary><code>tab-visibility.mjs</code> — exit 0, 1169 ms</summary>
 
 ```
 TAB VISIBILITY GATE
@@ -1383,7 +1383,7 @@ TAB VISIBILITY GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-run.mjs</code> — exit 0, 56103 ms</summary>
+<details><summary><code>vsp-run.mjs</code> — exit 0, 57233 ms</summary>
 
 ```
 OPENVSP SCRIPT-RUN GATE
@@ -1403,7 +1403,7 @@ OPENVSP SCRIPT-RUN GATE PASSED — every configuration builds in OpenVSP
 
 </details>
 
-<details><summary><code>vspaero.mjs</code> — exit 0, 11694 ms</summary>
+<details><summary><code>vspaero.mjs</code> — exit 0, 13268 ms</summary>
 
 ```
 VSPAERO GATE — vortex-lattice polar on the exported model
@@ -1441,7 +1441,7 @@ VSPAERO GATE PASSED
 
 </details>
 
-<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 73 ms</summary>
+<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 83 ms</summary>
 
 ```
 ROTORCRAFT TAIL GATE
@@ -1461,7 +1461,7 @@ ROTORCRAFT TAIL GATE PASSED
 
 </details>
 
-<details><summary><code>drive-failure.mjs</code> — exit 0, 63 ms</summary>
+<details><summary><code>drive-failure.mjs</code> — exit 0, 78 ms</summary>
 
 ```
 DRIVE-SYSTEM FAILURE GATE
@@ -1489,7 +1489,7 @@ DRIVE-SYSTEM FAILURE GATE PASSED
 
 </details>
 
-<details><summary><code>autorotation.mjs</code> — exit 0, 2047 ms</summary>
+<details><summary><code>autorotation.mjs</code> — exit 0, 2461 ms</summary>
 
 ```
 AUTOROTATION GATE
@@ -1532,7 +1532,7 @@ AUTOROTATION GATE PASSED
 
 </details>
 
-<details><summary><code>whirl-flutter.mjs</code> — exit 0, 2188 ms</summary>
+<details><summary><code>whirl-flutter.mjs</code> — exit 0, 2477 ms</summary>
 
 ```
 WHIRL-FLUTTER GATE
@@ -1578,7 +1578,7 @@ WHIRL-FLUTTER GATE PASSED
 
 </details>
 
-<details><summary><code>load-cases.mjs</code> — exit 0, 1763 ms</summary>
+<details><summary><code>load-cases.mjs</code> — exit 0, 2100 ms</summary>
 
 ```
 STRUCTURAL LOAD CASE GATE
@@ -1615,7 +1615,7 @@ STRUCTURAL LOAD CASE GATE PASSED
 
 </details>
 
-<details><summary><code>reg-applicability.mjs</code> — exit 0, 2303 ms</summary>
+<details><summary><code>reg-applicability.mjs</code> — exit 0, 2682 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -1784,7 +1784,7 @@ REGULATORY APPLICABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>blade-twist.mjs</code> — exit 0, 3294 ms</summary>
+<details><summary><code>blade-twist.mjs</code> — exit 0, 2634 ms</summary>
 
 ```
 BLADE TWIST GATE
@@ -1826,7 +1826,7 @@ BLADE TWIST GATE PASSED
 
 </details>
 
-<details><summary><code>control-authority.mjs</code> — exit 0, 2482 ms</summary>
+<details><summary><code>control-authority.mjs</code> — exit 0, 2909 ms</summary>
 
 ```
 FAILURE-MODE CONTROLLABILITY GATE
@@ -1866,7 +1866,7 @@ FAILURE-MODE CONTROLLABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>hover-dynamics.mjs</code> — exit 0, 1598 ms</summary>
+<details><summary><code>hover-dynamics.mjs</code> — exit 0, 1764 ms</summary>
 
 ```
 HOVER DYNAMICS GATE
@@ -1914,7 +1914,7 @@ HOVER DYNAMICS GATE PASSED
 
 </details>
 
-<details><summary><code>render-freeze.mjs</code> — exit 0, 7615 ms</summary>
+<details><summary><code>render-freeze.mjs</code> — exit 0, 7939 ms</summary>
 
 ```
 RENDER FREEZE GATE
@@ -1952,7 +1952,7 @@ PASS: all 27 views render exactly as committed
 
 </details>
 
-<details><summary><code>design-file.mjs</code> — exit 0, 3065 ms</summary>
+<details><summary><code>design-file.mjs</code> — exit 0, 3050 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -2034,7 +2034,7 @@ DESIGN FILE: 54 passed, 0 failed
 
 </details>
 
-<details><summary><code>validation-domain.mjs</code> — exit 0, 1974 ms</summary>
+<details><summary><code>validation-domain.mjs</code> — exit 0, 1643 ms</summary>
 
 ```
 VALIDATION DOMAIN GATE
@@ -2058,7 +2058,7 @@ PASS  the app's domain file matches the harnesses
 
 </details>
 
-<details><summary><code>result-warnings.mjs</code> — exit 0, 2047 ms</summary>
+<details><summary><code>result-warnings.mjs</code> — exit 0, 2200 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -2126,7 +2126,7 @@ RESULT WARNINGS: 41 passed, 0 failed
 
 </details>
 
-<details><summary><code>provenance-report.mjs</code> — exit 0, 1108 ms</summary>
+<details><summary><code>provenance-report.mjs</code> — exit 0, 1312 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
@@ -2160,7 +2160,7 @@ PROVENANCE GATE PASSED - every output any layout emits is classified.
 
 </details>
 
-<details><summary><code>api.mjs</code> — exit 0, 3557 ms</summary>
+<details><summary><code>api.mjs</code> — exit 0, 4196 ms</summary>
 
 ```
 ENGINE API GATE
@@ -2170,11 +2170,11 @@ ENGINE API GATE
   PASS  size() returns warnings and the domain with the numbers
   PASS  sizeMany() sizes each case
   PASS  a design that does not close reports converged: false
-  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"03e8d5ce31c7","dirty":true,"builtAt":null,"mode":"node-api"}
+  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"832bc3d2d148","dirty":true,"builtAt":null,"mode":"node-api"}
   PASS  reopen() reproduces a record
   PASS  engineVersion() reports the package and format versions
   PASS  docs/API.md documents every export  — 19 exports
-  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit 03e8d5ce31c7, uncommitted changes; API 1; design format 1)
+  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit 832bc3d2d148, uncommitted changes; API 1; design format 1)
   PASS  a clean design exits 0
   PASS  a design that does not close exits 1
   PASS  unreadable input exits 2
@@ -2188,7 +2188,7 @@ ENGINE API GATE PASSED (17 checks)
 
 </details>
 
-<details><summary><code>turboelectric.mjs</code> — exit 0, 1708 ms</summary>
+<details><summary><code>turboelectric.mjs</code> — exit 0, 2118 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -2247,7 +2247,7 @@ TURBOELECTRIC GATE PASSED (24 checks)
 
 </details>
 
-<details><summary><code>cpacs-export.mjs</code> — exit 0, 1495 ms</summary>
+<details><summary><code>cpacs-export.mjs</code> — exit 0, 1777 ms</summary>
 
 ```
 CPACS AND TRACEABILITY EXPORT GATE
@@ -2283,7 +2283,7 @@ EXPORT GATE PASSED (25 checks)
 
 </details>
 
-<details><summary><code>release.mjs</code> — exit 0, 158 ms</summary>
+<details><summary><code>release.mjs</code> — exit 0, 202 ms</summary>
 
 ```
 RELEASE GATE
@@ -2309,7 +2309,7 @@ RELEASE GATE PASSED (0.2.0-dev, in preparation)
 
 </details>
 
-<details><summary><code>aircraft-classes.mjs</code> — exit 0, 579 ms</summary>
+<details><summary><code>aircraft-classes.mjs</code> — exit 0, 774 ms</summary>
 
 ```
 AIRCRAFT-CLASS GATE
@@ -2348,7 +2348,7 @@ AIRCRAFT-CLASS GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>trainer.mjs</code> — exit 0, 143 ms</summary>
+<details><summary><code>trainer.mjs</code> — exit 0, 170 ms</summary>
 
 ```
 TRAINER GATE
@@ -2418,7 +2418,7 @@ TRAINER GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>transport.mjs</code> — exit 0, 1259 ms</summary>
+<details><summary><code>transport.mjs</code> — exit 0, 1627 ms</summary>
 
 ```
 TRANSPORT GATE
@@ -2502,7 +2502,7 @@ TRANSPORT GATE PASSED (60 checks)
 
 </details>
 
-<details><summary><code>transport-mission.mjs</code> — exit 0, 263 ms</summary>
+<details><summary><code>transport-mission.mjs</code> — exit 0, 302 ms</summary>
 
 ```
 TRANSPORT MISSION AND LAYOUT GATE
@@ -2565,7 +2565,7 @@ TRANSPORT MISSION GATE PASSED (44 checks)
 
 </details>
 
-<details><summary><code>transport-aero.mjs</code> — exit 0, 2161 ms</summary>
+<details><summary><code>transport-aero.mjs</code> — exit 0, 2688 ms</summary>
 
 ```
 TRANSPORT DRAG BUILD-UP GATE
@@ -2622,7 +2622,7 @@ TRANSPORT DRAG GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>bizjet.mjs</code> — exit 0, 442 ms</summary>
+<details><summary><code>bizjet.mjs</code> — exit 0, 541 ms</summary>
 
 ```
 BUSINESS-JET GATE
@@ -2656,7 +2656,7 @@ BUSINESS-JET GATE PASSED (15 checks)
 
 </details>
 
-<details><summary><code>aircraft-engine.mjs</code> — exit 0, 1281 ms</summary>
+<details><summary><code>aircraft-engine.mjs</code> — exit 0, 1638 ms</summary>
 
 ```
 AIRCRAFT ENGINE GATE
@@ -2867,7 +2867,7 @@ AIRCRAFT ENGINE GATE PASSED (166 checks)
 
 </details>
 
-<details><summary><code>turboprop.mjs</code> — exit 0, 138 ms</summary>
+<details><summary><code>turboprop.mjs</code> — exit 0, 159 ms</summary>
 
 ```
 TURBOPROP GATE
@@ -2952,7 +2952,7 @@ TURBOPROP GATE PASSED (59 checks)
 
 </details>
 
-<details><summary><code>paper-claims.mjs</code> — exit 0, 12531 ms</summary>
+<details><summary><code>paper-claims.mjs</code> — exit 0, 15168 ms</summary>
 
 ```
 PAPER CLAIM GATE
@@ -2997,7 +2997,7 @@ PASS: all 32 numeric claims in paper/ are reproduced by the harnesses
 
 </details>
 
-<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 475 ms</summary>
+<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 556 ms</summary>
 
 ```
 VTOL AUTOPILOT GATE
@@ -3055,7 +3055,7 @@ VTOL AUTOPILOT GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-frames.mjs</code> — exit 0, 77 ms</summary>
+<details><summary><code>drone-frames.mjs</code> — exit 0, 91 ms</summary>
 
 ```
 DRONE FRAME GATE
@@ -3078,7 +3078,7 @@ DRONE FRAME GATE PASSED (12 checks)
 
 </details>
 
-<details><summary><code>drone-components.mjs</code> — exit 0, 89 ms</summary>
+<details><summary><code>drone-components.mjs</code> — exit 0, 97 ms</summary>
 
 ```
 DRONE COMPONENT CATALOGUE GATE
@@ -3120,7 +3120,7 @@ DRONE COMPONENT CATALOGUE GATE PASSED (13 checks)
 
 </details>
 
-<details><summary><code>drone-rotor.mjs</code> — exit 0, 113 ms</summary>
+<details><summary><code>drone-rotor.mjs</code> — exit 0, 142 ms</summary>
 
 ```
 DRONE ROTOR GATE
@@ -3180,7 +3180,7 @@ DRONE ROTOR GATE PASSED (14 checks)
 
 </details>
 
-<details><summary><code>drone-motor.mjs</code> — exit 0, 91 ms</summary>
+<details><summary><code>drone-motor.mjs</code> — exit 0, 107 ms</summary>
 
 ```
 DRONE MOTOR GATE
@@ -3276,7 +3276,7 @@ DRONE MOTOR GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-esc.mjs</code> — exit 0, 91 ms</summary>
+<details><summary><code>drone-esc.mjs</code> — exit 0, 103 ms</summary>
 
 ```
 DRONE ESC GATE
@@ -3342,7 +3342,7 @@ DRONE ESC GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-battery.mjs</code> — exit 0, 87 ms</summary>
+<details><summary><code>drone-battery.mjs</code> — exit 0, 98 ms</summary>
 
 ```
 DRONE BATTERY GATE
@@ -3404,7 +3404,7 @@ DRONE BATTERY GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>drone-sizing.mjs</code> — exit 0, 105 ms</summary>
+<details><summary><code>drone-sizing.mjs</code> — exit 0, 115 ms</summary>
 
 ```
 DRONE SIZING GATE
@@ -3455,7 +3455,7 @@ DRONE SIZING GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-trade.mjs</code> — exit 0, 774 ms</summary>
+<details><summary><code>drone-trade.mjs</code> — exit 0, 1003 ms</summary>
 
 ```
 DRONE TRADE GATE
@@ -3503,7 +3503,7 @@ DRONE TRADE GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-airframe.mjs</code> — exit 0, 84 ms</summary>
+<details><summary><code>drone-airframe.mjs</code> — exit 0, 111 ms</summary>
 
 ```
 DRONE AIRFRAME GATE
@@ -3561,7 +3561,7 @@ DRONE AIRFRAME GATE PASSED (33 checks)
 
 </details>
 
-<details><summary><code>drone-dynamics.mjs</code> — exit 0, 1318 ms</summary>
+<details><summary><code>drone-dynamics.mjs</code> — exit 0, 1540 ms</summary>
 
 ```
 DRONE DYNAMICS GATE
@@ -3630,7 +3630,7 @@ DRONE DYNAMICS GATE PASSED (38 checks)
 
 </details>
 
-<details><summary><code>drone-playback.mjs</code> — exit 0, 539 ms</summary>
+<details><summary><code>drone-playback.mjs</code> — exit 0, 582 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -3735,7 +3735,7 @@ DRONE PLAYBACK GATE PASSED
 
 </details>
 
-<details><summary><code>drone-risk.mjs</code> — exit 0, 141 ms</summary>
+<details><summary><code>drone-risk.mjs</code> — exit 0, 173 ms</summary>
 
 ```
 DRONE RISK GATE
@@ -3788,7 +3788,7 @@ DRONE RISK GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-avionics.mjs</code> — exit 0, 96 ms</summary>
+<details><summary><code>drone-avionics.mjs</code> — exit 0, 108 ms</summary>
 
 ```
 DRONE AVIONICS GATE
@@ -3839,7 +3839,7 @@ DRONE AVIONICS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>drone-autopilot.mjs</code> — exit 0, 149 ms</summary>
+<details><summary><code>drone-autopilot.mjs</code> — exit 0, 157 ms</summary>
 
 ```
 DRONE AUTOPILOT GATE
@@ -3920,7 +3920,7 @@ DRONE AUTOPILOT GATE PASSED (52 checks)
 
 </details>
 
-<details><summary><code>drone-obstacles.mjs</code> — exit 0, 87 ms</summary>
+<details><summary><code>drone-obstacles.mjs</code> — exit 0, 99 ms</summary>
 
 ```
 DRONE OBSTACLE GATE
@@ -4010,7 +4010,7 @@ DRONE OBSTACLE GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 6604 ms</summary>
+<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 7918 ms</summary>
 
 ```
 DRONE FLIGHT ENERGY GATE
@@ -4058,7 +4058,7 @@ DRONE FLIGHT ENERGY GATE PASSED (29 checks)
 
 </details>
 
-<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 5878 ms</summary>
+<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 6854 ms</summary>
 
 ```
 DRONE FLIGHT WORKER GATE
@@ -4088,7 +4088,7 @@ DRONE FLIGHT WORKER GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-regulatory.mjs</code> — exit 0, 87 ms</summary>
+<details><summary><code>drone-regulatory.mjs</code> — exit 0, 98 ms</summary>
 
 ```
 DRONE REGULATORY GATE

@@ -22,6 +22,7 @@ import { ShearMomentDiagram, StressMarginPlot, BoxSection, StructuralPlanform,
 import { fuselageStructure } from "./fuselage-structure.js";
 import { fuselageLoads } from "./fuselage-structure-loads.js";
 import { fuselagePressureShell, PA_PER_PSI } from "./fuselage-pressure-shell.js";
+import { fuselageBendingMaterial } from "./fuselage-bending-material.js";
 import { FuselageProfile, FuselageSection } from "./FuselageViews.jsx";
 import { balanceOf, BALANCE_DEFAULTS } from "./balance.js";
 import { LoadingDiagram, StationDiagram } from "./BalanceViews.jsx";
@@ -702,6 +703,8 @@ export function FuselageTab({ type, result }) {
   const dpPa = dpPsi === "" ? undefined : Number(dpPsi) * PA_PER_PSI;
   const ps = useMemo(() => fuselagePressureShell(result, { deltaPPa: dpPa, material: shellMat }),
                      [result, dpPa, shellMat]);
+  const bm = useMemo(() => fuselageBendingMaterial(result, { deltaPPa: dpPa, material: shellMat }),
+                     [result, dpPa, shellMat]);
   if (!f) return <Empty>This type does not report a fuselage length, width and height, which the arrangement needs.</Empty>;
   const IN_ = 0.0254;
   const inches = (v) => `${(v / IN_).toFixed(2)} in`;
@@ -846,6 +849,50 @@ export function FuselageTab({ type, result }) {
               </ul>
             </>
           )}
+        </Card>
+      ) : null}
+
+      {bm && ps && ps.applies ? (
+        <Card title="Added bending material — where the shell alone is not enough">
+          {!bm.evaluated ? <Lead>{bm.why}</Lead> : (() => {
+            const sc = bm.scenarios.find((s) => s.id === bm.governing);
+            return (
+              <>
+                <Lead>
+                  TASOPT (A.84)–(A.100): the axial stress from F1's bending moment plus F2's pressure stress is held
+                  to an allowable, and where the shell's own inertia cannot do it, material is added top and bottom.
+                  Same two routes as F1 — the real stations, and the source's closed form — and the gate demands they
+                  agree to rounding under matched assumptions.
+                </Lead>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: S.md }}>
+                  <Kpi label="Added bending material" value={fmt(sc.massKg, 1)} unit="kg"
+                       sub={sc.needed
+                         ? <>peak <Q v={fmt(sc.peak.aHbendM2 * 1e4, 1)} u="cm²" /> at <Q v={fmt(sc.peak.xM, 2)} u="m" /> · to <Q v={fmt(sc.xHbend.stationedM, 2)} u="m" /></>
+                         : "none needed — the shell carries the moment"} />
+                  <Kpi label="Worst shell-only stress" value={fmt(sc.worstShellOnly.sigmaShellOnlyPa / 1e6, 0)} unit="MPa"
+                       sub={<>against σ_bend <Q v={fmt(bm.input.sigmaBendPa / 1e6, 0)} u="MPa" /> at <Q v={fmt(sc.worstShellOnly.x, 2)} u="m" /></>} />
+                  <Kpi label="Left for bending, (A.88)" value={fmt(bm.input.sigmaMhPa / 1e6, 1)} unit="MPa"
+                       sub={<>σ_bend less pressure axial <Q v={fmt(bm.input.pressureAxialPa / 1e6, 1)} u="MPa" /></>} />
+                  <Kpi label="Skin + added vs FLOPS" value={fmt(100 * bm.budget.fractionOfFlops, 1)} unit="%"
+                       sub={<><Q v={fmt(bm.budget.skinPlusAddedKg, 0)} u="kg" /> of <Q v={fmt(bm.budget.flopsFuselageKg, 0)} u="kg" /> · the rest is frames, floor, doors, fasteners</>} />
+                </div>
+                {bm.wingBox.peakOutsideBox
+                  ? <Note>The peak moment stands {fmt(bm.wingBox.offsetFromBoxM, 2)} m outside the wing box
+                          [{fmt(bm.wingBox.xbM, 2)}, {fmt(bm.wingBox.xfM, 2)}] m: F1's cantilevers meet at the wing-group CG,
+                          which carries the main gear, not at the centre of lift TASOPT reflects about. This is the B2/B5
+                          station mismatch, visible here as it is in the wheelbase.</Note>
+                  : null}
+                <Table head={["Scenario", "n", "Needed", "Added mass", "Stationed back volume", "Smeared (A.96)"]}
+                       rows={bm.scenarios.map((s) => [s.label, fmt(s.nFactor, 2), s.needed ? "yes" : "no",
+                                                       `${fmt(s.massKg, 1)} kg`, `${fmt(s.volume.backM3 * 1e3, 2)} L`,
+                                                       `${fmt(s.volume.closedBackM3 * 1e3, 2)} L`])} />
+                <Note>{bm.sources.allowable}</Note>
+                <ul style={{ margin: `${S.sm}px 0 0`, paddingLeft: 18, fontSize: T.label, color: SC.muted, lineHeight: 1.7 }}>
+                  {bm.caveats.map((c, i) => <li key={i}>{c}</li>)}
+                </ul>
+              </>
+            );
+          })()}
         </Card>
       ) : null}
 

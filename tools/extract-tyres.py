@@ -75,8 +75,10 @@ def ival(tok):
 #   Radial (11): od grown max, sect grown max, shoulder dia, shoulder width,
 #       SLR grown min, SLR grown max, wheel, WBF, rim dia, flange, min ledge
 SCHEMA = {
-    "standard": {"n": 14, "od": 0, "odMin": 1, "width": 2, "slr": 6, "flat": 7},
-    "radial":   {"n": 11, "od": 0, "odMin": None, "width": 1, "slr": 4, "flat": None},
+    "standard": {"n": 14, "od": 0, "odMin": 1, "width": 2, "slr": 6, "flat": 7,
+                 "aspect": 8, "wbf": 10, "rim": 11},
+    "radial":   {"n": 11, "od": 0, "odMin": None, "width": 1, "slr": 4, "flat": None,
+                 "aspect": None, "wbf": 7, "rim": 8},
 }
 
 SECTIONS = ("Type I", "Type III", "Type VII", "Metric", "Radial",
@@ -180,6 +182,16 @@ def parse_table():
                 "widthMaxIn": num(trailing[sch["width"]]),
                 "slrIn": num(trailing[sch["slr"]]),
                 "flatRadIn": None if sch["flat"] is None else num(trailing[sch["flat"]]),
+                # G7 (stowage) reads these three: the T&RA growth and clearance
+                # rules need the rim diameter D (H = (D_O - D)/2), the aspect
+                # ratio (G_H = 1.115 - 0.075 AR) and, for radials, the width
+                # between flanges A. The radial table prints no aspect ratio;
+                # the T&RA radial rule defines it from D_T, D and W_T, so it is
+                # computed downstream from those, not invented here.
+                "aspect": None if sch["aspect"] is None else num(trailing[sch["aspect"]]),
+                "rimWidthIn": num(trailing[sch["wbf"]]),
+                "rimDiaIn": num(trailing[sch["rim"]]),
+                "_trailing": list(trailing[:sch["n"]]),
             })
     return rows, unparsed
 
@@ -205,6 +217,42 @@ def pdf_rows():
     return out
 
 
+def same_token(a, b):
+    """16 == 16.0 == 16.00; .901 == 0.901; otherwise the strings must match."""
+    try:
+        return round(float(a), 4) == round(float(b), 4)
+    except ValueError:
+        return a.strip() == b.strip()
+
+
+def sanity(r):
+    """Invariants that follow from what the columns MEAN, so that a schema
+    index pointing at the wrong column is refused even though the row's
+    tokens all corroborate. Bounds are from the failure mode (see the
+    generator's commit): the aspect identity is innocent to 0.047 and a
+    rim index off by one gives 0.8; SLR over half the OD is innocent down
+    to 0.74 and the shoulder width read as SLR gives 0.49."""
+    od, odm, w, slr, flat = r["odMaxIn"], r["odMinIn"], r["widthMaxIn"], r["slrIn"], r["flatRadIn"]
+    rim, wbf, ar = r["rimDiaIn"], r["rimWidthIn"], r["aspect"]
+    if None in (od, w, slr, rim, wbf):
+        return "a dimensional column is missing"
+    if odm is not None and not od > odm:
+        return "OD max %s not above OD min %s" % (od, odm)
+    if not w < od:
+        return "section width %s not below OD %s" % (w, od)
+    if not rim < od:
+        return "rim diameter %s not below OD %s" % (rim, od)
+    if not wbf < w:
+        return "width between flanges %s not below section width %s" % (wbf, w)
+    if not 0.65 <= slr / (od / 2.0) < 1.0:
+        return "SLR %s is %.2f of the OD radius; 0.65-1.0 expected" % (slr, slr / (od / 2.0))
+    if flat is not None and not slr > flat:
+        return "SLR %s not above the flat-tyre radius %s" % (slr, flat)
+    if ar is not None and abs((od - rim) / (2.0 * w) - ar) > 0.10:
+        return "printed aspect %s vs (D_O - D)/(2 W) = %.3f" % (ar, (od - rim) / (2.0 * w))
+    return None
+
+
 def main():
     rows, unparsed = parse_table()
     if not rows:
@@ -215,6 +263,14 @@ def main():
         sys.exit("extract-tyres: %d line(s) look like tyre rows but were not "
                  "understood. Nothing emitted - a silently dropped table is "
                  "how the radials went missing the first time." % len(unparsed))
+
+    insane = [(r["part"], why) for r in rows for why in [sanity(r)] if why]
+    if insane:
+        for p, why in insane[:15]:
+            print("  INVARIANT %s: %s" % (p, why), file=sys.stderr)
+        sys.exit("extract-tyres: %d of %d rows break a definitional invariant; a "
+                 "column is being read as the wrong quantity. Nothing emitted."
+                 % (len(insane), len(rows)))
 
     pdfr = pdf_rows()
     bad = []
@@ -235,6 +291,31 @@ def main():
             if str(val) not in plain:
                 bad.append((r["part"], "%s=%s not on the printed row" % (key, val)))
                 break
+        else:
+            # The dimensional columns are corroborated POSITIONALLY: the
+            # printed row's tokens after the part number, in x order, must
+            # equal the -table trailing columns token by token. Asking only
+            # whether a value appears somewhere on the row lets a column
+            # swap through (the flange height is on the row too), and a
+            # swapped column is exactly the defect the stowage rules would
+            # not survive. Tokens compare as numbers where both parse (the
+            # page prints 16 for the table's 16.0) and as strings otherwise
+            # (the wheel size 16x4.4).
+            try:
+                k0 = band.index(r["part"])
+            except ValueError:
+                bad.append((r["part"], "part number not a single token on its printed row"))
+                continue
+            printed = [w.replace(",", "") for w in band[k0 + 1:]]
+            want = r["_trailing"]
+            if len(printed) < len(want):
+                bad.append((r["part"], "printed row has %d trailing tokens, table has %d"
+                            % (len(printed), len(want))))
+                continue
+            for k, (a, b) in enumerate(zip(want, printed)):
+                if not same_token(a, b):
+                    bad.append((r["part"], "trailing column %d: table %r, page %r" % (k, a, b)))
+                    break
     if bad:
         for p, why in bad[:15]:
             print("  DISAGREE %s: %s" % (p, why), file=sys.stderr)
@@ -252,16 +333,19 @@ def main():
         return "null" if v is None else repr(v)
     w("/* GENERATED by tools/extract-tyres.py -- DO NOT HAND-EDIT.\n")
     w("   A DERIVED SUBSET of the Goodyear Aircraft Tire Data Book (2018,\n")
-    w("   effective 6/18): the thirteen quantities a 14 CFR 25.733 tyre\n")
-    w("   selection and the strut sizing downstream of it actually read. The\n")
-    w("   book's wheel and rim manufacturing columns are deliberately not\n")
-    w("   carried. `part` is the Goodyear part number and is the key back to\n")
+    w("   effective 6/18): the sixteen quantities a 14 CFR 25.733 tyre\n")
+    w("   selection, the strut sizing and the 25.733(d) stowage envelope\n")
+    w("   downstream of it actually read. The book's remaining wheel and rim\n")
+    w("   manufacturing columns are deliberately not carried.\n")
+    w("   `part` is the Goodyear part number and is the key back to\n")
     w("   the printed page. See NOTICE for attribution.\n\n")
     w("   Every row below was parsed from the `pdftotext -table` extraction\n")
     w("   AND independently re-extracted from the PDF by word coordinate; the\n")
     w("   generator refuses to emit unless the two agree on ply rating, rated\n")
-    w("   load, rated inflation, maximum braking load and maximum bottoming\n")
-    w("   load for EVERY row. %d rows, %d distinct sizes.\n\n"
+    w("   load, rated inflation, maximum braking load, maximum bottoming load\n")
+    w("   and, POSITIONALLY, every trailing column of every row - the printed\n")
+    w("   tokens after the part number in page order equal the table's.\n")
+    w("   %d rows, %d distinct sizes.\n\n"
       % (len(rows), len({r["size"] for r in rows})))
     w("   loadLb    rated load, lb            [14 CFR 25.733(a)(1) limit]\n")
     w("   psi       rated inflation, psi      [pavement pressure code]\n")
@@ -270,15 +354,21 @@ def main():
     w("   odMaxIn   outside diameter, max, in [grown envelope / stowage]\n")
     w("   slrIn     static loaded radius, in  [tyre deflection = od/2 - slr]\n")
     w("   flatRadIn flat-tyre radius, in      [25.733(d) clearance]\n")
+    w("   widthMaxIn section width, max, in   [grown envelope]\n")
+    w("   aspect    aspect ratio, as printed  [G_H = 1.115 - 0.075 AR; null on radials, which print none]\n")
+    w("   rimWidthIn width between flanges, in [the radial clearance rule's A]\n")
+    w("   rimDiaIn  specified rim diameter, in [H = (D_O - D)/2; a radial's OD and width are printed GROWN]\n")
+    w("   radial    true for the book's Radial table [T&RA rules differ by construction]\n")
     w("*/\n")
     w("export const TYRES = Object.freeze([\n")
     for r in rows:
         w('  { size: "%s", ply: %d, tube: "%s", speedMph: %d, loadLb: %d, psi: %d,'
           ' brakeLb: %d, bottomLb: %d, odMaxIn: %s, odMinIn: %s, widthMaxIn: %s,'
-          ' slrIn: %s, flatRadIn: %s, part: "%s" },\n'
+          ' slrIn: %s, flatRadIn: %s, aspect: %s, rimWidthIn: %s, rimDiaIn: %s, radial: %s, part: "%s" },\n'
           % (r["size"], r["ply"], r["tube"], r["speedMph"], r["loadLb"], r["psi"],
              r["brakeLb"], r["bottomLb"], js(r["odMaxIn"]), js(r["odMinIn"]),
-             js(r["widthMaxIn"]), js(r["slrIn"]), js(r["flatRadIn"]), r["part"]))
+             js(r["widthMaxIn"]), js(r["slrIn"]), js(r["flatRadIn"]), js(r["aspect"]),
+             js(r["rimWidthIn"]), js(r["rimDiaIn"]), "true" if r["kind"] == "radial" else "false", r["part"]))
     w("]);\n\n")
     w("/* The source, held here so a reader need not open the generator. */\n")
     w('export const TYRE_SOURCE = Object.freeze({\n')

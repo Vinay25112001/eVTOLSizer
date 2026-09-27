@@ -54,6 +54,7 @@ import {
 import {
   tyreEfficiencyFor, strokeFromEnergy, reserveEnergyRatio, ETA_OLEO,
 } from "../../engine/gear/strut.js";
+import { stowageOf } from "../../engine/gear/stowage.js";
 import { G0 } from "../../engine/constants.js";
 
 const LB_PER_KG = 2.20462262;
@@ -160,6 +161,8 @@ export function gearOf(result, opts = {}) {
       nosePavement: nose.resolved ? pavementCode(nose.operatingPsi) : null,
     },
     strut, tyreEfficiency: eta,
+    /* G7: the 25.733(d) bay each selected tyre needs, on the T&RA rules. */
+    stowage: { main: stowageOf(main, { tyresPerLeg: wheelsPerAxle }), nose: stowageOf(nose, { tyresPerLeg: 2 }) },
     reaction: { N, ...GEAR_REACTION_FACTOR, value: N },
   };
 }

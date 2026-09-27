@@ -100,6 +100,13 @@ export function shortPeriodDampingLevel(zeta) {
 
 export function dutchRollLevel(zeta, wn) {
   const T = MIL_F_8785C.dutchRoll;
+  if (zeta == null && wn > 0) {
+    return { level: null, notLevelled: true, wn,
+             why: "Dutch-roll damping withheld upstream: wingmodes measured its fin-only damping formula against NASA CR-2144's "
+                + "four transports and it misses by more than a factor of two; Table VI needs zeta, so no level is assigned "
+                + "rather than one from frequency alone",
+             src: T.src, table: T };
+  }
   if (!Number.isFinite(zeta) || !(wn > 0)) return { level: null, why: "no Dutch-roll frequency and damping" };
   const meets = (r) => zeta >= r.zetaMin && (r.zetaWnMin == null || zeta * wn >= r.zetaWnMin) && wn >= r.wnMin;
   const level = firstLevel([() => meets(T.level1), () => meets(T.level2), () => meets(T.level3)]);
@@ -149,7 +156,9 @@ export function flyingQualities(M, opts = {}) {
     applicable: true, category, standard: MIL_F_8785C.standard,
     modes,
     worst: { level: worst.level, mode: worst.mode, worseThanLevel3: worst.level == null && worst.mode != null },
-    notLevelled: ["spiral (withheld upstream)", "Dutch-roll |phi/beta| increment (not computed)", "Category A and C tables", "ADS-33E-PRF for rotor-borne layouts"],
+    notLevelled: ["spiral (withheld upstream)",
+                  ...(modes.dutchRoll.notLevelled ? ["Dutch-roll damping (withheld upstream: fin-only formula measured wrong on NASA CR-2144)"] : []),
+                  "Dutch-roll |phi/beta| increment (not computed)", "Category A and C tables", "ADS-33E-PRF for rotor-borne layouts"],
     caveat: "A level is where the classical decoupled approximation lands on the standard's tables, not a statement about an aircraft: "
           + (M.caveat ?? "the modes are unvalidated") + " Propulsion-airframe coupling is not modelled.",
   };

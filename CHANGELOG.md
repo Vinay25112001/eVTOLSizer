@@ -26,6 +26,17 @@ version. `validation/release.mjs` checks that these agree.
 ## [Unreleased]
 
 ### Added
+- Wing-borne modes measured on real aircraft: NASA CR-2144's manufacturer-
+  supplied derivatives and modes for the Boeing 747, Lockheed Jetstar,
+  Convair 880M and Lockheed C-5A (36 flight conditions), transcribed with
+  page citations into `src/data/cr2144/` and fed through the same mode
+  formulas the eVTOL uses. The short-period formula reproduces the printed
+  modes within 1 %; the roll mode reads 9 % low; the fin-only Dutch-roll
+  frequency 17 % low; the Lanchester phugoid is an order of magnitude only.
+  The fin-only Dutch-roll damping misses by more than a factor of two and
+  is now withheld, like the spiral, for the same missing term; the flying-
+  qualities level for the Dutch roll is not assigned. The module states
+  these numbers and the harness asserts they equal the live measurement.
 - Design files: every input, the custom airfoil, an input hash, the engine
   build stamp and the full result fingerprint. Designs can be downloaded and
   opened as `.evtol.json` files without an account. Reopening a design re-runs

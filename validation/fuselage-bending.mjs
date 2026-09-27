@@ -150,14 +150,36 @@ for (const t of WITH) {
     `${ga.massKg.toFixed(1)} kg → ${gt.massKg.toFixed(1)} kg`);
 }
 
-/* ── 5. THE TWO FINDINGS ARE STATED, NOT HIDDEN ──────────────────────── */
-console.log("\n5. What F3 exposes is reported as a finding");
+/* ── 5. THE BOX DATUM IS THE SOURCE'S, AND THE ONE FINDING IS STATED ──
+   The first version of this gate asserted that F1's peak stood "outside
+   the wing box". That compared x_wing, a station on the MAC, with the
+   box at the ROOT; TASOPT's own text puts x_wing aft of the centreline
+   box on a swept wing. The check that survives is the one that could
+   have caught the error: the box AXIS at the centreline must lie inside
+   the centreline box on every class, the stand-off must be the sweep
+   geometry exactly, and the withdrawn narrative must be gone. */
+console.log("\n5. The box datum is TASOPT's, and what F3 exposes is reported as a finding");
+for (const t of WITH) {
+  const m = M[t], ws = fuselageLoads(SIZED[t]).geometry.wingStation;
+  check(m.wingBox.known && m.wingBox.axisInsideBox === true
+        && Math.abs(m.wingBox.xWboxM - 0.5 * (m.wingBox.xbM + m.wingBox.xfM)) < 1e-9,
+    `${t}: the spar-box axis at the centreline lies inside, and on the midline of, the root box`,
+    `x_wbox ${m.wingBox.xWboxM.toFixed(3)} m in [${m.wingBox.xbM.toFixed(3)}, ${m.wingBox.xfM.toFixed(3)}] m`);
+  check(Math.abs(m.wingBox.peakAftOfRearSparM - (m.wingBox.xWingM - m.wingBox.xfM)) < 1e-12
+        && Math.abs(m.wingBox.sweepOffsetM - ws.dxWing) < 1e-12 && Math.abs(m.wingBox.xWingM - ws.xWing) < 1e-12,
+    `${t}: the stand-off and sweep offset reported are F1's own numbers`,
+    `x_wing ${m.wingBox.xWingM.toFixed(3)} m stands ${m.wingBox.peakAftOfRearSparM >= 0 ? "" : "-"}${Math.abs(m.wingBox.peakAftOfRearSparM).toFixed(3)} m `
+    + `${m.wingBox.peakAftOfRearSparM >= 0 ? "aft of" : "ahead of"} the root rear spar; Delta x_wing ${m.wingBox.sweepOffsetM.toFixed(3)} m`);
+  check(!m.caveats.some((c) => /NOT IN THE WING BOX|B2\/B5|carries the main gear/.test(c))
+        && m.caveats.some((c) => /AFT OF THE ROOT REAR SPAR ON A SWEPT WING/.test(c)),
+    `${t}: the withdrawn "outside the box" narrative is gone and the source's construction is stated`,
+    `${m.caveats.length} caveats`);
+}
 {
   const m = M.transport;
-  check(m.wingBox.known && m.wingBox.peakOutsideBox === true && m.wingBox.offsetFromBoxM > 1
-        && m.caveats.some((c) => /PEAK MOMENT IS NOT IN THE WING BOX/.test(c)),
-    "transport: F1's peak stands outside the wing box the tool draws, and the caveat says so",
-    `box [${m.wingBox.xbM.toFixed(2)}, ${m.wingBox.xfM.toFixed(2)}] m, peak at ${m.wingBox.xWingUsedByF1.toFixed(2)} m, ${m.wingBox.offsetFromBoxM.toFixed(2)} m aft of the rear spar`);
+  check(m.wingBox.peakAftOfRearSparM > 1 && m.wingBox.sweepOffsetM > m.wingBox.peakAftOfRearSparM,
+    "transport: on the swept wing the peak stands more than a metre aft of the root rear spar, less than the sweep offset",
+    `stand-off ${m.wingBox.peakAftOfRearSparM.toFixed(3)} m, Delta x_wing ${m.wingBox.sweepOffsetM.toFixed(3)} m`);
   const sc = m.scenarios.find((s) => s.id === m.governing);
   check(sc.volume.backM3 > 0 && sc.volume.closedBackM3 > 0 && Math.abs(sc.volume.backM3 / sc.volume.closedBackM3 - 1) > 0.5,
     "transport: the stationed volume is a different model from the smeared one and is not forced to agree",

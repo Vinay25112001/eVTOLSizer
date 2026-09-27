@@ -54,16 +54,23 @@
      pressure term in (A.88) is not small - it eats into the allowable
      before any bending is carried.
 
-   THE THING F3 EXPOSES ABOUT F1
+   WHERE THE PEAK STANDS, AND WHY THAT IS NOT A FINDING
 
-   TASOPT reflects M(x) about x_wing, its centre of lift, which lies in
-   the wing box. F1's cantilevers meet at balance.js's WING-GROUP CG,
-   which on the transport sits 1.6 m AFT of the rear spar because the
-   main gear travels in that group. So F1's peak moment stands outside
-   the box (A.97) says to bridge linearly. The module reports both
-   stations and the gap between them, uses the box the tool draws for
-   the linear bridge, and does not move the peak. Closing that is the
-   B2/B5 mismatch the park already lists; it is not closed here.
+   TASOPT matches the front and back M(x) at x_wing, the spar-box AXIS
+   at the wing's AREA CENTROID, (A.136)-(A.137). On a swept wing that
+   point is aft of the centreline box: the source says so ("the wing
+   box location xwbox will be centered somewhat ahead of xwing"), and
+   (A.93)-(A.94) start the front and back integrals at the ROOT box
+   faces, x_wbox -/+ half the root box width, with the front limit
+   mirrored about x_wing. So the peak is legitimately aft of the root
+   rear spar by Delta x_wing less the axis-to-rear-spar part of the
+   root chord, and the box bridges the difference with a pitch moment.
+
+   The first version of this module compared x_wing against the ROOT
+   box and reported the peak as "outside the wing box". That was a
+   datum error, not a structural finding, and it is withdrawn: the
+   module now reports x_wbox against the box (where it must lie), the
+   sweep offset, and the stand-off as the geometry it is.
    ===================================================================== */
 import { fuselageLoads } from "./fuselage-structure-loads.js";
 import { fuselagePressureShell } from "./fuselage-pressure-shell.js";
@@ -294,8 +301,14 @@ export function fuselageBendingMaterial(result, opts = {}) {
              pressureAxialPa, sigmaMhPa, hM, iShellM4, tShellM: shell.skin.tShellM,
              stringersCredited: shell.input.stringersCredited },
     wingBox: { xbM: boxKnown ? xB : null, xfM: boxKnown ? xF : null, known: boxKnown,
-               xWingUsedByF1: xWing, peakOutsideBox: boxKnown ? (xWing < xB || xWing > xF) : null,
-               offsetFromBoxM: boxKnown ? (xWing > xF ? xWing - xF : xWing < xB ? xB - xWing : 0) : null },
+               xWingM: xWing,
+               xWboxM: loads.geometry.wingStation?.xWbox ?? null,
+               sweepOffsetM: loads.geometry.wingStation?.dxWing ?? null,
+               /* the axis at the centreline has to lie inside the centreline box */
+               axisInsideBox: boxKnown && Number.isFinite(loads.geometry.wingStation?.xWbox)
+                 ? (loads.geometry.wingStation.xWbox >= xB && loads.geometry.wingStation.xWbox <= xF) : null,
+               /* positive on a swept wing: x_wing aft of the ROOT rear spar, by (A.137)'s offset */
+               peakAftOfRearSparM: boxKnown ? xWing - xF : null },
     scenarios, governing: governing.id,
     budget,
     sources: {
@@ -308,10 +321,12 @@ export function fuselageBendingMaterial(result, opts = {}) {
       "THE ALLOWABLE IS A CHOICE. TASOPT states sigma_bend only for a CFRP D8.5. Compression yield of the skin "
       + "alloy is used here, at F1's ultimate load factor. No crippling, no panel buckling, no fatigue: those are "
       + "F5 and beyond, and a real cap is sized by them.",
-      "THE PEAK MOMENT IS NOT IN THE WING BOX. F1's two cantilevers meet at the wing-GROUP CG, which balance.js "
-      + "places and which carries the main gear; TASOPT's x_wing is the centre of lift, inside the box. The linear "
-      + "bridge of (A.97) is drawn across the box the tool draws; the peak stands outside it. This is the B2/B5 "
-      + "station mismatch, visible here as it is in the wheelbase, and it is not corrected.",
+      "THE PEAK STANDS AFT OF THE ROOT REAR SPAR ON A SWEPT WING, BY THE SOURCE'S OWN CONSTRUCTION. F1 matches its "
+      + "cantilevers at TASOPT's x_wing, the spar-box axis at the wing's area centroid (A.136)-(A.137), and "
+      + "(A.93)-(A.94) start the added-material integrals at the ROOT box faces; the sweep offset between the two "
+      + "is carried by the box as a pitch moment. The bridge of (A.97) is drawn across the root box the tool "
+      + "draws. An earlier version of this module reported that stand-off as the peak being \"outside the wing "
+      + "box\"; that compared a MAC station with a root box and is withdrawn.",
       "THE FRONT FUSELAGE IS COMPUTED, NOT MIRRORED. TASOPT gets V_front by symmetry; the stationed route "
       + "integrates the forward diagram F1 actually has. The two differ ahead of the wing by design.",
       "VERTICAL-AXIS BENDING (A.101)-(A.110) IS NOT BUILT. It needs L_vmax = q_NE S_v CL_vmax, and CL_vmax is "

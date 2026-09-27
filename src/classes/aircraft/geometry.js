@@ -67,6 +67,22 @@ export function leSweepRad(sweepC4Deg, ar, taper) {
                    + (1 / Math.max(ar, 1e-6)) * ((1 - taper) / (1 + taper)));
 }
 
+/* Sweep of ANY constant-chord-fraction line of a straight-tapered
+   surface, from its quarter-chord sweep. Same geometry as `leSweepRad`,
+   which is the frac = 0 case of it:
+
+       tan Λ_n = tan Λ_c/4 − (4/AR)·(n − 1/4)·(1 − λ)/(1 + λ)
+
+   A straight-tapered planform's chord-fraction lines are straight, so
+   this is an identity of the trapezoid and not a model. The fuselage
+   loads module needs it for the spar-box axis, which TASOPT sweeps at
+   the box's own chord fraction (Figure A.6, "reference axis"). The gate
+   pins it to `leSweepRad` at 0 and to the input at 0.25. */
+export function sweepAtChordFractionRad(sweepC4Deg, ar, taper, frac) {
+  return Math.atan(Math.tan((sweepC4Deg * Math.PI) / 180)
+                   - (4 / Math.max(ar, 1e-6)) * (frac - 0.25) * ((1 - taper) / (1 + taper)));
+}
+
 /* ── THE FUSELAGE OUTLINE ─────────────────────────────────────────────
    One description of the body, used by every view that draws it.
 

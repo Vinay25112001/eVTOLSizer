@@ -105,9 +105,78 @@
    ===================================================================== */
 import { balanceOf } from "./balance.js";
 import { fuselageStructure } from "./fuselage-structure.js";
-import { generalArrangement } from "./geometry.js";
+import { generalArrangement, macOf, sweepAtChordFractionRad } from "./geometry.js";
+import { SPARS_BY_CLASS } from "./wing-structure.js";
 import { flightEnvelope } from "./flight-envelope.js";
 import { G0, RHO_MSL } from "../../engine/constants.js";
+
+/* ── x_wing: WHERE THE TWO CANTILEVERS MEET ─────────────────────────
+   TASOPT App. A, p.19 (extracted text lines 594-601): "The horizontal-
+   axis moment Mh(x) distributions on the front and back bending
+   fuselage are assumed to match at location xwing ... Theoretically
+   this is the wing's net lift-weight centroid ... For simplicity it
+   will be approximated as the wing's area centroid. Note that for a
+   swept wing the wing box location xwbox will be centered somewhat
+   ahead of xwing, but it will then also impart a pitch-axis moment at
+   its location, so that the front and back Mh(x) distributions must
+   still match at xwing."
+
+   And how that centroid is placed, (A.136)-(A.137) with Figure A.6:
+   the area centroid is taken ON THE SPAR-BOX AXIS, a straight line at
+   chord fraction xi_ax with sweep Lambda; x_wbox is that axis at the
+   centreline and Delta x_wing is the axis's aft offset at the spanwise
+   area centroid, so x_wing = x_wbox + Delta x_wing. TASOPT.jl (commit
+   884389c, example/defaults/default_input.toml line 231 and
+   default_regional.toml line 220) sets "spar_box_x_c = 0.40 # spar box
+   axis x/c location" for its own box, which is 0.50 c wide; Figure A.10
+   draws the box centred on that axis.
+
+   THIS TOOL HAS ITS OWN BOX. `SPARS_BY_CLASS` places the front and rear
+   spars as chord fractions - the same box the loading diagram draws and
+   F3 bridges - so the axis is the midline of THAT box, not TASOPT's
+   value, and its `sourced` flag travels with the station. On the
+   transport the spars are measured off a published cutaway; the other
+   two Part 25 classes say NOT SOURCED and the caveat repeats it. For a
+   straight-tapered planform the spanwise area centroid is the MAC
+   station, so the closed form is x_wing = x_LEMAC + xi_ax * MAC; the
+   gate rebuilds it from (A.136)'s integral instead and demands they
+   agree exactly.
+
+   WHAT THIS REPLACED, AND WHY THE EARLIER FINDING WAS WRONG. F1 first
+   used balance.js's wing-group CG (GASP's CPMRGN offset aft of the
+   LEMAC), and F3 then reported the peak as standing outside the wing
+   box. That compared a station on the MAC against the box at the ROOT:
+   on a swept wing the axis at the centroid IS aft of the root rear
+   spar, by Delta x_wing less the axis-to-rear-spar part of the root
+   chord, and the source says so in the sentence quoted above. On the
+   transport the two definitions happen to coincide because the box
+   midline and GASP's wing-CG fraction are the same number; that is a
+   coincidence of two conventions, reported by the gate, not asserted. */
+export function wingReactionStation({ bal, ga, type }) {
+  const spars = SPARS_BY_CLASS[type] ?? SPARS_BY_CLASS.transport;
+  const boxAxisChordFrac = 0.5 * (spars.front + spars.rear);
+  const m = macOf({ area: ga.wing.area, span: ga.wing.span, taper: ga.wing.taper, sweepC4Deg: ga.wing.sweepDeg });
+  const axisSweepRad = sweepAtChordFractionRad(ga.wing.sweepDeg, m.ar, ga.wing.taper, boxAxisChordFrac);
+  /* (A.137) x_wbox: the axis at the centreline. This planform's root
+     chord is at the centreline (no constant-chord centre box, TASOPT's
+     eta_o = 0), so the axis starts at the root leading edge. */
+  const xWbox = bal.xWingRootLE + boxAxisChordFrac * m.rootChord;
+  /* (A.136) Delta x_wing = (2/S) Int c (y - y_o) tan(Lambda) dy, y_o = 0:
+     the axis offset at the spanwise area centroid. For a trapezoid that
+     centroid is y_MAC = (b/6)(1 + 2 lambda)/(1 + lambda). */
+  const yCentroidM = m.yMac;
+  const dxWing = yCentroidM * Math.tan(axisSweepRad);
+  const xWing = xWbox + dxWing;
+  return {
+    xWing, xWbox, dxWing, boxAxisChordFrac, yCentroidM,
+    axisSweepDeg: (axisSweepRad * 180) / Math.PI,
+    boxAxisSourced: spars.sourced === true, boxAxisSource: spars.source,
+    /* the two stations this replaced or was mistaken for, for the record */
+    xWingCgM: bal.xWingCg, xAcWingM: bal.neutralPoint?.xAcWing ?? null,
+    basis: "TASOPT (A.136)-(A.137) with Figure A.6: the spar-box axis at the wing's area centroid; the axis is "
+         + "the midline of SPARS_BY_CLASS's box for this class",
+  };
+}
 
 const KT = 0.514444;                 // m/s per knot
 
@@ -323,11 +392,10 @@ export function fuselageLoads(result, opts = {}) {
   const shellAftX = L - fs.shell.tailConeLengthM;
   const lShell = Math.max(0, shellAftX - shellFwdX);
 
-  /* The wing reaction station. TASOPT reflects about x_wing, its centre
-     of lift; the nearest thing this tool solves is the wing-group CG,
-     which balance.js places by Scholz (10.24). They are not the same
-     point and the difference is recorded. */
-  const xWing = bal.xWingCg;
+  /* The wing reaction station, TASOPT's x_wing: the spar-box axis at the
+     wing's area centroid, (A.136)-(A.137). See wingReactionStation. */
+  const wingStation = wingReactionStation({ bal, ga, type });
+  const xWing = wingStation.xWing;
 
   /* ── the lumped tail, (A.70) and (A.71) ──────────────────────────── */
   const fusItems = bal.items.filter((i) => i.group === "fuselage");
@@ -518,6 +586,7 @@ export function fuselageLoads(result, opts = {}) {
     geometry: {
       fuselageLengthM: L, shellFwdX, shellAftX, lShell,
       xWing, xTail, tailMassKg,
+      wingStation,
       cabinFwdX, cabinAftX, payloadKg,
       lumpedItems: lumped.map((i) => ({ name: i.name, kg: i.kg, xM: i.x })),
       spreadItemCount: spread.length,
@@ -538,16 +607,23 @@ export function fuselageLoads(result, opts = {}) {
       + "(A.71) puts it at the mid-point of the cone. This tool reports one \"Fuselage\" mass and does not split "
       + "a cone out of it, so the cone's share stays in the distributed term instead. W_tail here is light and "
       + "x_tail is further aft than TASOPT's would be.",
-      "x_wing is the WING-GROUP CG, not the centre of lift. TASOPT reflects its bending moment about the centre "
-      + "of lift; balance.js solves the wing station by Scholz (10.24) for a target CG. The two points differ "
-      + "by a fraction of the MAC and nothing here corrects for it.",
+      "X_WING IS THE SPAR-BOX AXIS AT THE WING'S AREA CENTROID, TASOPT (A.136)-(A.137): the source approximates "
+      + "its \"net lift-weight centroid\" by the area centroid taken on the swept box axis, and states that on a "
+      + "swept wing that point lies aft of the centreline box, which then carries the difference as a pitch "
+      + "moment. The axis here is the midline of this tool's own spar box, "
+      + `${(100 * wingStation.boxAxisChordFrac).toFixed(1)} % chord, where TASOPT.jl's decks use 40 %; `
+      + `x_wbox ${wingStation.xWbox.toFixed(2)} m at the centreline, offset ${wingStation.dxWing.toFixed(2)} m aft `
+      + "at the centroid. The lift centroid is not solved here and the fuel state is not in it.",
+      ...(wingStation.boxAxisSourced ? [] : ["THE BOX AXIS IS NOT SOURCED ON THIS CLASS. x_wing is the midline of "
+        + `a spar box whose positions are not published for this class (${wingStation.boxAxisSource}), so the `
+        + "station inherits that gap."]),
       "The stationed route does not reflect about the wing. TASOPT gets the front fuselage by mirroring (A.79), "
       + "because it has no forward stations; this module integrates the forward stations it has. The two "
       + "therefore diverge ahead of the wing BY DESIGN, and only the aft comparison is meaningful.",
       "Every station is a convention inherited from balance.js, whose own caveat applies unchanged: all of them "
       + "except the wing's are one TASOPT deck's layout as fractions of fuselage length.",
       "No shell is SIZED here. F1 is the load; the pressure shell (F2) and the added bending material (F3) are "
-      + "what turn a moment into a thickness, and neither is built.",
+      + "what turn a moment into a thickness, and each is its own module with its own gate.",
       ...(tailAero.evaluated ? [] : [`THE TAIL AIRLOAD IS NOT EVALUATED. ${tailAero.why}`]),
       ...(nUltLand > 0 ? [] : ["THE EMERGENCY LANDING SCENARIO IS NOT EVALUATED. 14 CFR 25.561's inertia "
         + "forces are not held in this corpus, so no landing load factor is defaulted. Supply "

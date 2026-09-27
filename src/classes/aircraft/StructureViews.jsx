@@ -102,7 +102,7 @@ export function FuselageLoadDiagram({ loads, scenarioId, height = 210 }) {
     smeared: r3(s.smearedMomentNm / 1e6),      // MN.m, TASOPT (A.79)
   }));
   const marks = [
-    { x: loads.geometry.xWing, label: "wing box", colour: SC.nominal },
+    { x: loads.geometry.xWing, label: "x_wing", colour: SC.nominal },
     { x: loads.geometry.xTail, label: "x_tail", colour: SC.caution },
   ];
   const panel = (key, colour, label, unit, extra = []) => (

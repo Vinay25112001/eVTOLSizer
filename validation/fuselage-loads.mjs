@@ -31,8 +31,10 @@
 import * as E from "../src/classes/aircraft/engine.js";
 import { balanceOf } from "../src/classes/aircraft/balance.js";
 import {
-  fuselageLoads, shearAndMoment, tasoptA79, loadGrid, uniformSpan, R_MH,
+  fuselageLoads, shearAndMoment, tasoptA79, loadGrid, uniformSpan, R_MH, wingReactionStation,
 } from "../src/classes/aircraft/fuselage-structure-loads.js";
+import { generalArrangement, macOf, leSweepRad, sweepAtChordFractionRad } from "../src/classes/aircraft/geometry.js";
+import { SPARS_BY_CLASS } from "../src/classes/aircraft/wing-structure.js";
 import { G0 } from "../src/engine/constants.js";
 
 let fails = 0, passes = 0;
@@ -334,11 +336,99 @@ for (const t of WITH) {
   check(/A\.77/.test(f.sources.relief),
     `${t}: the inertial-relief factor cites the equation it comes from`, f.sources.relief.slice(0, 92) + "…");
   check(f.caveats.some((c) => /TAILCONE IS NOT IN THE LUMP/.test(c))
-        && f.caveats.some((c) => /WING-GROUP CG/.test(c)),
-    `${t}: the two known departures from the source are stated, not buried`,
+        && f.caveats.some((c) => /SPAR-BOX AXIS AT THE WING'S AREA CENTROID/.test(c)),
+    `${t}: the tailcone departure and the x_wing definition are stated, not buried`,
     `${f.caveats.length} caveats`);
 }
 check(R_MH === 0.4, "r_Mh is TASOPT's stated 0.4 and is not silently retuned", `r_Mh = ${R_MH}`);
+
+/* ── 11. x_wing IS TASOPT'S (A.136)-(A.137), REBUILT INDEPENDENTLY ───
+   The source: "the wing's area centroid", taken on the spar-box axis
+   (Figure A.6), x_wing = x_wbox + Delta x_wing. The module uses the
+   closed form for a trapezoid. This section integrates (A.136)
+   numerically over the planform - a different route to the same
+   number - and demands exact agreement; ties the axis to the box the
+   tool actually draws; and pins the sweep conversion to the two
+   sweeps the tool already owns. The earlier "peak outside the wing
+   box" finding was a datum error, and 11(e) is the identity that
+   would have caught it: on a swept wing the peak stands aft of the
+   ROOT rear spar by exactly the sweep offset less the axis-to-rear-
+   spar part of the root chord. */
+console.log("\n11. x_wing is the spar-box axis at the area centroid, TASOPT (A.136)-(A.137)");
+const EXACT_GEOM = 1e-9;
+for (const t of WITH) {
+  const f = LOADS[t], ws = f.geometry.wingStation, bal = balanceOf(SIZED[t]), ga = generalArrangement(SIZED[t]);
+  const sp = SPARS_BY_CLASS[t];
+  const m = macOf({ area: ga.wing.area, span: ga.wing.span, taper: ga.wing.taper, sweepC4Deg: ga.wing.sweepDeg });
+  const xi = 0.5 * (sp.front + sp.rear);
+
+  /* (a) (A.136) by quadrature: Delta x = (2/S) Int_0^{b/2} c(y) y tan(Lambda_axis) dy on
+     the trapezoid c(y) = c_root (1 - (1 - lambda) 2y/b). Simpson, 2000 cells:
+     the integrand is a quadratic, so Simpson is exact and any residual is rounding. */
+  const b = ga.wing.span, lam = ga.wing.taper, cr = m.rootChord;
+  const tanAx = Math.tan(sweepAtChordFractionRad(ga.wing.sweepDeg, m.ar, lam, xi));
+  const c = (y) => cr * (1 - (1 - lam) * (2 * y) / b);
+  const n = 2000, h = (b / 2) / n;
+  let s = 0;
+  for (let i = 0; i <= n; i++) {
+    const y = i * h, w = i === 0 || i === n ? 1 : i % 2 ? 4 : 2;
+    s += w * c(y) * y * tanAx;
+  }
+  const dxQuad = (2 / ga.wing.area) * (s * h / 3);
+  check(Math.abs(dxQuad - ws.dxWing) < EXACT_GEOM,
+    `${t}: Delta x_wing by (A.136) quadrature equals the module's closed form EXACTLY`,
+    `quadrature ${dxQuad.toFixed(6)} m, module ${ws.dxWing.toFixed(6)} m, diff ${(dxQuad - ws.dxWing).toExponential(2)}`);
+
+  /* (b) the axis is the midline of the box the tool draws, and x_wing sits on the MAC */
+  check(Math.abs(ws.boxAxisChordFrac - xi) < 1e-15 && Math.abs((ws.xWing - bal.xLemac) - xi * m.mac) < EXACT_GEOM,
+    `${t}: the axis is the midline of SPARS_BY_CLASS's box and x_wing = x_LEMAC + xi * MAC`,
+    `xi ${xi.toFixed(3)} from spars ${sp.front}/${sp.rear}; x_wing - x_LEMAC ${(ws.xWing - bal.xLemac).toFixed(4)} m, xi*MAC ${(xi * m.mac).toFixed(4)} m`);
+  check(Math.abs(ws.xWing - f.geometry.xWing) < 1e-15 && Math.abs(ws.xWbox + ws.dxWing - ws.xWing) < 1e-12,
+    `${t}: the station the diagram is built on IS x_wbox + Delta x_wing, (A.137)`,
+    `x_wbox ${ws.xWbox.toFixed(3)} + ${ws.dxWing.toFixed(3)} = ${ws.xWing.toFixed(3)} m`);
+
+  /* (c) x_wbox lies inside the centreline box, which is where a box axis has to be */
+  const ld = bal.loadingDiagram;
+  check(ws.xWbox > ld.boxFwd && ws.xWbox < ld.boxAft && Math.abs(ws.xWbox - 0.5 * (ld.boxFwd + ld.boxAft)) < EXACT_GEOM,
+    `${t}: x_wbox is the midline of the root box the loading diagram draws`,
+    `x_wbox ${ws.xWbox.toFixed(3)} m in [${ld.boxFwd.toFixed(3)}, ${ld.boxAft.toFixed(3)}] m`);
+
+  /* (d) the sweep conversion reproduces the two sweeps the tool already owns */
+  check(Math.abs(sweepAtChordFractionRad(ga.wing.sweepDeg, m.ar, lam, 0) - leSweepRad(ga.wing.sweepDeg, m.ar, lam)) < 1e-12
+        && Math.abs(sweepAtChordFractionRad(ga.wing.sweepDeg, m.ar, lam, 0.25) - (ga.wing.sweepDeg * Math.PI) / 180) < 1e-12,
+    `${t}: the chord-fraction sweep is the leading-edge sweep at 0 and the input sweep at 1/4`,
+    `axis sweep ${ws.axisSweepDeg.toFixed(3)} deg at ${xi.toFixed(3)} c, c/4 ${ga.wing.sweepDeg} deg`);
+
+  /* (e) THE DATUM IDENTITY: the peak's stand-off from the ROOT rear spar is geometry, not a defect */
+  const sc = f.scenarios.find((s) => s.id === "manoeuvre");
+  const standOff = ws.xWing - ld.boxAft;
+  const predicted = ws.dxWing - (sp.rear - xi) * m.rootChord;
+  check(Math.abs(standOff - predicted) < EXACT_GEOM,
+    `${t}: x_wing stands off the root rear spar by Delta x_wing less (rear - xi) * c_root, exactly`,
+    `stand-off ${standOff.toFixed(3)} m (peak at ${sc.peakMomentXM.toFixed(2)} m); ${ws.dxWing.toFixed(3)} - ${((sp.rear - xi) * m.rootChord).toFixed(3)} = ${predicted.toFixed(3)} m`);
+
+  /* (f) provenance travels: the sourced flag is the box's, and an unsourced class says so */
+  check(ws.boxAxisSourced === (sp.sourced === true)
+        && (sp.sourced === true || f.caveats.some((cv) => /BOX AXIS IS NOT SOURCED/.test(cv)))
+        && (sp.sourced !== true || !f.caveats.some((cv) => /BOX AXIS IS NOT SOURCED/.test(cv))),
+    `${t}: the station carries the box's own sourced flag and the caveat matches it`,
+    `sourced ${ws.boxAxisSourced}: ${(ws.boxAxisSource ?? "").slice(0, 60)}`);
+
+  /* (g) REPORTED, NOT ASSERTED: where the two stations this replaced sit. On the transport the
+     wing-group CG coincides because two conventions share a fraction; a check that pinned that
+     would fail on correct code the day either convention moved for its own reason. */
+  console.log(`        ${t}: x_wing ${ws.xWing.toFixed(3)} m; wing-group CG ${ws.xWingCgM.toFixed(3)} m `
+    + `(${(ws.xWing - ws.xWingCgM >= 0 ? "+" : "") + (ws.xWing - ws.xWingCgM).toFixed(3)} m); `
+    + `quarter-chord point ${ws.xAcWingM.toFixed(3)} m (${(ws.xWing - ws.xAcWingM >= 0 ? "+" : "") + (ws.xWing - ws.xAcWingM).toFixed(3)} m)`);
+}
+/* (h) the function is the one the module used: rebuilt from the same inputs it must match */
+for (const t of WITH) {
+  const bal = balanceOf(SIZED[t]), ga = generalArrangement(SIZED[t]);
+  const again = wingReactionStation({ bal, ga, type: t });
+  check(Math.abs(again.xWing - LOADS[t].geometry.xWing) < 1e-15,
+    `${t}: wingReactionStation rebuilt from balance and geometry reproduces the module's station`,
+    `${again.xWing.toFixed(6)} m`);
+}
 
 console.log(`\n${bar}`);
 console.log(`FUSELAGE LOADS GATE: ${passes} passed, ${fails} failed`);

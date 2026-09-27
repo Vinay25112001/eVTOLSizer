@@ -876,11 +876,14 @@ export function FuselageTab({ type, result }) {
                   <Kpi label="Skin + added vs FLOPS" value={fmt(100 * bm.budget.fractionOfFlops, 1)} unit="%"
                        sub={<><Q v={fmt(bm.budget.skinPlusAddedKg, 0)} u="kg" /> of <Q v={fmt(bm.budget.flopsFuselageKg, 0)} u="kg" /> · the rest is frames, floor, doors, fasteners</>} />
                 </div>
-                {bm.wingBox.peakOutsideBox
-                  ? <Note>The peak moment stands {fmt(bm.wingBox.offsetFromBoxM, 2)} m outside the wing box
-                          [{fmt(bm.wingBox.xbM, 2)}, {fmt(bm.wingBox.xfM, 2)}] m: F1's cantilevers meet at the wing-group CG,
-                          which carries the main gear, not at the centre of lift TASOPT reflects about. This is the B2/B5
-                          station mismatch, visible here as it is in the wheelbase.</Note>
+                {bm.wingBox.known
+                  ? <Note>x_wing, where F1's cantilevers meet, is TASOPT's spar-box axis at the wing's area
+                          centroid (A.136)-(A.137): the axis crosses the centreline at <Q v={fmt(bm.wingBox.xWboxM, 2)} u="m" />,
+                          inside the root box [<Q v={fmt(bm.wingBox.xbM, 2)} u="m" />, <Q v={fmt(bm.wingBox.xfM, 2)} u="m" />],
+                          and sweeps <Q v={fmt(bm.wingBox.sweepOffsetM, 2)} u="m" /> aft by the centroid. The peak therefore
+                          stands <Q v={fmt(Math.abs(bm.wingBox.peakAftOfRearSparM), 2)} u="m" /> {bm.wingBox.peakAftOfRearSparM >= 0 ? "aft of" : "ahead of"} the
+                          root rear spar, which the source's construction expects on a swept wing; the box carries the
+                          difference as a pitch moment. (A.97)'s bridge is drawn across the root box.</Note>
                   : null}
                 <Table head={["Scenario", "n", "Needed", "Added mass", "Stationed back volume", "Smeared (A.96)"]}
                        rows={bm.scenarios.map((s) => [s.label, fmt(s.nFactor, 2), s.needed ? "yes" : "no",

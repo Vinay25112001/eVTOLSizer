@@ -30,7 +30,8 @@
    Run: node validation/report.mjs
    ===================================================================== */
 import { execFileSync } from "node:child_process";
-import { writeFileSync, readFileSync } from "node:fs";
+import { writeFileSync, readFileSync, readdirSync } from "node:fs";
+import { reviewFactorLevel } from "../src/lib/review-record.js";
 import { OUTPUTS } from "../src/lib/provenance.js";
 
 const STD = "NASA-STD-7009B, Standard for Models and Simulations, w/Change 1, 5 March 2024";
@@ -125,6 +126,18 @@ const HARNESSES = [
    `ceiling` records where a level is capped by the available EVIDENCE
    rather than by the state of the code, so a reader can tell the two
    apart. */
+/* The two Technical Review factors are read from docs/reviews/, not typed: a
+   favourable informal internal peer review by a peer, recorded in the format
+   docs/reviews/README.md states, moves them to 1 (Tables 10 and 19, E.3.5).
+   The rule lives in src/lib/review-record.js and validation/review-record.mjs
+   gates it on fixtures; nothing here can move the score by editing a string. */
+const REVIEW = (() => {
+  const dir = new URL("../docs/reviews/", import.meta.url);
+  let files = [];
+  try { files = readdirSync(dir).filter((f) => f.endsWith(".md") && f !== "README.md" && f !== "BRIEF.md"); } catch { files = []; }
+  return reviewFactorLevel(files.map((f) => ({ file: f, text: readFileSync(new URL(f, dir), "utf8") })));
+})();
+
 const CAPABILITY = [
   { factor: "M&S Data Pedigree", level: 2,
     why: "Every one of the engine's outputs carries a machine-readable provenance tag with its citation, and CI fails if an output is emitted untagged, so traceability to formal documentation is enforced rather than asserted. Uncertainty in all tagged inputs is at least estimated, because the band width is derived from the tag class. Level 3 requires ALL data traced to a sufficiently representative referent; inputs tagged [LAY] are by definition assumptions with no referent, so 3 is unavailable while any remain." },
@@ -133,8 +146,8 @@ const CAPABILITY = [
   { factor: "M&S Validation", level: 2,
     ceiling: true,
     why: "Key outputs compare favorably with a sufficiently similar referent system: ten weight-statement groups across three NASA concept vehicles, plus brochure figures for commercial aircraft. LEVEL 2 IS THE HONEST MAXIMUM AVAILABLE TO THIS PROJECT AND NO CODE CHANGE CAN RAISE IT. Level 3 requires data from the Real World System -- a physical aircraft built, flown and weighed. NASA's concept-vehicle weight statements are NDARC output, i.e. another model's results, and manufacturer figures are brochure claims rather than certified weight statements. Until someone weighs a real eVTOL and publishes the statement, no referent exists that could support level 3." },
-  { factor: "M&S Development Technical Review", level: 0,
-    why: "Insufficient evidence. There has been no peer review of any kind: not independent, not formal internal, not informal internal. Level 1 requires a favorable informal internal peer review, and a developer reviewing their own work is not a peer review under any reading of the standard. This is the lowest score in this assessment and it is accurate." },
+  { factor: "M&S Development Technical Review", level: REVIEW.level,
+    why: REVIEW.why + (REVIEW.level === 0 ? " This is the lowest score in this assessment and it is accurate." : "") },
   { factor: "M&S Development Process/Product Management", level: 2,
     why: "Formal processes are applied: the source is under version control, every gate runs in CI on every push, changes carry their rationale in the commit message, and the research that justifies each method is written down before the method is built. Level 3 requires controlled processes with compliance measured, which would mean a defined and audited process baseline rather than a convention followed by one developer." },
 ];
@@ -148,8 +161,10 @@ const RESULTS = [
     why: "Sources of uncertainty are identified, expressed quantitatively, classified by provenance class, and propagated two ways: one-at-a-time to an MTOW band with the dominant contributors ranked, and by seeded Latin hypercube over the same bands with the sizing loop re-run per draw (sampled-uncertainty.mjs), which carries the loop's non-linearity and reports P5/P50/P95 as a range with replicates. Level 3 requires propagation of ALL known uncertainty; the band widths are [LAY] assumptions and the untagged and derived inputs are [GAP]s excluded from the propagation and reported separately, so the level-2 wording is the one met and level 3 is not claimed." },
   { factor: "M&S Results Robustness", level: 3,
     why: "Sensitivities are known for many parameters including many of the key ones, by measurement: every sidebar input is perturbed and the full sizing loop re-run, and every provenance-tagged input is perturbed and ranked by its contribution to the band. Level 4 requires most parameters and most key sensitivities; the screen is one-at-a-time and therefore blind to interactions, which it states in its own output, so 4 is not claimed." },
-  { factor: "M&S Use/Analysis Technical Review", level: 0,
-    why: "Insufficient evidence, for the same reason as the development review factor. No results produced by this tool have been reviewed by anyone other than its author." },
+  { factor: "M&S Use/Analysis Technical Review", level: REVIEW.level,
+    why: REVIEW.level === 0
+      ? "Insufficient evidence, for the same reason as the development review factor. No results produced by this tool have been reviewed by anyone other than its author."
+      : "The same record covers this factor: the brief's three questions read the results (VALIDATION.md sections 4 and 7-9 and the abstract's claim gate) as well as the method, so the informal internal peer review that moves the development factor moves this one. " + REVIEW.why },
   { factor: "M&S Use Process/Product Management", level: 2,
     why: "Formal processes are applied: results are reproducible from a stamped commit, the harnesses that produced them run in CI, and this report is generated from those runs rather than written by hand." },
 ];

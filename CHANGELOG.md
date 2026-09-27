@@ -158,6 +158,39 @@ version. `validation/release.mjs` checks that these agree.
   README links them and that the guide's tab table matches the app.
 - `docs/CONVENTIONAL-MODE.md`: the design for a fixed-wing trainer mode and
   the evidence it needs before it is built. No trainer sizing is in the app.
+- Fuselage structure, Phase E: the fuselage loaded as a beam on the stations
+  the balance already places (F1), the pressure skin sized to a differential
+  the holder supplies with no default (F2), added bending material only where
+  the shell cannot carry the moment (F3), and the transverse shear distributed
+  round the section by a boom idealisation derived from equilibrium, not cited,
+  and gated on its resultant and on convergence to the thin-ring closed form
+  (F4). TASOPT Appendix A throughout; the shear flow is the one piece with no
+  vendored primary and says so.
+- Landing gear: the 14 CFR 25.733(d) stowage envelope each selected tyre
+  needs, on the Tire and Rim Association's growth and clearance rules as the
+  Goodyear data book reprints them (G7); the tyre table now carries the aspect
+  ratio, rim diameter and flange width those rules need, corroborated
+  positionally against the PDF and refused on definitional invariants. Pavement
+  loading reported as the tyre-pressure code, the load per leg and per wheel,
+  and an ACN *estimate* by Airbus's own linear interpolation between published
+  anchors with its stated 5–10 % error, refused outside the published range;
+  no ACN is computed (G8).
+- Sampled uncertainty: the provenance-tagged inputs drawn together by seeded
+  Latin hypercube within the same [LAY] bands the one-at-a-time screen uses,
+  with the sizing loop re-run per draw, five replicates, non-converged draws
+  counted, counts excluded by name, and the design variables sampled or held.
+  Reported as a range over assumed input ranges, not a confidence interval.
+- Certified hardware: the EASA type-certificate data for the E-811 motor and
+  P-812 propeller compared to the electric-propulsion models, and the
+  statement that no type-certified eVTOL has a public weight statement.
+- Flying-qualities levels: the wing-borne modes placed on MIL-F-8785C's
+  Category B tables (phugoid, short-period frequency and damping, Dutch roll,
+  roll mode), the spiral withheld, rotor-borne layouts refused because
+  ADS-33E-PRF's hover requirements need a bandwidth the tool cannot give. Both
+  standards are vendored in the research corpus.
+- Review records: the two NASA-STD-7009B Technical Review factors are read
+  from `docs/reviews/`, where the reviewer brief and the record format now
+  live; a favourable informal internal peer review by a peer moves them to 1.
 
 ### Changed
 - **One thrust lapse, not two.** The matching chart took cruise thrust from
@@ -334,6 +367,22 @@ version. `validation/release.mjs` checks that these agree.
   is not, and no claim that the MATLAB script it began from was validated.
 - Two tabs are named for what they show: "Designs & References" (it holds
   the version history) and "Collaboration" (was "Design Archive").
+- Rotor group: the inputs NASA's own NDARC decks publish (blade counts, flap
+  frequencies, chord laws, technology factors, AFDD82 as the default), which
+  reproduce five of seven reference rotor groups within 2.2 %. The lift+cruise
+  rotor remains +15 % and is reported as a residual. The default lift+cruise
+  now sits above the validated envelope and the placard says so; the golden
+  master, the validation domain and the reference drawings were re-recorded
+  for this physics change.
+- The fuselage cantilevers meet at TASOPT's x_wing, the spar-box axis at the
+  wing's area centroid, not at a MAC-based station.
+- VALIDATION.md now says cruise L/D is computed for every winged layout, with
+  the measured gap against NDARC's lift+cruise stated, and that the
+  aerodynamics build-up is what the loop closes on.
+- The tail-geometry harness compares like for like: the lift+cruise, whose
+  body is grown to carry its rotors to NASA's own fuselage/span proportion, is
+  asserted below NASA's built tails and above a mutant-derived floor; the
+  other layouts keep their band, reported with the proportion beside it.
 
 ### Fixed
 - The matching chart held the air density ratio σ at 1, so a field length
@@ -369,6 +418,7 @@ version. `validation/release.mjs` checks that these agree.
   reserve at the unperturbed cruise speed when it perturbed cruise speed, and
   the VSP-model replication ignored a reserve given as a distance. Designs
   with a reserve above 0 minutes give the same main result as before.
+- The units table lacked kN/m, the shear flow's unit; it converts to lbf/in.
 
 ## [0.1.0] - 2026-09-01
 

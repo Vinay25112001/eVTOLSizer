@@ -55,6 +55,7 @@ import {
   tyreEfficiencyFor, strokeFromEnergy, reserveEnergyRatio, ETA_OLEO,
 } from "../../engine/gear/strut.js";
 import { stowageOf } from "../../engine/gear/stowage.js";
+import { pavementOf } from "../../engine/gear/pavement.js";
 import { G0 } from "../../engine/constants.js";
 
 const LB_PER_KG = 2.20462262;
@@ -150,7 +151,7 @@ export function gearOf(result, opts = {}) {
     }
   }
 
-  return {
+  const out = {
     resolved: true, type,
     ga, balance, verticalCg: vcg, geometry: geom,
     sink, basis: certificationBasis(type), usedLandingWeight,
@@ -165,4 +166,7 @@ export function gearOf(result, opts = {}) {
     stowage: { main: stowageOf(main, { tyresPerLeg: wheelsPerAxle }), nose: stowageOf(nose, { tyresPerLeg: 2 }) },
     reaction: { N, ...GEAR_REACTION_FACTOR, value: N },
   };
+  /* G8: the tyre-pressure code, the load per leg, and an ACN ESTIMATE by (31). */
+  out.pavement = pavementOf(out, result);
+  return out;
 }

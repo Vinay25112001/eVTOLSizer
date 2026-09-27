@@ -21,6 +21,7 @@ import { ShearMomentDiagram, StressMarginPlot, BoxSection, StructuralPlanform,
          FuselageLoadDiagram } from "./StructureViews.jsx";
 import { fuselageStructure } from "./fuselage-structure.js";
 import { fuselageLoads } from "./fuselage-structure-loads.js";
+import { fuselagePressureShell, PA_PER_PSI } from "./fuselage-pressure-shell.js";
 import { FuselageProfile, FuselageSection } from "./FuselageViews.jsx";
 import { balanceOf, BALANCE_DEFAULTS } from "./balance.js";
 import { LoadingDiagram, StationDiagram } from "./BalanceViews.jsx";
@@ -693,6 +694,14 @@ export function ControlsTab({ type, result }) {
 export function FuselageTab({ type, result }) {
   const f = useMemo(() => fuselageStructure(result), [result]);
   const fl = useMemo(() => fuselageLoads(result), [result]);
+  /* dp is a REQUIREMENT with no default, by the holder's decision: the
+     field starts blank and the shell is reported not evaluated until a
+     value is typed. Nothing here fills it in. */
+  const [dpPsi, setDpPsi] = useState("");
+  const [shellMat, setShellMat] = useState("2024-T3");
+  const dpPa = dpPsi === "" ? undefined : Number(dpPsi) * PA_PER_PSI;
+  const ps = useMemo(() => fuselagePressureShell(result, { deltaPPa: dpPa, material: shellMat }),
+                     [result, dpPa, shellMat]);
   if (!f) return <Empty>This type does not report a fuselage length, width and height, which the arrangement needs.</Empty>;
   const IN_ = 0.0254;
   const inches = (v) => `${(v / IN_).toFixed(2)} in`;
@@ -793,6 +802,52 @@ export function FuselageTab({ type, result }) {
           </Card>
         );
       })() : null}
+
+      {ps && ps.applies ? (
+        <Card title="Pressure shell — skin sized to the cabin differential">
+          <div style={{ display: "flex", gap: S.md, alignItems: "flex-end", flexWrap: "wrap", marginBottom: S.md }}>
+            <label style={{ display: "flex", flexDirection: "column", fontSize: T.label, color: SC.muted, gap: 4 }}>
+              Maximum relief-valve differential Δp
+              <input type="number" value={dpPsi} min={0} max={20} step={0.1} placeholder="required"
+                onChange={(e) => setDpPsi(e.target.value)}
+                style={{ width: 110, background: SC.inset, color: SC.text, border: `1px solid ${SC.border}`, borderRadius: 3, padding: "4px 6px", fontFamily: MONO }} />
+              <span style={{ fontSize: T.micro, color: SC.subtle }}>psi — a requirement, not defaulted</span>
+            </label>
+            <label style={{ fontSize: T.label, color: SC.muted }}>Skin material{" "}
+              <select value={shellMat} onChange={(e) => setShellMat(e.target.value)}
+                style={{ fontFamily: MONO, fontSize: T.label, background: SC.inset, color: SC.text,
+                         border: `1px solid ${SC.border}`, borderRadius: 3, padding: "3px 6px" }}>
+                {MATERIAL_IDS.map((id) => <option key={id} value={id}>{MATERIALS[id].label}</option>)}
+              </select>
+            </label>
+          </div>
+          {!ps.evaluated ? <Lead>{ps.why}</Lead> : (
+            <>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: S.md }}>
+                <Kpi label="Skin thickness" value={fmt(ps.skin.tSkinM * 1e3, 2)} unit="mm"
+                     sub={<>pressure alone asks <Q v={fmt(ps.skin.tPressureM * 1e3, 3)} u="mm" /> · {ps.governing} governs</>} />
+                <Kpi label="Hoop stress σ_θ" value={fmt(ps.stress.sigmaThetaPa / 1e6, 1)} unit="MPa"
+                     sub={<>axial <Q v={fmt(ps.stress.sigmaXPa / 1e6, 1)} u="MPa" /> · ratio {fmt(ps.stress.hoopOverAxial, 2)} · margin to yield {fmt(ps.stress.marginYield, 2)}</>} />
+                <Kpi label={`${ps.burstFactor} × Δp, 25.365(d)`} value={fmt(ps.stress.sigmaThetaBurstPa / 1e6, 1)} unit="MPa"
+                     sub={`margin to ultimate ${fmt(ps.stress.marginUltimateBurst, 2)}`} />
+                <Kpi label="Skin mass, TASOPT (A.28)" value={fmt(ps.skinMass.builtKg, 0)} unit="kg"
+                     sub={ps.crossCheck.available
+                       ? <>{fmt(100 * ps.crossCheck.skinFraction, 1)} % of FLOPS's <Q v={fmt(ps.crossCheck.fuselageItemKg, 0)} u="kg" /> fuselage · implied structure/skin {fmt(ps.crossCheck.impliedStructureToSkin, 2)}</>
+                       : ps.crossCheck.why} />
+              </div>
+              <Note>{ps.governingNote}</Note>
+              <Note>{ps.stress.note}</Note>
+              {ps.crossCheck.available ? <Note>{ps.crossCheck.reading}</Note> : null}
+              <Table head={["Case", "Δp", "Allowable", "t_skin from (A.16)", "Why this allowable"]}
+                     rows={ps.cases.map((c) => [c.label, `${fmt(c.dpPa / 1e3, 1)} kPa`, c.allowable,
+                                                 `${fmt(c.tSkinM * 1e3, 3)} mm`, c.why])} />
+              <ul style={{ margin: `${S.sm}px 0 0`, paddingLeft: 18, fontSize: T.label, color: SC.muted, lineHeight: 1.7 }}>
+                {ps.caveats.map((c, i) => <li key={i}>{c}</li>)}
+              </ul>
+            </>
+          )}
+        </Card>
+      ) : null}
 
       <Card title="What this view is, and is not">
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: T.label, color: SC.muted, lineHeight: 1.7 }}>

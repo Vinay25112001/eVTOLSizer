@@ -209,15 +209,49 @@ export function fuselageClosure(type) {
   }
   const keel = rows.reduce((s, r) => s + r.keelTipZ, 0) / rows.length;
   const crowns = rows.filter((r) => r.crownTipZ != null);
-  const crown = crowns.length ? crowns.reduce((s, r) => s + r.crownTipZ, 0) / crowns.length : C.crownTipZ;
+  let crown = crowns.length ? crowns.reduce((s, r) => s + r.crownTipZ, 0) / crowns.length : C.crownTipZ;
+
+  /* MEASURING ONE EDGE CAN DISQUALIFY THE CONVENTION ON THE OTHER, AND
+     THAT HAS TO BE CAUGHT HERE RATHER THAN DRAWN.
+
+     A tail cone closes on a face whose crown is above its keel. It is not
+     a convention that the crown wins; it is what a closed shape means, and
+     an outline drawn the other way crosses itself. When the Dash 8's keel
+     was measured at 0.243 H it went ABOVE the convention's 0.220 H crown —
+     so the turboprop was drawn with an inverted tip face, by a change that
+     only touched the keel. The gate missed it because its inversion check
+     ran on the DEFAULT convention, which is self-consistent, and never on
+     what a class actually draws.
+
+     The convention's crown is not a measurement and is contradicted by the
+     only crown anyone has measured here (the A320's 0.389 H, which sits far
+     higher). So where a class's own measured keel rises past it, the
+     convention is disqualified for that class rather than clipped, and the
+     measured crown is used instead — labelled as measured on a different
+     aeroplane, because it is. The bound is the class's own measurement: an
+     unmeasurable crown cannot be below a measured keel. */
+  const conventionCrownInverted = !crowns.length && crown <= keel;
+  let crownNote = null;
+  if (conventionCrownInverted) {
+    const allCrowns = FUSELAGE_UPSWEEP_MEASURED.filter((r) => r.crownTipZ != null);
+    const fallback = allCrowns.reduce((s, r) => s + r.crownTipZ, 0) / allCrowns.length;
+    crownNote = `the convention's crown ${C.crownTipZ} H is DISQUALIFIED for this class: its own measured keel `
+              + `${keel.toFixed(3)} H rises past it, which would draw an inverted tip face. The crown here is `
+              + `${fallback.toFixed(3)} H, measured on ${allCrowns.map((r) => r.aircraft).join(" and ")} — a `
+              + `different class — and is the only measured crown in the corpus. It is not a measurement of this `
+              + `class and carries no dimension`;
+    crown = fallback;
+  }
   const keelRange = [Math.min(...rows.map((r) => r.keelTipZ)), Math.max(...rows.map((r) => r.keelTipZ))];
   return Object.freeze({
     crownTipZ: crown, keelTipZ: keel, measured: true, crownMeasured: crowns.length > 0,
+    crownFromOtherClass: conventionCrownInverted,
     keelRange, n: rows.length, aircraft: rows.map((r) => r.aircraft),
     source: `keel ${keel.toFixed(3)} H measured from ${rows.map((r) => r.aircraft).join(" and ")} `
           + `(${keelRange.map((v) => v.toFixed(3)).join("-")} H); crown `
           + (crowns.length ? `${crown.toFixed(3)} H measured from ${crowns.map((r) => r.aircraft).join(" and ")}`
-                           : `${crown} H is the convention: the fin hides the crown at the tip on the measured drawing`),
+             : crownNote
+               || `${crown} H is the convention: the fin hides the crown at the tip on the measured drawing`),
   });
 }
 

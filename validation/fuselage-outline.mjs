@@ -117,6 +117,43 @@ check(near(crownTipZ, H * FUSELAGE_CONVENTION.crownTipZ, 1e-12)
   "the tip face comes from the declared convention, not a literal",
   `${FUSELAGE_CONVENTION.crownTipZ} / ${FUSELAGE_CONVENTION.keelTipZ} of H`);
 
+/* ── 2b. AND THE SAME INVARIANTS ON EVERY CLASS THAT ACTUALLY DRAWS ───
+   Everything above runs on the DEFAULT convention, which is
+   self-consistent by construction, so it can never fail. That made it
+   decorative the moment a class started drawing something else.
+
+   IT MISSED A REAL INVERSION. Measuring the Dash 8's keel put the
+   turboprop's keel tip at 0.243 H, ABOVE the convention's 0.220 H crown
+   that the same class was still using, so its tail cone was drawn with a
+   crossed tip face — by a change that only touched the keel. A tail cone
+   closing on a face whose crown is above its keel is not a convention; it
+   is what a closed shape means. So the invariants are re-run here against
+   the closure each class really draws with. */
+console.log("\n-- and the same invariants on every class's own closure --");
+
+for (const t of ["transport", "bizjet", "turboprop", "trainer"]) {
+  const c = fuselageClosure(t);
+  check(c.crownTipZ > c.keelTipZ,
+    `${t}: the tip face is not inverted — the crown stays above the keel`,
+    `crown ${c.crownTipZ.toFixed(3)} H over keel ${c.keelTipZ.toFixed(3)} H, `
+    + `face ${(c.crownTipZ - c.keelTipZ).toFixed(3)} H tall`);
+  check(c.keelTipZ > 0 && c.crownTipZ > 0 && c.crownTipZ < 0.5,
+    `${t}: the whole tip face sits above the centreline and below the crown line`, "");
+  check((0.5 + c.keelTipZ) > (0.5 - c.crownTipZ),
+    `${t}: the keel still rises further than the crown falls`,
+    `keel +${(0.5 + c.keelTipZ).toFixed(3)} H against crown −${(0.5 - c.crownTipZ).toFixed(3)} H`);
+}
+
+/* A crown borrowed from another class must SAY it was borrowed. */
+const tpClosure = fuselageClosure("turboprop");
+check(tpClosure.crownFromOtherClass === true && /DISQUALIFIED/.test(tpClosure.source)
+      && /different class/.test(tpClosure.source),
+  "a class whose measured keel disqualifies the convention's crown says so in its own source",
+  tpClosure.source.slice(0, 120) + "...");
+check(fuselageClosure("transport").crownFromOtherClass !== true
+      && fuselageClosure("trainer").crownFromOtherClass !== true,
+  "and a class whose convention is still valid does not claim a borrowed crown", "");
+
 /* ── 3. THE PLAN VIEW MIRRORS EXACTLY ────────────────────────────────
    An aeroplane is symmetric about its vertical plane. There is no
    equivalent of upsweep here, so any asymmetry is a defect. */
@@ -287,8 +324,17 @@ const tr = fuselageClosure("transport"), tp = fuselageClosure("turboprop"), bj =
 check(tr.measured && near(tr.keelTipZ, (0.098 + 0.146) / 2, 1e-12) && near(tr.crownTipZ, 0.389, 1e-12) && tr.n === 2 && tr.crownMeasured,
   "transport: keel is the mean of the 737 and A320 (0.122 H), crown the A320's (0.389 H), n = 2, range stated",
   tr.source);
-check(tp.measured && near(tp.keelTipZ, 0.243, 1e-12) && !tp.crownMeasured && near(tp.crownTipZ, FUSELAGE_CONVENTION.crownTipZ, 1e-12) && /fin hides/.test(tp.source),
-  "turboprop: keel is the Dash 8's (0.243 H); the crown stays the convention and the reason is stated",
+/* This check used to assert that the turboprop's crown "stays the
+   convention". That was the defect: the Dash 8's measured keel of 0.243 H
+   rises ABOVE the convention's 0.220 H crown, so keeping it drew an
+   inverted tip face. What must be true now is that the class's own
+   measurement disqualifies the convention, the crown is not claimed as
+   this class's measurement, and the tip face is the right way up. */
+check(tp.measured && near(tp.keelTipZ, 0.243, 1e-12) && !tp.crownMeasured
+      && tp.crownFromOtherClass === true && near(tp.crownTipZ, 0.389, 1e-12)
+      && tp.crownTipZ > tp.keelTipZ && /DISQUALIFIED/.test(tp.source),
+  "turboprop: keel is the Dash 8's (0.243 H), which disqualifies the convention's 0.220 H crown; "
+  + "the crown used is the only measured one, named as another class's",
   tp.source);
 check(!bj.measured && !tn.measured && near(bj.keelTipZ, FUSELAGE_CONVENTION.keelTipZ, 1e-12) && /below every measured/.test(bj.source) && /below every measured/.test(tn.source),
   "bizjet and trainer: no drawing on disk, the convention is used and labelled as below the measured range",

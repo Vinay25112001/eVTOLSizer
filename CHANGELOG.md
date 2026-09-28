@@ -26,6 +26,21 @@ version. `validation/release.mjs` checks that these agree.
 ## [Unreleased]
 
 ### Fixed
+- The turboprop's tail cone is no longer drawn inverted. Measuring the
+  Dash 8-400's keel put the turboprop's keel tip at 0.243 H above the
+  centreline, which is ABOVE the 0.220 H crown the same class was still
+  taking from the unsourced convention, so the tip face crossed over and
+  the outline closed on itself — a defect introduced by a change that only
+  touched the keel. A tail cone closes on a face whose crown is above its
+  keel; that is not a convention but what a closed shape means. Where a
+  class's own measured keel rises past the convention's crown, the
+  convention is now disqualified for that class rather than clipped, and
+  the crown falls back to the only crown anyone has measured here (the
+  A320's 0.389 H), labelled in the drawing as measured on another class and
+  carrying no dimension. The gate missed this because its inversion check
+  ran on the default convention, which is self-consistent by construction
+  and can never fail; the same invariants now run against the closure every
+  class actually draws with.
 - The fuselage cross-section is symmetric about the aeroplane's vertical
   plane again. The stringers were placed inside the view by walking the
   perimeter from the side and putting stringer `i` at arc fraction `i/n`,

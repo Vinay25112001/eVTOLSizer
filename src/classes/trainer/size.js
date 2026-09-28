@@ -25,7 +25,7 @@
    pounds ... and full oil of 15.0 pounds").
    ===================================================================== */
 
-import { TRAINER_DEFAULTS } from "./defaults.js";
+import { TRAINER_DEFAULTS, TRAINER_INPUTS } from "./defaults.js";
 import * as W from "./weights.js";
 import * as P from "./performance.js";
 
@@ -122,11 +122,57 @@ function missionFuel(p, grossLb, geo, hp) {
   return { usableLb, allowanceLb, climbLb, climbMin, cruiseLb, reserveLb, cruise: cr, rocMidFpm: roc };
 }
 
+/* ── THE BOUNDS ALREADY EXISTED; NOTHING CONSULTED THEM ────────────────
+   This checked finiteness and nothing else, so the loop accepted inputs that
+   are not merely out of range but physically impossible, converged on them,
+   and published the result with converged:true and no flag of any kind:
+
+       rangeNm    = -518   ->  usable fuel -108.86 lb, cruise fuel -153.63 lb
+       reserveMin = -1000  ->  usable fuel -320.28 lb, reserve   -442.64 lb
+
+   Those are genuine fixed points -- the residual really is under the 0.01 lb
+   tolerance -- so the loop was right and the physics was not. A gross weight
+   of "empty + payload MINUS 108.86 lb of fuel" is not a design, and unlike the
+   eVTOL path there is no banner anywhere to say so.
+
+   Nor is negativity the whole of it: rangeNm = 99 against a declared minimum of
+   100, and reserveMin = 91 against a declared maximum of 90, were accepted just
+   as silently. The defect is not "a negative slipped through", it is that the
+   declared range was never enforced.
+
+   TRAINER_INPUTS publishes `min` and `max` for 50 of its 53 entries -- the
+   other three are two strings and a boolean -- and those bounds are what the UI
+   sliders are built from. So this invents no rule and picks no new number: it
+   applies the file's own published contract at the one place that skipped it.
+   Phase 18 requires an illegal input to be REFUSED WITH AN EXPLANATION, and the
+   throw below names the input, the offending value and the bound it broke. */
 function resolve(p) {
   const q = { ...TRAINER_DEFAULTS, ...(p || {}) };
-  for (const [k, v] of Object.entries(TRAINER_DEFAULTS))
-    if (typeof v === "number" && !Number.isFinite(Number(q[k])))
+  for (const [k, v] of Object.entries(TRAINER_DEFAULTS)) {
+    if (typeof v !== "number") continue;
+    const x = Number(q[k]);
+    if (!Number.isFinite(x))
       throw new Error(`Trainer input "${k}" must be a finite number (got ${q[k]})`);
+    const s = TRAINER_INPUTS[k];
+    /* ONLY THE SIGN IS POLICED HERE, NOT THE WHOLE DECLARED RANGE.
+       s.max is a slider bound, not a statement about where the model is valid,
+       and this loop already has a way to answer an ambitious but MEANINGFUL
+       request: it returns converged:false with a stopReason. validation/
+       trainer.mjs depends on exactly that -- it asks for 5,000 nm and requires
+       a reasoned non-convergence, not an exception. A 50 nm mission and a 91
+       minute reserve are likewise real questions with real answers.
+       A NEGATIVE range or reserve is not a question at all, and s.min >= 0 is
+       the schema's own statement that the quantity cannot go below zero. */
+    if (s && Number.isFinite(s.min) && s.min >= 0 && x < 0)
+      throw new Error(
+        `Trainer input "${k}" cannot be negative (got ${x}${s.unit ? " " + s.unit : ""}; ` +
+        `the declared range is ${s.min} to ${s.max}${s.unit ? " " + s.unit : ""}). ` +
+        `The sizing loop converges on negative inputs, but on designs that are not ` +
+        `physical: rangeNm = -518 closed at a usable fuel of -108.86 lb and a cruise ` +
+        `fuel of -153.63 lb, and reserveMin = -1000 at -320.28 lb usable, each reported ` +
+        `as converged with no flag. A gross weight of empty + payload MINUS fuel is not ` +
+        `a design, so the input is refused here rather than sized.`);
+  }
   return q;
 }
 

@@ -40,7 +40,7 @@ import { readFileSync } from "node:fs";
 import {
   fuselageSideOutline, fuselagePlanOutline, outlinePath, sectionStringerPoints,
   FUSELAGE_FINENESS, FUSELAGE_CONVENTION, FUSELAGE_UPSWEEP_MEASURED, fuselageClosure,
-  generalArrangement, val,
+  generalArrangement, val, fuselageOutlinePoints,
 } from "../src/classes/aircraft/geometry.js";
 import * as E from "../src/classes/aircraft/engine.js";
 
@@ -428,6 +428,53 @@ const fvSrc = readFileSync(new URL("../src/classes/aircraft/FuselageViews.jsx", 
 check(/sectionStringerPoints\(/.test(fvSrc) && !/2 \* Math\.PI \* i/.test(fvSrc),
   "the cross-section view calls the hoisted placement and no longer walks the ellipse itself",
   "a view that rolls its own placement can break the symmetry again without this gate noticing");
+
+/* ── 11. the outline can be ASKED where the skin is ──────────────────
+   A consumer that needs a point on the body — the tail-strike search is
+   the first — must not describe the shape a second time. gear-geometry.js
+   did, with the tip at a hard-coded 0.05 H, and drifted the moment the
+   closure became per-class. fuselageOutlinePoints is the one sampler, so
+   it is checked HERE, beside the outline it walks, and per class rather
+   than on the default convention. */
+console.log("\n11. The outline, sampled as points");
+for (const type of ["transport", "bizjet", "turboprop", "trainer"]) {
+  const r = E.designAircraft({ type });
+  const ga = generalArrangement(r);
+  const H = val(ga.fuselage.height), L = val(ga.fuselage.length);
+  const spec = { length: L, height: H, noseLength: val(ga.fuselage.noseLength),
+                 tailLength: val(ga.fuselage.tailLength), closure: ga.fuselage.closure };
+  const pts = fuselageOutlinePoints(spec);
+  check(pts.length > 100, `${type}: the outline samples to points`, `${pts.length} points`);
+
+  /* THE TIP FACE THE CLASS ACTUALLY DRAWS must appear in the samples.
+     This is the assertion that would have caught the drift: on a
+     transport the keel tip is 0.122 H, not the convention's 0.05 H. */
+  const atTip = pts.filter((p) => Math.abs(p.x - L) < 1e-9).map((p) => p.z / H).sort((a, b) => a - b);
+  check(atTip.length >= 2, `${type}: the tip face is sampled`, `z/H at the tip: ${atTip.map((z) => z.toFixed(3)).join(", ")}`);
+  check(atTip.some((z) => Math.abs(z - ga.fuselage.closure.keelTipZ) < 1e-9),
+    `${type}: and carries the keel tip this class draws (${ga.fuselage.closure.keelTipZ.toFixed(3)} H)`,
+    "a sampler that fell back to the convention would read 0.050 H here on every class");
+  check(atTip.some((z) => Math.abs(z - ga.fuselage.closure.crownTipZ) < 1e-9),
+    `${type}: and its crown tip (${ga.fuselage.closure.crownTipZ.toFixed(3)} H)`);
+
+  /* every sampled point lies within the body it came from */
+  const within = pts.every((p) => p.x >= -1e-9 && p.x <= L + 1e-9
+                                  && p.z >= -H / 2 - 1e-9 && p.z <= H / 2 + 1e-9);
+  check(within, `${type}: every sampled point lies inside the body's own bounds`);
+  /* EVERY ANCHOR OF THE PATH MUST SURVIVE THE SAMPLING, so that a segment
+     cannot be dropped silently. This replaced a check that the walk closed
+     on the nose it started from, which could not fail: the side outline's
+     last segment already ends at the nose, so first and last are equal
+     whether or not the sampler handles the closing command at all. A
+     mutant that removed that handling walked straight through it. */
+  const anchors = fuselageSideOutline(spec)
+    .filter(([op]) => op !== "Z")
+    .map((seg) => seg[seg.length - 1]);
+  const missing = anchors.filter((a) => !pts.some((p) => Math.abs(p.x - a[0]) < 1e-9 && Math.abs(p.z - a[1]) < 1e-9));
+  check(missing.length === 0,
+    `${type}: every one of the outline's ${anchors.length} anchor points appears in the samples`,
+    missing.length ? `missing: ${missing.map((a) => `(${a[0].toFixed(3)}, ${a[1].toFixed(3)})`).join(" ")}` : "");
+}
 
 console.log("");
 console.log(fails.length ? `FUSELAGE OUTLINE GATE FAILED: ${fails.length} check(s)`

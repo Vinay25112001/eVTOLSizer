@@ -46,6 +46,10 @@
    tricycle rather than trusting any comment, including this one.
    ===================================================================== */
 
+/* The tail-strike search asks the outline where the skin is rather than
+   describing the shape a second time. See the note at the strike point. */
+import { fuselageOutlinePoints } from "./geometry.js";
+
 const IN = 0.0254;
 
 /* geometry.js wraps its drawn values as { value, ... }. */
@@ -142,30 +146,35 @@ export function gearGeometry({ balance, ga, verticalCg, propDiameterM = 0 }) {
   const H = valOf(ga.fuselage.height);
   const tailLen = valOf(ga.fuselage.tailLength);
 
-  /* THE STRIKE POINT IS NOT THE TAIL TIP. The outline upsweeps the tail
-     cone from the keel at −H/2 to +0.05 H at the tip, so the tip is high
-     and far aft while the START of the cone is low and nearer. Rotating
-     about the main wheels, a point at (x, z) runs out of clearance at
-     atan((z − ground)/(x − x_main)), and the strike angle is the SMALLEST
-     such angle over every point aft of the wheels. Taking the tip gives a
-     larger, flattering angle that no real tail strike would respect.
+  /* THE STRIKE POINT IS NOT THE TAIL TIP. The tail cone upsweeps, so the
+     tip is high and far aft while the START of the cone is low and nearer.
+     Rotating about the main wheels, a point at (x, z) runs out of clearance
+     at atan((z − ground)/(x − x_main)), and the strike angle is the
+     SMALLEST such angle over every point aft of the wheels. Taking the tip
+     gives a larger, flattering angle that no real tail strike would
+     respect.
 
-     Sampled off the drawn keel rather than solved in closed form: a
-     closed form would be a second copy of the outline's own convention,
-     and the two would drift the moment either changed. */
-  const xConeStart = L - tailLen;
-  const P0 = { x: L, z: H * 0.05 };                   // FUSELAGE_CONVENTION.keelTipZ
-  const P1 = { x: L - tailLen * 0.45, z: -H / 2 };    // FUSELAGE_CONVENTION.keelControlX
-  const P2 = { x: xConeStart, z: -H / 2 };
-  const keel = [{ x: xConeStart, z: -H / 2 }];
-  for (let i = 0; i <= 40; i++) {
-    const u = i / 40, v = 1 - u;
-    keel.push({ x: v * v * P0.x + 2 * v * u * P1.x + u * u * P2.x,
-                z: v * v * P0.z + 2 * v * u * P1.z + u * u * P2.z });
-  }
+     THE OUTLINE IS ASKED FOR ITS OWN POINTS. This used to rebuild the keel
+     here as a Bézier with the tip at a hard-coded 0.05 H, under a comment
+     explaining that a second copy of the outline's convention would drift
+     the moment either changed. It drifted: the closure became per-class and
+     measured — 0.122 H on a transport, 0.243 H on a turboprop — and this
+     search went on sampling a keel no class draws, understating the
+     clearance angle by 0.07 to 0.18 degrees.
+
+     The whole outline is sampled rather than the keel alone. Restricting it
+     to the keel assumed the keel is always the lowest surface aft of the
+     wheels; it is, but the assumption bought nothing and the minimum over
+     every point needs no assumption at all. Points forward of the wheels
+     are skipped below, and the crown's points give larger angles, so they
+     cannot win. */
+  const outline = fuselageOutlinePoints({
+    length: L, height: H, noseLength: valOf(ga.fuselage.noseLength), tailLength: tailLen,
+    closure: ga.fuselage.closure,
+  });
 
   let strike = null;
-  for (const pt of keel) {
+  for (const pt of outline) {
     const arm = pt.x - main.x;
     if (arm <= 0) continue;             // forward of the wheels: it rises, not falls
     const deg = (Math.atan((pt.z - groundZ) / arm) * 180) / Math.PI;

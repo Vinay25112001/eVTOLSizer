@@ -35,7 +35,8 @@
    ===================================================================== */
 import * as E from "../src/classes/aircraft/engine.js";
 import { balanceOf } from "../src/classes/aircraft/balance.js";
-import { generalArrangement, val } from "../src/classes/aircraft/geometry.js";
+import { generalArrangement, val, fuselageSideOutline } from "../src/classes/aircraft/geometry.js";
+import { readFileSync } from "node:fs";
 import { loadedVerticalCg } from "../src/classes/aircraft/vertical-cg.js";
 import { A320_INPUTS } from "../src/classes/transport/validation-cases.js";
 import {
@@ -187,6 +188,105 @@ console.log("\n6. The soft floor, and the regulation that is not soft");
   check(/stalling angle/.test(G.transport.rotation.note),
     "the rotation result declares it is only the geometric half of 25.481(c)",
     "the regulation takes the lesser of this and the stalling angle");
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   THE TAIL-STRIKE SEARCH MUST SAMPLE THE KEEL THE DRAWING DRAWS
+   ─────────────────────────────────────────────────────────────────────
+   This module used to rebuild the tail cone's keel here as its own Bézier
+   with the tip at a hard-coded 0.05 H, under a comment explaining that a
+   second copy of the outline's convention would drift the moment either
+   changed. It drifted. The closure became per-class and MEASURED — 0.122 H
+   on a transport, 0.243 H on a turboprop — and the strike search went on
+   sampling a keel no class draws.
+
+   The angle is now checked against a SECOND, INDEPENDENT sampling of
+   fuselageSideOutline written here in the gate, so the module's sampler
+   and the gate's have to agree exactly; and the search is required to be
+   SENSITIVE to the closure, because a check that the number is merely
+   plausible is what let the hard-coded tip survive in the first place. */
+console.log("\nThe tail-strike search follows the drawn outline");
+{
+  /* the gate's own sampler — deliberately not the module's */
+  const sampleOutline = (spec, n = 40) => {
+    const path = fuselageSideOutline(spec);
+    const out = [];
+    let cur = null, first = null;
+    for (const [op, ...a] of path) {
+      if (op === "M") { cur = a[0]; first = cur; out.push({ x: cur[0], z: cur[1] }); continue; }
+      if (op === "L" || op === "Z") {
+        const e = op === "Z" ? first : a[0];
+        for (let i = 1; i <= n; i++) {
+          const u = i / n;
+          out.push({ x: cur[0] + (e[0] - cur[0]) * u, z: cur[1] + (e[1] - cur[1]) * u });
+        }
+        cur = e; continue;
+      }
+      if (op === "Q") {
+        const [c, e] = a;
+        for (let i = 1; i <= n; i++) {
+          const u = i / n, v = 1 - u;
+          out.push({ x: v * v * cur[0] + 2 * v * u * c[0] + u * u * e[0],
+                     z: v * v * cur[1] + 2 * v * u * c[1] + u * u * e[1] });
+        }
+        cur = e; continue;
+      }
+    }
+    return out;
+  };
+  const minAngle = (pts, xMain, groundZ) => {
+    let best = null;
+    for (const p of pts) {
+      const arm = p.x - xMain;
+      if (arm <= 0) continue;
+      const deg = (Math.atan((p.z - groundZ) / arm) * 180) / Math.PI;
+      if (best === null || deg < best) best = deg;
+    }
+    return best;
+  };
+
+  for (const type of TYPES) {
+    const g = G[type];
+    if (!g.resolved) { check(true, `${type}: declines a wheelbase, so there is no strike angle to check`); continue; }
+    const r = E.designAircraft({ type });
+    const ga = generalArrangement(r);
+    const spec = {
+      length: val(ga.fuselage.length), height: val(ga.fuselage.height),
+      noseLength: val(ga.fuselage.noseLength), tailLength: val(ga.fuselage.tailLength),
+      closure: ga.fuselage.closure,
+    };
+    const xMain = g.xCg + g.B, groundZ = ga.stance.z;
+    const want = minAngle(sampleOutline(spec), xMain, groundZ);
+    check(Math.abs(g.rotation.angleDeg - want) < 1e-9,
+      `${type}: the reported clearance angle equals the minimum over the DRAWN outline`,
+      `module ${g.rotation.angleDeg.toFixed(6)} deg, gate's own sampling ${want.toFixed(6)} deg`);
+
+    /* SENSITIVITY. Raising the keel tip must raise the clearance angle. If
+       the search were still reading a literal, this would not move. */
+    const lifted = minAngle(sampleOutline({ ...spec, closure: { ...spec.closure, keelTipZ: spec.closure.keelTipZ + 0.10 } }),
+                            xMain, groundZ);
+    const dropped = minAngle(sampleOutline({ ...spec, closure: { ...spec.closure, keelTipZ: spec.closure.keelTipZ - 0.10 } }),
+                             xMain, groundZ);
+    check(lifted > want && want > dropped,
+      `${type}: the angle responds to the keel tip, in the right direction`,
+      `keel −0.10 H: ${dropped.toFixed(3)}, as drawn: ${want.toFixed(3)}, keel +0.10 H: ${lifted.toFixed(3)} deg`);
+
+    /* the strike point is on the skin, aft of the wheels, below the crown */
+    const H = spec.height;
+    check(g.rotation.strikePoint.xM > xMain && g.rotation.strikePoint.zM < 0 && g.rotation.strikePoint.zM >= -H / 2 - 1e-9,
+      `${type}: the strike point is aft of the main wheels and on the lower skin`,
+      `x ${g.rotation.strikePoint.xM.toFixed(3)} m (wheels ${xMain.toFixed(3)}), z ${g.rotation.strikePoint.zM.toFixed(3)} m`);
+  }
+
+  /* The module must not describe the shape a second time. */
+  const src = readFileSync(new URL("../src/classes/aircraft/gear-geometry.js", import.meta.url), "utf8");
+  check(/import\s*\{[^}]*\bfuselageOutlinePoints\b[^}]*\}\s*from\s*"\.\/geometry\.js"/s.test(src),
+    "gear-geometry.js asks geometry.js for the outline points");
+  check(!/H \* 0\.05|0\.05 \* H/.test(src),
+    "and carries no hard-coded keel-tip fraction of its own",
+    "0.05 H was the pre-measurement convention; the drawn keel is 0.122 H on a transport and 0.243 H on a turboprop");
+  check(!/keelControlX|crownControlX/.test(src),
+    "and no copy of the outline's control-point conventions either");
 }
 
 console.log("\n" + "=".repeat(78));

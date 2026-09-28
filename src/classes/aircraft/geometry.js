@@ -276,6 +276,58 @@ export function fuselageSideOutline({ length, height, noseLength, tailLength, cl
   ];
 }
 
+/* THE OUTLINE, SAMPLED AS POINTS, for anything that has to ask where the
+   skin actually is rather than draw it.
+
+   This exists because gear-geometry.js needed the keel and wrote its own
+   copy of it. Its comment said the right thing — "sampled off the drawn
+   keel rather than solved in closed form: a closed form would be a second
+   copy of the outline's own convention, and the two would drift the moment
+   either changed" — and then it WAS the second copy: a Bézier with the tip
+   at a hard-coded 0.05 H. When the closure became per-class and measured,
+   the drawn keel moved to 0.122 H on a transport and 0.243 H on a
+   turboprop and the tail-strike search kept sampling a keel no class draws.
+
+   So the curve is walked out of the outline itself. A consumer that asks
+   this function cannot drift from the drawing, because there is no second
+   description of the shape to drift from. */
+export function fuselageOutlinePoints(spec, samples = 40) {
+  const path = fuselageSideOutline(spec);
+  const pts = [];
+  let cur = null, first = null;
+  const push = (x, z) => pts.push({ x, z });
+  const lerp = (a, b) => {
+    for (let i = 1; i <= samples; i++) {
+      const u = i / samples;
+      push(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u);
+    }
+  };
+  for (const [op, ...args] of path) {
+    if (op === "M") { cur = args[0]; first = cur; push(cur[0], cur[1]); continue; }
+    if (op === "L") { lerp(cur, args[0]); cur = args[0]; continue; }
+    if (op === "Q") {
+      const [c, e] = args;
+      for (let i = 1; i <= samples; i++) {
+        const u = i / samples, v = 1 - u;
+        push(v * v * cur[0] + 2 * v * u * c[0] + u * u * e[0],
+             v * v * cur[1] + 2 * v * u * c[1] + u * u * e[1]);
+      }
+      cur = e; continue;
+    }
+    if (op === "C") {
+      const [c1, c2, e] = args;
+      for (let i = 1; i <= samples; i++) {
+        const u = i / samples, v = 1 - u;
+        push(v * v * v * cur[0] + 3 * v * v * u * c1[0] + 3 * v * u * u * c2[0] + u * u * u * e[0],
+             v * v * v * cur[1] + 3 * v * v * u * c1[1] + 3 * v * u * u * c2[1] + u * u * u * e[1]);
+      }
+      cur = e; continue;
+    }
+    if (op === "Z") { if (first && cur) { lerp(cur, first); cur = first; } continue; }
+  }
+  return pts;
+}
+
 /* Plan view, in BODY coordinates: x aft, y starboard. An aeroplane is
    symmetric about its vertical plane, so the port half is the exact sign
    flip of the starboard half and is built that way rather than retyped. */

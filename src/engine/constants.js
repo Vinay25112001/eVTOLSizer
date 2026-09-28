@@ -73,7 +73,34 @@ export const LAPSE   = 0.0065;    // ISA tropospheric lapse rate, K/m
    ===================================================================== */
 export const R_GAS   = 287.05287; // specific gas constant for air, J/(kg*K) — derived; see above
 export const GAMMA   = 1.4;       // ratio of specific heats
-export const MU0     = 1.47e-5;   // reference dynamic viscosity, Pa*s
+/* ── THE COEFFICIENT WAS THE WRONG QUANTITY, NOT THE WRONG NUMBER ──────
+   MU0 read 1.47e-5 under the label "reference dynamic viscosity, Pa*s".
+   1.47e-5 is not the dynamic viscosity of air at sea level. It is very
+   nearly the KINEMATIC viscosity: Sutherland's law (White, Viscous Fluid
+   Flow 3e, eq. 1-36, mu = 1.458e-6 T^1.5/(T+110.4)) gives
+
+       mu(288.15 K)      = 1.789380e-5 Pa*s   [ICAO Doc 7488 tabulates 1.7894e-5]
+       nu  = mu/rho      = 1.460719e-5 m2/s
+
+   so the shipped value sat 17.8 % BELOW dynamic and within 0.64 % of
+   kinematic. It was then consumed as a dynamic viscosity in Re = rho V L / mu
+   at five sites in engine.js, making every Reynolds number in the tree 21.7 %
+   high and every Prandtl-Schlichting Cf about 3 % low, which understates
+   parasite drag.
+
+   THE LAW IT FEEDS IS A DYNAMIC-VISCOSITY LAW, so the formula was right and
+   only the coefficient was wrong. Over 288.15 -> 216.65 K, viscosity() in
+   atmosphere.js gives (T/T0)^0.75 = 0.80743 against Sutherland's 0.79447 --
+   1.6 % apart. The true KINEMATIC ratio over the same interval is 2.67431,
+   off by 3.3x. A kinematic coefficient cannot be what this law transports.
+
+   1.789e-5 agrees with Sutherland to 0.02 % and is the value the tree already
+   carried under the same label in two other places (engine/noise.js and
+   export/report.js), so this makes it ONE value rather than three sites and
+   two numbers. validation/constants.mjs now pins it by RELATION -- Sutherland
+   evaluated at T0 -- rather than by its digits, the same instrument already
+   used for R_GAS above. [SRC] White 3e eq.1-36; ICAO Doc 7488 */
+export const MU0     = 1.789e-5;  // reference dynamic viscosity at T0, Pa*s
 export const P0      = 101325;    // ISA sea-level static pressure, Pa
 
 

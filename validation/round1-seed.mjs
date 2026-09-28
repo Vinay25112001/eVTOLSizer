@@ -171,7 +171,19 @@ check(OK.some((c) => c.r.r2Diverged !== c.r.mtowFromR1Seed),
 console.log("\n-- 6. the design that closes is untouched --");
 {
   const c = OK.find((x) => x.label === "default");
-  for (const [field, want] of [["MTOW", 2772.06], ["MTOW1", 1597.2], ["itersR1", 50]]) {
+  /* MTOW MOVED 2772.06 -> 2795.68 (+0.85 %) UNDER F-04, DELIBERATELY, and this
+     pin is updated rather than relaxed. F-04 corrected MU0 from 1.47e-5 -- which
+     is the KINEMATIC viscosity, 17.8 % below the dynamic value Sutherland's law
+     gives at T0 -- to 1.789e-5, lowering every Reynolds number by 17.8 % and
+     raising skin friction about 3 %. More parasite drag is more energy, more
+     battery and a heavier aircraft, so this number SHOULD have risen.
+
+     MTOW1 AND itersR1 ARE UNCHANGED, and that is the part worth asserting:
+     Round 1's recurrence contains no viscosity, no Reynolds number and no drag
+     term at all -- only LD, etaSys, sedCell, range and payload. If a change to
+     an atmospheric constant ever moves MTOW1, something has reached into Round 1
+     that has no business there, and these two pins are what would catch it. */
+  for (const [field, want] of [["MTOW", 2795.68], ["MTOW1", 1597.2], ["itersR1", 50]]) {
     check(c && Math.abs(c.r[field] - want) < 5e-3,
       `default: ${field} unchanged at ${want}`,
       c ? `got ${c.r[field]}` : "case missing");

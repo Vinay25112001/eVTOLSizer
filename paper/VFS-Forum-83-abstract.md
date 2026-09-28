@@ -42,7 +42,7 @@ commercial types.
 Three NASA all-electric concept vehicles are sized from their own published
 parameters, with no per-vehicle tuning, and **ten groups** of each published
 weight statement are scored — rather than the three or four usually reported.
-39 published comparisons result, with a mean absolute error of 10.4%.
+39 published comparisons result, with a mean absolute error of 10.2%.
 
 Those comparisons are not scored against a single self-chosen tolerance. Each
 group is compared against **AFDD's own published error for that group on the
@@ -133,7 +133,7 @@ Battery mass is sized as the heavier of two requirements — energy for the
 mission, and power to hover: `W_battery = max(W_E, W_P)`. Reporting that a tool
 applies "dual energy and power constraints" says nothing about which of them
 ever governs. Measured across all six configurations at the reference mission,
-**energy binds on every one**, with W_P/W_E between 0.236 and 0.780. The `max`
+**energy binds on every one**, with W_P/W_E between 0.236 and 0.773. The `max`
 never selects W_P, so no weight difference at that mission is attributable to
 the power constraint, however prominently the dual formulation is described.
 
@@ -142,10 +142,10 @@ mission variables, not one:
 
 | configuration | W_P/W_E at 161 km | crossover range | W_P/W_E at 10 km |
 |---|---|---|---|
-| lift+cruise | 0.754 | 115.5 km | 1.497 |
-| hybrid (tilt+lift) | 0.780 | 120.8 km | 1.422 |
-| hybrid pusher | 0.724 | 109.9 km | 1.310 |
-| tiltrotor | 0.744 | 112.7 km | 1.097 |
+| lift+cruise | 0.749 | 114.9 km | 1.488 |
+| hybrid (tilt+lift) | 0.773 | 119.5 km | 1.408 |
+| hybrid pusher | 0.718 | 109.0 km | 1.298 |
+| tiltrotor | 0.736 | 111.2 km | 1.082 |
 | side-by-side | 0.329 | none in 2–161 km | 0.755 |
 | multicopter | 0.236 | none in 2–161 km | 0.547 |
 

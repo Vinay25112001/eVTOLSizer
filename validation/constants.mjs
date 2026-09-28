@@ -72,7 +72,8 @@
    ===================================================================== */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { G0, R_GAS, RHO_MSL, T0, GAMMA, P0 } from "../src/engine/constants.js";
+import { G0, R_GAS, RHO_MSL, T0, GAMMA, P0, MU0 } from "../src/engine/constants.js";
+import { viscosity } from "../src/engine/atmosphere.js";
 
 const fails = [];
 let passes = 0;
@@ -135,6 +136,52 @@ check(Math.abs(P0 / (RHO_MSL * T0) / R_GAS - 1) < 1e-6,
   "and R is what NDARC's own p0, rho0 and T0 imply",
   `p0/(rho0*T0) = ${(P0 / (RHO_MSL * T0)).toFixed(6)} — R is derived from the table, ` +
   `not looked up; 287.05287 reproduces it to every digit the rounded rho0 supports`);
+
+/* ── VISCOSITY IS PINNED BY SUTHERLAND, NOT BY ITS DIGITS ─────────────
+   MU0 shipped as 1.47e-5 under the label "dynamic viscosity, Pa*s" and no
+   gate could see it. The identity harness re-derived Reynolds number with a
+   HARDCODED COPY of the same 1.47e-5, so the constant sat on both sides of
+   its own identity and the algebra closed perfectly around a wrong number.
+   That is the failure mode this whole file exists for: where a constant is
+   pinned by physics, check the RELATION.
+
+   Sutherland's law is that relation. It needs nothing from the application.
+       mu(T) = 1.458e-6 * T^1.5 / (T + 110.4)      [White, Viscous Fluid
+       Flow 3e, eq. 1-36; ICAO Doc 7488 tabulates mu(288.15) = 1.7894e-5]
+
+   The second check is the one that actually had teeth: it asserts MU0 is NOT
+   the KINEMATIC viscosity. 1.47e-5 is within 0.64 % of nu = mu/rho, so a
+   "is it about right" band centred anywhere near dynamic would have passed
+   the wrong quantity. A gate that cannot tell mu from nu is not gating mu. */
+const SUTHERLAND = (T) => 1.458e-6 * Math.pow(T, 1.5) / (T + 110.4);
+const MU_ISA = SUTHERLAND(T0);          // 1.789380e-5 Pa*s
+const NU_ISA = MU_ISA / RHO_MSL;        // 1.460719e-5 m2/s
+
+check(Math.abs(MU0 / MU_ISA - 1) < 5e-3,
+  "MU0 is the DYNAMIC viscosity Sutherland's law gives at T0",
+  `MU0 = ${MU0.toExponential(6)} against Sutherland ${MU_ISA.toExponential(6)} Pa*s ` +
+  `(${(100 * (MU0 / MU_ISA - 1)).toFixed(2)} %); at 1.47e-5 this read -17.85 %`);
+
+check(Math.abs(MU0 / NU_ISA - 1) > 0.10,
+  "and it is NOT the kinematic viscosity wearing a dynamic label",
+  `nu = mu/rho = ${NU_ISA.toExponential(6)} m2/s; MU0 is ${(100 * Math.abs(MU0 / NU_ISA - 1)).toFixed(1)} % ` +
+  `away from it (at 1.47e-5 it sat 0.64 % away, i.e. it WAS nu)`);
+
+/* The law that transports MU0 must be a dynamic-viscosity law, or the
+   coefficient is being carried by the wrong physics. Over the troposphere
+   Sutherland falls to 0.79447 of its sea-level value; the code's (T/T0)^0.75
+   gives 0.80743, within 2 %. The KINEMATIC ratio over the same interval is
+   2.674 -- larger by 3.3x -- so this check also fails if anyone "fixes" the
+   units by swapping the law instead of the constant. */
+{
+  const T11 = 216.65;
+  const lawRatio = viscosity(T11) / viscosity(T0);
+  const sutherRatio = SUTHERLAND(T11) / MU_ISA;
+  check(Math.abs(lawRatio / sutherRatio - 1) < 0.02,
+    "and atmosphere.js transports it with a DYNAMIC-viscosity temperature law",
+    `viscosity(216.65)/viscosity(288.15) = ${lawRatio.toFixed(5)} against Sutherland's ` +
+    `${sutherRatio.toFixed(5)}; the kinematic ratio over the same interval is 2.67431`);
+}
 
 /* ── 2. THE NEIGHBOURHOODS ──────────────────────────────────────────── */
 const R_EXACT = 287.05287;

@@ -26,8 +26,26 @@ import { runSizing } from "../src/engine.js";
 import { downloadFractionFor, resolveConfiguration } from "../src/engine/configuration.js";
 import { twinRotorInterference, hubSpacingFor } from "../src/engine/coaxial.js";
 
-const G0 = 9.80665, RHO_MSL = 1.225, T0 = 288.15, LAPSE = 0.0065,
-      R_GAS = 287.05287, GAMMA = 1.4, P0 = 101325, MU0 = 1.47e-5;
+/* ── A SECOND COPY OF A CONSTANT IS NOT AN INDEPENDENT CHECK ───────────
+   These eight were HARDCODED here, and MU0 was written 1.47e-5 -- the same
+   wrong value the engine carried. The Reynolds identity below then re-derived
+   Re with that private copy and compared it to the engine's Re, which the
+   engine had computed from ITS copy of the same wrong number. The constant
+   sat on BOTH SIDES of its own identity, the algebra closed to 1e-9, and the
+   harness reported a clean pass over a 21.7 % error in every Reynolds number
+   in the tree. The unit annotation on that identity even read (Pa*s) --
+   dynamic -- while the value was kinematic, and nothing compared the two.
+
+   So they are imported now. This harness tests ALGEBRA -- that a quantity the
+   engine reports equals the same quantity rebuilt from its own inputs by a
+   different route -- and it cannot do that job while silently disagreeing
+   with the engine about what a constant is. The CONSTANTS are pinned
+   elsewhere and by physics, not by digits: validation/constants.mjs closes
+   the ideal gas law on P0/RHO_MSL/T0/R_GAS, reproduces NDARC's speed of
+   sound, and pins MU0 against Sutherland's law at T0 while asserting it is
+   not the kinematic viscosity. Two instruments, two jobs. */
+import { G0, RHO_MSL, T0, LAPSE, R_GAS, GAMMA, P0, MU0 }
+  from "../src/engine/constants.js";
 
 function lcg(seed) { let s = seed >>> 0;
   return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296); }

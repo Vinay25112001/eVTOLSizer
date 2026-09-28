@@ -492,16 +492,47 @@ function runSizingCore(p0) {
   const tolFor = (W) => 0.01 * Math.max(1, Math.abs(W)) * convEps;
 
   /* Round 1 */
+  /* ── A GUARD MUST SEE THE VALUE IT IS GUARDING ────────────────────────
+     The ceiling test used to sit AFTER the assignment and read MTOW1, so the
+     offending iterate was published before anything looked at it and the
+     break merely stopped the NEXT one. Moving the test up without changing
+     its subject does not help: it then reads the previous, in-range iterate,
+     passes, and the runaway is assigned anyway one iteration later. Measured
+     on the registry path, sedCell=1 Wh/kg published 142,042.75 kg either way
+     -- 24.9x the 5,700 kg certification MCTOM -- and sedCell=1e-9 published
+     1.40e14 kg. The test must read `mn`, the candidate, before it becomes the
+     answer.
+
+     Round 2 already does exactly this at the mtowCeiling guard below, and says
+     why: "keep the last in-range iterate rather than an out-of-range one".
+     This makes Round 1 consistent with its sibling loop.
+
+     The bound is TWO-SIDED, and it has to be. A one-sided `mn > 5700` never
+     rejects a NEGATIVE mass, and these iterates go negative: range = -4938.9 km
+     runs 2177 -> -12,813.92 -> 78,556.43. Guarding only the top keeps
+     -12,813.92 kg as "the last in-range iterate" and an aircraft that weighs
+     less than nothing reaches componentWeights, which throws on a NaN
+     nzUltimate. An MTOW below the payload it carries is not a small design,
+     it is proof no root exists -- the same argument Round 2 makes for its own
+     ceiling. Round 2 states this bound as "[payload, ceiling]" but tests only
+     the upper half; registered as a separate finding rather than changed here.
+
+     `isFinite` is deliberately NOT tested here, unlike Round 2. Every route
+     that would make `mn` non-finite (sedCell/LD/etaSys = 0) throws earlier in
+     componentWeights on a NaN nzUltimate, so the condition is unreachable --
+     and a guard that cannot fail is not a guard. */
   let MTOW1=2177,Wempty1,Wbat1,itersR1=0;
+  let r1Converged=false,r1CeilingHit=false,r1FloorHit=false;
   for(let i=0;i<5000;i++){
     itersR1=i+1;
     Wempty1=ewf*MTOW1;
     const bf=(g0*p.range*1000)/(p.LD*p.etaSys*p.sedCell*3600);
     Wbat1=bf*MTOW1;
     const mn=p.payload+Wempty1+Wbat1;
-    if(Math.abs(mn-MTOW1)<tolFor(MTOW1)){MTOW1=mn;break;}
+    if(Math.abs(mn-MTOW1)<tolFor(MTOW1)){MTOW1=mn;r1Converged=true;break;}
+    if(mn>5700){r1CeilingHit=true;break;}
+    if(mn<p.payload){r1FloorHit=true;break;}
     MTOW1=mn;
-    if(MTOW1>5700)break;
   }
 
   /* ── HOW MANY HOPS THE SIZING MISSION FLIES ───────────────────────────
@@ -760,6 +791,16 @@ function runSizingCore(p0) {
   let WbatPrev=0;
   const mtowH=[MTOW1],energyH=[],residualH=[];
   let itersR2=0, r2Converged=false, r2Diverged=false;
+  /* ── DID ROUND 2 EVER PRODUCE AN MTOW? ────────────────────────────────
+     MTOW is SEEDED from MTOW1 above, so if Round 2 breaks before it writes
+     MTOW -- the ceiling/finiteness guard on its very first pass -- the value
+     that leaves this function is Round 1's, not Round 2's. It is still called
+     MTOW, still colour-coded as MTOW in the UI and still names a saved report.
+     Measured: vCruise=0 publishes 1,241.58 kg that way, and 1,241.58 kg is
+     PLAUSIBLE for this class, which is what makes it dangerous. r2Diverged
+     tells a caller the design did not close; it does not tell them the number
+     in front of them never came from the coupled loop at all. This does. */
+  let r2WroteMtow=false;
   /* [SRC] EASA SC-VTOL-01 small-category applicability: MCTOM 3,175 kg
      (7,000 lb) and 9 passengers or fewer. */
   const mtomLimit   = mtomLimitFor(p);
@@ -1445,7 +1486,7 @@ function runSizingCore(p0) {
     const residual=Math.abs(mn-MTOW);
     energyH.push(+Etot.toFixed(3)); mtowH.push(+mn.toFixed(2));
     residualH.push(residual);
-    if(residual<tolFor(MTOW)){MTOW=mn;r2Converged=true;break;}
+    if(residual<tolFor(MTOW)){MTOW=mn;r2WroteMtow=true;r2Converged=true;break;}
     /* DIVERGENCE GUARD — the weight-growth spiral.
        If empty-weight fraction plus battery fraction approach 1, MTOW runs away
        and every downstream number becomes Infinity/NaN, which then renders as
@@ -1630,7 +1671,7 @@ function runSizingCore(p0) {
        than an out-of-range one. */
     if(!isFinite(next)||next>mtowCeiling){ r2Diverged=true; mtowCeilingHit=true; break; }
     xPrev=MTOW; fPrev=fCur;
-    MTOW=next;
+    MTOW=next; r2WroteMtow=true;
   }
   /* If the loop ran out of iterations without meeting tolerance, the design did
      not close. Reporting the last iterate as though it were a converged answer
@@ -3875,6 +3916,14 @@ function runSizingCore(p0) {
     Trotor:+Trotor.toFixed(1),TW_hover:+TW_hover.toFixed(3),TW_cruise:+TW_cruise.toFixed(3),
     vnBasis,
     itersR1,itersR2,r2Converged,r2Diverged,
+    /* Round 1's own outcome. itersR1 alone cannot distinguish "converged in 39"
+       from "hit the ceiling on pass 1" -- both are just a number -- so nothing
+       downstream could tell a Round 1 ANSWER from a Round 1 SEED. */
+    r1Converged,r1CeilingHit,r1FloorHit,
+    /* True when the published MTOW is Round 1's value because Round 2 broke
+       before ever writing one. Not the same as r2Diverged: a design can
+       diverge after Round 2 has produced perfectly real iterates. */
+    mtowFromR1Seed:!r2WroteMtow,
     /* the threshold as APPLIED, so the convergence plot's reference line sits
        where the test really was rather than at the raw exponent */
     tol:tolFor(MTOW), convEps,

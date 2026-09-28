@@ -1,6 +1,6 @@
 # Validation Report — eVTOL Conceptual Sizing Tool
 
-**Generated 2026-09-28 17:52 UTC from commit `3a7a5a4` (WORKING TREE DIRTY — this report does not describe a committed state).**
+**Generated 2026-09-28 20:05 UTC from commit `5206672` (WORKING TREE DIRTY — this report does not describe a committed state).**
 
 This document is produced by `validation/report.mjs`, which runs every
 harness and captures what each one printed. It is not written by hand. If
@@ -69,7 +69,7 @@ any further work on the code.**
 
 ## 3. Verification
 
-68 harnesses, all gated in `npm test` and run in CI on every push.
+69 harnesses, all gated in `npm test` and run in CI on every push.
 
 | harness | what it proves | result |
 |---|---|---|
@@ -100,6 +100,7 @@ any further work on the code.**
 | `load-cases.mjs` | SC-VTOL gust set and the CS-23.341 alleviation factor, with the SI form checked against the regulation's own imperial 498 constant. | pass |
 | `reg-applicability.mjs` | Whether the certification document GOVERNS the design at all is decided before any of its thresholds are evaluated, because a rule from a document that does not apply has no verdict to give. The Regulatory tab used to render SC-VTOL-02's own applicability limit -- VTOL.2005(a), MCTOM 5 700 kg -- as an ordinary compliance row with a PASS/FAIL badge beside the others, so a design this engine produces by moving the Payload slider to its own maximum, 11 132 kg or twice the limit, was reported as one FAIL with nine PASS beside it, including VTOL.2215 on an aircraft VTOL.2215 does not govern. Nothing that checks thresholds can catch that: every threshold was evaluated correctly. The gate holds the five applicability gates of VTOL.2000 and VTOL.2005, and distinguishes two kinds of undecided that must not be merged -- a seat count nobody typed, which one keystroke closes, from VTOL.2000(d)'s VNO limit, which NOTHING closes because this engine computes no VNO, VNE or VH. Merging them made the incompleteness flag permanent, and a warning that is always on stops being read; so the applicability test here is honestly reported as never complete, only never contradicted. The EASA and FAA gates are held as DIFFERENT limits rather than one number in two units -- 5 700 kg against 12 500 lb = 5 669.905 kg, and nine seats against six -- so a 5 685 kg eight-seater is shown inside EASA scope and outside FAA scope, the same 30 kg trap that drone-regulatory.js refuses at 52 g. It also refuses the shape of a second defect found alongside: every rule's value must MOVE across a thirteen-design sweep, which withdrew a dive-speed row that compared VD to p.vCruise while the engine defines VD as exactly 1.25 x vCruise -- 1.250000 for every design ever sized, a check that could not fail. load-factor-source.mjs refuses that class for load factors by scanning for numeric literals, and could not see this one because it was a ratio of a quantity to itself. Finally it SERVER-RENDERS the panel at four scope states, which nothing else in this repo does: tab-render.mjs covers src/tabs/, and this panel lives in src/panels/, the same blind spot in which a conditional hook once stopped a tab loading entirely while the production build and every other gate passed. | pass |
 | `certification-climb.mjs` | The MOC VTOL.2120 climb gradient must REFUSE a degenerate aircraft rather than certify one, and its basis string may not claim a condition the arithmetic never applied. Both halves were live defects and both were invisible to every other gate here, for the same reason: this file scores nothing against a reference. W and V were floored with Math.max(1, ...) and Math.max(1e-6, ...), which did not guard the arithmetic but FABRICATED an aeroplane -- a missing or zero mass became a 1 N machine and a missing or zero cruise speed a 1 micrometre-per-second one -- and the clause then PASSED it: measured at the app's own unit count and rating, MTOW_kg = 0 returned a gradient of 968 252 % with pass:true, vCruise = 0 returned 2 386 407 994 % with pass:true, and both zero returned 6.5e13 %. That is the only safety-performance clause the eVTOL path evaluates, it is reported as a certification finding, and unlike the sizing loop's runaway -- which App.jsx banners in red -- a PASS here carried no warning at all. A harness that compares an output to published data can never see this, because a degenerate input has no published answer to be compared against; the check that finds it is an assertion about what the function must REFUSE, and pass must come back null rather than false, because false is a finding about an aircraft and there is no aircraft. The second half is the harder one to gate: the basis string read 'at 305 m above the take-off surface' while CLIMB_GRADIENT_ALT_M appeared in the module exactly twice, at its declaration and inside that sentence, and never in the arithmetic, and rhoAtCondition was documented as an input and never read. A gate cannot read English, but it can require that a named condition either move the result or be stated as NOT the one applied -- so the rule's own condition is still cited, explicitly as the condition the number was not computed at, and conditionApplied carries the same fact in a field for any consumer that renders no prose. Closing the gap for real needs the lift-to-drag and speed re-derived at 305 m, and ISA SL for Category Basic, which is an engineering change with its own validation and is deliberately left undone and SAID. Four regression pins hold the valid-design arithmetic unchanged, and they are MEASURED against the pre-fix module rather than predicted: the first value written by hand was a guess and this harness rejected it. | pass |
+| `round1-seed.mjs` | Round 1's mass iteration must not publish an out-of-category iterate as MTOW, and a number that only ever came from Round 1 must say so. The ceiling test sat AFTER the assignment and read MTOW1, so the offending value was written before anything examined it and the break merely stopped the next one: on the registry entry path the app actually uses, sedCell = 1 Wh/kg published 142 042.75 kg -- 24.9x the 5 700 kg certification MCTOM and 12.5x the tool's own ceiling -- range = 5000 km published 16 256.18 kg, and sedCell = 1e-9 published 1.40e14 kg. The remediation register proposed moving the guard above the assignment, and THAT PROPOSAL IS A NO-OP: moved but still reading MTOW1, the test sees the previous in-range iterate, passes, and the runaway is assigned anyway one iteration later, with all three numbers unchanged and only itersR1 moving from 1 to 2. It is kept here as a mutant so it cannot be reintroduced as a fix. The test must read the candidate, mn, before it becomes the answer -- which is what Round 2 already does at its own mtowCeiling guard, saying 'keep the last in-range iterate rather than an out-of-range one'. The bound is two-sided because a one-sided mn > 5700 never rejects a NEGATIVE mass and these iterates go negative: range = -4938.9 km runs 2177 -> -12 813.92 -> 78 556.43, and keeping only an upper bound preserves -12 813.92 kg as the last in-range iterate, whereupon an aircraft weighing less than nothing reaches componentWeights and throws on a NaN nzUltimate. Round 2 states that bound as [payload, ceiling] but tests only the upper half; that divergence between its comment and its code is registered as a finding rather than changed under this one. A guard ordering fixes none of the second failure: vCruise = 0 publishes 1 241.58 kg because Round 1 genuinely CONVERGES -- its recurrence contains no vCruise at all -- MTOW is seeded from MTOW1, and Round 2 breaks on its first pass without ever writing MTOW. 1 241.58 kg is plausible for this class, which is what makes it the dangerous case, and r2Diverged does not cover it: that flag says the design did not close, not that the number never came from the coupled loop. mtowFromR1Seed says the latter, and the harness proves the two are not synonyms by carrying range = 240 km -- inside the UI slider's own 50-250 -- where Round 2 writes MTOW 65 times, never meets tolerance, and diverges with a number that is genuinely its own. isFinite is deliberately NOT tested in Round 1, unlike Round 2, because every route that would make mn non-finite throws earlier in componentWeights, and a guard that cannot fail is not a guard. Every flag asserted here must be observed both true and false across the case set, so a constant cannot masquerade as a tested one. Five mutants, all killed: the pre-fix code, the register's moved guard, ceiling-only, floor-only, and a constant mtowFromR1Seed. | pass |
 | `blade-twist.mjs` | Ideal twist through the derived collective; the curve must pass through Beta34, which is the same quantity OpenVSP samples at 0.75 R. | pass |
 | `control-authority.mjs` | Du et al. ACAI. Validated by reproducing the published hexacopter paradox: uncontrollable after one rotor failure AT FULL RANK. | pass |
 | `wing-modes-cr2144.mjs` | The wing-borne mode formulas measured on real aircraft: NASA CR-2144's manufacturer-supplied derivatives and modes for the Boeing 747, Lockheed Jetstar, Convair 880M and Lockheed C-5A at 36 flight conditions, fed through the same code path the eVTOL uses. Short period within 1 %; roll 9 % low; fin-only Dutch-roll frequency 17 % low; Dutch-roll damping withheld because the formula misses by more than a factor of two. The transcription is gated by the report's own characteristic polynomials. | pass |
@@ -231,7 +232,7 @@ output is emitted without one.
 
 | status | count | share |
 |---|---|---|
-| derived | 234 | 50% |
+| derived | 238 | 51% |
 | sourced | 141 | 30% |
 | unverified | 70 | 15% |
 | validated | 16 | 3% |
@@ -239,7 +240,7 @@ output is emitted without one.
 | assumed | 1 | 0% |
 
 **`validated` means one thing only: the value has been numerically compared
-to a published figure and the error is recorded.** 16 of 467 outputs
+to a published figure and the error is recorded.** 16 of 471 outputs
 (3%) meet that bar:
 
 `DL_lbft2`, `Etot`, `LDact`, `MTOW`, `PackkWh`, `Phov`, `Wbat`, `Wempty`, `bWing`, `dBA_100m`, `ewfImplied`, `fuelBurnKg`, `fuelMassKg`, `kNDARC`, `weightGroupsRaw`, `weightModel`
@@ -460,7 +461,7 @@ Required by [M&S 49].
 
 Everything below is captured from the run that produced this document.
 
-<details><summary><code>scope-check.mjs</code> — exit 0, 6014 ms</summary>
+<details><summary><code>scope-check.mjs</code> — exit 0, 4118 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
@@ -472,7 +473,7 @@ PASS — every referenced identifier is imported, declared or a runtime global,
 
 </details>
 
-<details><summary><code>tab-registry.mjs</code> — exit 0, 396 ms</summary>
+<details><summary><code>tab-registry.mjs</code> — exit 0, 250 ms</summary>
 
 ```
 TAB REGISTRY GATE
@@ -490,7 +491,7 @@ TAB REGISTRY GATE PASSED
 
 </details>
 
-<details><summary><code>units.mjs</code> — exit 0, 407 ms</summary>
+<details><summary><code>units.mjs</code> — exit 0, 269 ms</summary>
 
 ```
 UNITS GATE
@@ -564,7 +565,7 @@ UNITS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>constants.mjs</code> — exit 0, 1011 ms</summary>
+<details><summary><code>constants.mjs</code> — exit 0, 607 ms</summary>
 
 ```
 PHYSICAL CONSTANTS GATE
@@ -600,7 +601,7 @@ PHYSICAL CONSTANTS GATE
 
 -- every source file in src/ --
   PASS  the scan actually read the tree
-          373 source files — a passing result from an empty walk is not a result
+          374 source files — a passing result from an empty walk is not a result
   PASS  no source file writes a physical constant with a value of its own
           7 named exceptions, each with a reason: src/classes/trainer/weights.js 32.2; src/lib/units.js 9.807; src/engine/constants.js 9.81; src/engine/constants.js 287.052874; src/engine/constants.js 287.053; src/engine/constants.js 287.058; src/data/tyres.js 32.2
 
@@ -626,7 +627,7 @@ CONSTANTS GATE PASSED (20 checks)
 
 </details>
 
-<details><summary><code>identities.mjs</code> — exit 0, 8350 ms</summary>
+<details><summary><code>identities.mjs</code> — exit 0, 5897 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -684,7 +685,7 @@ PASS — all 43 relations hold to 0.2%.
 
 </details>
 
-<details><summary><code>golden-master.mjs</code> — exit 0, 9566 ms</summary>
+<details><summary><code>golden-master.mjs</code> — exit 0, 6305 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -696,7 +697,7 @@ PASS — no output moved by more than 1e-6 relative.
 
 </details>
 
-<details><summary><code>components.mjs</code> — exit 0, 197 ms</summary>
+<details><summary><code>components.mjs</code> — exit 0, 167 ms</summary>
 
 ```
 ==============================================================================
@@ -877,7 +878,7 @@ regardless of what the loop happens to converge to.
 
 </details>
 
-<details><summary><code>database-report.mjs</code> — exit 0, 159 ms</summary>
+<details><summary><code>database-report.mjs</code> — exit 0, 145 ms</summary>
 
 ```
 ======================================================================================
@@ -983,7 +984,7 @@ NASA CONCEPT VEHICLES — the only full weight statements in the field
 
 </details>
 
-<details><summary><code>sampled-uncertainty.mjs</code> — exit 0, 98456 ms</summary>
+<details><summary><code>sampled-uncertainty.mjs</code> — exit 0, 71902 ms</summary>
 
 ```
 SAMPLED UNCERTAINTY
@@ -1032,7 +1033,7 @@ SAMPLED UNCERTAINTY PASSED
 
 </details>
 
-<details><summary><code>analysis-layers.mjs</code> — exit 0, 14367 ms</summary>
+<details><summary><code>analysis-layers.mjs</code> — exit 0, 11911 ms</summary>
 
 ```
 ANALYSIS-LAYER GATE
@@ -1070,7 +1071,7 @@ ANALYSIS-LAYER GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-models.mjs</code> — exit 0, 6897 ms</summary>
+<details><summary><code>vsp-models.mjs</code> — exit 0, 3986 ms</summary>
 
 ```
 NASA OpenVSP MODEL REPLICATION GATE
@@ -1110,7 +1111,7 @@ VSP GATE PASSED
 
 </details>
 
-<details><summary><code>geometry-export.mjs</code> — exit 0, 102442 ms</summary>
+<details><summary><code>geometry-export.mjs</code> — exit 0, 67851 ms</summary>
 
 ```
 GEOMETRY & EXPORT GATE
@@ -1167,7 +1168,7 @@ GEOMETRY & EXPORT GATE PASSED
 
 </details>
 
-<details><summary><code>fuselage-outline.mjs</code> — exit 0, 806 ms</summary>
+<details><summary><code>fuselage-outline.mjs</code> — exit 0, 469 ms</summary>
 
 ```
 FUSELAGE OUTLINE GATE
@@ -1368,7 +1369,7 @@ FUSELAGE OUTLINE GATE PASSED (104 checks)
 
 </details>
 
-<details><summary><code>control-surface-stations.mjs</code> — exit 0, 516 ms</summary>
+<details><summary><code>control-surface-stations.mjs</code> — exit 0, 270 ms</summary>
 
 ```
 ==============================================================================
@@ -1505,7 +1506,7 @@ CONTROL-SURFACE STATIONS GATE PASSED (59 checks)
 
 </details>
 
-<details><summary><code>general-arrangement.mjs</code> — exit 0, 1247 ms</summary>
+<details><summary><code>general-arrangement.mjs</code> — exit 0, 606 ms</summary>
 
 ```
 GENERAL ARRANGEMENT GATE — centre of gravity and gear stations
@@ -1629,7 +1630,7 @@ GENERAL ARRANGEMENT GATE PASSED (77 checks)
 
 </details>
 
-<details><summary><code>nasa-configs.mjs</code> — exit 0, 1436 ms</summary>
+<details><summary><code>nasa-configs.mjs</code> — exit 0, 423 ms</summary>
 
 ```
 ======================================================================================
@@ -1723,7 +1724,7 @@ PASS: 39 published comparisons, mean 10.4%, worst -26.9%
 
 </details>
 
-<details><summary><code>validate.mjs</code> — exit 0, 4823 ms</summary>
+<details><summary><code>validate.mjs</code> — exit 0, 1760 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════════
@@ -1836,7 +1837,7 @@ PASS: within the 40% gate
 
 </details>
 
-<details><summary><code>tab-visibility.mjs</code> — exit 0, 5211 ms</summary>
+<details><summary><code>tab-visibility.mjs</code> — exit 0, 1873 ms</summary>
 
 ```
 TAB VISIBILITY GATE
@@ -1862,7 +1863,7 @@ TAB VISIBILITY GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-run.mjs</code> — exit 0, 142720 ms</summary>
+<details><summary><code>vsp-run.mjs</code> — exit 0, 91535 ms</summary>
 
 ```
 OPENVSP SCRIPT-RUN GATE
@@ -1882,7 +1883,7 @@ OPENVSP SCRIPT-RUN GATE PASSED — every configuration builds in OpenVSP
 
 </details>
 
-<details><summary><code>vspaero.mjs</code> — exit 0, 25142 ms</summary>
+<details><summary><code>vspaero.mjs</code> — exit 0, 20310 ms</summary>
 
 ```
 VSPAERO GATE — vortex-lattice polar on the exported model
@@ -1920,7 +1921,7 @@ VSPAERO GATE PASSED
 
 </details>
 
-<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 183 ms</summary>
+<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 136 ms</summary>
 
 ```
 ROTORCRAFT TAIL GATE
@@ -1940,7 +1941,7 @@ ROTORCRAFT TAIL GATE PASSED
 
 </details>
 
-<details><summary><code>drive-failure.mjs</code> — exit 0, 146 ms</summary>
+<details><summary><code>drive-failure.mjs</code> — exit 0, 147 ms</summary>
 
 ```
 DRIVE-SYSTEM FAILURE GATE
@@ -1968,7 +1969,7 @@ DRIVE-SYSTEM FAILURE GATE PASSED
 
 </details>
 
-<details><summary><code>autorotation.mjs</code> — exit 0, 5433 ms</summary>
+<details><summary><code>autorotation.mjs</code> — exit 0, 5497 ms</summary>
 
 ```
 AUTOROTATION GATE
@@ -2011,7 +2012,7 @@ AUTOROTATION GATE PASSED
 
 </details>
 
-<details><summary><code>whirl-flutter.mjs</code> — exit 0, 5161 ms</summary>
+<details><summary><code>whirl-flutter.mjs</code> — exit 0, 4481 ms</summary>
 
 ```
 WHIRL-FLUTTER GATE
@@ -2057,7 +2058,7 @@ WHIRL-FLUTTER GATE PASSED
 
 </details>
 
-<details><summary><code>load-cases.mjs</code> — exit 0, 4078 ms</summary>
+<details><summary><code>load-cases.mjs</code> — exit 0, 3650 ms</summary>
 
 ```
 STRUCTURAL LOAD CASE GATE
@@ -2094,7 +2095,7 @@ STRUCTURAL LOAD CASE GATE PASSED
 
 </details>
 
-<details><summary><code>reg-applicability.mjs</code> — exit 0, 4522 ms</summary>
+<details><summary><code>reg-applicability.mjs</code> — exit 0, 4161 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -2139,7 +2140,7 @@ REGULATORY APPLICABILITY GATE — does the document govern this aircraft?
 
 2b. THE DECLARATION IS INERT — it gates, it does not size
   PASS  declaring a VNO changes no sized result, byte for byte
-        runSizing with and without VNO 250 KCAS → identical (105918 chars)
+        runSizing with and without VNO 250 KCAS → identical (106000 chars)
   PASS  the engine derives no VNO of its own
         src/engine.js assigns no VNO — it is read from the parameters or absent
 
@@ -2263,7 +2264,7 @@ REGULATORY APPLICABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>certification-climb.mjs</code> — exit 0, 211 ms</summary>
+<details><summary><code>certification-climb.mjs</code> — exit 0, 142 ms</summary>
 
 ```
 
@@ -2322,7 +2323,70 @@ PASS: 42 checks passed, 0 failed
 
 </details>
 
-<details><summary><code>blade-twist.mjs</code> — exit 0, 5555 ms</summary>
+<details><summary><code>round1-seed.mjs</code> — exit 0, 3440 ms</summary>
+
+```
+
+-- 0. the engine returns, on every case --
+  PASS  default: runSizing returns
+  PASS  sedCell=1: runSizing returns
+  PASS  range=5000: runSizing returns
+  PASS  vCruise=0: runSizing returns
+  PASS  sedCell=1e-9: runSizing returns
+  PASS  range=-5000: runSizing returns
+  PASS  range=240: runSizing returns
+
+-- 1. Round 1 reports its own outcome --
+  PASS  r1Converged is present and boolean on every case
+  PASS  r1CeilingHit is present and boolean on every case
+  PASS  r1FloorHit is present and boolean on every case
+  PASS  mtowFromR1Seed is present and boolean on every case
+  PASS  itersR1 does not distinguish a converged Round 1 from a bailed one, so a flag must
+
+-- 2. an out-of-category iterate is never published --
+  PASS  sedCell=1: a non-converged Round 1 publishes no mass above 5700 kg
+  PASS  range=5000: a non-converged Round 1 publishes no mass above 5700 kg
+  PASS  sedCell=1e-9: a non-converged Round 1 publishes no mass above 5700 kg
+  PASS  range=-5000: a non-converged Round 1 publishes no mass above 5700 kg
+  PASS  sedCell=1: no longer publishes its pre-fix value 142042.75
+  PASS  range=5000: no longer publishes its pre-fix value 16256.18
+  PASS  sedCell=1e-9: no longer publishes its pre-fix value 140499252822752.62
+
+-- 3. the bound has a floor as well as a ceiling --
+  PASS  sedCell=1: a non-converged Round 1 publishes no mass below its own payload
+  PASS  range=5000: a non-converged Round 1 publishes no mass below its own payload
+  PASS  sedCell=1e-9: a non-converged Round 1 publishes no mass below its own payload
+  PASS  range=-5000: a non-converged Round 1 publishes no mass below its own payload
+  PASS  range=-5000 trips the FLOOR, not the ceiling — the iterate it rejects is -12,813.92 kg
+
+-- 4. the published MTOW says whether Round 2 produced it --
+  PASS  sedCell=1: mtowFromR1Seed means the published MTOW *is* Round 1's
+  PASS  range=5000: mtowFromR1Seed means the published MTOW *is* Round 1's
+  PASS  vCruise=0: mtowFromR1Seed means the published MTOW *is* Round 1's
+  PASS  sedCell=1e-9: mtowFromR1Seed means the published MTOW *is* Round 1's
+  PASS  vCruise=0: Round 1 CONVERGED and the answer is still only a seed — no guard ordering reaches this case
+  PASS  vCruise=0: and it is PLAUSIBLE, which is why a flag and not a magnitude test is required
+
+-- 5. every flag is observed both true and false --
+  PASS  r1Converged is not constant over the case set
+  PASS  r1CeilingHit is not constant over the case set
+  PASS  r1FloorHit is not constant over the case set
+  PASS  mtowFromR1Seed is not constant over the case set
+  PASS  r2Diverged is not constant over the case set
+  PASS  mtowFromR1Seed is not a duplicate of r2Diverged
+
+-- 6. the design that closes is untouched --
+  PASS  default: MTOW unchanged at 2772.06
+  PASS  default: MTOW1 unchanged at 1597.2
+  PASS  default: itersR1 unchanged at 50
+  PASS  default: converged in both rounds, and its MTOW is Round 2's
+
+PASS: 40 checks passed, 0 failed
+```
+
+</details>
+
+<details><summary><code>blade-twist.mjs</code> — exit 0, 4889 ms</summary>
 
 ```
 BLADE TWIST GATE
@@ -2364,7 +2428,7 @@ BLADE TWIST GATE PASSED
 
 </details>
 
-<details><summary><code>control-authority.mjs</code> — exit 0, 5611 ms</summary>
+<details><summary><code>control-authority.mjs</code> — exit 0, 4289 ms</summary>
 
 ```
 FAILURE-MODE CONTROLLABILITY GATE
@@ -2404,7 +2468,7 @@ FAILURE-MODE CONTROLLABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>wing-modes-cr2144.mjs</code> — exit 0, 5179 ms</summary>
+<details><summary><code>wing-modes-cr2144.mjs</code> — exit 0, 4613 ms</summary>
 
 ```
 WING-BORNE MODES vs NASA CR-2144 GATE
@@ -2472,7 +2536,7 @@ WING-BORNE MODES vs CR-2144 GATE PASSED
 
 </details>
 
-<details><summary><code>hover-dynamics.mjs</code> — exit 0, 3986 ms</summary>
+<details><summary><code>hover-dynamics.mjs</code> — exit 0, 2800 ms</summary>
 
 ```
 HOVER DYNAMICS GATE
@@ -2520,7 +2584,7 @@ HOVER DYNAMICS GATE PASSED
 
 </details>
 
-<details><summary><code>render-freeze.mjs</code> — exit 0, 14763 ms</summary>
+<details><summary><code>render-freeze.mjs</code> — exit 0, 13130 ms</summary>
 
 ```
 RENDER FREEZE GATE
@@ -2558,7 +2622,7 @@ PASS: all 27 views render exactly as committed
 
 </details>
 
-<details><summary><code>design-file.mjs</code> — exit 0, 6034 ms</summary>
+<details><summary><code>design-file.mjs</code> — exit 0, 5076 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -2566,16 +2630,16 @@ DESIGN FILE — reproducible saved designs
 ════════════════════════════════════════════════════════════════════════
 
 1. A saved design reopens to the same result
-  PASS  default: identical after save → JSON → open  — 448 outputs compared, status identical
-  PASS  config liftcruise: identical after save → JSON → open  — 449 outputs compared, status identical
-  PASS  config hybrid: identical after save → JSON → open  — 448 outputs compared, status identical
-  PASS  config hybridPusher: identical after save → JSON → open  — 448 outputs compared, status identical
-  PASS  config tiltrotor: identical after save → JSON → open  — 448 outputs compared, status identical
-  PASS  config multicopter: identical after save → JSON → open  — 347 outputs compared, status identical
-  PASS  config sideBySide: identical after save → JSON → open  — 347 outputs compared, status identical
-  PASS  reserve by distance: identical after save → JSON → open  — 448 outputs compared, status identical
-  PASS  manoeuvre load factor set: identical after save → JSON → open  — 448 outputs compared, status identical
-  PASS  a record compares the whole fingerprint, not a handful of headline numbers  — smallest comparison 347 outputs
+  PASS  default: identical after save → JSON → open  — 452 outputs compared, status identical
+  PASS  config liftcruise: identical after save → JSON → open  — 453 outputs compared, status identical
+  PASS  config hybrid: identical after save → JSON → open  — 452 outputs compared, status identical
+  PASS  config hybridPusher: identical after save → JSON → open  — 452 outputs compared, status identical
+  PASS  config tiltrotor: identical after save → JSON → open  — 452 outputs compared, status identical
+  PASS  config multicopter: identical after save → JSON → open  — 351 outputs compared, status identical
+  PASS  config sideBySide: identical after save → JSON → open  — 351 outputs compared, status identical
+  PASS  reserve by distance: identical after save → JSON → open  — 452 outputs compared, status identical
+  PASS  manoeuvre load factor set: identical after save → JSON → open  — 452 outputs compared, status identical
+  PASS  a record compares the whole fingerprint, not a handful of headline numbers  — smallest comparison 351 outputs
   PASS  stored MTOW is the engine's MTOW for the stored inputs (reserve transform included)  — 2543.51 vs 2543.51
   PASS  …and the transform matters (running the raw state gives a different aircraft)  — raw 2073.36 vs transformed 2543.51
 
@@ -2640,7 +2704,7 @@ DESIGN FILE: 54 passed, 0 failed
 
 </details>
 
-<details><summary><code>validation-domain.mjs</code> — exit 0, 2880 ms</summary>
+<details><summary><code>validation-domain.mjs</code> — exit 0, 2638 ms</summary>
 
 ```
 VALIDATION DOMAIN GATE
@@ -2664,7 +2728,7 @@ PASS  the app's domain file matches the harnesses
 
 </details>
 
-<details><summary><code>result-warnings.mjs</code> — exit 0, 4162 ms</summary>
+<details><summary><code>result-warnings.mjs</code> — exit 0, 4049 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -2732,7 +2796,7 @@ RESULT WARNINGS: 41 passed, 0 failed
 
 </details>
 
-<details><summary><code>provenance-report.mjs</code> — exit 0, 3253 ms</summary>
+<details><summary><code>provenance-report.mjs</code> — exit 0, 2107 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
@@ -2746,18 +2810,18 @@ INPUTS — 89 registered
   derived      16   18%  ███████
   unverified   27   30%  ████████████
 
-OUTPUTS — 467 registered
+OUTPUTS — 471 registered
   validated    16    3%  █
   calibrated    5    1%  
   sourced     141   30%  ████████████
-  derived     234   50%  ████████████████████
+  derived     238   51%  ████████████████████
   unverified   70   15%  ██████
 
 ══════════════════════════════════════════════════════════════════════════
-Engine emits 467 distinct keys over 16 runs (467 on the reference run); 467 are registered.
+Engine emits 471 distinct keys over 16 runs (471 on the reference run); 471 are registered.
 Every emitted output is classified.
 
-Bottom line: 16 of 467 engine outputs (3%) have been
+Bottom line: 16 of 471 engine outputs (3%) have been
 compared numerically against published aircraft data.
 
 ══════════════════════════════════════════════════════════════════════════
@@ -2766,7 +2830,7 @@ PROVENANCE GATE PASSED - every output any layout emits is classified.
 
 </details>
 
-<details><summary><code>api.mjs</code> — exit 0, 8901 ms</summary>
+<details><summary><code>api.mjs</code> — exit 0, 6597 ms</summary>
 
 ```
 ENGINE API GATE
@@ -2776,16 +2840,16 @@ ENGINE API GATE
   PASS  size() returns warnings and the domain with the numbers
   PASS  sizeMany() sizes each case
   PASS  a design that does not close reports converged: false
-  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"3a7a5a415fe8","dirty":true,"builtAt":null,"mode":"node-api"}
+  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"52066723edbc","dirty":true,"builtAt":null,"mode":"node-api"}
   PASS  reopen() reproduces a record
   PASS  engineVersion() reports the package and format versions
   PASS  docs/API.md documents every export  — 19 exports
-  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit 3a7a5a415fe8, uncommitted changes; API 1; design format 1)
+  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit 52066723edbc, uncommitted changes; API 1; design format 1)
   PASS  a clean design exits 0
   PASS  a design that does not close exits 1
   PASS  unreadable input exits 2
   PASS  an array gives one JSON line per case, each with its warnings
-  PASS  --reopen reproduces a saved design file and exits 0  — identical: 0 of 448 stored outputs moved
+  PASS  --reopen reproduces a saved design file and exits 0  — identical: 0 of 452 stored outputs moved
   PASS  no app module imports src/api.js (it uses node:fs)
   PASS  package.json exports the API and the command
 
@@ -2794,7 +2858,7 @@ ENGINE API GATE PASSED (17 checks)
 
 </details>
 
-<details><summary><code>turboelectric.mjs</code> — exit 0, 4345 ms</summary>
+<details><summary><code>turboelectric.mjs</code> — exit 0, 3798 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -2853,7 +2917,7 @@ TURBOELECTRIC GATE PASSED (24 checks)
 
 </details>
 
-<details><summary><code>cpacs-export.mjs</code> — exit 0, 3209 ms</summary>
+<details><summary><code>cpacs-export.mjs</code> — exit 0, 2757 ms</summary>
 
 ```
 CPACS AND TRACEABILITY EXPORT GATE
@@ -2889,7 +2953,7 @@ EXPORT GATE PASSED (25 checks)
 
 </details>
 
-<details><summary><code>release.mjs</code> — exit 0, 443 ms</summary>
+<details><summary><code>release.mjs</code> — exit 0, 336 ms</summary>
 
 ```
 RELEASE GATE
@@ -2915,7 +2979,7 @@ RELEASE GATE PASSED (0.2.0-dev, in preparation)
 
 </details>
 
-<details><summary><code>aircraft-classes.mjs</code> — exit 0, 1591 ms</summary>
+<details><summary><code>aircraft-classes.mjs</code> — exit 0, 1414 ms</summary>
 
 ```
 AIRCRAFT-CLASS GATE
@@ -2931,7 +2995,7 @@ AIRCRAFT-CLASS GATE
   PASS  class "bizjet" is complete
   PASS  class "turboprop" is complete
   PASS  eVTOL DEFAULT_PARAMS unchanged (content hash)  — now 159dfff349a567, pinned 159dfff349a567
-  PASS  sizeDesign(eVTOL) equals the app's own call in every output  — 448 outputs
+  PASS  sizeDesign(eVTOL) equals the app's own call in every output  — 452 outputs
   PASS  an unknown class ("glider") is refused
   PASS  an unknown class ("") is refused
   PASS  an unknown class ("toString") is refused
@@ -2954,7 +3018,7 @@ AIRCRAFT-CLASS GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>trainer.mjs</code> — exit 0, 421 ms</summary>
+<details><summary><code>trainer.mjs</code> — exit 0, 347 ms</summary>
 
 ```
 TRAINER GATE
@@ -3024,7 +3088,7 @@ TRAINER GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>transport.mjs</code> — exit 0, 3032 ms</summary>
+<details><summary><code>transport.mjs</code> — exit 0, 3056 ms</summary>
 
 ```
 TRANSPORT GATE
@@ -3108,7 +3172,7 @@ TRANSPORT GATE PASSED (60 checks)
 
 </details>
 
-<details><summary><code>transport-mission.mjs</code> — exit 0, 714 ms</summary>
+<details><summary><code>transport-mission.mjs</code> — exit 0, 644 ms</summary>
 
 ```
 TRANSPORT MISSION AND LAYOUT GATE
@@ -3171,7 +3235,7 @@ TRANSPORT MISSION GATE PASSED (44 checks)
 
 </details>
 
-<details><summary><code>transport-aero.mjs</code> — exit 0, 5834 ms</summary>
+<details><summary><code>transport-aero.mjs</code> — exit 0, 5425 ms</summary>
 
 ```
 TRANSPORT DRAG BUILD-UP GATE
@@ -3228,7 +3292,7 @@ TRANSPORT DRAG GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>bizjet.mjs</code> — exit 0, 882 ms</summary>
+<details><summary><code>bizjet.mjs</code> — exit 0, 1237 ms</summary>
 
 ```
 BUSINESS-JET GATE
@@ -3262,7 +3326,7 @@ BUSINESS-JET GATE PASSED (15 checks)
 
 </details>
 
-<details><summary><code>aircraft-engine.mjs</code> — exit 0, 2866 ms</summary>
+<details><summary><code>aircraft-engine.mjs</code> — exit 0, 3686 ms</summary>
 
 ```
 AIRCRAFT ENGINE GATE
@@ -3473,7 +3537,7 @@ AIRCRAFT ENGINE GATE PASSED (166 checks)
 
 </details>
 
-<details><summary><code>turboprop.mjs</code> — exit 0, 341 ms</summary>
+<details><summary><code>turboprop.mjs</code> — exit 0, 410 ms</summary>
 
 ```
 TURBOPROP GATE
@@ -3558,7 +3622,7 @@ TURBOPROP GATE PASSED (59 checks)
 
 </details>
 
-<details><summary><code>paper-claims.mjs</code> — exit 0, 28596 ms</summary>
+<details><summary><code>paper-claims.mjs</code> — exit 0, 24816 ms</summary>
 
 ```
 PAPER CLAIM GATE
@@ -3601,7 +3665,7 @@ Checking 2 document(s): README.md, VFS-Forum-83-abstract.md
   ok   best rotor model in sweep (the cost of guessing) 23.6%
   ok   groups at or better than AFDD in population 11
   ok   mean out-of-population degradation ×1.4
-  ok   registered outputs               467
+  ok   registered outputs               471
   ok   validated outputs                16
   ok   golden master cases              277
 
@@ -3610,7 +3674,7 @@ PASS: all 39 numeric claims in paper/ are reproduced by the harnesses
 
 </details>
 
-<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 3184 ms</summary>
+<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 2116 ms</summary>
 
 ```
 VTOL AUTOPILOT GATE
@@ -3668,7 +3732,7 @@ VTOL AUTOPILOT GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-frames.mjs</code> — exit 0, 189 ms</summary>
+<details><summary><code>drone-frames.mjs</code> — exit 0, 139 ms</summary>
 
 ```
 DRONE FRAME GATE
@@ -3691,7 +3755,7 @@ DRONE FRAME GATE PASSED (12 checks)
 
 </details>
 
-<details><summary><code>drone-components.mjs</code> — exit 0, 158 ms</summary>
+<details><summary><code>drone-components.mjs</code> — exit 0, 151 ms</summary>
 
 ```
 DRONE COMPONENT CATALOGUE GATE
@@ -3733,7 +3797,7 @@ DRONE COMPONENT CATALOGUE GATE PASSED (13 checks)
 
 </details>
 
-<details><summary><code>drone-rotor.mjs</code> — exit 0, 227 ms</summary>
+<details><summary><code>drone-rotor.mjs</code> — exit 0, 189 ms</summary>
 
 ```
 DRONE ROTOR GATE
@@ -3793,7 +3857,7 @@ DRONE ROTOR GATE PASSED (14 checks)
 
 </details>
 
-<details><summary><code>drone-motor.mjs</code> — exit 0, 198 ms</summary>
+<details><summary><code>drone-motor.mjs</code> — exit 0, 161 ms</summary>
 
 ```
 DRONE MOTOR GATE
@@ -3889,7 +3953,7 @@ DRONE MOTOR GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-esc.mjs</code> — exit 0, 180 ms</summary>
+<details><summary><code>drone-esc.mjs</code> — exit 0, 169 ms</summary>
 
 ```
 DRONE ESC GATE
@@ -3955,7 +4019,7 @@ DRONE ESC GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-battery.mjs</code> — exit 0, 176 ms</summary>
+<details><summary><code>drone-battery.mjs</code> — exit 0, 163 ms</summary>
 
 ```
 DRONE BATTERY GATE
@@ -4017,7 +4081,7 @@ DRONE BATTERY GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>drone-sizing.mjs</code> — exit 0, 194 ms</summary>
+<details><summary><code>drone-sizing.mjs</code> — exit 0, 191 ms</summary>
 
 ```
 DRONE SIZING GATE
@@ -4068,7 +4132,7 @@ DRONE SIZING GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-trade.mjs</code> — exit 0, 1869 ms</summary>
+<details><summary><code>drone-trade.mjs</code> — exit 0, 1658 ms</summary>
 
 ```
 DRONE TRADE GATE
@@ -4116,7 +4180,7 @@ DRONE TRADE GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-airframe.mjs</code> — exit 0, 155 ms</summary>
+<details><summary><code>drone-airframe.mjs</code> — exit 0, 176 ms</summary>
 
 ```
 DRONE AIRFRAME GATE
@@ -4174,7 +4238,7 @@ DRONE AIRFRAME GATE PASSED (33 checks)
 
 </details>
 
-<details><summary><code>drone-dynamics.mjs</code> — exit 0, 2745 ms</summary>
+<details><summary><code>drone-dynamics.mjs</code> — exit 0, 2525 ms</summary>
 
 ```
 DRONE DYNAMICS GATE
@@ -4243,7 +4307,7 @@ DRONE DYNAMICS GATE PASSED (38 checks)
 
 </details>
 
-<details><summary><code>drone-playback.mjs</code> — exit 0, 989 ms</summary>
+<details><summary><code>drone-playback.mjs</code> — exit 0, 898 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -4348,7 +4412,7 @@ DRONE PLAYBACK GATE PASSED
 
 </details>
 
-<details><summary><code>drone-risk.mjs</code> — exit 0, 273 ms</summary>
+<details><summary><code>drone-risk.mjs</code> — exit 0, 271 ms</summary>
 
 ```
 DRONE RISK GATE
@@ -4401,7 +4465,7 @@ DRONE RISK GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-avionics.mjs</code> — exit 0, 220 ms</summary>
+<details><summary><code>drone-avionics.mjs</code> — exit 0, 175 ms</summary>
 
 ```
 DRONE AVIONICS GATE
@@ -4452,7 +4516,7 @@ DRONE AVIONICS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>drone-autopilot.mjs</code> — exit 0, 300 ms</summary>
+<details><summary><code>drone-autopilot.mjs</code> — exit 0, 244 ms</summary>
 
 ```
 DRONE AUTOPILOT GATE
@@ -4533,7 +4597,7 @@ DRONE AUTOPILOT GATE PASSED (52 checks)
 
 </details>
 
-<details><summary><code>drone-obstacles.mjs</code> — exit 0, 190 ms</summary>
+<details><summary><code>drone-obstacles.mjs</code> — exit 0, 154 ms</summary>
 
 ```
 DRONE OBSTACLE GATE
@@ -4623,7 +4687,7 @@ DRONE OBSTACLE GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 15392 ms</summary>
+<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 13430 ms</summary>
 
 ```
 DRONE FLIGHT ENERGY GATE
@@ -4671,7 +4735,7 @@ DRONE FLIGHT ENERGY GATE PASSED (29 checks)
 
 </details>
 
-<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 13591 ms</summary>
+<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 11551 ms</summary>
 
 ```
 DRONE FLIGHT WORKER GATE
@@ -4701,7 +4765,7 @@ DRONE FLIGHT WORKER GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-regulatory.mjs</code> — exit 0, 159 ms</summary>
+<details><summary><code>drone-regulatory.mjs</code> — exit 0, 142 ms</summary>
 
 ```
 DRONE REGULATORY GATE

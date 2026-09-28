@@ -201,7 +201,7 @@ bad convergence. It is what allowed the −46.7% to be attributed to the
 equation rather than to the tool — and, once the reference's own input decks
 were read, to the inputs rather than to the equation, which is where it belonged.
 
-**Machine-readable provenance on every output.** All 467 registered engine
+**Machine-readable provenance on every output.** All 471 registered engine
 outputs carry a status — validated, sourced, calibrated, derived, or assumed —
 with its citation, and continuous integration fails if any output is emitted
 without one. `validated` has a single meaning: the value has been numerically
@@ -349,7 +349,7 @@ The Call for Papers weighs completion status, so it is stated precisely.
 the seventeen-harness verification suite, all gated in continuous integration; the
 39 published comparisons reported in §2; component-level testing of every
 weight model against all eight NASA concept variants; provenance registration of
-all 467 outputs; the generated validation report with its staleness gate; and the
+all 471 outputs; the generated validation report with its staleness gate; and the
 NASA-STD-7009B assessment; and the analysis layers of §6, including an
 inertia tensor built from the drawn geometry, hover attitude dynamics after
 Malpica et al., and the robustness testing that decides which comparisons may

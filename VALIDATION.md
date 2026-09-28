@@ -1,6 +1,6 @@
 # Validation Report — eVTOL Conceptual Sizing Tool
 
-**Generated 2026-09-28 00:31 UTC from commit `694e960` (WORKING TREE DIRTY — this report does not describe a committed state).**
+**Generated 2026-09-28 14:01 UTC from commit `46c7a1d` (WORKING TREE DIRTY — this report does not describe a committed state).**
 
 This document is produced by `validation/report.mjs`, which runs every
 harness and captures what each one printed. It is not written by hand. If
@@ -69,7 +69,7 @@ any further work on the code.**
 
 ## 3. Verification
 
-66 harnesses, all gated in `npm test` and run in CI on every push.
+67 harnesses, all gated in `npm test` and run in CI on every push.
 
 | harness | what it proves | result |
 |---|---|---|
@@ -87,6 +87,7 @@ any further work on the code.**
 | `geometry-export.mjs` | No rotor overlaps another; every body is structurally connected; the exported .vsp3 matches what the viewer draws. | pass |
 | `fuselage-outline.mjs` | One fuselage outline, drawn the same way by every view that draws it, and an asymmetry that is defended rather than removed. Three views each wrote the body curve out by hand -- the general arrangement, the structural profile and the station diagram -- and the copies drifted: the general arrangement closed its tail cone on +0.14H to +0.02H while the other two closed on +0.22H to +0.05H, so the same aeroplane had two different upsweeps depending on which tab was open, and its nose began 6 percent of fuselage height BELOW the centreline while the other two mirrored theirs. No harness named any of the three files, which is how it survived. The tail-cone asymmetry itself is correct and the gate protects it: an aft fuselage rises toward the tail to buy rotation clearance, so the keel must travel further than the crown falls, the tip face must sit wholly above the centreline, and the crown must not be inverted -- reversing the upsweep would still close the shape and still look like an aeroplane at a glance. Everything with no physical reason to be asymmetric is required to mirror exactly: the nose in side view, and both halves in plan, where every port ordinate must be the exact negative of its starboard twin. The provenance is the second half. Torenbeek (1982, section 3.5.1, pp. 93-94) publishes nose fineness 1.5 to 2.0 and tail-cone length 2.5 to 3 times the cylindrical diameter, so the gate tests the ratio the drawing ACTUALLY ENDS UP WITH against those ranges rather than the cap in the code, and records the measured answer: on every class the length fraction binds and the result falls BELOW both ranges -- transport 1.34 and 2.49, bizjet 1.07 and 1.99, turboprop 1.27 and 2.36, trainer 0.85 and 1.57 -- so the fineness caps are inert and these lengths stay declared conventions carrying no dimension line. The upsweep MAGNITUDE is not sourced at all and the gate requires it to stay that way, because the sources that discuss upsweep do not share a datum: Torenbeek and Raymer measure it on the fuselage CENTRELINE, Raymer's 25 degrees is a LOWER-SURFACE figure for rear-loading freighters only, his 10 to 12 degrees is a contour deviation from the freestream, and Kroo measures the centre of cross-sectional area at 75 percent of cone length, so a number borrowed from any of them would be measured from the wrong line. This project's own research note already ruled on it -- CABIN-LAYOUT.md section 5, "Tail-cone upsweep angle. Not sourced anywhere ... Do not invent one" -- and ESDU 80006, the dedicated primary item, is paywalled and is named as what would replace the convention. A tenth section was added when the holder asked why the fuselage diagram was still not symmetric about its midline. Two different things were being seen and only one was a defect. The side elevation's asymmetry is the tail-cone upsweep and is correct, measured, and already defended by section 2. The cross-section's was real: the stringers were placed inside FuselageViews.jsx by walking the perimeter from the side and putting stringer i at arc fraction i over n, whose mirror sits at 1 minus i over n and is in the set only when n is EVEN, and the count is a rounded quantity that is odd about half the time, so the drawing broke its own left-right symmetry on half its inputs -- at the trainer's 17 stringers the worst one missed its mirror by a fifth of the semi-width. The placement now lives in geometry.js beside the outline, measures arc length from the crown at i plus a half over n, and builds the port half as the exact sign flip of the starboard half, so the symmetry is exact rather than close and an odd count puts one stringer on the keel, which is its own mirror. The gate asserts the mirror EXACTLY at four odd counts as well as four even ones, checks the count drawn is the count asked for, checks the odd split is eight one eight rather than nine eight, checks the spacing is still by arc length rather than by angle, and ties the view to the hoisted function so that a later view cannot roll its own placement and break it again unnoticed. | pass |
 | `control-surface-stations.mjs` | Where the control surfaces sit spanwise, which is the first control-surface GEOMETRY the tool has carried, and a gate built around the fact that it comes from two very different places. control-surfaces.js computes the 25.415 ground-gust hinge moment from an area and a mean chord and deliberately holds no spanwise geometry, because when it was written no source on disk gave any: the 737 ACAPS has zero occurrences of the word aileron in 7,616 lines, the A320 planning manual mentions the surfaces only as ground-clearance datum points, and the 737 and 747 type certificates decline to state deflections at all. That is still true of the planning manuals, but it is not true of NASA CR-2144, which prints a scaled general arrangement for every aircraft it documents with the surfaces drawn on it, so the stations were MEASURED off the B-747 three-view on printed page 213: rasterised at 600 dpi, ink taken by threshold because the page is a scan with no outline colour to mask, each panel recovered as a white region enclosed by its own outline, scaled by the span printed on the figure and cross-checked against the drawing own nought-to-one-hundred-foot scale bar, which agree to 0.078 percent. Both wings were measured independently and every control surface two readings agree to 0.003 of semispan; the fuselage falls out 21.5 feet wide against a real 21.3. The gate checks the module table against a second hand transcription of that measurement log, so a typo has to be made twice identically to survive. It then checks the thing that actually identified the panels, which is not a label on the drawing but a RELATION in CR-2144 own text on printed page 211: an inboard aileron BETWEEN the inboard and outboard flaps. Measured, the inboard flap ends at 0.376 of semispan and the outboard flap begins at 0.444, and the isolated panel runs 0.382 to 0.436, so it fills that gap and nothing else could. Six spoiler panels came off each wing against the text five plus a most inboard sixth, and the drawing does not say which is the symmetric-only one, so neither does the module. Every other class falls back to Howe 2000 Table 8.2 as reproduced third-hand in Coene 2008, and the gate is strict that a convention is never reported as a measurement: a class with no drawing returns no flap, no spoiler and no nacelle station at all, and says in its own source string that it is a convention. The table also had to be read correctly, and the gate carries the arithmetic rather than the conclusion: its y_A,M over b is a fraction of the FULL span from the centreline, not of the semispan, and the table own aileron volume coefficient column proves it, because V_A equals S_A over S times y_A,M over b on all four rows to the printed precision under the full-span reading and on none of them under the semispan reading, where it is exactly half. The measurement is then the independent confirmation: the 747 outboard aileron sits at 0.831 of semispan against the corrected reading 0.86, and nowhere near the old reading 0.43. A measurement is also refused where it does not apply -- the 747 is a four-engine aeroplane, so its pod stations are two-a-side stations, and a transport with ONE engine a side is handed the old convention with a source string that says why rather than being given stations measured on a different layout. Finally the geometry itself: a drawn panel corners must lie between the local leading and trailing edges, its aft edge must BE the trailing edge, its chord must be the stated fraction of the LOCAL chord so that it tapers with the wing, and the port panel must be the exact sign flip of the starboard one. A flap and a spoiler have a measured span and no sourced chord, so what is drawn for them is the run along the trailing edge and nothing deeper. And the two tail conventions are recorded as what they are: the elevator area fraction of 0.33 over its chord ratio of 0.30 implies a surface 1.10 times the span of the tailplane it sits on, the rudder 0.38 over 0.32 implies 1.19, so the pair cannot both be drawn, the drawing takes the chord ratio because that is the geometric quantity, and the area that falls out is 30 and 32 percent rather than 33 and 38. Nothing computed changes: control-surfaces.js still takes its hinge moment from the area convention, which is the quantity 25.415 asks for. | pass |
+| `general-arrangement.mjs` | Where the aeroplane balances and what it stands on, added to the three-view that had never carried either. Neither quantity is new: balance.js has solved the centre-of-gravity envelope since Phase B and gear.js has placed the stations and selected the tyres since G6 and G7, so the drawing had the numbers available and drew none of them, which meant a reader could not tell from the general arrangement whether the aeroplane balanced at all. What is drawn is the loading sweep full range as a bar on the centre line with the take-off centre of gravity marked on it by the quartered-circle symbol, the mean aerodynamic chord in plan with its leading edge ticked so that every per-cent-MAC figure on the sheet has a visible datum, and the nose and main gear as station lines in plan and as wheels in elevation. Because the failure mode here is not arithmetic but a drawing that says something its owning module does not, every check reads the RENDERED markup and compares it with what balance.js and gear.js return, rather than recomputing the number beside the assertion. The provenance rules the rest of the sheet already obeys decide what may carry a dimension. The centre-of-gravity range is computed, so it is dimensioned plainly. The gear stations are the TASOPT 737-800 deck layout as fractions of fuselage length, which is a published deck and not a result, so the wheelbase dimension names the deck in its own label and the title block says so -- and the standing claim at the head of the title block, that dimensioned features are sized, was amended rather than left to be false. The TRACK is refused outright: the only track figure the tool holds is the NACA SR-63 equation 25 turnover MINIMUM, a minimum is not a layout, so no wheel is placed off the centre line in plan and the gate asserts that no track dimension exists on any class. A class that cannot split its gear draws none -- the trainer reports one combined Landing gear item, which is a mass centroid and not a wheelbase -- and the refusal is asserted on the DIMENSION rather than on the prose, because gear.js own refusal sentence contains the word wheelbase itself, so a check that merely greps for the word passes on exactly the class it exists to catch. The wheel is a circle of the static loaded radius of the tyre G7 actually chose, and it must be TANGENT to the ground line. That check had to be rebuilt: the first version compared the wheels only with each other, and two mutants walked through it -- lifting every wheel a full radius clear of the ground, and sinking every wheel to its axle -- because wheels moved together still agree with one another, so the ground line is now found independently as the widest horizontal line on the sheet and the wheel bottom is required to lie on it. The envelope is also required to contain its own operating point on every class, since a drawn envelope excluding the take-off centre of gravity would be worse than drawing nothing. Two layout checks guard the band the new dimensions live in, which is reserved below the ground line rather than borrowed from the margin -- at transport scale one dimension row is about three times the margin, so borrowing put the arrowheads inside the title block, and the title block origin had to move down by the same band. Every check runs over every class and there is no default path through the file, which is the lesson the inverted turboprop tail cone taught: an invariant can hold for the default convention and fail on what a class actually draws. | pass |
 | `nasa-configs.mjs` | THE PRIMARY VALIDATION. Sizes each NASA concept vehicle from its own published parameters and scores ten weight-statement groups against Table 12. | pass |
 | `validate.mjs` | Scores against brochure-grade figures for real commercial aircraft (Joby, Archer and others), with mission-convention bracketing. | pass |
 | `tab-visibility.mjs` | Configuration-dependent tabs are hidden rather than showing NaN. A tool that prints NaN where a number belongs has told the user something false. | pass |
@@ -458,7 +459,7 @@ Required by [M&S 49].
 
 Everything below is captured from the run that produced this document.
 
-<details><summary><code>scope-check.mjs</code> — exit 0, 2013 ms</summary>
+<details><summary><code>scope-check.mjs</code> — exit 0, 2612 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
@@ -470,7 +471,7 @@ PASS — every referenced identifier is imported, declared or a runtime global,
 
 </details>
 
-<details><summary><code>tab-registry.mjs</code> — exit 0, 147 ms</summary>
+<details><summary><code>tab-registry.mjs</code> — exit 0, 179 ms</summary>
 
 ```
 TAB REGISTRY GATE
@@ -488,7 +489,7 @@ TAB REGISTRY GATE PASSED
 
 </details>
 
-<details><summary><code>units.mjs</code> — exit 0, 127 ms</summary>
+<details><summary><code>units.mjs</code> — exit 0, 167 ms</summary>
 
 ```
 UNITS GATE
@@ -562,7 +563,7 @@ UNITS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>constants.mjs</code> — exit 0, 255 ms</summary>
+<details><summary><code>constants.mjs</code> — exit 0, 350 ms</summary>
 
 ```
 PHYSICAL CONSTANTS GATE
@@ -598,7 +599,7 @@ PHYSICAL CONSTANTS GATE
 
 -- every source file in src/ --
   PASS  the scan actually read the tree
-          371 source files — a passing result from an empty walk is not a result
+          372 source files — a passing result from an empty walk is not a result
   PASS  no source file writes a physical constant with a value of its own
           7 named exceptions, each with a reason: src/classes/trainer/weights.js 32.2; src/lib/units.js 9.807; src/engine/constants.js 9.81; src/engine/constants.js 287.052874; src/engine/constants.js 287.053; src/engine/constants.js 287.058; src/data/tyres.js 32.2
 
@@ -624,7 +625,7 @@ CONSTANTS GATE PASSED (20 checks)
 
 </details>
 
-<details><summary><code>identities.mjs</code> — exit 0, 2730 ms</summary>
+<details><summary><code>identities.mjs</code> — exit 0, 3266 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -682,7 +683,7 @@ PASS — all 43 relations hold to 0.2%.
 
 </details>
 
-<details><summary><code>golden-master.mjs</code> — exit 0, 3252 ms</summary>
+<details><summary><code>golden-master.mjs</code> — exit 0, 4254 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -694,7 +695,7 @@ PASS — no output moved by more than 1e-6 relative.
 
 </details>
 
-<details><summary><code>components.mjs</code> — exit 0, 87 ms</summary>
+<details><summary><code>components.mjs</code> — exit 0, 109 ms</summary>
 
 ```
 ==============================================================================
@@ -875,7 +876,7 @@ regardless of what the loop happens to converge to.
 
 </details>
 
-<details><summary><code>database-report.mjs</code> — exit 0, 71 ms</summary>
+<details><summary><code>database-report.mjs</code> — exit 0, 96 ms</summary>
 
 ```
 ======================================================================================
@@ -981,7 +982,7 @@ NASA CONCEPT VEHICLES — the only full weight statements in the field
 
 </details>
 
-<details><summary><code>sampled-uncertainty.mjs</code> — exit 0, 32160 ms</summary>
+<details><summary><code>sampled-uncertainty.mjs</code> — exit 0, 43243 ms</summary>
 
 ```
 SAMPLED UNCERTAINTY
@@ -1030,7 +1031,7 @@ SAMPLED UNCERTAINTY PASSED
 
 </details>
 
-<details><summary><code>analysis-layers.mjs</code> — exit 0, 5615 ms</summary>
+<details><summary><code>analysis-layers.mjs</code> — exit 0, 6091 ms</summary>
 
 ```
 ANALYSIS-LAYER GATE
@@ -1068,7 +1069,7 @@ ANALYSIS-LAYER GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-models.mjs</code> — exit 0, 1965 ms</summary>
+<details><summary><code>vsp-models.mjs</code> — exit 0, 2451 ms</summary>
 
 ```
 NASA OpenVSP MODEL REPLICATION GATE
@@ -1108,7 +1109,7 @@ VSP GATE PASSED
 
 </details>
 
-<details><summary><code>geometry-export.mjs</code> — exit 0, 32776 ms</summary>
+<details><summary><code>geometry-export.mjs</code> — exit 0, 40572 ms</summary>
 
 ```
 GEOMETRY & EXPORT GATE
@@ -1165,7 +1166,7 @@ GEOMETRY & EXPORT GATE PASSED
 
 </details>
 
-<details><summary><code>fuselage-outline.mjs</code> — exit 0, 200 ms</summary>
+<details><summary><code>fuselage-outline.mjs</code> — exit 0, 223 ms</summary>
 
 ```
 FUSELAGE OUTLINE GATE
@@ -1328,7 +1329,7 @@ FUSELAGE OUTLINE GATE PASSED (80 checks)
 
 </details>
 
-<details><summary><code>control-surface-stations.mjs</code> — exit 0, 138 ms</summary>
+<details><summary><code>control-surface-stations.mjs</code> — exit 0, 170 ms</summary>
 
 ```
 ==============================================================================
@@ -1465,7 +1466,131 @@ CONTROL-SURFACE STATIONS GATE PASSED (59 checks)
 
 </details>
 
-<details><summary><code>nasa-configs.mjs</code> — exit 0, 233 ms</summary>
+<details><summary><code>general-arrangement.mjs</code> — exit 0, 380 ms</summary>
+
+```
+GENERAL ARRANGEMENT GATE — centre of gravity and gear stations
+========================================================================
+
+1. Provenance: the drawing asks the owning module
+  PASS  the general arrangement IMPORTS balanceOf from balance.js
+          a view that recomputed the envelope could disagree with the balance tab about the same aeroplane
+  PASS  and imports gearOf from gear.js
+  PASS  and defines no local copy of either
+  PASS  and hard-codes none of the deck's own station fractions
+          0.113 and 0.226 are the deck's nose-gear fractions; the drawing must read the station, not the fraction
+
+2. Every label equals the owning module's number, on every class
+  PASS  trainer: the drawing renders
+          20237 characters
+  PASS  trainer: no NaN, undefined or Infinity reaches the sheet
+  PASS  trainer: the CG range label states balance.js's envelope (2 to 40 % MAC)
+  PASS  trainer: and the same range in metres (CG range  0.57 m)
+  PASS  trainer: the MAC is drawn and labelled 1.50 m
+  PASS  turboprop: the drawing renders
+          24869 characters
+  PASS  turboprop: no NaN, undefined or Infinity reaches the sheet
+  PASS  turboprop: the CG range label states balance.js's envelope (-1 to 57 % MAC)
+  PASS  turboprop: and the same range in metres (CG range  1.41 m)
+  PASS  turboprop: the MAC is drawn and labelled 2.46 m
+  PASS  bizjet: the drawing renders
+          23879 characters
+  PASS  bizjet: no NaN, undefined or Infinity reaches the sheet
+  PASS  bizjet: the CG range label states balance.js's envelope (21 to 26 % MAC)
+  PASS  bizjet: and the same range in metres (CG range  0.12 m)
+  PASS  bizjet: the MAC is drawn and labelled 2.28 m
+  PASS  transport: the drawing renders
+          29531 characters
+  PASS  transport: no NaN, undefined or Infinity reaches the sheet
+  PASS  transport: the CG range label states balance.js's envelope (4 to 48 % MAC)
+  PASS  transport: and the same range in metres (CG range  1.83 m)
+  PASS  transport: the MAC is drawn and labelled 4.19 m
+
+3. The take-off CG lies inside the envelope drawn around it
+  PASS  trainer: take-off CG 4.214 m is within 3.950–4.525 m
+          a drawn envelope that excluded the operating point would be worse than drawing nothing
+  PASS  trainer: the envelope has a positive width (0.575 m)
+  PASS  turboprop: take-off CG 11.630 m is within 10.849–12.257 m
+          a drawn envelope that excluded the operating point would be worse than drawing nothing
+  PASS  turboprop: the envelope has a positive width (1.407 m)
+  PASS  bizjet: take-off CG 9.634 m is within 9.527–9.648 m
+          a drawn envelope that excluded the operating point would be worse than drawing nothing
+  PASS  bizjet: the envelope has a positive width (0.121 m)
+  PASS  transport: take-off CG 16.605 m is within 15.572–17.404 m
+          a drawn envelope that excluded the operating point would be worse than drawing nothing
+  PASS  transport: the envelope has a positive width (1.832 m)
+
+4. Each wheel is tangent to the ground line, at the tyre's static loaded radius
+  PASS  trainer: no wheel to place — gear declines, checked in section 6
+  PASS  turboprop: a nose wheel of radius 0.191 m (tyre 18x5.5) is drawn
+  PASS  turboprop: the nose wheel rests ON the ground line, not above it or through it
+          ground y 44.1246; wheel bottoms 44.1246
+  PASS  turboprop: a main wheel of radius 0.321 m (tyre 30x9.5-14) is drawn
+  PASS  turboprop: the main wheel rests ON the ground line, not above it or through it
+          ground y 44.1246; wheel bottoms 44.1246
+  PASS  bizjet: a nose wheel of radius 0.132 m (tyre 5.00-4) is drawn
+  PASS  bizjet: the nose wheel rests ON the ground line, not above it or through it
+          ground y 32.2757; wheel bottoms 32.2757
+  PASS  bizjet: a main wheel of radius 0.254 m (tyre 24x7.7) is drawn
+  PASS  bizjet: the main wheel rests ON the ground line, not above it or through it
+          ground y 32.2757; wheel bottoms 32.2757
+  PASS  transport: a nose wheel of radius 0.232 m (tyre H22x8.25-10) is drawn
+  PASS  transport: the nose wheel rests ON the ground line, not above it or through it
+          ground y 57.6923; wheel bottoms 57.6923
+  PASS  transport: a main wheel of radius 0.466 m (tyre 44.5x16.5-18) is drawn
+  PASS  transport: the main wheel rests ON the ground line, not above it or through it
+          ground y 57.6923; wheel bottoms 57.6923
+
+5. The wheelbase carries a dimension with its source; the track carries none
+  PASS  trainer: NO wheelbase dimension is drawn, because the class declines
+          asserted on the dimension, not on the word
+  PASS  trainer: no track dimension is drawn (only a turnover minimum exists)
+  PASS  turboprop: a wheelbase dimension is drawn
+  PASS  turboprop: and it states gear.js's wheelbase (9.39 m)
+  PASS  turboprop: and its label names the deck it rests on rather than passing as a result
+  PASS  turboprop: no track dimension is drawn (only a turnover minimum exists)
+  PASS  bizjet: a wheelbase dimension is drawn
+  PASS  bizjet: and it states gear.js's wheelbase (8.34 m)
+  PASS  bizjet: and its label names the deck it rests on rather than passing as a result
+  PASS  bizjet: no track dimension is drawn (only a turnover minimum exists)
+  PASS  transport: a wheelbase dimension is drawn
+  PASS  transport: and it states gear.js's wheelbase (13.59 m)
+  PASS  transport: and its label names the deck it rests on rather than passing as a result
+  PASS  transport: no track dimension is drawn (only a turnover minimum exists)
+
+6. A class that cannot split its gear draws none, and says why
+  PASS  trainer: the title block says no gear is drawn
+  PASS  trainer: and gives gear.js's own reason verbatim
+          the ground loads need a wheelbase: this class reports one combined "Landing gear" item, which is a mass centroid and not a wheelbase; a single station cannot give A and B
+  PASS  trainer: and draws no wheel
+  PASS  turboprop: the title block states where the stations come from
+  PASS  bizjet: the title block states where the stations come from
+  PASS  transport: the title block states where the stations come from
+
+7. Nothing drawn falls outside the sheet or under the title block
+  PASS  trainer: the sheet declares a viewBox
+  PASS  trainer: the deepest drawn feature (19.14) is inside the sheet (19.34)
+          the band the CG range and wheelbase are dimensioned in is reserved, not borrowed from the margin
+  PASS  trainer: the CG-range dimension (y 16.99) sits above the title block (y 17.56)
+  PASS  turboprop: the sheet declares a viewBox
+  PASS  turboprop: the deepest drawn feature (52.63) is inside the sheet (53.01)
+          the band the CG range and wheelbase are dimensioned in is reserved, not borrowed from the margin
+  PASS  turboprop: the CG-range dimension (y 45.08) sits above the title block (y 48.43)
+  PASS  bizjet: the sheet declares a viewBox
+  PASS  bizjet: the deepest drawn feature (38.13) is inside the sheet (38.42)
+          the band the CG range and wheelbase are dimensioned in is reserved, not borrowed from the margin
+  PASS  bizjet: the CG-range dimension (y 32.93) sits above the title block (y 35.21)
+  PASS  transport: the sheet declares a viewBox
+  PASS  transport: the deepest drawn feature (68.92) is inside the sheet (69.45)
+          the band the CG range and wheelbase are dimensioned in is reserved, not borrowed from the margin
+  PASS  transport: the CG-range dimension (y 58.95) sits above the title block (y 63.35)
+
+GENERAL ARRANGEMENT GATE PASSED (77 checks)
+```
+
+</details>
+
+<details><summary><code>nasa-configs.mjs</code> — exit 0, 255 ms</summary>
 
 ```
 ======================================================================================
@@ -1559,7 +1684,7 @@ PASS: 39 published comparisons, mean 10.4%, worst -26.9%
 
 </details>
 
-<details><summary><code>validate.mjs</code> — exit 0, 802 ms</summary>
+<details><summary><code>validate.mjs</code> — exit 0, 861 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════════
@@ -1672,7 +1797,7 @@ PASS: within the 40% gate
 
 </details>
 
-<details><summary><code>tab-visibility.mjs</code> — exit 0, 881 ms</summary>
+<details><summary><code>tab-visibility.mjs</code> — exit 0, 1172 ms</summary>
 
 ```
 TAB VISIBILITY GATE
@@ -1698,7 +1823,7 @@ TAB VISIBILITY GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-run.mjs</code> — exit 0, 42721 ms</summary>
+<details><summary><code>vsp-run.mjs</code> — exit 0, 52902 ms</summary>
 
 ```
 OPENVSP SCRIPT-RUN GATE
@@ -1718,7 +1843,7 @@ OPENVSP SCRIPT-RUN GATE PASSED — every configuration builds in OpenVSP
 
 </details>
 
-<details><summary><code>vspaero.mjs</code> — exit 0, 11603 ms</summary>
+<details><summary><code>vspaero.mjs</code> — exit 0, 12822 ms</summary>
 
 ```
 VSPAERO GATE — vortex-lattice polar on the exported model
@@ -1756,7 +1881,7 @@ VSPAERO GATE PASSED
 
 </details>
 
-<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 61 ms</summary>
+<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 76 ms</summary>
 
 ```
 ROTORCRAFT TAIL GATE
@@ -1776,7 +1901,7 @@ ROTORCRAFT TAIL GATE PASSED
 
 </details>
 
-<details><summary><code>drive-failure.mjs</code> — exit 0, 66 ms</summary>
+<details><summary><code>drive-failure.mjs</code> — exit 0, 72 ms</summary>
 
 ```
 DRIVE-SYSTEM FAILURE GATE
@@ -1804,7 +1929,7 @@ DRIVE-SYSTEM FAILURE GATE PASSED
 
 </details>
 
-<details><summary><code>autorotation.mjs</code> — exit 0, 1919 ms</summary>
+<details><summary><code>autorotation.mjs</code> — exit 0, 2350 ms</summary>
 
 ```
 AUTOROTATION GATE
@@ -1847,7 +1972,7 @@ AUTOROTATION GATE PASSED
 
 </details>
 
-<details><summary><code>whirl-flutter.mjs</code> — exit 0, 1961 ms</summary>
+<details><summary><code>whirl-flutter.mjs</code> — exit 0, 2646 ms</summary>
 
 ```
 WHIRL-FLUTTER GATE
@@ -1893,7 +2018,7 @@ WHIRL-FLUTTER GATE PASSED
 
 </details>
 
-<details><summary><code>load-cases.mjs</code> — exit 0, 1769 ms</summary>
+<details><summary><code>load-cases.mjs</code> — exit 0, 1978 ms</summary>
 
 ```
 STRUCTURAL LOAD CASE GATE
@@ -1930,7 +2055,7 @@ STRUCTURAL LOAD CASE GATE PASSED
 
 </details>
 
-<details><summary><code>reg-applicability.mjs</code> — exit 0, 1874 ms</summary>
+<details><summary><code>reg-applicability.mjs</code> — exit 0, 2187 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -2099,7 +2224,7 @@ REGULATORY APPLICABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>blade-twist.mjs</code> — exit 0, 2147 ms</summary>
+<details><summary><code>blade-twist.mjs</code> — exit 0, 2529 ms</summary>
 
 ```
 BLADE TWIST GATE
@@ -2141,7 +2266,7 @@ BLADE TWIST GATE PASSED
 
 </details>
 
-<details><summary><code>control-authority.mjs</code> — exit 0, 2109 ms</summary>
+<details><summary><code>control-authority.mjs</code> — exit 0, 2463 ms</summary>
 
 ```
 FAILURE-MODE CONTROLLABILITY GATE
@@ -2181,7 +2306,7 @@ FAILURE-MODE CONTROLLABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>wing-modes-cr2144.mjs</code> — exit 0, 2064 ms</summary>
+<details><summary><code>wing-modes-cr2144.mjs</code> — exit 0, 2777 ms</summary>
 
 ```
 WING-BORNE MODES vs NASA CR-2144 GATE
@@ -2249,7 +2374,7 @@ WING-BORNE MODES vs CR-2144 GATE PASSED
 
 </details>
 
-<details><summary><code>hover-dynamics.mjs</code> — exit 0, 1364 ms</summary>
+<details><summary><code>hover-dynamics.mjs</code> — exit 0, 1666 ms</summary>
 
 ```
 HOVER DYNAMICS GATE
@@ -2297,7 +2422,7 @@ HOVER DYNAMICS GATE PASSED
 
 </details>
 
-<details><summary><code>render-freeze.mjs</code> — exit 0, 6147 ms</summary>
+<details><summary><code>render-freeze.mjs</code> — exit 0, 7130 ms</summary>
 
 ```
 RENDER FREEZE GATE
@@ -2335,7 +2460,7 @@ PASS: all 27 views render exactly as committed
 
 </details>
 
-<details><summary><code>design-file.mjs</code> — exit 0, 2529 ms</summary>
+<details><summary><code>design-file.mjs</code> — exit 0, 2678 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -2417,7 +2542,7 @@ DESIGN FILE: 54 passed, 0 failed
 
 </details>
 
-<details><summary><code>validation-domain.mjs</code> — exit 0, 1305 ms</summary>
+<details><summary><code>validation-domain.mjs</code> — exit 0, 1446 ms</summary>
 
 ```
 VALIDATION DOMAIN GATE
@@ -2441,7 +2566,7 @@ PASS  the app's domain file matches the harnesses
 
 </details>
 
-<details><summary><code>result-warnings.mjs</code> — exit 0, 1733 ms</summary>
+<details><summary><code>result-warnings.mjs</code> — exit 0, 1903 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -2509,7 +2634,7 @@ RESULT WARNINGS: 41 passed, 0 failed
 
 </details>
 
-<details><summary><code>provenance-report.mjs</code> — exit 0, 1006 ms</summary>
+<details><summary><code>provenance-report.mjs</code> — exit 0, 1152 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
@@ -2543,7 +2668,7 @@ PROVENANCE GATE PASSED - every output any layout emits is classified.
 
 </details>
 
-<details><summary><code>api.mjs</code> — exit 0, 3087 ms</summary>
+<details><summary><code>api.mjs</code> — exit 0, 3595 ms</summary>
 
 ```
 ENGINE API GATE
@@ -2553,11 +2678,11 @@ ENGINE API GATE
   PASS  size() returns warnings and the domain with the numbers
   PASS  sizeMany() sizes each case
   PASS  a design that does not close reports converged: false
-  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"694e960680cb","dirty":true,"builtAt":null,"mode":"node-api"}
+  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"46c7a1d33a94","dirty":true,"builtAt":null,"mode":"node-api"}
   PASS  reopen() reproduces a record
   PASS  engineVersion() reports the package and format versions
   PASS  docs/API.md documents every export  — 19 exports
-  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit 694e960680cb, uncommitted changes; API 1; design format 1)
+  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit 46c7a1d33a94, uncommitted changes; API 1; design format 1)
   PASS  a clean design exits 0
   PASS  a design that does not close exits 1
   PASS  unreadable input exits 2
@@ -2571,7 +2696,7 @@ ENGINE API GATE PASSED (17 checks)
 
 </details>
 
-<details><summary><code>turboelectric.mjs</code> — exit 0, 1689 ms</summary>
+<details><summary><code>turboelectric.mjs</code> — exit 0, 1966 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -2630,7 +2755,7 @@ TURBOELECTRIC GATE PASSED (24 checks)
 
 </details>
 
-<details><summary><code>cpacs-export.mjs</code> — exit 0, 1389 ms</summary>
+<details><summary><code>cpacs-export.mjs</code> — exit 0, 1522 ms</summary>
 
 ```
 CPACS AND TRACEABILITY EXPORT GATE
@@ -2666,7 +2791,7 @@ EXPORT GATE PASSED (25 checks)
 
 </details>
 
-<details><summary><code>release.mjs</code> — exit 0, 140 ms</summary>
+<details><summary><code>release.mjs</code> — exit 0, 151 ms</summary>
 
 ```
 RELEASE GATE
@@ -2692,7 +2817,7 @@ RELEASE GATE PASSED (0.2.0-dev, in preparation)
 
 </details>
 
-<details><summary><code>aircraft-classes.mjs</code> — exit 0, 523 ms</summary>
+<details><summary><code>aircraft-classes.mjs</code> — exit 0, 590 ms</summary>
 
 ```
 AIRCRAFT-CLASS GATE
@@ -2731,7 +2856,7 @@ AIRCRAFT-CLASS GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>trainer.mjs</code> — exit 0, 134 ms</summary>
+<details><summary><code>trainer.mjs</code> — exit 0, 145 ms</summary>
 
 ```
 TRAINER GATE
@@ -2801,7 +2926,7 @@ TRAINER GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>transport.mjs</code> — exit 0, 1084 ms</summary>
+<details><summary><code>transport.mjs</code> — exit 0, 1302 ms</summary>
 
 ```
 TRANSPORT GATE
@@ -2885,7 +3010,7 @@ TRANSPORT GATE PASSED (60 checks)
 
 </details>
 
-<details><summary><code>transport-mission.mjs</code> — exit 0, 258 ms</summary>
+<details><summary><code>transport-mission.mjs</code> — exit 0, 253 ms</summary>
 
 ```
 TRANSPORT MISSION AND LAYOUT GATE
@@ -2948,7 +3073,7 @@ TRANSPORT MISSION GATE PASSED (44 checks)
 
 </details>
 
-<details><summary><code>transport-aero.mjs</code> — exit 0, 2027 ms</summary>
+<details><summary><code>transport-aero.mjs</code> — exit 0, 2262 ms</summary>
 
 ```
 TRANSPORT DRAG BUILD-UP GATE
@@ -3005,7 +3130,7 @@ TRANSPORT DRAG GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>bizjet.mjs</code> — exit 0, 385 ms</summary>
+<details><summary><code>bizjet.mjs</code> — exit 0, 495 ms</summary>
 
 ```
 BUSINESS-JET GATE
@@ -3039,7 +3164,7 @@ BUSINESS-JET GATE PASSED (15 checks)
 
 </details>
 
-<details><summary><code>aircraft-engine.mjs</code> — exit 0, 1220 ms</summary>
+<details><summary><code>aircraft-engine.mjs</code> — exit 0, 1491 ms</summary>
 
 ```
 AIRCRAFT ENGINE GATE
@@ -3250,7 +3375,7 @@ AIRCRAFT ENGINE GATE PASSED (166 checks)
 
 </details>
 
-<details><summary><code>turboprop.mjs</code> — exit 0, 146 ms</summary>
+<details><summary><code>turboprop.mjs</code> — exit 0, 169 ms</summary>
 
 ```
 TURBOPROP GATE
@@ -3335,7 +3460,7 @@ TURBOPROP GATE PASSED (59 checks)
 
 </details>
 
-<details><summary><code>paper-claims.mjs</code> — exit 0, 10953 ms</summary>
+<details><summary><code>paper-claims.mjs</code> — exit 0, 12865 ms</summary>
 
 ```
 PAPER CLAIM GATE
@@ -3387,7 +3512,7 @@ PASS: all 39 numeric claims in paper/ are reproduced by the harnesses
 
 </details>
 
-<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 1080 ms</summary>
+<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 1381 ms</summary>
 
 ```
 VTOL AUTOPILOT GATE
@@ -3445,7 +3570,7 @@ VTOL AUTOPILOT GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-frames.mjs</code> — exit 0, 77 ms</summary>
+<details><summary><code>drone-frames.mjs</code> — exit 0, 84 ms</summary>
 
 ```
 DRONE FRAME GATE
@@ -3468,7 +3593,7 @@ DRONE FRAME GATE PASSED (12 checks)
 
 </details>
 
-<details><summary><code>drone-components.mjs</code> — exit 0, 77 ms</summary>
+<details><summary><code>drone-components.mjs</code> — exit 0, 95 ms</summary>
 
 ```
 DRONE COMPONENT CATALOGUE GATE
@@ -3510,7 +3635,7 @@ DRONE COMPONENT CATALOGUE GATE PASSED (13 checks)
 
 </details>
 
-<details><summary><code>drone-rotor.mjs</code> — exit 0, 103 ms</summary>
+<details><summary><code>drone-rotor.mjs</code> — exit 0, 137 ms</summary>
 
 ```
 DRONE ROTOR GATE
@@ -3570,7 +3695,7 @@ DRONE ROTOR GATE PASSED (14 checks)
 
 </details>
 
-<details><summary><code>drone-motor.mjs</code> — exit 0, 87 ms</summary>
+<details><summary><code>drone-motor.mjs</code> — exit 0, 97 ms</summary>
 
 ```
 DRONE MOTOR GATE
@@ -3666,7 +3791,7 @@ DRONE MOTOR GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-esc.mjs</code> — exit 0, 88 ms</summary>
+<details><summary><code>drone-esc.mjs</code> — exit 0, 100 ms</summary>
 
 ```
 DRONE ESC GATE
@@ -3732,7 +3857,7 @@ DRONE ESC GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-battery.mjs</code> — exit 0, 76 ms</summary>
+<details><summary><code>drone-battery.mjs</code> — exit 0, 105 ms</summary>
 
 ```
 DRONE BATTERY GATE
@@ -3794,7 +3919,7 @@ DRONE BATTERY GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>drone-sizing.mjs</code> — exit 0, 101 ms</summary>
+<details><summary><code>drone-sizing.mjs</code> — exit 0, 122 ms</summary>
 
 ```
 DRONE SIZING GATE
@@ -3845,7 +3970,7 @@ DRONE SIZING GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-trade.mjs</code> — exit 0, 732 ms</summary>
+<details><summary><code>drone-trade.mjs</code> — exit 0, 868 ms</summary>
 
 ```
 DRONE TRADE GATE
@@ -3893,7 +4018,7 @@ DRONE TRADE GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-airframe.mjs</code> — exit 0, 86 ms</summary>
+<details><summary><code>drone-airframe.mjs</code> — exit 0, 89 ms</summary>
 
 ```
 DRONE AIRFRAME GATE
@@ -3951,7 +4076,7 @@ DRONE AIRFRAME GATE PASSED (33 checks)
 
 </details>
 
-<details><summary><code>drone-dynamics.mjs</code> — exit 0, 1275 ms</summary>
+<details><summary><code>drone-dynamics.mjs</code> — exit 0, 1357 ms</summary>
 
 ```
 DRONE DYNAMICS GATE
@@ -4020,7 +4145,7 @@ DRONE DYNAMICS GATE PASSED (38 checks)
 
 </details>
 
-<details><summary><code>drone-playback.mjs</code> — exit 0, 491 ms</summary>
+<details><summary><code>drone-playback.mjs</code> — exit 0, 572 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -4125,7 +4250,7 @@ DRONE PLAYBACK GATE PASSED
 
 </details>
 
-<details><summary><code>drone-risk.mjs</code> — exit 0, 140 ms</summary>
+<details><summary><code>drone-risk.mjs</code> — exit 0, 180 ms</summary>
 
 ```
 DRONE RISK GATE
@@ -4178,7 +4303,7 @@ DRONE RISK GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-avionics.mjs</code> — exit 0, 95 ms</summary>
+<details><summary><code>drone-avionics.mjs</code> — exit 0, 126 ms</summary>
 
 ```
 DRONE AVIONICS GATE
@@ -4229,7 +4354,7 @@ DRONE AVIONICS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>drone-autopilot.mjs</code> — exit 0, 144 ms</summary>
+<details><summary><code>drone-autopilot.mjs</code> — exit 0, 176 ms</summary>
 
 ```
 DRONE AUTOPILOT GATE
@@ -4310,7 +4435,7 @@ DRONE AUTOPILOT GATE PASSED (52 checks)
 
 </details>
 
-<details><summary><code>drone-obstacles.mjs</code> — exit 0, 85 ms</summary>
+<details><summary><code>drone-obstacles.mjs</code> — exit 0, 97 ms</summary>
 
 ```
 DRONE OBSTACLE GATE
@@ -4400,7 +4525,7 @@ DRONE OBSTACLE GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 6379 ms</summary>
+<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 8504 ms</summary>
 
 ```
 DRONE FLIGHT ENERGY GATE
@@ -4448,7 +4573,7 @@ DRONE FLIGHT ENERGY GATE PASSED (29 checks)
 
 </details>
 
-<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 5566 ms</summary>
+<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 7436 ms</summary>
 
 ```
 DRONE FLIGHT WORKER GATE
@@ -4478,7 +4603,7 @@ DRONE FLIGHT WORKER GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-regulatory.mjs</code> — exit 0, 83 ms</summary>
+<details><summary><code>drone-regulatory.mjs</code> — exit 0, 97 ms</summary>
 
 ```
 DRONE REGULATORY GATE

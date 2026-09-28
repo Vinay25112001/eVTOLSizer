@@ -36,8 +36,11 @@ import {
 import { tailThickness } from "../../engine/control-surfaces.js";
 import { SURFACE_CONVENTIONS } from "./control-surfaces.js";
 import { surfaceStations, TAIL_SURFACE_SPAN_IMPLIED } from "./control-surface-stations.js";
+import { balanceOf } from "./balance.js";
+import { gearOf } from "./gear.js";
 
 const FT = 0.3048;
+const IN = 0.0254;
 const LOCATION_WORDS = {
   wing: "wing-mounted", "aft-fuselage": "on the rear fuselage",
   "wing+tail": "two on the wing, one in the tail", "fuselage-3": "three on the rear fuselage",
@@ -70,6 +73,49 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
   const g = generalArrangement(result);
   if (!g) return null;
 
+  /* ── the centre of gravity and the gear stations ────────────────────
+     Both quantities already existed and neither was drawn, so the drawing
+     said nothing about where the aeroplane balances or what it stands on.
+     balance.js solves the CG envelope; gear.js places the wheels and
+     selects the tyres.
+
+     PROVENANCE decides what may carry a dimension, as everywhere else on
+     this sheet:
+       - the CG envelope and the take-off CG are COMPUTED, from the mass
+         breakdown, so they are drawn in the computed colour and
+         dimensioned;
+       - the gear STATIONS are the TASOPT 737-800 deck's layout as
+         fractions of fuselage length. That is a published deck, so they
+         are drawn in the convention colour and the title block names
+         them; the wheelbase they imply is dimensioned with its source;
+       - the TRACK is neither computed nor sourced. gear.js has only a
+         turnover MINIMUM, and a minimum is not a layout, so NO wheel is
+         placed off the centre line in plan and no track is dimensioned.
+     A class that cannot split its gear draws none at all and the title
+     block says why, which is the same refusal the flap runs already make
+     visible on a class with no measured flap station. */
+  const bal = balanceOf(result);
+  const gear = gearOf(result);
+  const cg = bal && Number.isFinite(bal.envelope?.fwd?.x) && Number.isFinite(bal.envelope?.aft?.x)
+             && Number.isFinite(bal.takeoff?.xM) && bal.mac > 0
+    ? { fwd: bal.envelope.fwd.x, aft: bal.envelope.aft.x, to: bal.takeoff.xM,
+        fwdPct: bal.envelope.fwd.pctMac, aftPct: bal.envelope.aft.pctMac, toPct: bal.takeoff.pctMac,
+        lemac: bal.xLemac, mac: bal.mac, yMac: bal.yMac }
+    : null;
+  /* The wheel is drawn as a circle of the selected tyre's STATIC LOADED
+     RADIUS centred that far above the ground, which is tangent to the
+     ground line the way a loaded tyre is, and is the T&RA figure for the
+     tyre G7 actually chose rather than a drawing convention. */
+  const wheels = gear.resolved && bal
+    ? [["nose", gear.tyres?.nose], ["main", gear.tyres?.main]]
+        .map(([kind, ty]) => {
+          const it = (bal.items || []).find((i) => new RegExp(`^${kind === "nose" ? "Nose" : "Main"} gear$`).test(i.name || ""));
+          return it && ty?.resolved && ty.tyre?.slrIn > 0
+            ? { kind, x: it.x, slr: ty.tyre.slrIn * IN, size: ty.tyre.size } : null;
+        })
+        .filter(Boolean)
+    : [];
+
   const L = val(g.fuselage.length), W = val(g.fuselage.width), H = val(g.fuselage.height);
   const noseL = val(g.fuselage.noseLength), tailL = val(g.fuselage.tailLength);
   const b = g.wing.span, semi = b / 2;
@@ -87,7 +133,14 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
   const sideTop = planTop + planH + gap + labelH, sideH = zTop - zBot;
   const frontLeft = m + L + gap;
   const titleH = showTitleBlock ? Math.max(L, b) * 0.14 : 0;
-  const sheetH = sideTop + sideH + m + titleH;
+  /* The CG range and the wheelbase are dimensioned BELOW the ground line,
+     where nothing else on the sheet runs. The band is reserved rather than
+     borrowed from the margin — at transport scale one dimension row is
+     about three times the margin, so borrowing put the arrowheads inside
+     the title block. Reserved only when there is something to dimension. */
+  const dimRows = (cg ? 1 : 0) + (gear.resolved ? 1 : 0);
+  const dimBand = dimRows * (sheetW / 1000) * 30;
+  const sheetH = sideTop + sideH + dimBand + m + titleH;
 
   const pX = (x) => m + x, pY = (y) => planTop + planH / 2 - y;
   const sX = (x) => m + x, sZ = (z) => sideTop + (zTop - z);
@@ -199,6 +252,14 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
      −0.18H and the front view −0.16H. */
   const wingZ = val(g.wing.z);
 
+  /* The CG is drawn at the LOADED VERTICAL centroid where gear.js resolved
+     one — that is a height above the GROUND, not above the body centre
+     line. Where it did not, the CG bar sits on the centre line instead and
+     the title block says the height is not placed, rather than the drawing
+     implying a height nobody computed. */
+  const cgZsourced = gear.resolved && Number.isFinite(gear.verticalCg?.eM);
+  const cgZ = cgZsourced ? zBot + gear.verticalCg.eM : 0;
+
   /* ── dimension helper: extension lines, arrows, metric over imperial ── */
   const Dim = ({ x1, y1, x2, y2, label, off = 0, vertical = false, tick = u * 7 }) => {
     const a = u * 5;
@@ -222,6 +283,18 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
     );
   };
   const both = (metres) => `${metres.toFixed(2)} m  ·  ${(metres / FT).toFixed(1)} ft`;
+
+  /* The aeronautical centre-of-gravity symbol: a circle in four quadrants
+     with two opposite ones filled. Drawn rather than lettered because that
+     is how the airport-planning three-views this sheet imitates mark it,
+     and it reads at a glance where a label would crowd the outline. */
+  const cgMark = (cx, cy, r = u * 7) => (
+    <g>
+      <circle cx={cx} cy={cy} r={r} fill={SC.panel} stroke={SC.primary} strokeWidth={u * 1.3} />
+      <path d={`M ${cx} ${cy} L ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx + r} ${cy} Z`} fill={SC.primary} />
+      <path d={`M ${cx} ${cy} L ${cx} ${cy + r} A ${r} ${r} 0 0 1 ${cx - r} ${cy} Z`} fill={SC.primary} />
+    </g>
+  );
 
   const viewLabel = (x, y, n, t) => (
     <g>
@@ -292,6 +365,41 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
           <line key={`pp${i}`} x1={pX(p.x)} y1={pY(p.y - p.d / 2)} x2={pX(p.x)} y2={pY(p.y + p.d / 2)}
                 stroke={SC.caution} strokeWidth={u * 1.2} opacity={0.85} />
         ))}
+        {/* THE MEAN AERODYNAMIC CHORD, at its spanwise station, with the
+            leading edge ticked. Every per-cent-MAC figure on this drawing
+            and in the balance tab is measured from that tick, and until it
+            was drawn the drawing quoted no datum for them at all. */}
+        {cg && (
+          <g>
+            <line x1={pX(cg.lemac)} y1={pY(cg.yMac)} x2={pX(cg.lemac + cg.mac)} y2={pY(cg.yMac)}
+                  stroke={SC.primary} strokeWidth={u * 2.4} />
+            <line x1={pX(cg.lemac)} y1={pY(cg.yMac) - u * 7} x2={pX(cg.lemac)} y2={pY(cg.yMac) + u * 7}
+                  stroke={SC.primary} strokeWidth={u * 1.5} />
+            <text x={pX(cg.lemac + cg.mac / 2)} y={pY(cg.yMac) - u * 10} {...txt} fill={SC.primary}
+                  textAnchor="middle" fontSize={u * 10}>
+              MAC {cg.mac.toFixed(2)} m
+            </text>
+          </g>
+        )}
+        {/* the CG envelope on the centre line, take-off CG marked on it */}
+        {cg && (
+          <g>
+            <rect x={pX(cg.fwd)} y={pY(0) - u * 5} width={cg.aft - cg.fwd} height={u * 10}
+                  fill={SC.primary} fillOpacity={0.25} stroke={SC.primary} strokeWidth={u * 1.2} />
+            {cgMark(pX(cg.to), pY(0))}
+          </g>
+        )}
+        {/* GEAR STATIONS ONLY. The track is not sized — see the note where
+            the wheels are built — so these are station lines across the
+            body and not wheels at an invented semi-track. */}
+        {wheels.map((w) => (
+          <g key={`pg${w.kind}`}>
+            <line x1={pX(w.x)} y1={pY(W / 2 * 1.06)} x2={pX(w.x)} y2={pY(-W / 2 * 1.06)}
+                  stroke={SC.caution} strokeWidth={u * 1.4} strokeDasharray={`${u * 5} ${u * 3}`} />
+            <text x={pX(w.x)} y={pY(-W / 2 * 1.06) + u * 12} {...txt} fill={SC.caution}
+                  textAnchor="middle" fontSize={u * 9.5}>{w.kind}</text>
+          </g>
+        ))}
         <Dim x1={pX(0)} y1={pY(0) + planH / 2 + u * 16} x2={pX(L)} y2={pY(0) + planH / 2 + u * 16}
              label={`length  ${both(L)}`} />
         <Dim x1={pX(L) + u * 26} y1={pY(semi)} x2={pX(L) + u * 26} y2={pY(-semi)} vertical
@@ -329,8 +437,38 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
           <line key={`sp${i}`} x1={sX(p.x)} y1={sZ(p.z - p.d / 2)} x2={sX(p.x)} y2={sZ(p.z + p.d / 2)}
                 stroke={SC.caution} strokeWidth={u * 1.2} opacity={0.85} />
         ))}
+        {/* THE GEAR, drawn before the ground line so the heavier ground
+            line reads over the tyre rather than under it. The circle is the
+            selected tyre's static loaded radius, centred that far above the
+            ground and so tangent to it; the strut runs from the keel to the
+            axle. Both the station and the tyre come with the class, and a
+            class whose gear cannot be split draws neither. */}
+        {wheels.map((w) => (
+          <g key={`sg${w.kind}`}>
+            <line x1={sX(w.x)} y1={sZ(-H / 2)} x2={sX(w.x)} y2={sZ(zBot + w.slr)}
+                  stroke={SC.caution} strokeWidth={u * 2} />
+            <circle cx={sX(w.x)} cy={sZ(zBot + w.slr)} r={w.slr}
+                    fill={SC.panel} fillOpacity={0.65} stroke={SC.caution} strokeWidth={u * 1.7} />
+          </g>
+        ))}
         <line x1={sX(-m * 0.5)} y1={sZ(zBot)} x2={sX(L + m * 0.5)} y2={sZ(zBot)}
               stroke={SC.muted} strokeWidth={u * 2.4} />
+        {/* THE CG ENVELOPE in elevation, at its vertical station where one
+            was computed. The bar is the range the loading sweep allows and
+            the symbol is where the aeroplane actually balances at take-off;
+            the two are drawn together because a CG mark without its range
+            is the number people most often mistake for a limit. */}
+        {cg && (
+          <g>
+            <line x1={sX(cg.fwd)} y1={sZ(cgZ)} x2={sX(cg.aft)} y2={sZ(cgZ)}
+                  stroke={SC.primary} strokeWidth={u * 1.7} />
+            {[cg.fwd, cg.aft].map((x, i) => (
+              <line key={i} x1={sX(x)} y1={sZ(cgZ) - u * 8} x2={sX(x)} y2={sZ(cgZ) + u * 8}
+                    stroke={SC.primary} strokeWidth={u * 1.5} />
+            ))}
+            {cgMark(sX(cg.to), sZ(cgZ))}
+          </g>
+        )}
         {/* OVERALL HEIGHT is measured to the GROUND LINE, so it is only as
             good as the stance — and the stance is not sized, it is a
             construction resting on the wing station, which this drawing
@@ -344,6 +482,20 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
         {g.stance.zProvenance.sourced && (
           <Dim x1={sX(-u * 30)} y1={sZ(vtTop)} x2={sX(-u * 30)} y2={sZ(zBot)} vertical
                label={`height  ${both(vtTop - zBot)}`} />
+        )}
+        {/* Dimensioned below the ground line, in the band reserved for it.
+            The CG range is COMPUTED, so it carries a plain dimension; the
+            wheelbase rests on two stations from a published deck, so its
+            label names the deck rather than presenting it as a result. */}
+        {cg && (
+          <Dim x1={sX(cg.fwd)} y1={sZ(zBot) + u * 22} x2={sX(cg.aft)} y2={sZ(zBot) + u * 22}
+               label={`CG range  ${both(cg.aft - cg.fwd)}  ·  ${(100 * cg.fwdPct).toFixed(0)} to `
+                    + `${(100 * cg.aftPct).toFixed(0)} % MAC`} />
+        )}
+        {gear.resolved && (
+          <Dim x1={sX(gear.geometry.xCg - gear.geometry.A)} y1={sZ(zBot) + u * 22 + (cg ? u * 30 : 0)}
+               x2={sX(gear.geometry.xCg + gear.geometry.B)} y2={sZ(zBot) + u * 22 + (cg ? u * 30 : 0)}
+               label={`wheelbase  ${both(gear.geometry.wheelbase)}  ·  TASOPT deck stations`} />
         )}
         {viewLabel(sX(0), sideTop - u * 8, "SIDE", `fin ${g.vt.area.toFixed(1)} m²  ·  tailplane ${g.ht.area.toFixed(1)} m²`)}
       </g>
@@ -383,7 +535,7 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
 
       {/* ── title block ───────────────────────────────────────────────── */}
       {showTitleBlock && (() => {
-        const tY = sideTop + sideH + m * 0.55, tH = titleH * 0.72, tW = sheetW - 2 * m;
+        const tY = sideTop + sideH + dimBand + m * 0.55, tH = titleH * 0.72, tW = sheetW - 2 * m;
         const cols = [0.30, 0.22, 0.24, 0.24];
         const cells = [
           ["designation", g.label],
@@ -411,7 +563,8 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
               );
             })}
             <text x={m} y={tY + tH + u * 22} {...txt} fontSize={u * 9.5} fill={SC.subtle} opacity={0.75}>
-              Dimensioned features are sized. Tail section thickness {(tailTC * 100).toFixed(1)} % is computed off the
+              Dimensioned features are sized, except where the dimension's own label names the source it rests on —
+              the wheelbase is the only one that does. Tail section thickness {(tailTC * 100).toFixed(1)} % is computed off the
               wing (Scholz ch.9). Tail-cone closure: {g.fuselage.closure.measured
                 ? `keel ${g.fuselage.closure.keelTipZ.toFixed(3)} H above the centreline, measured from ${g.fuselage.closure.aircraft.join(" and ")} airport-planning drawings`
                   + (g.fuselage.closure.crownMeasured ? `; crown ${g.fuselage.closure.crownTipZ.toFixed(3)} H measured` : `; crown ${g.fuselage.closure.crownTipZ} H is a convention (the fin hides it)`)
@@ -440,6 +593,27 @@ export function GeneralArrangement({ result, height = 460, showTitleBlock = true
                     that construction is ${g.stance.zProvenance.cite}.`
                 : " The ground line is a construction on the wing station and has no published range for this class, so"
                   + " overall height carries no dimension."}
+              {cg
+                ? ` Centre of gravity: the bar is the loading sweep's full range, ${(100 * cg.fwdPct).toFixed(1)} to `
+                  + `${(100 * cg.aftPct).toFixed(1)} % MAC, and the symbol is the take-off CG at `
+                  + `${(100 * cg.toPct).toFixed(1)} % MAC, both measured from the leading edge of the mean `
+                  + `aerodynamic chord drawn in plan. That range is the UNRESTRICTED extreme — every seat forward `
+                  + `against every seat aft, passengers only, at zero fuel — so it is wider than a published `
+                  + `loading range and is not a certificated limit.`
+                  + (cgZsourced
+                      ? ` It is drawn at the loaded vertical centroid, ${gear.verticalCg.eM.toFixed(2)} m above the ground.`
+                      : ` No vertical centroid is computed for this class, so the bar sits on the body centre line and`
+                        + ` its height means nothing.`)
+                : " No centre of gravity is drawn: the balance model returns no envelope for this class."}
+              {gear.resolved
+                ? ` Landing gear: nose and main stations are the TASOPT 737-800 deck's layout as fractions of `
+                  + `fuselage length, so they are drawn in the convention colour; the wheels are circles of the `
+                  + `static loaded radius of the tyres G7 selected (${wheels.map((w) => `${w.kind} ${w.size}`).join(", ")}), `
+                  + `tangent to the ground line as a loaded tyre is. The TRACK is not drawn and not dimensioned: `
+                  + `the only track this tool has is the ${gear.geometry.turnover.minimumTrackM.toFixed(2)} m turnover `
+                  + `MINIMUM from NACA SR-63 eq. (25), and a minimum is not a layout, so the gear appears in plan as `
+                  + `station lines rather than wheels at a semi-track nobody sourced.`
+                : ` Landing gear: none is drawn — ${gear.why}.`}
             </text>
           </g>
         );

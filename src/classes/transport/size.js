@@ -36,7 +36,8 @@
    segment mission then evaluates at each Mach and height.
    ===================================================================== */
 
-import { TRANSPORT_DEFAULTS } from "./defaults.js";
+import { TRANSPORT_DEFAULTS, TRANSPORT_INPUTS } from "./defaults.js";
+import { refuseNegativeInputs, negativeInputMessage } from "../aircraft/domain.js";
 import { flopsWeights, flopsGeometry } from "./flops-weights.js";
 import { makeJetISA } from "./atmosphere.js";
 import { flyMission, RESERVE_POLICIES } from "./mission.js";
@@ -53,6 +54,20 @@ const FRACTIONS = { start: 0.99, taxi: 0.99, takeoff: 0.995, climb: 0.98, descen
 const isa = makeJetISA(0);
 const TOL_LB = 0.5;
 
+/* What accepting a negative input used to produce, measured on the shipped
+   code one input at a time. 83 of the 84 inputs TRANSPORT_INPUTS declares
+   non-negative were accepted at -1 -- the one refusal was numEngines, caught
+   by a rule about engine counts rather than about signs -- and 59 of them
+   converged. The two extremes are quoted in the refusal itself. */
+const TRANSPORT_NEGATIVE_EVIDENCE =
+  `The sizing loop converges on negative inputs, but on aeroplanes that are not ` +
+  `physical: tsfcCruise = -1 closed at a gross weight of 54,340 lb against a ` +
+  `173,724.4 lb baseline (-68.7 %), because an engine that burns negative fuel is ` +
+  `a fixed point the loop is happy to find, and emptyMarginFraction = -1 closed at ` +
+  `65,362 lb (-62.4 %). 83 of the 84 inputs this schema declares non-negative were ` +
+  `accepted at -1 and 59 of those converged, each reported as converged with no ` +
+  `flag, so the input is refused here rather than sized.`;
+
 const flapDrag = (cl) => (cl >= 1.1 ? 0.05 * cl - 0.055 : 0);
 
 function resolve(p) {
@@ -60,6 +75,23 @@ function resolve(p) {
   for (const [k, v] of Object.entries(TRANSPORT_DEFAULTS))
     if (typeof v === "number" && !Number.isFinite(Number(q[k])))
       throw new Error(`Transport input "${k}" must be a finite number (got ${q[k]})`);
+  /* A NEGATIVE value for a quantity the schema declares non-negative is
+     refused rather than sized. The rule, and why only the sign and not the
+     whole declared range, are in ../aircraft/domain.js (CHG-007). */
+  refuseNegativeInputs("Transport", TRANSPORT_DEFAULTS, TRANSPORT_INPUTS, q, TRANSPORT_NEGATIVE_EVIDENCE);
+  /* `passengersCarried` is a BUSINESS-JET input, and the business jet is flown
+     through this entry -- both src/classes/aircraft/engine.js and
+     src/classes/registry.js route it to sizeTransport. Its schema lives in
+     ../bizjet/defaults.js, which imports TRANSPORT_INPUTS, so this file cannot
+     import it back without a cycle and the sign is enforced directly here. The
+     two jet schemas agree on the sign of all 100 keys they share, so
+     TRANSPORT_INPUTS governs the whole of the business jet except this one key
+     (validation/aircraft-domain.mjs asserts both halves of that sentence). */
+  if (Number(q.passengersCarried) < 0)
+    throw new Error(negativeInputMessage("Transport", "passengersCarried", Number(q.passengersCarried),
+      { min: 0, max: "the installed seat count", unit: "" },
+      `It multiplies the per-passenger and baggage masses straight into the payload, so a ` +
+      `negative count sizes an aeroplane around a negative payload.`));
   if (!(q.numEngines >= 2 && q.numEngines <= 4)) throw new Error("A transport here has 2 to 4 engines");
   if (!["loftin", "regulatory", "mission"].includes(q.fuelMethod)) throw new Error(`Unknown fuel method "${q.fuelMethod}"`);
   if (!RESERVE_POLICIES.includes(q.reservePolicy)) throw new Error(`Unknown reserve policy "${q.reservePolicy}"`);

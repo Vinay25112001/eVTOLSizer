@@ -26,6 +26,7 @@
    ===================================================================== */
 
 import { TRAINER_DEFAULTS, TRAINER_INPUTS } from "./defaults.js";
+import { refuseNegativeInputs } from "../aircraft/domain.js";
 import * as W from "./weights.js";
 import * as P from "./performance.js";
 
@@ -145,35 +146,28 @@ function missionFuel(p, grossLb, geo, hp) {
    sliders are built from. So this invents no rule and picks no new number: it
    applies the file's own published contract at the one place that skipped it.
    Phase 18 requires an illegal input to be REFUSED WITH AN EXPLANATION, and the
-   throw below names the input, the offending value and the bound it broke. */
+   refusal names the input, the offending value and the bound it broke.
+
+   ONLY THE SIGN IS POLICED, NOT THE WHOLE DECLARED RANGE, and the rule
+   itself now lives in ../aircraft/domain.js because the same defect stood
+   in every other class and was fixed only here (CHG-007). The reasoning
+   behind the sign-only rule is in that file; this is the trainer's own
+   measured account of what accepting a negative value used to produce. */
+const TRAINER_NEGATIVE_EVIDENCE =
+  `The sizing loop converges on negative inputs, but on designs that are not ` +
+  `physical: rangeNm = -518 closed at a usable fuel of -108.86 lb and a cruise ` +
+  `fuel of -153.63 lb, and reserveMin = -1000 at -320.28 lb usable, each reported ` +
+  `as converged with no flag. A gross weight of empty + payload MINUS fuel is not ` +
+  `a design, so the input is refused here rather than sized.`;
+
 function resolve(p) {
   const q = { ...TRAINER_DEFAULTS, ...(p || {}) };
   for (const [k, v] of Object.entries(TRAINER_DEFAULTS)) {
     if (typeof v !== "number") continue;
-    const x = Number(q[k]);
-    if (!Number.isFinite(x))
+    if (!Number.isFinite(Number(q[k])))
       throw new Error(`Trainer input "${k}" must be a finite number (got ${q[k]})`);
-    const s = TRAINER_INPUTS[k];
-    /* ONLY THE SIGN IS POLICED HERE, NOT THE WHOLE DECLARED RANGE.
-       s.max is a slider bound, not a statement about where the model is valid,
-       and this loop already has a way to answer an ambitious but MEANINGFUL
-       request: it returns converged:false with a stopReason. validation/
-       trainer.mjs depends on exactly that -- it asks for 5,000 nm and requires
-       a reasoned non-convergence, not an exception. A 50 nm mission and a 91
-       minute reserve are likewise real questions with real answers.
-       A NEGATIVE range or reserve is not a question at all, and s.min >= 0 is
-       the schema's own statement that the quantity cannot go below zero. */
-    if (s && Number.isFinite(s.min) && s.min >= 0 && x < 0)
-      throw new Error(
-        `Trainer input "${k}" cannot be negative (got ${x}${s.unit ? " " + s.unit : ""}; ` +
-        `the declared range is ${s.min} to ${s.max}${s.unit ? " " + s.unit : ""}). ` +
-        `The sizing loop converges on negative inputs, but on designs that are not ` +
-        `physical: rangeNm = -518 closed at a usable fuel of -108.86 lb and a cruise ` +
-        `fuel of -153.63 lb, and reserveMin = -1000 at -320.28 lb usable, each reported ` +
-        `as converged with no flag. A gross weight of empty + payload MINUS fuel is not ` +
-        `a design, so the input is refused here rather than sized.`);
   }
-  return q;
+  return refuseNegativeInputs("Trainer", TRAINER_DEFAULTS, TRAINER_INPUTS, q, TRAINER_NEGATIVE_EVIDENCE);
 }
 
 /* Range (nm) taking off at grossLb with fuelLb usable fuel, by the same

@@ -32,7 +32,8 @@
       available equals fuel required (FLOPS, TM-2017-219627 p.8).
    ===================================================================== */
 
-import { TURBOPROP_DEFAULTS } from "./defaults.js";
+import { TURBOPROP_DEFAULTS, TURBOPROP_INPUTS } from "./defaults.js";
+import { refuseNegativeInputs } from "../aircraft/domain.js";
 import { turbopropGroup, PROPELLER_TYPES } from "./propulsion.js";
 import { flopsWeights } from "../transport/flops-weights.js";
 import { makeISA } from "../../engine/atmosphere.js";
@@ -58,6 +59,10 @@ function resolve(p) {
   for (const [k, v] of Object.entries(TURBOPROP_DEFAULTS))
     if (typeof v === "number" && !Number.isFinite(Number(q[k])))
       throw new Error(`Turboprop input "${k}" must be a finite number (got ${q[k]})`);
+  /* A NEGATIVE value for a quantity the schema declares non-negative is
+     refused rather than sized. The rule, and why only the sign and not the
+     whole declared range, are in ../aircraft/domain.js (CHG-007). */
+  refuseNegativeInputs("Turboprop", TURBOPROP_DEFAULTS, TURBOPROP_INPUTS, q, TURBOPROP_NEGATIVE_EVIDENCE);
   if (!(q.numEngines >= 2 && q.numEngines <= 4) || !Number.isInteger(q.numEngines))
     throw new Error("A turboprop transport here has 2, 3 or 4 engines (the climb rules are for multi-engine aircraft)");
   if (!POWER_LAPSE[q.powerLapse]) throw new Error(`Unknown power lapse "${q.powerLapse}"`);
@@ -66,6 +71,19 @@ function resolve(p) {
   if (!PROPELLER_TYPES[q.propellerType]) throw new Error(`Unknown propeller type "${q.propellerType}"`);
   return q;
 }
+
+/* What accepting a negative input used to produce, measured on the shipped
+   code one input at a time. 53 of the 54 inputs TURBOPROP_INPUTS declares
+   non-negative were accepted at -1 -- the one refusal was numEngines, caught
+   by a rule about engine counts rather than about signs -- and 27 of them
+   converged. */
+const TURBOPROP_NEGATIVE_EVIDENCE =
+  `The sizing loop converges on negative inputs, but on aeroplanes that are not ` +
+  `physical: emptyMarginFraction = -1 closed at a gross weight of 19,622.1 lb ` +
+  `against a 55,990.5 lb baseline (-65.0 %), systemsFactor = -1 at 25,272.9 lb ` +
+  `(-54.9 %) and sfcCruise = -1 at 30,148.2 lb (-46.2 %). 53 of the 54 inputs this ` +
+  `schema declares non-negative were accepted at -1 and 27 of those converged, each ` +
+  `reported with no flag, so the input is refused here rather than sized.`;
 
 const climbPolar = (cl, A, gear) => cl / (0.05 * cl - 0.035 + gear + cl * cl / (Math.PI * A * 0.7));
 

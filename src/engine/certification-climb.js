@@ -102,15 +102,63 @@ export const CLIMB_GRADIENT_ALT_M = 305;
  * @param p  parameter set — vtolCategory, vCruise, etaSys
  * @param g  converged geometry/state:
  *           { MTOW_kg, LD, nUnits, pMotInstalledKW, hasWing, separateCruiseProp,
- *             nCruiseProps, rhoAtCondition, g0 }
+ *             nCruiseProps, g0 }
+ *
+ * `rhoAtCondition` was listed here and is gone: nothing ever read it and
+ * engine.js never passed it. A documented input that no line consumes reads
+ * as a condition being applied, which is the claim this function stopped
+ * making — see the basis string below.
  */
 export function certificationClimb(p = {}, g = {}) {
   const enhanced = (p.vtolCategory ?? "enhanced") !== "basic";
   const category = enhanced ? "enhanced" : "basic";
-  const W = Math.max(1, (g.MTOW_kg ?? 0) * (g.g0 ?? 9.80665));
-  const V = Math.max(1e-6, p.vCruise ?? 0);
+
+  /* ── A DEGENERATE AIRCRAFT IS REFUSED, NOT CERTIFIED ──────────────────
+     W and V were floored here with Math.max(1, …) and Math.max(1e-6, …).
+     Those floors did not protect the arithmetic, they FABRICATED an
+     aircraft: a missing or zero mass became a 1 N machine and a missing or
+     zero cruise speed a 1 micrometre-per-second one, and the clause then
+     PASSED it. Measured before this change, with the app's own unit count
+     and rating: MTOW_kg = 0 gave a gradient of 968,252% with pass:true;
+     vCruise = 0 gave 2,386,407,994% with pass:true; both zero gave 6.5e13%.
+
+     That is the worst place in this engine for a permissive default. This
+     is the ONLY safety-performance clause the eVTOL path evaluates, it is
+     reported as a certification finding, and — unlike the sizing loop's
+     runaway, which App.jsx banners in red — a PASS here is shown with no
+     warning at all. Several upstream paths can deliver a zero or absent
+     mass, so the case is reachable rather than theoretical.
+
+     NOT EVALUATED IS NOT ZERO, which is the rule this repository already
+     states in those words in fuselage-structure/pressure-shell, and which
+     the wingless branch below has always followed.
+
+     A VALID DESIGN IS UNAFFECTED. Each floor could only ever bind on an
+     input that is already non-finite or non-positive, so every finite,
+     positive case returns exactly the number it returned before. */
+  const mtowKg = g.MTOW_kg;
+  const vCruise = p.vCruise;
+  const etaIn = p.etaSys ?? 0.8;
+  const missing = !Number.isFinite(mtowKg) || mtowKg <= 0 ? "maximum take-off mass"
+                : !Number.isFinite(vCruise) || vCruise <= 0 ? "cruise speed"
+                : !Number.isFinite(etaIn) || etaIn <= 0 ? "powertrain efficiency"
+                : null;
+  if (missing) {
+    return {
+      category, applicable: false, gradientPct: null,
+      requiredPct: CLIMB_GRADIENT_MIN * 100, pass: null,
+      basis: `not evaluated — ${missing} is missing or not positive, so there `
+           + "is no aircraft to apply MOC VTOL.2120 to. Not evaluated is not "
+           + "zero, and it is not a pass.",
+      conditionApplied: null,
+      unitsTotal: g.nUnits ?? 0, unitsAvailable: null, cfp: null,
+    };
+  }
+
+  const W = mtowKg * (g.g0 ?? 9.80665);
+  const V = vCruise;
   const LD = g.LD ?? 0;
-  const eta = Math.max(1e-6, p.etaSys ?? 0.8);
+  const eta = etaIn;
 
   /* A wingless aircraft has no L/D climb gradient of this kind. Absent, not
      zero — the same rule the tail outputs follow. */
@@ -120,6 +168,7 @@ export function certificationClimb(p = {}, g = {}) {
       requiredPct: CLIMB_GRADIENT_MIN * 100, pass: null,
       basis: "not applicable — MOC VTOL.2120 is a wing-borne climb gradient; "
            + "this layout is rotor-borne and has no cruise lift-to-drag",
+      conditionApplied: null,
       unitsTotal: g.nUnits ?? 0, unitsAvailable: null, cfp: null,
     };
   }
@@ -166,13 +215,36 @@ export function certificationClimb(p = {}, g = {}) {
     unitsTotal: nUnits,
     unitsAvailable: Math.max(0, unitsAvailable),
     cfp,
+    /* ── THE BASIS NAMES WHAT WAS COMPUTED, NOT WHAT THE RULE ASKS FOR ────
+       This string used to read ", at 305 m above the take-off surface". It
+       was not true of any run. CLIMB_GRADIENT_ALT_M appeared in this file
+       exactly twice — at its declaration and inside this sentence — and
+       never in the arithmetic; rhoAtCondition was documented as an input at
+       the top of this function and never read, and engine.js has never
+       passed it. The gradient is evaluated at whatever cruise condition the
+       design converged to.
+
+       THE GAP IS REAL AND IS NOT CLOSED HERE. Evaluating at 305 m needs the
+       lift-to-drag and the speed AT that condition, not the converged cruise
+       ones, and MOC VTOL.2120(b) additionally puts Category Basic at ISA SL.
+       Re-deriving the polar at a second condition is an engineering change
+       with its own validation, not a wording fix, so it is left undone and
+       SAID rather than implied. What is fixed is the false claim: a reader
+       can no longer be told the number was computed somewhere it was not.
+       `conditionApplied` carries the same fact in a field, so a consumer
+       that never renders prose still sees it. */
+    conditionApplied: "converged cruise condition",
     basis: (enhanced
       ? "MOC VTOL.2120(a) — Category Enhanced, following a critical failure "
         + "for performance, remaining units at maximum continuous power"
-      : "MOC VTOL.2120(b) — Category Basic, nominal conditions, ISA SL")
-      + `, at ${CLIMB_GRADIENT_ALT_M} m above the take-off surface, cruise `
-      + "configuration, at the applicant-selected speed (taken here as cruise "
-      + "speed). ONE POINT ON THE DESIGN CONDITION, not an envelope showing.",
+      : "MOC VTOL.2120(b) — Category Basic, nominal conditions")
+      + ", cruise configuration, at the applicant-selected speed (taken here "
+      + "as cruise speed). COMPUTED AT THE CONVERGED CRUISE CONDITION, not at "
+      + `the ${CLIMB_GRADIENT_ALT_M} m above the take-off surface the rule `
+      + (enhanced ? "specifies" : "specifies, nor at the ISA sea level Category Basic requires")
+      + " — the lift-to-drag and speed at that condition are not derived, so "
+      + "this is an indication at the design point rather than a showing at "
+      + "the required condition. ONE POINT, not an envelope showing.",
     note,
   };
 }

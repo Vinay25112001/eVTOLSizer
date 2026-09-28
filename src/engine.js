@@ -2980,7 +2980,7 @@ function runSizingCore(p0) {
     ...(certClimbOut.applicable ? [{
       label:`Climb gradient >= 2.5% (MOC VTOL.2120, Category ${certClimbOut.category})`,
       ok: certClimbOut.pass,
-      val:`${certClimbOut.gradientPct}% at 305 m, CFP: ${certClimbOut.cfp}`
+      val:`${certClimbOut.gradientPct}% at the converged cruise condition, CFP: ${certClimbOut.cfp}`
         + (certClimbOut.note ? " — single cruise propulsor, see certClimbNote" : "") }] : []),
     {label:"Main tyre rated load adequate",ok:gearOut?gearOut.tyreMain.adequate:true,
      val:gearOut?`${gearOut.tyreMain.size} rated ${gearOut.tyreMain.loadLb} lb vs ${gearOut.tyreMain.requiredLb} lb required`:"n/a (fraction model)"},

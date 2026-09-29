@@ -101,6 +101,11 @@ must state that share rather than let it read as a pass rate.
 2. Then work the 82 named physics domains (P02-004…P02-085) in register order, **worst-covered
    domain first** — GEOM, STRUCT, REG, STAB — because that is where the phase's own prohibition
    has been violated, and because the best-covered domains already have prose to build on.
-3. Gate it, as Phase 0 and Phase 1 were gated. A Phase-2 ledger with no harness holding it to
-   the register would score NO REGRESSION TEST, which is the verdict 11 of Phase 0's
-   requirements already carry.
+3. ~~Gate it, as Phase 0 and Phase 1 were gated.~~ **DONE the same day (N-24):**
+   `validation/phase2-ledger.mjs`, **20 checks, 16 of 16 mutants killed**, wired into `npm test`
+   after `formula-register.mjs`. Without it the ledger would have scored NO REGRESSION TEST, the
+   verdict 11 of Phase 0's requirements already carry. The gate reads the **committed** ledger and
+   **re-derives** from the register rather than regenerating the artefact it compares against,
+   which is the N-19 trap, and it strips CR **first**, which is the F-40 trap. **Gating answers
+   none of the twenty questions** — it only stops the answers already recorded from drifting away
+   from the code.

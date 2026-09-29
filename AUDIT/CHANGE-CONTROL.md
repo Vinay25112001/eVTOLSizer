@@ -1415,3 +1415,69 @@ sites at 7 — summing to 2,429.
 **NOT DONE, AND NOT PRETENDED.** The ledger has no harness holding it to the register, so on the
 audit's own scale it would score NO REGRESSION TEST — the verdict 11 of Phase 0's requirements
 already carry. Gating it is the next step, before any more questions are answered.
+---
+
+### N-24 — THE PHASE 2 LEDGER IS NOW GATED: 20 CHECKS, 16/16 MUTANTS, AND THE FIRST TWO MUTANTS WERE WRONG
+
+`AUDIT/PHASE-2-LEDGER.md` was created ungated, which on this audit's own scale scores
+NO REGRESSION TEST — the verdict **11 of Phase 0's 58 requirements already carry**, for
+exactly this reason: the work was done, documented, and nothing held it to the code.
+`validation/phase2-ledger.mjs` closes that, and is wired into `npm test` after
+`formula-register.mjs`. **20 checks, all passing. This is a new harness, not a change to any
+engineering code: no source, constant or formula is touched.**
+
+**THE DIRECTION OF THE COMPARISON IS THE POINT.** The gate reads the **committed** ledger and
+**re-derives** the determinable verdicts from the register, then compares. It never regenerates
+the ledger and compares it against itself. N-19 is this project doing precisely the latter in the
+local gate runner, and F-40 is the four-session cost of the wrong conclusion that followed. The
+register is the independent input here; the ledger is the artefact under test.
+
+**CR IS STRIPPED FIRST, NOT LAST.** Every read in the gate strips `\r` on the first line, before
+anything is split or matched. F-40 is `report.mjs` stripping it last, after regexes whose `^\s*`
+can match between the `\r` and the `\n`. The lesson is applied the same day it was found.
+
+**WHAT IT PINS.** That the register still parses into its two tables (1,288 retained at 18
+columns + 1,141 excluded at 7 = 2,429) and that its trailing columns still resolve to their
+controlled vocabularies — `impl` to 1 value, `confidence` to 3, `unit verif` to 5. Those counts
+are **PINNED, not bounded**: a new value means the register changed shape and every verdict
+derived from it must be re-derived rather than re-blessed. That the ledger covers the retained
+population **exactly** — same count, 0 orphans, 0 omissions, every site matching the register's
+own file and line. That every verdict is drawn from P02-108…111's four tokens and every row
+carries all twenty. That Q3, Q9 and Q10 still agree with `unit verif`, equation-shape uniqueness
+and `source`. That every determined verdict states a basis, which is P02-112 made mechanical.
+And that the document's leading summary matches the body it summarises, including the stated
+determination total — the F-39 shape, caught by construction.
+
+**Q20 IS PINNED AT ZERO PASS, DELIBERATELY.** A mechanical scan can establish that no guard is
+present near a site, which is evidence the case is unhandled and is recorded as WARNING. It
+cannot establish that a guard which IS present covers the relation in question, so that yields
+UNVERIFIED. The gate fails if a PASS ever appears there, because a PASS would mean the scan had
+been taught to claim something it cannot know. **250 relations are WARNING; 0 are PASS.**
+
+**THE FIRST TWO MUTANTS WERE DEFECTIVE, AND THEY SURVIVED — WHICH IS HOW IT SHOULD LOOK.**
+The mutation run is 16 mutants, one aimed at each check. On the first pass **14 were killed and
+2 survived**: the `confidence` and `unit verif` vocabulary mutants, anchored on the substrings
+`"| NONE | "` and `"| UNRESOLVED |"`. Neither anchor is unique. `NONE` is the value of the
+`finding` column on **1,282 of 1,288 rows**, and `UNRESOLVED` appears in a summary table in the
+register's own prose before it appears in any data row. Both mutants therefore changed a cell the
+check does not read, and the gate was right to pass them.
+
+**That is a defect in the mutant, not a gap in the gate** — the same conclusion this audit has
+reached before, when five surviving mutants turned out to be fixtures or an invented restriction
+rather than a code defect. Re-anchored on a data row and indexed **from the right** (the equation
+column contains `||`, so left-hand indexing past it is unreliable), the run is **16 killed, 0
+survived, 0 not applied**. Every mutation is diffed after restore, and both artefacts are
+confirmed byte-identical to their originals afterwards; a mutation matching nothing is reported
+as NOT APPLIED and counted against the mutation rather than as a kill.
+
+**WHAT THE GATE CANNOT DO.** It cannot say whether any verdict is correct as engineering. It
+knows whether the ledger still describes the register and obeys the phase's own rules. **Sixteen
+of the twenty questions remain UNVERIFIED for every relation, and no gate can change that — only
+work can.** A high UNVERIFIED count is deliberately NOT a failure condition here, because
+UNVERIFIED is the honest verdict the phase provides where evidence is absent; making the gate
+fail on it would create pressure to convert UNVERIFIED into a guess, which is what P02-112
+forbids.
+
+**Phase 2 remains 0 of 112 COMPLETE.** Gating the ledger does not answer a single one of the
+twenty questions; it only stops the answers already recorded from drifting away from the code.
+

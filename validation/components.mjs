@@ -78,6 +78,23 @@ const pct = (g, w) => (w ? (g - w) / w * 100 : NaN);
 const f1 = (x) => (isFinite(x) ? `${x >= 0 ? "+" : ""}${x.toFixed(1)}%` : "  n/a");
 const bar = "=".repeat(78);
 
+/* ── WHY THIS FILE NOW HAS CHECKS ─────────────────────────────────────
+   It was registered in `npm test` and could not fail: no exit, no throw,
+   no assertion anywhere in 516 lines. A harness that cannot fail still
+   counts toward a green run, so it bought coverage it did not provide.
+
+   Everything asserted below is a claim this file ALREADY MAKES IN PROSE.
+   The measurements were always here; what was missing was anything that
+   notices when the code drifts out from under the narration. Where a
+   claim is qualitative ("tens of kg, not hundreds") the bound is set at
+   the order of magnitude the sentence asserts, not at the measured value,
+   so a legitimate re-fit does not trip it and a regression does. */
+let pass = 0, fail = 0;
+const check = (name, ok, detail = "") => {
+  ok ? pass++ : fail++;
+  console.log(`  ${ok ? "PASS" : "FAIL"}  ${name}${detail ? "  — " + detail : ""}`);
+};
+
 console.log(bar);
 console.log("COMPONENT-LEVEL VALIDATION — each model alone, at NASA's published inputs");
 console.log("no sizing loop, no convergence, no feedback: a component cannot hide");
@@ -126,6 +143,20 @@ function scoreRotor(model, nBlades, nu) {
   return { errs, mae };
 }
 
+/* The nu assignment is SOURCED, not fitted: NASA publish both the values
+   and which vehicle uses which, and the lift+cruise rotors are rigid
+   because they stop in cruise and take edgewise flow as a cantilever.
+   If either value or either assignment is edited, the sweep below stops
+   being a bound on a guess and becomes a fit. */
+console.log("\n   -- the published inputs this section rests on --");
+check("nu by published rotor type is 1.03 flapping / 1.25 hingeless",
+  NU_BY_TYPE.flapping === 1.03 && NU_BY_TYPE.hingeless === 1.25,
+  "Concept Vehicles for VTOL Air Taxi Operations, Table 8 discussion");
+check("both lift+cruise vehicles are the hingeless ones",
+  ROTOR_TYPE["L+C-E"] === "hingeless" && ROTOR_TYPE["L+C-TE"] === "hingeless"
+  && Object.values(ROTOR_TYPE).filter((t) => t === "hingeless").length === 2,
+  "Johnson & Silva 2022 sec.6.3 — rigid rotors, stopped in cruise");
+
 const calRow = scoreRotor("diskArea", 3, 1.25);
 console.log(`   ${"model".padEnd(26)} ${VEHICLES.map(v => v.key.padStart(8)).join("")}   MAE`);
 console.log(`   ${"[CAL] 2.0 kg/m2 disk".padEnd(26)} ${calRow.errs.map(e => f1(e).padStart(8)).join("")}  ${calRow.mae.toFixed(1)}%`);
@@ -172,7 +203,7 @@ const supportLb = (v) => {
 };
 console.log(`\n   NASA's OWN DECK INPUTS (AFDD82, deck blades and nu, chi 0.916/0.759, geometric chord;`);
 console.log(`   scored as blades+hub against Table 12 less the deck's rotor-support term):`);
-const deckErrs = [];
+const deckErrs = [], deckByKey = {};
 for (const v of VEHICLES.filter((x) => DECK_CFG[x.key])) {
   const R_m = v.R_ft / FT;
   const out = rotorGroup({ configType: DECK_CFG[v.key], solidity: v.solidity },
@@ -181,11 +212,33 @@ for (const v of VEHICLES.filter((x) => DECK_CFG[x.key])) {
   const sup = supportLb(v), target = v.rotor_lb - sup;
   const e = pct(out.mass * LB, target), eWhole = pct(out.mass * LB + sup, v.rotor_lb);
   deckErrs.push(e);
+  deckByKey[v.key] = e;
   console.log(`   ${v.key.padEnd(8)} ${out.nBlades} bl nu ${out.flapFreq}  blades+hub ${(out.mass * LB).toFixed(0).padStart(4)} lb`
     + ` vs ${target.toFixed(0).padStart(4)} (= ${v.rotor_lb} - support ${sup.toFixed(0)})  ${f1(e).padStart(7)}`
     + `   whole group ${f1(eWhole).padStart(7)}`);
 }
 console.log(`   MAE ${(deckErrs.reduce((a, b) => a + Math.abs(b), 0) / deckErrs.length).toFixed(1)}% over ${deckErrs.length} vehicles, nothing tuned.`);
+/* "Nothing tuned" is only meaningful if the SET is pinned: an MAE over a
+   shrinking set of vehicles improves for free. The tiltwing is excluded on
+   the source's own terms (its deck weighs the proprotors with the propeller
+   model, tiltwing6.list :220), which is a reason, not a convenience. */
+check("the deck row scores the seven non-tiltwing vehicles",
+  deckErrs.length === 7 && !("TW-TE" in deckByKey),
+  `scored: ${Object.keys(deckByKey).join(", ")}`);
+/* The five NON-lift+cruise vehicles reproduce at NASA's own deck inputs.
+   Measured worst is -2.6%; the bound is 5% so a re-fit has room and a
+   broken deck read does not. */
+for (const k of ["SMR-TS", "Quad-TS", "Quad-E", "SbS-TS", "SbS-E"]) {
+  check(`  ${k} reproduces at the deck inputs`, Math.abs(deckByKey[k]) < 5,
+    `${deckByKey[k] >= 0 ? "+" : ""}${deckByKey[k].toFixed(1)}%`);
+}
+/* And the lift+cruise pair does NOT reproduce — reported, not fitted. The
+   check is that they remain the two worst, i.e. that the exception the
+   text spends a paragraph on is still the exception it describes. */
+check("the lift+cruise pair are the two worst, as the text says",
+  Math.min(Math.abs(deckByKey["L+C-E"]), Math.abs(deckByKey["L+C-TE"]))
+    > Math.max(...["SMR-TS", "Quad-TS", "Quad-E", "SbS-TS", "SbS-E"].map((k) => Math.abs(deckByKey[k]))),
+  `L+C-E ${deckByKey["L+C-E"].toFixed(1)}%, L+C-TE ${deckByKey["L+C-TE"].toFixed(1)}%`);
 console.log(`   THE LIFT+CRUISE DOES NOT REPRODUCE and is reported, not fitted: Silva & Johnson`);
 console.log(`   2018 Table 3 carries the same 948 lb as Table 12, so it is not a vintage gap;`);
 console.log(`   the pusher (propulsion group), spinner (none), taper direction, nu and tip speed`);
@@ -239,8 +292,14 @@ console.log(`   are excluded; the sized solidity and the 2018 run's boom increme
    ELECTRICAL could not be anchored. FLOPS has two equations and they disagree
    wildly for this class: the transport form (Eq. 106) gives ~513 kg and the
    short-form (Eq. 107) ~147 kg for a Joby-sized aircraft, against this model's
-   ~89 kg. Both are fitted to conventional aircraft whose electrical
+   ~38 kg. Both are fitted to conventional aircraft whose electrical
    architecture is nothing like a distributed-electric one. NO ANCHOR FOUND.
+   (That last figure READ ~89 kg until 2026-09-29 and was stale: it is
+   electricalFrac x 2939.3 kg, and the fraction was recalibrated from 3.0%
+   to 1.31% against Table 12 without this paragraph following it. The
+   FLOPS numbers and the conclusion are unaffected — 513/147 is still 3.5x
+   and still spans the model either way. Found by the checks added to this
+   file in the same commit, on their first run.)
 
    NOT TUNED. Nothing here was adjusted to close the gap — that would be
    fitting. What the hunt bought is a smaller suspect list: avionics is
@@ -252,6 +311,7 @@ console.log(`   boundaries: avionics + electrical + ECS + furnishings.`);
 console.log(`   EXCLUDES battery packaging (propulsion group) and flight controls (tested above).`);
 console.log(`   ${"vehicle".padEnd(10)} ${"published".padStart(10)} ${"ours".padStart(10)} ${"err(A)".padStart(8)} ${"err(B)".padStart(9)}`);
 console.log(`   A = systems EXCLUDES flight controls (CORRECT — B implies a negative electrical group)`);
+const sysRows = [];
 for (const v of VEHICLES.filter(x => x.systems_lb)) {
   const MTOW_kg = v.dgw_lb / LB;
   const pubKg = v.systems_lb / LB;
@@ -265,15 +325,51 @@ for (const v of VEHICLES.filter(x => x.systems_lb)) {
      same published total. The truth is one of these; the table cannot say. */
   const eA = 100 * (ours / pubKg - 1);
   const eB = 100 * ((ours + v.fc_lb / LB) / pubKg - 1);
+  /* AV and FURN are not restated here: the remainder is recovered from the
+     same `ours` the table prints, so a change to either constant moves the
+     check with the table instead of leaving it asserting a stale number. */
+  sysRows.push({ key: v.key, pubKg, ours, elec, ecs, fcKg: v.fc_lb / LB, eA, eB,
+                 remainderB: pubKg - (ours - elec - ecs) - v.fc_lb / LB });
   console.log(`   ${v.key.padEnd(10)} ${pubKg.toFixed(1).padStart(10)} ${ours.toFixed(1).padStart(10)} `
     + `${((eA > 0 ? "+" : "") + eA.toFixed(1) + "%").padStart(8)} `
     + `${((eB > 0 ? "+" : "") + eB.toFixed(1) + "%").padStart(9)}`);
 }
+/* THE BOUNDARY RESOLUTION IS A DERIVATION, SO IT CAN STOP BEING TRUE.
+   Reading B (Table 12's systems line INCLUDES flight controls) was ruled
+   out by contradiction: subtract the sourced avionics and furnishings and
+   the flight-controls line from the published total and the remainder left
+   for electrical, instruments, hydraulics, APU and lights is 11.6 / 5.3 /
+   -6.5 kg. A NEGATIVE electrical group is impossible, which is the only
+   reason reading A is used. If a constant ever moves that remainder
+   positive, the argument is gone and the table is comparing unlike things
+   without saying so. */
+check("reading B still implies an impossible (negative) electrical group",
+  sysRows.some((r) => r.remainderB < 0),
+  sysRows.map((r) => `${r.key} ${r.remainderB.toFixed(1)} kg`).join(" · "));
+/* THE TWO FRACTIONS ARE PINNED BY A DERIVATION, SO CHECK THE DERIVATION.
+   weights.js declares these as "[CAL] 2/3 of the 1.96% backed out of
+   Table 12" and "[CAL] 1/3 — split [LAY], total is what is calibrated".
+   Only the TOTAL is calibrated and only the RATIO is chosen, so those are
+   the two things worth asserting: restating the digits would pass for the
+   wrong reason after any re-calibration, and would not notice one term
+   being edited without the other. (The first version of this check DID
+   restate the digits — 3.0% and 1.5% — and failed on its first run, which
+   is how the stale prose corrected below was found.) */
+check("the systems fractions still sum to the 1.96% calibrated off Table 12",
+  Math.abs((K.electricalFrac + K.ecsAntiIceFrac) - 0.0196) < 1e-9,
+  `${K.electricalFrac} + ${K.ecsAntiIceFrac} = ${(K.electricalFrac + K.ecsAntiIceFrac).toFixed(4)}`);
+check("and are still split 2:1 electrical:environmental, as declared [LAY]",
+  Math.abs(K.electricalFrac / K.ecsAntiIceFrac - 2) < 0.02,
+  `ratio ${(K.electricalFrac / K.ecsAntiIceFrac).toFixed(3)}`);
+check("under reading A the systems buildup is within 10% on all three",
+  sysRows.every((r) => Math.abs(r.eA) < 10),
+  sysRows.map((r) => `${r.key} ${r.eA >= 0 ? "+" : ""}${r.eA.toFixed(1)}%`).join(" · "));
 console.log(`
    THE FINDING SURVIVES THE SOURCE HUNT, but the suspect list is smaller.
    Avionics is CLEARED (FLOPS agrees within 4%). Furnishings now has a sourced
    seat term (NASA, 23 lb/seat). The residual sits in ELECTRICAL and
-   ENVIRONMENTAL, modelled as flat fractions of MTOW (3.0% and 1.5%) for which
+   ENVIRONMENTAL, modelled as flat fractions of MTOW (1.31% and 0.65%, a total
+   [CAL] against Table 12 and a [LAY] 2:1 split) for which
    no eVTOL-relevant published model was found — FLOPS' two electrical
    equations disagree by 3.5x on this class because both are fitted to
    conventional aircraft.
@@ -285,13 +381,22 @@ console.log(`
    in the same table as everything else so the comparison is uniform. */
 console.log(`\n── DRIVE SYSTEM  (NASA Table 12 "Drive system weight")`);
 console.log(`   ${"vehicle".padEnd(10)} ${"published".padStart(10)} ${"AFDD00/train".padStart(13)} ${"error".padStart(8)}`);
+const driveErrs = {};
 for (const v of VEHICLES.filter(x => x.drive_lb)) {
   const R_m = v.R_ft / FT;
   const omega = (v.tip / FT) / R_m;
   const out = driveSystem({ motorGearRatio: v.gearRatio },
     { nRotors: v.nRotors, PmotKW: v.PmotKW, omegaRotor: omega });
+  driveErrs[v.key] = pct(out.mass, v.drive_lb / LB);
   console.log(`   ${v.key.padEnd(10)} ${(v.drive_lb / LB).toFixed(1).padStart(8)} kg ${out.mass.toFixed(1).padStart(11)} kg ${f1(pct(out.mass, v.drive_lb / LB)).padStart(8)}`);
 }
+/* The header of the MOTOR GROUP section below argues from these two numbers
+   ("drivesystem.js already scores -1.9% / +1.7% on two of the three") to
+   conclude the gearbox is not the cause of the motor+drive error. That
+   argument is only available while the two numbers hold. */
+check("the gearbox is exonerated by its own score on two of the three",
+  Math.abs(driveErrs["Quad-E"]) < 5 && Math.abs(driveErrs["SbS-E"]) < 5,
+  Object.entries(driveErrs).map(([k, e]) => `${k} ${f1(e)}`).join(" · "));
 
 /* ── MOTOR GROUP ──────────────────────────────────────────────────────
    THE LARGEST SINGLE MASS IN THE AIRCRAFT, AND UNTIL NOW UNTESTED. At the app
@@ -338,6 +443,27 @@ console.log(`   NASA's own, recovered by inverting their motor-group weights.
   console.log(`     ${tauLine.join(" · ")}`);
   console.log(`   (the EMRAX fit runs to ${EMRAX_TAU_MAX_NM} N·m; beyond it the model adds`);
   console.log(`    power at the family's specific power rather than extrapolating.)`);
+
+  /* Every row above is labelled "<- DEFAULT" against emraxTorque. That is a
+     claim about the ENGINE, made by a validation file, and nothing checked
+     it: if motormass.js changes its default the table keeps printing the
+     annotation beside the wrong row. Asked by calling with no model at all
+     and comparing to the named one, so it cannot pass by restating itself. */
+  {
+    const arg = { P_kW: 100, omega: 100, gearRatio: 1, K };
+    const implicit = motorMass(arg), named = motorMass({ ...arg, model: "emraxTorque" });
+    check("emraxTorque really is the default the table labels",
+      implicit.kg === named.kg,
+      `no model ${implicit.kg.toFixed(3)} kg vs emraxTorque ${named.kg.toFixed(3)} kg`);
+    /* The fit has a stated ceiling and the text says what happens past it:
+       power at the family specific power, NOT an extrapolated torque line.
+       Above the cap the two must part company. */
+    const below = motorMass({ P_kW: 30, omega: 200, gearRatio: 1, K });
+    const above = motorMass({ P_kW: 4000, omega: 4, gearRatio: 1, K });
+    check("the EMRAX fit declares a ceiling and stops extrapolating past it",
+      below.tauNm < EMRAX_TAU_MAX_NM && above.tauNm > EMRAX_TAU_MAX_NM && above.kg > below.kg,
+      `cap ${EMRAX_TAU_MAX_NM} N·m; ${below.tauNm.toFixed(0)} -> ${above.tauNm.toFixed(0)} N·m`);
+  }
 }
 
 /* ── CERTIFIED HARDWARE ───────────────────────────────────────────────
@@ -395,6 +521,18 @@ console.log(`   the only measured, authority-certified hardware on the eVTOL sid
               ` this engine's cruise propeller at that diameter ${propKg.toFixed(2)} kg ${f1(pct(propKg, P812.kg))}` +
               ` ([CAL] ${K.rotorMassPerDiskAreaKgM2} kg/m2 of disk, its first measured comparison)`);
   console.log(`   Reported, not fitted: one certified motor and one propeller are points, not populations.`);
+
+  /* THE ONE PLACE A DATA-ENTRY ERROR WOULD BE SILENT. Every other number in
+     this section is scored against something; the certificate figures are
+     just transcribed. They are not independent, though — EASA.E.234 gives
+     power, speed AND torque, so P = tau*omega checks the transcription
+     against itself. A mistyped rating stops satisfying its own identity. */
+  for (const [tag, P_kW, rpm, tauPub] of [["MTOP", E811.mtopKW, E811.mtopRpm, E811.tauMtopNm],
+                                          ["MCP", E811.mcpKW, E811.mcpRpm, E811.tauMcpNm]]) {
+    const tau = P_kW * 1000 / rad(rpm);
+    check(`  EASA.E.234 ${tag}: P = tau x omega to within 1 N·m`,
+      Math.abs(tau - tauPub) < 1, `${tau.toFixed(1)} vs certificate ${tauPub} N·m`);
+  }
 }
 
 /* ── INSTALLED MOTOR MARGIN ───────────────────────────────────────────
@@ -428,11 +566,13 @@ console.log(`
       note:"WING-BORNE — the wing unloads the rotors; NASA keep baseline motors" },
   ];
   const OURS = Math.pow(1.30, 1.5);
+  const factors = [];
   console.log(`   ${"vehicle".padEnd(9)}${"hover kW/rotor".padStart(15)}${"NASA kW/motor".padStart(15)}`
     + `${"NASA factor".padStart(13)}${"ours".padStart(8)}${"over by".padStart(10)}`);
   for (const v of NASA) {
     const P = (v.W_kg * G / v.FM) * Math.sqrt(v.DL * PSF_N / (2 * RHO_5K_ISA20)) / 1000 / v.N;
     const nasaKW = v.hp * 0.7457, factor = nasaKW / P;
+    factors.push({ k: v.k, factor });
     console.log(`   ${v.k.padEnd(9)}${P.toFixed(1).padStart(15)}${nasaKW.toFixed(1).padStart(15)}`
       + `${factor.toFixed(3).padStart(13)}${OURS.toFixed(3).padStart(8)}`
       + `${(OURS / factor).toFixed(2).padStart(9)}x`);
@@ -462,6 +602,21 @@ console.log(`
   console.log(`   benchmark drifting further from a 1.00 g aircraft, not the model decaying.`);
   console.log(`   Separately, deriving n_z per configuration from N/(N-1) was refuted`);
   console.log(`   (1.54 / 1.00 / 1.22 against 1.425 / 1.080 / 0.911) — see note 20.`);
+
+  /* THE FINDING IS THE SPREAD, NOT ANY ONE FACTOR. These three numbers are
+     recovered from NASA's own published gross weight, disk loading and
+     figure of merit through momentum theory, so they do not depend on
+     anything this engine computes — which is exactly why they are worth
+     pinning: they are arithmetic on published data and must reproduce. */
+  const want = { "Quad-E": 1.425, "SbS-E": 1.080, "L+C-E": 0.911 };
+  for (const { k, factor } of factors) {
+    check(`  ${k}: NASA's installed margin recovers to ${want[k]}`,
+      Math.abs(factor - want[k]) < 0.005, `recovered ${factor.toFixed(3)}`);
+  }
+  const lo = Math.min(...factors.map((f) => f.factor)), hi = Math.max(...factors.map((f) => f.factor));
+  check("NASA's margin is configuration-DEPENDENT, this engine's is not",
+    hi / lo > 1.5 && factors.every((f) => Math.abs(f.factor - OURS) > 0.001),
+    `NASA ${lo.toFixed(3)}..${hi.toFixed(3)} (x${(hi / lo).toFixed(2)}) against a uniform ${OURS.toFixed(3)}`);
 }
 
 /* ── NACELLE GROUP ────────────────────────────────────────────────────
@@ -471,11 +626,19 @@ console.log(`
 console.log(`\n── NACELLE GROUP  (no published line in Table 12 — magnitude check only)`);
 console.log(`   built to test the claim that a missing nacelle group explained a`);
 console.log(`   ~290 kg lift+cruise structures gap:\n`);
+const nacelleKg = {};
 for (const v of VEHICLES.filter(x => x.motor_lb)) {
   const out = nacelleGroup({}, { motorMassKg: v.motor_lb / LB, nMotors: v.nRotors, MTOW: 3000 });
+  nacelleKg[v.key] = out.mass;
   console.log(`   ${v.key.padEnd(10)} motors ${(v.motor_lb / LB).toFixed(0).padStart(4)} kg over ${String(v.nRotors).padStart(2)} -> nacelle ${out.mass.toFixed(1).padStart(6)} kg`);
 }
 console.log(`   -> the group is tens of kg, not hundreds. The 290 kg inference was wrong.`);
+/* The refutation, made checkable. The claim is an ORDER OF MAGNITUDE, so
+   that is what the bound tests: anything under 100 kg refutes the 290 kg
+   inference and anything over 1 kg means the group was actually built. */
+check("the nacelle group is tens of kg, not hundreds",
+  Object.values(nacelleKg).every((m) => m > 1 && m < 100),
+  Object.entries(nacelleKg).map(([k, m]) => `${k} ${m.toFixed(1)} kg`).join(" · "));
 
 console.log(`\n${bar}`);
 console.log("Component accuracy is NOT the same as loop accuracy. A component that");
@@ -491,7 +654,7 @@ console.log(bar);
    the result does NOT go the way the audit assumed. */
 console.log(`\n── FLIGHT CONTROLS  (NASA Table 12 "Flight controls weight", 8 variants)`);
 console.log(`   ${"vehicle".padEnd(9)} ${"published".padStart(9)} ${"% of MTOW".padStart(10)} ${"FRAC 2.5%".padStart(11)} ${"err".padStart(8)} ${"AFDD82".padStart(10)} ${"err".padStart(9)}`);
-let fracErrs = [], afddErrs = [];
+let fracErrs = [], afddErrs = [], fcShare = [];
 for (const v of VEHICLES) {
   const MTOW = v.dgw_lb / LB, want = v.fc_lb / LB;
   const R_m = v.R_ft / FT;
@@ -501,6 +664,7 @@ for (const v of VEHICLES) {
   const af = flightControls({ flightControlsModel: "afdd", solidity: v.solidity,
                               rotorControl: "rpm" }, g, K.flightControlsFrac);
   fracErrs.push(pct(fr.mass, want)); afddErrs.push(pct(af.mass, want));
+  fcShare.push({ key: v.key, share: 100 * want / MTOW });
   console.log(`   ${v.key.padEnd(9)} ${want.toFixed(1).padStart(7)} kg ${(100*want/MTOW).toFixed(2).padStart(9)}% ${fr.mass.toFixed(1).padStart(9)} kg ${f1(pct(fr.mass,want)).padStart(8)} ${af.mass.toFixed(1).padStart(8)} kg ${f1(pct(af.mass,want)).padStart(9)}`);
 }
 const mae = (a) => a.reduce((x, y) => x + Math.abs(y), 0) / a.length;
@@ -514,3 +678,32 @@ console.log(`   regression that is several times high. The [FRAC] model is KEPT.
 console.log(`   Published spread is 1.36%-3.42% of MTOW, and the top of it is the`);
 console.log(`   TILTWING — NDARC counts "conversion (rotor tilt) flight controls" as`);
 console.log(`   its own category, which is real configuration dependence.`);
+
+/* THE SECTION'S CONCLUSION, WHICH IS A COMPARISON AND SO CAN REVERSE.
+   The method-fidelity audit flagged the flat [FRAC] model as a mismatch
+   against AFDD82 §29-8; measured on NASA's own eight variants the import
+   would be an order of magnitude worse, because the N_rotor^1.3855 term
+   describes mechanical runs to every rotor and these aircraft are
+   fly-by-wire. "Several times high" is the claim, so 2x is the bound. */
+console.log("");
+check("keeping [FRAC] over AFDD82 is still the better of the two",
+  mae(fracErrs) < mae(afddErrs) && mae(afddErrs) > 2 * mae(fracErrs),
+  `[FRAC] MAE ${mae(fracErrs).toFixed(1)}% against AFDD82 ${mae(afddErrs).toFixed(1)}%`);
+/* The published spread is quoted to two decimals in the line above, and the
+   claim that its TOP is the tiltwing is the evidence for real configuration
+   dependence rather than scatter. Both are read off Table 12. */
+{
+  const lo = Math.min(...fcShare.map((r) => r.share)), hi = Math.max(...fcShare.map((r) => r.share));
+  const top = fcShare.reduce((a, b) => (b.share > a.share ? b : a));
+  check("the published spread is 1.36%-3.42% of MTOW as quoted",
+    Math.abs(lo - 1.36) < 0.01 && Math.abs(hi - 3.42) < 0.01,
+    `${lo.toFixed(2)}% .. ${hi.toFixed(2)}%`);
+  check("and the top of it is the TILTWING, which is the point being made",
+    top.key === "TW-TE", `top is ${top.key} at ${top.share.toFixed(2)}%`);
+}
+
+console.log(`\n${bar}`);
+console.log(fail ? `COMPONENT GATE FAILED: ${fail} check(s), ${pass} passed`
+                 : `COMPONENT GATE PASSED (${pass} checks)`);
+console.log(bar);
+process.exit(fail ? 1 : 0);

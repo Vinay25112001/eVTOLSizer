@@ -24,7 +24,9 @@
    to be one; it is a round number in the right decade, chosen so the
    checks below exercise the code. Nothing in src/ carries it.
    ═══════════════════════════════════════════════════════════════════════ */
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import * as E from "../src/classes/aircraft/engine.js";
 import { fuselageStructure } from "../src/classes/aircraft/fuselage-structure.js";
 import { MATERIALS, MIN_GAUGE_BY_CLASS } from "../src/classes/aircraft/wing-structure.js";
@@ -38,6 +40,7 @@ const check = (ok, what, detail) => {
   if (detail) console.log(`        ${detail}`);
   ok ? passes++ : fails++;
 };
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const bar = "═".repeat(76);
 console.log(bar);
 console.log("FUSELAGE PRESSURE SHELL GATE — F2");
@@ -216,9 +219,35 @@ for (const t of WITH) {
         && p.caveats.some((c) => /STRINGERS ARE NOT CREDITED/.test(c)) && p.caveats.some((c) => /ELLIPSE/.test(c)),
     `${t}: the four honest limits are in the caveats a reader sees`, `${p.caveats.length} caveats`);
 }
-check(readFileSync("../eVTOL_Sizing_Research/classes/transport/extracted/14CFR_25.365.txt", "utf8")
-        .includes("multiplied by a factor of 1.33"),
-  "the regulation extract the module cites really says 1.33", "14CFR_25.365.txt paragraph (d)");
+/* THE CORPUS IS OPTIONAL, AND THIS HARNESS SITS 63rd IN A FAIL-FAST CHAIN.
+   The research corpus lives OUTSIDE the repository, so on a checkout without
+   it beside them this readFileSync THREW, and `npm test` is one `&&` chain:
+   it killed not just this gate but the 54 harnesses that run after it.
+   citations.mjs already settled the policy for exactly this case — "THE
+   CORPUS IS OPTIONAL ... when absent the gate says so loudly and still
+   enforces the denylist, rather than passing in silence". The remainder that
+   can be enforced here without the corpus is the DECLARED factor: the corpus
+   proves the REGULATION says 1.33, and the check below proves the CODE agrees
+   with it, so the pair is only ever weakened by one link, never silently.
+   The path is resolved from THIS FILE rather than from the working directory,
+   so the check no longer depends on where node was launched. */
+{
+  const EXTRACT = join(ROOT, "..", "eVTOL_Sizing_Research", "classes", "transport",
+                       "extracted", "14CFR_25.365.txt");
+  const declared = fuselageStructure(SIZED[WITH[0]]).pressure;
+  check(declared.burstFactor === 1.33 && /25\.365\(d\)/.test(declared.burstNote ?? ""),
+    "the factor the code applies is 1.33, and its note names 25.365(d)",
+    "enforced with or without the corpus");
+  if (existsSync(EXTRACT)) {
+    check(readFileSync(EXTRACT, "utf8").includes("multiplied by a factor of 1.33"),
+      "the regulation extract the module cites really says 1.33", "14CFR_25.365.txt paragraph (d)");
+  } else {
+    console.log(`  SKIP  CORPUS NOT FOUND at ${EXTRACT}`);
+    console.log(`        the regulation's own wording cannot be read here, so that half of`);
+    console.log(`        the pair is skipped — NOT passed. The declared factor above still`);
+    console.log(`        fails the gate if the code stops applying 1.33.`);
+  }
+}
 
 console.log(`\n${bar}`);
 console.log(`FUSELAGE PRESSURE SHELL GATE: ${passes} passed, ${fails} failed`);

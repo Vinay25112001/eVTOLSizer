@@ -912,6 +912,107 @@ own holder decision.
 
 ---
 
+## CHG-010 — The two registered harnesses that could not report a regression
+
+**AUTHORISED** by the holder as the first of four streams, in answer to the standing question
+"are the verification-infrastructure defects in remit?".
+
+### BEFORE
+
+Two entries in `npm test` could not tell anyone that anything had broken, for opposite reasons.
+
+`validation/components.mjs` held **516 lines, 0 `process.exit`, 0 `throw`, 0 `check(`**. It
+printed component-level measurements against NASA/TM-20210017971 Table 12 and always succeeded.
+It therefore counted toward a green run while providing none of the coverage its registration
+implied.
+
+`validation/fuselage-pressure.mjs:219` read the research corpus from **outside the repository**
+with no guard:
+
+```js
+check(readFileSync("../eVTOL_Sizing_Research/classes/transport/extracted/14CFR_25.365.txt", "utf8")
+        .includes("multiplied by a factor of 1.33"), ...)
+```
+
+`npm test` is a single `&&` chain and this harness sits at **position 63 of 117**, so on a
+checkout without the corpus beside it the throw took the **54 harnesses downstream** with it.
+The path was also resolved against the working directory rather than the file, so it depended on
+where node was launched.
+
+### AFTER
+
+`components.mjs` carries **26 checks**. Every one pins a claim the file **already made in prose** —
+that is the entire selection rule. The file narrates conclusions ("the group is tens of kg, not
+hundreds"; "THE FLAGGED MISMATCH RESOLVES THE OTHER WAY"; "B implies a negative electrical
+group"), and a conclusion kept beside the code that produced it drifts from it unless something
+enforces the pair. No new physics is measured and no threshold is invented beyond the margin each
+narrated claim already carries: where the claim is an order of magnitude, so is the bound.
+
+`fuselage-pressure.mjs` now follows the policy `citations.mjs` had already set for this exact
+situation — *"THE CORPUS IS OPTIONAL ... when absent the gate says so loudly and still enforces
+the denylist, rather than passing in silence."* The corpus proves the REGULATION says 1.33; a new
+check proves the CODE agrees with it, so the pair is only ever weakened by one link, never
+silently. 71 → **72 checks**.
+
+### WHY
+
+A harness that cannot fail is worse than no harness: it consumes a slot in the runner, appears in
+the report, and buys confidence it cannot supply. `MASTER-COMPLETENESS-REPORT.md` records 26 of
+960 requirements as regression-protected, and a harness that cannot fail inflates even that.
+
+**What is deliberately NOT asserted**: that the DEFAULT motor model scores best. It does not —
+`emraxTorque` measures MAE **42.8 %** against `specificPower`'s **16.8 %** — and the file explains
+why at length (the four are reference classes fitted to different populations; the motor+drive
+gap is a design-point difference in the hover load factor, not model error). Pinning the
+flattering thing would have been asserting an expectation instead of the data.
+
+### EVIDENCE
+
+| | |
+|---|---|
+| `components.mjs` | 26 checks, **11/11 mutants** |
+| `fuselage-pressure.mjs` | 72 checks (was 71), **3/3 mutants** |
+| full gate | `TEST_EXIT=0` `REPORT_EXIT=0` `CHECK_EXIT=0` |
+| suite | 117 chained commands, 116 distinct harnesses, **2,811 PASS, 0 FAIL** |
+| engine values moved | **none** — no `src/` file is touched by this change |
+
+Each mutant names the check it must kill, so a mutant that merely turns a gate red without
+killing its named check is reported as SURVIVED. **M5 earns its place**: it holds the calibrated
+total at 0.0196 and changes only the 2:1 split, leaving the printed systems table bit-identical,
+so only the ratio check can catch it. One mutant survived on its first run and **the mutant was
+at fault, not the check** — 57.72 is the AFDD83 branch, not the default AFDD00 path the table's
+own header names; retargeted to 95.7634 it kills.
+
+### N-11 — the component harness's own narration had gone stale — LOW — RAISED AND CLOSED HERE
+
+Found by the new checks **on their first run**, which is the argument for having written them.
+
+The first version of the systems check restated the two constants the prose names — 3.0 % and
+1.5 % of MTOW — and **failed**:
+
+```
+FAIL  electrical and ECS are the 3.0% and 1.5% of MTOW the text names
+      — electricalFrac 0.0131, ecsAntiIceFrac 0.0065
+```
+
+**The code is right and deliberate.** `weights.js:103-104` record them as *"[CAL] 2/3 of the
+1.96 % backed out of Table 12"* and *"[CAL] 1/3 — split [LAY], total is what is calibrated"*, and
+the printed systems table is self-consistent with those values (Quad-E: 92.5 + 90 + 38.5 + 19.1 =
+240.1 kg, the −1.2 % row). What was wrong is the **narration in `components.mjs`**, which still
+quoted the pre-calibration figures in two places, including a "~89 kg" electrical figure that is
+`electricalFrac × 2939.3 kg` at the old 3.0 %. Both sentences are corrected and say that they were.
+
+The check was the wrong **shape** as well as stale. The constants are pinned by a declared
+derivation, so it now asserts the calibrated **total** and the chosen **ratio** — which survive a
+re-calibration and still die if one term moves without the other. Restating digits would have
+passed for the wrong reason after any legitimate re-fit.
+
+This is the third instance in this repository of the same pattern, and it is now the argument for
+keeping records next to what they record: N-07 (a stale harness description), N-10 (a drifted
+`BASE`), and now N-11.
+
+---
+
 ## Summary of PASS B so far
 
 | | |
@@ -920,16 +1021,17 @@ own holder decision.
 | HIGH findings closed | **6** (F-01, F-04, F-05, F-02, F-03, F-09) + N-06, raised and closed in PASS B |
 | engineering equations changed | **0** |
 | numeric outputs moved | CHG-001..004 and CHG-007 moved **0**. CHG-005 moves numbers DELIBERATELY: 183 of 277 golden cases, median MTOW +1.13 %, every change class traced to the corrected constant |
-| new harness checks | 42 + 40 + 3 + 19 + 35 + 26 + 29 = **194**, with 26-check, 5-, 5-, 5-, 9-, 9- and 8-mutant evidence |
-| new findings raised BY remediation | **10** (N-01..N-10); N-04 closed by CHG-005, N-06 and N-07 by CHG-007 |
+| new harness checks | 42 + 40 + 3 + 19 + 35 + 26 + 29 + 27 = **221**, with 26-check, 5-, 5-, 5-, 9-, 9-, 8-, 11- and 3-mutant evidence |
+| new findings raised BY remediation | **11** (N-01..N-11); N-04 closed by CHG-005, N-06 and N-07 by CHG-007, N-11 by CHG-010 |
 | register prescriptions found to be wrong | **2** (F-01's one-liner is a measured no-op; F-03's "a control that cannot change the design must not sit on the design panel" is contradicted by `input-deck.js:33`, which shows `reserveMin` only under the one method that uses it) |
 | gaps deliberately left open and stated | 2 (evaluation at 305 m / ISA SL; `MTOW = null` on a loop that never produced one) |
 
 **The authorised order is complete.** F-01, F-02, F-03, F-04, F-05, F-09 and both CRITICALs are
 closed, and N-06 was found and closed on the way. What is left is not a queue but a set of holder
-decisions, listed in the park file and unchanged by this pass: whether `AUDIT/` is committed;
-whether the verification-infrastructure defects are in remit (`components.mjs` cannot fail,
-`fuselage-pressure.mjs` breaks a clean checkout, the blind freshness gate, `GATE_MAE = 40`, N-05);
+decisions, listed in the park file. TWO HAVE SINCE BEEN ANSWERED: `AUDIT/` was committed
+(`c3923ef`), and the verification-infrastructure defects were ruled IN REMIT, of which
+CHG-010 closes the first two (`components.mjs` cannot fail, `fuselage-pressure.mjs` breaks a
+clean checkout). Still open from that group: the blind freshness gate, `GATE_MAE = 40`, N-05;
 whether N-02 gets the same sign discipline the classes now have, which needs a published schema
 `DEFAULT_PARAMS` does not have; and N-08, N-09 and N-10 above.
 

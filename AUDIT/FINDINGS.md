@@ -754,6 +754,75 @@ The register's equation column is truncated for the same reason, and the Phase-0
 prefix-match allowance to truncated rows to compensate. Removing the truncation removes the
 need for that allowance and turns check #7 into an exact comparison.
 
+## F-40 — `report:check` calls the CURRENT report STALE on Windows, because `NORM` strips CR after regexes whose `^\s*` can cross a CRLF boundary — MEDIUM — VERIFIED
+
+**The committed `VALIDATION.md` is not stale.** Put through `report.mjs`'s own `NORM`, the
+committed blob and a freshly generated report are **identical**. N-19 concluded the opposite and
+left CHECK_EXIT=1 as an honest open item; **that conclusion was wrong** and N-20 records the
+correction. The cause is line endings, not drifted results.
+
+**Measured.** `git show HEAD:VALIDATION.md` is **LF** — 0 CR, 5,121 LF, 428,907 bytes. But
+`core.autocrlf=true` is set in this clone and `.gitattributes` exempts only
+`validation/schemas/**`, so the **working-tree** copy is **CRLF** — 5,121 CR, 5,121 LF,
+434,028 bytes. `--check` reads the working tree (`readFileSync("VALIDATION.md")`,
+`report.mjs:603`), so it reads the CRLF form while the repository stores LF.
+
+**Mechanism.** In JavaScript a lone `\r` is a LineTerminator, so under `/m` the anchor `^`
+matches at the position *between* `\r` and `\n`, and `\s` matches `\n`. `NORM`'s fence rule
+(`report.mjs:554`)
+
+    .replace(/^\s*SKIP\s+change fence —.*$/gm, "  SKIP  change fence <branch-dependent>")
+
+therefore begins matching **inside** line 3087's CRLF pair, lets `\s*` swallow the `\n` and
+line 3088's indent, and replaces that whole span — the line break included — with a literal
+string. `NORM`'s final `.replace(/\r/g, "")` then deletes the surviving `\r`, fusing two
+report lines into one:
+
+    committed:  "  PASS  only src/classes/ compares aircraftClass to a name  SKIP  change fence <branch-dependent>"
+    this build: "  PASS  only src/classes/ compares aircraftClass to a name"
+                "  SKIP  change fence <branch-dependent>"
+
+Every later line shifts by one, which is exactly the **2,033 differing lines** and the
+`committed 5121 / this build 5122` line count the check reports. **One fused line, not a
+results drift.**
+
+**Controlled experiment.** Take the LF blob and change *only* the line endings — content
+byte-identical once CR is stripped, asserted true. The verdict flips: `NORM(LF)` is 5,122
+normalised lines, `NORM(CRLF)` is 5,121, first differing at line 3087, 2,034 lines different
+(2,034 rather than the gate's 2,033 because this count iterates the longer file, including the
+extra trailing line the gate's own `a.reduce` loop cannot reach — the two agree).
+
+**Two of the four line-anchored rules cross the boundary; only one loses a line.** Both
+`python-lxml` (`report.mjs:552`) and `fence-SKIP` (`:554`) match text beginning with `\n`.
+`python-lxml` is harmless **by accident**: its replacement is `"$1<python>"` and the swallowed
+`\n` falls inside capture group 1, so it is written straight back. `fence-SKIP`'s replacement is
+a bare literal, so the break is discarded. `fence-PASS` (`:555`) does not match on this branch,
+and `generated` (`:557`) has no leading `\s*`.
+
+**The diagnostic built to catch this cannot see it.** `report.mjs:626-628` prints the differing
+lines through `JSON.stringify`, with the stated intent that *"whitespace, stray CR and non-ASCII
+show up as escapes rather than looking identical on screen"*. But the lines it prints come from
+`NORM(...)`, which has already deleted every `\r`. The one artefact the printer was added to
+reveal is removed before the printer runs — which is why four sessions of evidence recorded this
+as staleness.
+
+**Consequence.** `report:check` fails on any Windows checkout with `core.autocrlf=true`, and
+passes in CI, where `verify.yml` runs `ubuntu-latest` and the file stays LF. This is the third
+instance of the environment-dependent failure class the same comment block already documents
+for the commit hash and for the change fence — and the first one that is not normalised away.
+**Regenerating and committing does not durably fix it**: `npm run report` writes LF, so the
+check goes green locally only until the next checkout restores CRLF.
+
+**The shape, for the fourth time.** `^\s*` is a prefix test standing in for a grammatical one.
+The register's suffix matching (F-38), the scanner's `rhs.startswith("(")` (N-17) and the gate
+runner's ordering (N-19) were the first three; this is the fourth, and the `\s` character class
+silently including the line terminators is what makes it invisible.
+
+**Remediation (production change — NOT made here).** Move `.replace(/\r/g, "")` to the **head**
+of `NORM`'s chain, or anchor the line rules with `^[ \t]*` instead of `^\s*`. Either kills the
+class rather than this instance. `validation/report.mjs` is shipped tooling that CI executes, so
+the change is outside this audit's authorisation and is recorded as a remediation item.
+
 ---
 
 # Geometry and chart findings

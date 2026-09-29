@@ -1208,6 +1208,11 @@ too few of them for that to certify the tree.
 
 ### N-19 — THE LOCAL GATE'S THIRD EXIT CODE COULD NOT FAIL, AND IT HAS BEEN COVERING A STALE VALIDATION.md
 
+> **PARTLY SUPERSEDED BY N-20.** The gate-runner defect below is real and its fix stands.
+> **The conclusion that VALIDATION.md is stale is WRONG** — the committed report is current,
+> and CHECK_EXIT=1 is a Windows CRLF artefact in `NORM`. See **N-20** and **F-40** before
+> acting on anything in this note.
+
 The standing rule is that every commit gets the full gate green first, TEST_EXIT,
 REPORT_EXIT and CHECK_EXIT all 0. CHECK_EXIT has been 0 by construction.
 
@@ -1252,3 +1257,161 @@ decide the check's outcome.
 now honestly 1. Regenerating and committing it would close it, and it was explicitly
 reverted rather than committed in the register reconstruction, so it is left as a
 recorded open item rather than resolved by a side effect of this note.
+### N-20 — VALIDATION.md IS NOT STALE. N-19'S CONCLUSION WAS WRONG, AND THE CAUSE IS LINE ENDINGS
+
+N-19 fixed a real defect in the local gate runner and then drew a wrong conclusion from the
+newly honest exit code. It recorded: *"VALIDATION.md at HEAD is STALE"*, with the staleness
+pre-dating the units work and CHECK_EXIT=1 left as a deliberate open item.
+
+**CHECK_EXIT=1 is real. The staleness is not.** Normalised through `report.mjs`'s own `NORM`,
+the committed blob and a freshly generated report are **byte-identical**. The check fails
+because it reads the **working-tree** copy, which `core.autocrlf=true` has rewritten to CRLF,
+and `NORM` deletes `\r` only at the END of its chain — after two rules whose `^\s*` can match
+across the CRLF pair and swallow a line break. Full mechanism, measurements and the controlled
+experiment are in **F-40**.
+
+**What N-19 got right, and why it still missed this.** Its evidence was sound: the two failure
+reports at `545d212` and at the register commit are byte-identical, and
+`validation/aircraft-classes.mjs` does not read `AUDIT/`. Both facts are consistent with a
+line-ending artefact — an artefact is exactly what does *not* vary with the audit's commits. The
+missing step was that a check reporting STALE is reporting a **comparison result**, not a cause,
+and the comparison had a second input nobody measured: the terminators of the file on disk.
+`report.mjs`'s own diagnostic prints the differing lines through `JSON.stringify` specifically so
+that *"stray CR"* becomes visible, but it prints post-`NORM` text, from which every `\r` has
+already been removed. **The instrument that would have shown this was blinded by the same
+ordering bug it was meant to expose.**
+
+**THE HOLDER'S INSTRUCTION IS NOT CARRIED OUT, AND THIS IS WHY.** The holder authorised
+"regenerate and commit VALIDATION.md" on the premise that it was stale. That premise is false,
+and acting on it would have three bad effects:
+
+1. **It does not durably fix CHECK_EXIT.** `npm run report` writes LF. The check would pass
+   locally until the next checkout, when `autocrlf` restores CRLF and it fails again. On CI it
+   already passes, because `verify.yml` runs `ubuntu-latest`.
+2. **It is a content no-op.** The blob is already `NORM`-identical to what the harnesses
+   produce; the commit would churn only the generation stamp, the embedded HEAD hash and ~73
+   wall-clock timings — all of them quantities `NORM` exists to ignore.
+3. **It would write a false record.** The commit message would assert a staleness that did not
+   exist, and would bury a live defect in `validation/report.mjs` under an apparent fix.
+
+No commit is made. The decision is returned to the holder with the evidence, per the standing
+rule that the audit documents defects rather than papering over them.
+
+**REMEDIATION ITEM (production change, NOT authorised here).** `validation/report.mjs`: move
+`.replace(/\r/g, "")` to the head of `NORM`, or replace the line rules' `^\s*` with `^[ \t]*`.
+Either removes the class. Until then `report:check` is red on Windows and green on CI, for a
+reason unrelated to what the harnesses compute.
+
+---
+
+### N-21 — THE THREE REMAINING PHASE-0 COMPLETENESS GAPS, RECORDED ON THE HOLDER'S INSTRUCTION
+
+Recorded so they are not carried as tacit knowledge. Phase 0 stands at **29 of 58 COMPLETE**.
+
+1. **Known limitations are UNKNOWN for all 1,288 retained engineering relations.** The
+   reconstructed register carries 18 columns per row — ID, file, function, line, equation,
+   inputs, out units, source, source location, assumption type, impl, unit verif, indep verif,
+   validation, regression, finding, provenance, confidence — and **none of them is a
+   known-limitations field**. The gap is therefore structural, not merely unpopulated: the
+   register has nowhere to record a limitation.
+2. **Source provenance is UNVERIFIED for the large majority of relations.** Units resolve for
+   **363 of 1,288 (28.2 %)**, which is the measured and gated figure; the complementary source
+   coverage was measured in the preceding session and **has not been re-derived here**. A
+   column census attempted this session was **rejected as unreliable** — `equation as coded`
+   cells legitimately contain `||`, so splitting the table on `|` misaligns the columns and
+   produced obviously corrupt counts. The figure is carried forward as prior-session evidence,
+   **not re-verified**, and is marked so rather than restated as though measured today.
+   > **AMENDED LATER THE SAME DAY BY N-23 — THIS ONE IS NOW RE-DERIVED AND CONFIRMED.**
+   > A parser that reads the columns before `equation as coded` from the LEFT and those after
+   > it from the RIGHT resolves the table safely. It gives `source` = UNVERIFIED on
+   > **944 of 1,288 = 73.3 %**, confirming the carried-forward figure exactly. The
+   > qualification above stands as the record of how it was handled while unverified; the
+   > figure itself is no longer provisional.
+
+3. **Eight ARCHITECTURE sections were not re-verified** after the register reconstruction.
+
+**A limit on all three.** The governing specification, `eVTOLSizerLiveAudit.txt`, is **not in
+the repository** — it was supplied as a pasted document in an earlier session. The requirement
+wording behind these three gaps therefore **could not be re-read this session**, and they are
+recorded as carried forward from the prior determination rather than re-checked against the
+spec. Re-verifying them requires the holder to supply the audit document again.
+
+---
+
+### N-22 — 57 COMMITS HAVE NEVER BEEN THROUGH CI, AND THE HOLDER HAS RULED THAT THIS STANDS
+
+`shared-auth` carries **57 commits local-only against `origin/main`** and has no upstream.
+`.github/workflows/verify.yml` triggers on pushes to `main`/`master`, on pull requests, and on
+`workflow_dispatch`/`workflow_call`. A branch push with no PR fires none of those, so closing
+this gap requires either a push to a default branch or a pull request.
+
+**The holder was asked and ruled: DO NOT PUSH stands.** The gap is accepted, not resolved, and
+is recorded here with its consequence: **the only gate these 57 commits have passed is the
+local one.** Until N-20's remediation lands, that local gate reports CHECK_EXIT=1 for a
+Windows-only reason (F-40), while the CI that has never run on them would report it green.
+`origin` exists; nothing in this audit may push to it.
+
+
+---
+
+### N-23 — PHASE 2 OPENED: THE COVERAGE CLAIM IS MEASURED, AND THE PER-FORMULA LEDGER EXISTS AT 8.7 %
+
+Phase 2 (FORMULA FORENSIC AUDIT, 112 requirements) stood at **0 COMPLETE** and still does.
+Nothing here marks a requirement done. Two things were produced.
+
+**1. The phase's own note is now a number, and it was right.** `PHASE-BY-PHASE-STATUS.md` had
+carried the assertion *"the phase says 'Do NOT audit only major formulas'; coverage is exactly
+the major ones."* Measured against every `file.js:line` citation in every `AUDIT/*.md`:
+**504 of 2,429 sites (20.7 %) cited at their exact line, 669 (27.5 %) within +/-3**. That is an
+**UPPER BOUND** — a mention is not an audit and answers none of P02-087-106.
+
+**The distribution is the finding.** Coverage tracks how headline a domain is, not how much of
+the engine it is: BATTERY 64.3 %, ATM 53.3 %, MISSION 50.6 %, PROP 46.2 %, SIZING 40.4 %, against
+**GEOM 8.0 % (387 sites, the second largest domain), STRUCT 10.1 % (227), REG 11.1 % (81),
+STAB 18.5 % (173)**. Those four are **868 sites, 35.7 % of the register, at 11.0 %**. Recorded in
+`PHASE-2-COVERAGE.md`.
+
+**2. `PHASE-2-LEDGER.md`** — one row per retained relation, 1,288 x the 20 questions =
+**25,760 determinations required. 2,251 made (8.7 %); 23,509 UNVERIFIED (91.3 %). Sixteen of the
+twenty questions are untouched for every relation.** Verdicts use only P02-108-111's vocabulary,
+and P02-112's ban on *"probably correct"* is honoured by recording UNVERIFIED with a reason rather
+than a guess.
+
+| question | PASS | WARNING | FAIL | UNVERIFIED |
+|---|---|---|---|---|
+| Q3 units (P02-089) | 363 | 0 | **6** | 919 |
+| Q9 duplication (P02-095) | 1,268 | 20 | 0 | **0** |
+| Q10 coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
+| Q20 zero/negative/NaN (P02-106) | **0** | **250** | 0 | 1,038 |
+
+**A MECHANICAL SCAN CANNOT EARN A PASS ON Q20, AND THE LEDGER SAYS SO.** The absence of a guard
+near a site is evidence the case is unhandled, so it is a WARNING — **250 relations have no
+zero/negative/NaN guard within 25 lines**. The presence of a guard does not show it covers the
+relation in question, so it yields UNVERIFIED, never PASS. The asymmetry is deliberate; the
+question has 0 PASS by construction, not by accident.
+
+**Q9 is the only fully determined question**, and only because exact equation-shape matching
+decides it outright. It asks about duplication WITHIN the retained set; the register's 422 C7
+duplicate implementations were excluded from C1 by the classification rule and are not re-counted.
+
+**THE REGISTER ALREADY SAID PHASE 2 WAS UNDONE, IN TWO COLUMNS, FOR ALL 1,288 ROWS:**
+`validation` = *"NOT VALIDATED — Phase 2"* and `indep verif` = *"NO — no independent calculation"*.
+So there is **no independently recomputed relation anywhere in the engine**. That is consistent
+with 0/112 and with the no-self-certification rule — an independent calculation is precisely what
+has not been done, and no tooling written here performs one.
+
+**THE PARSING LESSON, AND IT CLOSED AN OPEN ITEM.** N-21 recorded the 73.3 % source figure as
+carried forward and NOT re-derived, because a column census had come out corrupt. The cause was
+that `equation as coded` legitimately contains `||`. The fix is not a better regex but a different
+reading order: **take the columns before the equation from the LEFT and those after it from the
+RIGHT**, and the equation is whatever remains. The parse is then validated against the trailing
+columns' controlled vocabularies — `confidence` resolves to exactly 3 values, `impl` to 1,
+`unitVerif` to 5 — and `unitVerif` reproduces the register's independently recorded
+165/198/135/6/784 exactly. That gives `source` = UNVERIFIED on **944/1,288 = 73.3 %**, confirming
+the figure. **N-21 gap 2 is amended: no longer provisional.** It also settles that the register
+holds **two** tables of FORMULA- rows — 1,288 retained relations at 18 columns and 1,141 excluded
+sites at 7 — summing to 2,429.
+
+**NOT DONE, AND NOT PRETENDED.** The ledger has no harness holding it to the register, so on the
+audit's own scale it would score NO REGRESSION TEST — the verdict 11 of Phase 0's requirements
+already carry. Gating it is the next step, before any more questions are answered.

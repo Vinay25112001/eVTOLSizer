@@ -1011,6 +1011,71 @@ This is the third instance in this repository of the same pattern, and it is now
 keeping records next to what they record: N-07 (a stale harness description), N-10 (a drifted
 `BASE`), and now N-11.
 
+### N-12 — six engine modules compute quantities nothing in the application consumes — MEDIUM — RAISED, NOT FIXED
+
+Found during the Phase-0 dependency mapping, by resolving every relative `import` in `src/**`
+(255 modules, 652 edges, **0 cycles**).
+
+Ten modules have **no production consumer** — nothing in `src/**` imports them, statically or
+dynamically — and **every one of them is imported by a validation harness**. They are live under
+test and dead in the application:
+
+| module | harnesses |
+|---|---|
+| `src/engine/aeropropulsive.js` | 1 |
+| `src/engine/autorotation.js` | 1 |
+| `src/engine/flyingqualities.js` | 2 |
+| `src/engine/whirlflutter.js` | 1 |
+| `src/engine/handlingcompare.js` | 1 |
+| `src/export/vspscript.js` | 2 |
+| `src/api.js` | 2 |
+| `src/data/aircraft-database.js` | 1 |
+| `src/data/evtol-database.js` | 1 |
+| `src/lib/review-record.js` | 2 |
+
+The last four are not defects: `api.js` is a programmatic entry point, the two databases are
+reference data for benchmarks, and `review-record.js` is an audit artifact. **The first six are
+the finding.** They compute slipstream and rotor-airframe interference, autorotation, flying
+qualities, whirl flutter and a handling comparison — and no sized aircraft is affected by any of
+them, while each contributes PASS lines to a green gate.
+
+`FINDINGS.md` **F-A17 already records this for `aeropropulsive.js` alone**, with the consequences
+traced (no wing/rotor lift sharing, no transition segment in the energy accounting). The import
+graph shows the shape is six modules wide, not one. Raised rather than fixed: whether each module
+should be wired in or removed is an engineering decision per module, and wiring one in moves
+numbers.
+
+### N-13 — one identifier, two reciprocal meanings, in sibling files — MEDIUM — RAISED, NOT FIXED
+
+Found by the Phase-0 P00-020 analysis (dimensionless vs dimensionful), after its three arithmetic
+tests found nothing.
+
+`DEG` is defined four times in `src/`:
+
+| file | value | meaning | used as |
+|---|---|---|---|
+| `src/classes/drone/geometry3d.js:55` | `Math.PI / 180` | radians per degree | `yawDeg * DEG` |
+| `src/classes/transport/flops-weights.js:21` | `Math.PI / 180` | radians per degree | `wingSweep * DEG` |
+| `src/classes/transport/high-lift.js:93` | `Math.PI / 180` | radians per degree | `sweepC4Deg * DEG` |
+| **`src/classes/transport/flops-aero.js:47`** | **`57.2958`** | **degrees per radian** | `sweepDeg / DEG` |
+
+**No number is currently wrong.** `flops-aero.js` divides where the others multiply, so each file
+is internally consistent, and nothing here should be "fixed" by changing a working calculation.
+
+**The finding is the collision.** Two of the four are in the SAME DIRECTORY,
+`src/classes/transport/`, implementing one published method (FLOPS) across sibling files. A line
+moved between `flops-aero.js` and `flops-weights.js` changes the answer by a factor of 3,283 with
+no error and no failing test. That is the exact shape of the gravity defect recorded in
+`src/engine/constants.js`, whose header says the split "ran INSIDE a single class".
+
+`validation/constants.mjs` exists to prevent this class of defect and **does not cover `DEG`**: it
+tracks physical constants by VALUE against an allowlist (G, speed of sound, viscosity, `R_GAS`),
+not identifier collisions. A constant can therefore carry two reciprocal meanings in one class
+and the gate built to stop that will not see it.
+
+Raised rather than fixed: the remedy is a gate change plus either a rename or a convention, and
+choosing between them is an engineering decision, not a mechanical one.
+
 ---
 
 ## Summary of PASS B so far
@@ -1022,7 +1087,7 @@ keeping records next to what they record: N-07 (a stale harness description), N-
 | engineering equations changed | **0** |
 | numeric outputs moved | CHG-001..004 and CHG-007 moved **0**. CHG-005 moves numbers DELIBERATELY: 183 of 277 golden cases, median MTOW +1.13 %, every change class traced to the corrected constant |
 | new harness checks | 42 + 40 + 3 + 19 + 35 + 26 + 29 + 27 = **221**, with 26-check, 5-, 5-, 5-, 9-, 9-, 8-, 11- and 3-mutant evidence |
-| new findings raised BY remediation | **11** (N-01..N-11); N-04 closed by CHG-005, N-06 and N-07 by CHG-007, N-11 by CHG-010 |
+| new findings raised BY remediation | **13** (N-01..N-13); N-04 closed by CHG-005, N-06 and N-07 by CHG-007, N-11 by CHG-010; N-12 and N-13 raised by the Phase-0 analyses |
 | register prescriptions found to be wrong | **2** (F-01's one-liner is a measured no-op; F-03's "a control that cannot change the design must not sit on the design panel" is contradicted by `input-deck.js:33`, which shows `reserveMin` only under the one method that uses it) |
 | gaps deliberately left open and stated | 2 (evaluation at 305 m / ISA SL; `MTOW = null` on a loop that never produced one) |
 

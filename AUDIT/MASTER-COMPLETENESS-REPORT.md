@@ -1,24 +1,28 @@
 # MASTER COMPLETENESS REPORT
 
+> **RECOUNTED 2026-09-29** from the per-requirement rows after the Phase-0
+> re-audit. The counts below are derived from `COMPLETENESS-MATRIX.md`, not
+> maintained by hand, so they cannot drift from the rows they summarise.
+
 ## Counts
 
 | Dimension | YES | PARTIAL | of 960 |
 |---|---|---|---|
-| IMPLEMENTED | 619 | 292 | 64.5% YES |
-| EXECUTED | 236 | 262 | 24.6% YES |
-| VERIFIED | 282 | 540 | 29.4% YES |
+| IMPLEMENTED | 617 | 294 | 64.3% YES |
+| EXECUTED | 292 | 264 | 30.4% YES |
+| VERIFIED | 322 | 513 | 33.5% YES |
 | DOCUMENTED | 911 | 0 | 94.9% YES |
-| REGRESSION PROTECTED | 26 | 205 | 2.7% YES |
+| REGRESSION PROTECTED | 64 | 207 | 6.7% YES |
 
 ## Final status distribution
 
 | Status | Count |
 |---|---|
-| NOT EXECUTED | 413 |
-| NO REGRESSION TEST | 294 |
-| INCOMPLETE | 182 |
+| NOT EXECUTED | 355 |
+| NO REGRESSION TEST | 305 |
+| INCOMPLETE | 200 |
 | NOT IMPLEMENTED | 49 |
-| COMPLETE | 13 |
+| COMPLETE | 42 |
 | NOT VERIFIED | 9 |
 
 ## Measured repository evidence

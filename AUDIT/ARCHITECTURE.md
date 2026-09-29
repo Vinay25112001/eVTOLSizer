@@ -141,6 +141,104 @@ Order matters and is fixed. Per iteration, at the current `MTOW`:
 (five implementations), hover power (five expressions), Oswald efficiency (three), CLmax
 (four), Pa→psf (three). See `FINDINGS.md` cross-cutting observation 1.
 
+## Dependency flow
+
+**Added 2026-09-29 for P00-025, which had no section.** Measured by resolving every
+relative `import` in `src/**` — 255 modules, **652 import edges**.
+
+| | |
+|---|---|
+| modules | 255 |
+| import edges | 652 |
+| **import cycles (SCCs > 1)** | **0** |
+
+The graph is acyclic. That is worth recording rather than assuming: a cycle between engine
+modules is how a lagged quantity silently becomes an unlagged one.
+
+**Most depended-upon**
+
+| module | in-degree | what it is |
+|---|---|---|
+| `src/lib/theme.js` | 71 | presentation only |
+| `src/ui/tokens.js` | 26 | presentation only |
+| `src/ui/primitives.jsx` | 24 | presentation only |
+| `src/ui/chart.js` | 23 | presentation only |
+| `src/lib/designfile.js` | 18 | **`engineInputs` — the parameter→engine boundary** |
+| `src/engine/configuration.js` | 16 | the configuration switchboard |
+| `src/engine/constants.js` | 12 | physical constants |
+| `src/classes/aircraft/geometry.js` | 11 | shared aircraft geometry |
+| `src/engine.js` | 10 | the eVTOL master loop |
+
+The four highest in-degrees are presentation. The highest-degree *engineering* module is
+`designfile.js`, which is the boundary every sized run passes through — `engineInputs` — and
+`engine/constants.js` is imported by only 12 of 255 modules, which is the structural reason the
+constants gate (`validation/constants.mjs`) has to read every file for literals rather than
+rely on imports.
+
+**Widest fan-out**: `src/App.jsx` (68), `classes/aircraft/tabs.jsx` (26), `src/engine.js` (25).
+
+### Modules with NO production consumer
+
+Nothing in `src/**` imports these, statically or dynamically, yet **every one is imported by a
+validation harness**. They are live under test and dead in the application.
+
+| module | harnesses importing it |
+|---|---|
+| `src/engine/aeropropulsive.js` | 1 |
+| `src/engine/autorotation.js` | 1 |
+| `src/engine/flyingqualities.js` | 2 |
+| `src/engine/whirlflutter.js` | 1 |
+| `src/engine/handlingcompare.js` | 1 |
+| `src/export/vspscript.js` | 2 |
+| `src/api.js` | 2 |
+| `src/data/aircraft-database.js` | 1 |
+| `src/data/evtol-database.js` | 1 |
+| `src/lib/review-record.js` | 2 |
+
+`AircraftStudio.jsx`, `DroneStudio.jsx` and `flight-worker.js` also have zero static importers
+but ARE referenced dynamically, so they are not in this list.
+
+The last four rows are not defects: `api.js` is a programmatic entry point, the two databases are
+reference data consumed by benchmarks, and `review-record.js` is an audit artifact. **The first
+six are the finding** (N-12): they compute flight-physics quantities — slipstream and
+rotor-airframe interference, autorotation, flying qualities, whirl flutter, handling comparison —
+that reach no sized result, while each carries a green harness. `FINDINGS.md` F-A17 already
+records this for `aeropropulsive.js` alone; the import graph shows it is six modules, not one.
+
+## Sizing flow
+
+**Added 2026-09-29 for P00-027**, which was previously folded into "Calculation flow inside the
+master loop" and so covered the eVTOL path only.
+
+There are **three independent sizing entry paths**, and they do not share a loop:
+
+```
+  UI / API parameters
+        |
+        v
+  lib/designfile.js  engineInputs(params)      <- the single parameter boundary
+        |
+        +---> src/engine.js  runSizing(...)           eVTOL     (L1, L2 + inner loops)
+        |
+        +---> src/classes/registry.js                 AIRCRAFT
+        |         |  size: sizeTransport | sizeTrainer | sizeBizjet | sizeTurboprop
+        |         v
+        |     classes/<class>/size.js                 (L4 transport gross closure, ...)
+        |
+        +---> src/classes/drone/*                     DRONE     (separate chain, npm run drone)
+```
+
+**The registry path BYPASSES `runClass`.** `src/classes/registry.js` maps `size: sizeTransport`
+directly, so a guard added in `classes/aircraft/engine.js` does not protect the registry entry.
+This is why guards belong in each class's own `resolve()`, and why `golden-master.mjs` is run
+twice — once direct, once `--via-registry` — with the two compared value-by-value under
+`Object.is`.
+
+`SIZING-LOOPS.md` enumerates **18 iterative loops** across these paths with their state,
+initial guess, criterion, iteration limit, damping and failure behaviour. In the formula register
+the loops carry their own domain, `SIZING`, with **483 formula rows** — the largest domain —
+because the master loops mix every physical domain by construction.
+
 ## Unit regimes — there is no single canonical system
 
 | regime | internal units | evidence |

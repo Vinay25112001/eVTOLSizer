@@ -138,6 +138,29 @@ export const DEFAULT_PARAMS = {
        survives as an explicit override for a caller who has a better number. */
     LD:8.50,AR:9,taper:0.45,tc:0.15,   // L/De [SRC NASA L+C-E]; see CONFIG_DEFAULTS.LD_target
 
+    /* ── THE LANDING GEAR WAS AN UNSTATED DEFAULT, AND THE WRONG ONE ─────
+       This key did not exist. `engine/drag.js:56` reads `p.gearType ||
+       "fixed"`, so every run landed on FIXED gear at CD0 0.015 -- the largest
+       single parasite-drag term, 34.2 % of CD0tot -- while `engine.js`
+       directly beside it states the opposite: "eVTOL with retractable/folding
+       gear uses CD0g = 0.003 ... Winged lift+cruise eVTOL (Joby, Archer) use
+       folding/retractable gear -> 0.003". The code disagreed with its own
+       sourced comment, and the user never saw the choice being made.
+
+       Measured on the default design, the gear alone is worth 11.65 % of MTOW:
+         fixed        CD0tot 0.043806  L/D  9.69  MTOW 2795.68 kg
+         retractable  CD0tot 0.032915  L/D 11.86  MTOW 2469.91 kg
+         faired       CD0tot 0.032360  L/D 12.14  MTOW 2312.92 kg
+       That is net of the mechanism: `engine/weights.js:322` charges a 1.1437
+       retraction factor whenever this is "retractable".
+
+       It is now an INPUT, on the Aerodynamics panel, defaulting to the value
+       the class's own source supports. `drag.js` keeps its "fixed" fallback
+       for a caller that passes nothing, which is the conservative choice for
+       an unknown aircraft; what changes is that this tool's default aircraft
+       no longer makes that choice silently. [SRC] Raymer Table 12.6. */
+    gearType:"retractable",
+
     /* WING SIZING — W/S is the design variable (Raymer ch.5 constraint
        diagram) and cruise CL is DERIVED from the wing the aircraft ends up
        with. clDesign is retained ONLY for the legacy wingSizedBy:"cl" path and

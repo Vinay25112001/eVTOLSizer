@@ -2019,6 +2019,27 @@ export default function App(){
             <Slider label="L/D target (reference only)" unit="" value={params.LD} min={5} max={22} step={0.5} onChange={set("LD")}
               note={SR?`⚠ does not size the aircraft — computed L/D is ${SR.LDact}. Archer 11.3 · Joby ~16`:"reference target only"}/>
             <Slider label="Thickness t/c" unit="" value={params.tc} min={0.08} max={0.20} step={0.01} onChange={set("tc")}/>
+            {/* LANDING GEAR DRAG. This was an unstated default and the wrong
+                one: with no key in DEFAULT_PARAMS, drag.js fell back to FIXED
+                gear at CD0 0.015 -- the largest single parasite term -- while
+                the comment beside it said winged lift+cruise eVTOLs fold or
+                retract to 0.003. Worth 11.65 % of MTOW on the default design,
+                chosen by nobody and shown nowhere. */}
+            <div style={{display:"flex",alignItems:"center",gap:8,margin:"6px 0 2px"}}>
+              <span style={{fontSize:11,color:SC.muted,minWidth:118}}>Landing gear</span>
+              <select value={params.gearType||"retractable"}
+                      onChange={e=>setParams(q=>({...q,gearType:e.target.value}))}
+                      style={{flex:1,fontSize:11,padding:"3px 6px",background:SC.panel,
+                              color:SC.text,border:`1px solid ${SC.border}`,borderRadius:5}}>
+                <option value="retractable">Retractable / folding — CD0 0.003</option>
+                <option value="fixed">Fixed — CD0 0.015</option>
+                <option value="faired">Faired — CD0 0.001</option>
+              </select>
+            </div>
+            <div style={{fontSize:10,color:SC.muted,margin:"0 0 6px 126px",lineHeight:1.35}}>
+              Raymer Table 12.6, on wing reference area.{SR?` Gear is ${((SR.CD0gear/SR.CD0tot)*100).toFixed(1)} % of CD0 total.`:""} Joby and Archer
+              fold or retract; a skid-gear multicopter is fixed.
+            </div>
           </Acc>
           <Acc title="Propulsion" icon="">
             <Slider label="Hover Rotors n" unit="" value={params.nPropHover} min={2} max={10} step={2} onChange={set("nPropHover")}/>

@@ -90,7 +90,20 @@ import { AIRCRAFT_CLASSES, CLASS_IDS, DEFAULT_CLASS, classOf, sizeDesign, classF
    override, reported through eOswOverridden. Sized results moved: the
    computed 0.828 costs slightly more induced drag than the assumed 0.85, and
    the tail drag coupling in the same change moves them further. */
-const PINNED_DEFAULTS_HASH = "159dfff349a567";
+/* MOVED FOR THE LANDING GEAR, by an ADDITION, and the sized results moved
+   with it. `gearType:"retractable"` was added to DEFAULT_PARAMS because the
+   key did not exist at all: `engine/drag.js:56` reads `p.gearType || "fixed"`,
+   so every run of this tool silently flew FIXED gear at CD0 0.015 -- the
+   largest single parasite-drag term, 34.2 % of CD0tot -- while engine.js
+   states that winged lift+cruise eVTOLs (Joby, Archer) fold or retract to
+   0.003. An unstated default, contradicting its own sourced comment, worth
+   11.65 % of MTOW: the default eVTOL goes 2795.68 -> 2469.91 kg and L/D
+   9.69 -> 11.86. It is now an input on the Aerodynamics panel, so the choice
+   is made where the user can see it. See validation/gear-drag.mjs, which
+   gates all three coefficients, the conservative fallback drag.js keeps for
+   callers that pass nothing, and the AFDD84 fuselage retraction penalty that
+   makes the 11.65 % a NET figure. */
+const PINNED_DEFAULTS_HASH = "00262e4db22f09";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 let pass = 0, fail = 0;

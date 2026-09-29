@@ -93,7 +93,7 @@ export const INPUTS = {
   solverSwitchFrac:{ status:"sourced", src:"0.05 — Ugwueze et al.'s observed switch point, the residual falling inside 5% of the sized mass. TUNED AND MEASURED here: 0.05 with a stall limit of 1 gives 384 total iterations against 584 for pure fixed-point over six cases with ZERO disagreements; switching on an ITERATION COUNT instead was tried and is strictly worse" },
   solverStallLimit:{ status:"derived", note:"secant steps allowed to fail to improve the residual before reverting permanently. 1 — the discrete feedback in the buildup model makes a second chance counter-productive (measured: 2 caused two cases to stop converging entirely)" },
   mtowCertLimitKg:{ status:"sourced", src:"SC-VTOL 5,700 kg category limit" },
-  gearType:       { status:"sourced",    src:"Raymer Table 12.6: fixed 0.015 / retractable 0.003 / faired 0.001" },
+  gearType:       { status:"sourced",    src:"Raymer Table 12.6: fixed 0.015 / retractable 0.003 / faired 0.001. Defaults to retractable, the value engine.js states for winged lift+cruise eVTOLs (Joby, Archer); it was previously absent from DEFAULT_PARAMS and fell back to fixed, worth 11.65 % of MTOW" },
   hubsExposed:    { status:"sourced",    src:"NDARC 12-10: spinnered tiltrotors carry no hub drag" },
   nRotorsStopped: { status:"sourced",    src:"NDARC 12-9 stoppable rotor: blade drag on geometric blade area" },
 

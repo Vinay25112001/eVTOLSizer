@@ -68,8 +68,21 @@ const CASES = [
      writes MTOW 65 times and never meets tolerance, so the design diverges
      while the published number is genuinely Round 2's work. Without this
      case the two flags are identical over the whole set and the new one
-     would be untested by the harness that claims to test it. */
-  ["range=240",     { range: 240 }],
+     would be untested by the harness that claims to test it.
+
+     THE GEAR IS NOW NAMED, AND IT ALWAYS WAS PART OF THIS CASE. When this
+     was written `gearType` did not exist in DEFAULT_PARAMS and every run
+     fell back to FIXED gear (F-09), so "range=240" meant "240 km on a
+     fixed-gear aircraft" without saying so. CHG-009 makes the default
+     retractable, which lowers CD0tot 24 % and raises L/D to 11.86, and the
+     240 km mission simply CLOSES for that better aircraft -- both flags go
+     false together and the separation is lost. The fix is to state the
+     aeroplane the case was always about rather than to move the mission:
+     240 km with fixed gear diverges exactly as before. Both controls are
+     user-reachable, so the case keeps the property it was chosen for.
+     Separation now needs 325 km or more on retractable gear, which is
+     outside the slider and would have cost that property. */
+  ["range=240,fixed", { range: 240, gearType: "fixed" }],
 ];
 
 const R = [];
@@ -171,8 +184,21 @@ check(OK.some((c) => c.r.r2Diverged !== c.r.mtowFromR1Seed),
 console.log("\n-- 6. the design that closes is untouched --");
 {
   const c = OK.find((x) => x.label === "default");
-  /* MTOW MOVED 2772.06 -> 2795.68 (+0.85 %) UNDER F-04, DELIBERATELY, and this
-     pin is updated rather than relaxed. F-04 corrected MU0 from 1.47e-5 -- which
+  /* MTOW MOVED AGAIN, 2795.68 -> 2469.91 (-11.65 %) UNDER F-09, DELIBERATELY.
+     `gearType` was absent from DEFAULT_PARAMS, so `drag.js:56`'s `|| "fixed"`
+     chose FIXED gear on every run -- 34.2 % of the whole parasite drag -- while
+     engine.js states that winged lift+cruise eVTOLs fold or retract to 0.003.
+     The default is now retractable, as the source says, and it is on the panel.
+     Asking for `gearType: "fixed"` reproduces 2795.68 kg exactly, which is what
+     says a DEFAULT moved and not the physics; validation/gear-drag.mjs pins it.
+
+     MTOW1 AND itersR1 DID NOT MOVE, and they are why this pin can be updated
+     with confidence rather than merely re-recorded: Round 1's recurrence holds
+     no drag term at all, so a change that is purely parasite drag must leave
+     them alone. It did.
+
+     MTOW MOVED 2772.06 -> 2795.68 (+0.85 %) UNDER F-04, DELIBERATELY, and this
+     pin was updated rather than relaxed then too. F-04 corrected MU0 from 1.47e-5 -- which
      is the KINEMATIC viscosity, 17.8 % below the dynamic value Sutherland's law
      gives at T0 -- to 1.789e-5, lowering every Reynolds number by 17.8 % and
      raising skin friction about 3 %. More parasite drag is more energy, more
@@ -183,7 +209,7 @@ console.log("\n-- 6. the design that closes is untouched --");
      term at all -- only LD, etaSys, sedCell, range and payload. If a change to
      an atmospheric constant ever moves MTOW1, something has reached into Round 1
      that has no business there, and these two pins are what would catch it. */
-  for (const [field, want] of [["MTOW", 2795.68], ["MTOW1", 1597.2], ["itersR1", 50]]) {
+  for (const [field, want] of [["MTOW", 2469.91], ["MTOW1", 1597.2], ["itersR1", 50]]) {
     check(c && Math.abs(c.r[field] - want) < 5e-3,
       `default: ${field} unchanged at ${want}`,
       c ? `got ${c.r[field]}` : "case missing");

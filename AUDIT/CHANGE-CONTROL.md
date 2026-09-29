@@ -1108,3 +1108,100 @@ defaulting to `retractable` per `engine.js:1714-1716` and Raymer T12.6. Re-measu
 the default (fixed, 0.015) gives CD0tot 0.043806 and MTOW 2,795.68 kg; retractable gives 0.032915
 and **2,469.91 kg, −11.65 %**, already paying the 1.1437 retraction weight factor at
 `weights.js:322`. The golden master re-baselines.
+
+
+### N-14 — CROSS-FILE SYMBOL RESOLUTION WAS BUILT, PROVEN, AND GAINED NOTHING
+
+The units-first audit named per-file scope as the primary blocker on unit coverage. A
+resolver was built against the repository's own import/export graph — direct imports,
+aliases, re-exports, `export *`, shadowing, duplicate bindings, cycles, unresolved
+specifiers — refusing by construction to unify two same-named symbols without a real
+dependency edge. It is proven by 41 adversarial checks, 10 of 10 code mutants, and **8 of 8
+dependency-edge corruptions** (delete an import, repoint it at a ghost file, redirect it to
+another module exporting the same name, remove the export, break a re-export hub, break an
+`export *`, rename an alias target, delete a shadowing declaration).
+
+**It applies to 0 of the 1,288 relations.** Of 11,863 unresolved-operand requests only **248
+(2.1 %)** are cross-file at all, and **all 248 are unit-less at their definition**: the tree
+exports **675 functions** against **512 consts**, of which only 50 carry a readable unit. A
+unit lives on a function's RETURN VALUE; a symbol table cannot supply one.
+
+What the analyser actually cannot see, over 5,912 NOT-FOUND requests: **37.0 % object
+properties, 30.3 % function parameters, 21.3 % nested locals, 11.4 % both** — **~89 % inside a
+function, not across a module boundary.**
+
+Graph facts, for the record: 255 modules, **0 import cycles**, **0 duplicate import
+bindings**, **0 unresolved relative specifiers**, **1 shadowing** (`src/ui/ErrorBoundary.jsx:10`,
+`SC`, UI only), 508 names declared more than once in a single file (recorded, not triaged).
+`G0` is imported by 10 modules and every one reaches `src/engine/constants.js`.
+
+### N-15 — PER-FUNCTION DIMENSIONAL SIGNATURES WERE BUILT, AND GAINED +4
+
+The second candidate dependency. 1,453 functions extracted; parameters seeded from JSDoc that
+states a unit, then the anchored naming convention, ambiguity preserved; **105 return units
+derived from bodies**, of which **85 are RECORDS** of per-key units, so `isa(h).rho` answers
+without pretending the object has a dimension; **966 of 1,288 relations** now evaluated in
+their enclosing function's environment.
+
+Coverage went 340 → **363 of 1,288 (28.2 %)**. A control run with signatures disabled gives
+**359**, so **only +4 is attributable to signatures**; the other +19 comes from the `cl`/`cd`
+coefficient convention restored in the same session. The first labelling counted `Math.max(`
+as a project call and reported 112 instead of 4 — the control is what the figure rests on.
+
+**Both candidate dependencies are now measured and nearly exhausted.** The binding constraint
+is neither: it is naming ambiguity in the quantities themselves. The operands that block the
+dimensional-corruption test are `S`, `R`, `tSkinM`→`M`, `tShellM`→`M`, and unnamed quantities
+`vMc`, `mTow`, `n`.
+
+### N-16 — EVERY DIMENSIONAL CONFLICT SO FAR HAS BEEN THE ANALYSER, NOT THE CODE
+
+Four successive triage rounds reduced the reported conflicts **13 → 12 → 8 → 4 → 1**, and
+every removal was a defect in the analyser rather than in the repository. Named analyser
+defects, each measured against the tree before being corrected:
+
+| rule | truth in this tree | evidence |
+|---|---|---|
+| a trailing lowercase `m` → metres | `sigmaLim` is a stress, `tlam` a tangent, `gam` an angle | 35-row `m` group, ~5 right |
+| `eff` → efficiency | it means EFFECTIVE: `T0eff` is a temperature | `engine.js:321` |
+| a trailing lone lowercase letter → a unit | it is a subscript: `CD0m` is the miscellaneous drag coefficient | `engine.js:1762` |
+| `LbFt2` → an area | it is lb/ft² | `engine.js:575` |
+| `Sec` → seconds | **always a section** here: `XSec` 21×, `GetNumXSec` 5×, `wingSec` 3×, `kSec` 2×; zero mean seconds | census over `src/` |
+| `MIN` → minutes | `TAIL_TC_MIN` is a thickness-to-chord floor | `control-surfaces.js:182-185` |
+
+**The discipline that produced this**: before a conflict is reported as a code defect it must
+survive the question *did the analyser cause it?* Eleven of the original thirteen did not.
+
+Two propagation mechanisms are now known to spread a single bad seed confidently. Back-inference
+turned one mis-read constant into `Wbat` = energy and contaminated three further lines.
+Signatures did the same at a distance: `TAIL_TC_MIN` read as minutes put `min` into
+`tailThickness()`'s **return unit**, which then reached every call site. Provenance and depth are
+tracked for exactly this reason, and a back-inferred unit does not cross a module boundary.
+
+### N-17 — A DEFECT IN THE AUDIT HARNESS, NOT IN THE REPOSITORY
+
+The declaration scanner shared by the units tooling decided whether a declaration held a
+FUNCTION by testing the first character of the right-hand side. Every expression that merely
+*begins* with a parenthesis was therefore discarded, including
+
+    const sweepRad = ((p.wingSweep ?? 0) * Math.PI) / 180;   // wing-structure.js:153
+
+It is the same defect class as F-38's suffix matching: a prefix test standing in for a
+grammatical one. **Previously reported coverage figures were understated as a result**, and one
+stated conclusion was wrong and is retracted: `sweepRad` was described as living in another
+module, when it is declared locally and was simply never scanned.
+
+### N-18 — THE REMAINING LEVER IS SOURCE-SIDE NAMING, WHICH IS A PRODUCTION CHANGE
+
+The dimensional-corruption test stands at **1 caught of 8 injected errors**, unchanged by
+cross-file resolution and unchanged by signatures. The operands that block it are named `S`,
+`R`, `tSkinM`, `tShellM`, `vMc`, `mTow`, `n`. Relaxing the AMBIGUOUS rule to resolve them from
+context was measured and fixes **1 of 6** — it is not the answer, and it would trade forensic
+correctness for coverage.
+
+Resolving them properly means either naming the quantities in the source or stating their units
+in a comment. **That is a production change and is NOT authorised here.** It is recorded as a
+remediation item for the phase that owns it.
+
+**Nothing in this work supports a claim that the repository is dimensionally consistent.** Of
+the relations the analyser can fully dimension, none contradicts itself; it can fully dimension
+too few of them for that to certify the tree.

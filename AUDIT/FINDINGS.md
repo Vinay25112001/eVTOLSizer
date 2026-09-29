@@ -709,6 +709,51 @@ printed the number.
 one-value-per-constant gate is blind to it by construction. Propagates into the gust mass
 ratio, `Kg`, `nGust` and the ultimate load factor.
 
+
+## F-38 — the register's recorded output units are wrong in 61 of 190 cases — HIGH — VERIFIED
+`AUDIT/FORMULA-REGISTER.md` recorded an output unit for 190 of the 1,288 retained relations.
+Judging each against what its right-hand side computes gives **118 OK, 43 WRONG, 11 QUOTIENT
+(X per Y recorded as X alone), 7 MAGNITUDE (kW as W, km as m), 5 per-radian awaiting a
+convention ruling, 6 unsettleable from the line** — **61 of 190 (32.1 %) wrong as recorded.**
+
+Six were checked against source and all six confirmed:
+
+| ID | recorded | actually | evidence |
+|---|---|---|---|
+| FORMULA-WEIGHT-040 | `min` | `Pa` | `balance.js:358` `qMin = 0.5*RHO0*vMc²`, used at `:387` as `qMin*Cd*A` = a force |
+| FORMULA-WEIGHT-121 | `kg` | dimensionless | `trainer/weights.js:57` — the FAR gust alleviation factor K_g, merely *named* `kg` |
+| FORMULA-STRUCT-033 | `kg` | dimensionless | the same K_g at `flight-envelope.js:204` |
+| FORMULA-AERO-073 | `ft` | `1/ft` | `flops-aero.js:136`, whose own comment says `// per ft per unit Mach` |
+| FORMULA-STRUCT-031 | `kg/m^3` | `slug/ft^3` | `flight-envelope.js:61` `RHO0_SLUG = 0.0023769; // slug/ft³` |
+| FORMULA-REG-044 | `Pa` | `Pa*s` | `noise.js:197`, whose own comment says `(Pa·s)` |
+
+**Two causes, both mechanical.** The naming convention matched a bare SUFFIX, so every name
+ending in a lowercase `m` became metres — `sigmaLim` (a stress), `tlam`/`slam` (sines), `gam`
+(an angle), `tauNm` (a torque), `alpha_dB_km` (dB/km), `atm` (an object). The `m` group is 35
+rows and about five are right. Separately, the comment reader took the FIRST unit token
+anywhere in the comment, so a declared quotient lost its denominator (`// kW/kg` → `kW`,
+`// rad/s` → `rad`, `// Pa·s` → `Pa`) and three inverted (`// per rad` → `rad`, `// per ft` →
+`ft`, `// per radian` → dimensionless). Prose was mined too: `// T/W=1.0` produced watts.
+
+**The 190 figure must not be carried forward as completion.** Only **129** of it is defensible.
+Per-row verdicts with reasons are held with the reconstruction evidence.
+
+---
+
+## F-39 — the register truncates its own cells, so it cannot be re-derived from itself — MEDIUM — VERIFIED
+Two independent truncations: the builder capped the variable list at six entries, and the
+writer then cut the rendered cell at ~90 characters (and the equation at ~100).
+
+**152 variable cells sit at the ceiling and 73 have their last token cut**, producing entries
+like `cl=1 (dimensi` and a bare `UNKNOW`. The document therefore shows **4,989** variable slots
+while stating **5,055**: 66 slots are not in the file at all. A checker reading the register
+sees a truncated `UNKNOWN` as a unit string — the first pass of the verification tooling fell
+for exactly that and reported 37 false unit assertions where there are 29.
+
+The register's equation column is truncated for the same reason, and the Phase-0 gate grants a
+prefix-match allowance to truncated rows to compensate. Removing the truncation removes the
+need for that allowance and turns check #7 into an exact comparison.
+
 ---
 
 # Geometry and chart findings

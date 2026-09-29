@@ -1,0 +1,169 @@
+{
+  "_note": "Frozen at commit 3a7a5a4 as a CHANGE-DETECTION baseline only. These are NOT asserted to be correct: findings F-04, F-08, F-09 and F-10 are live in every one of them. See AUDIT/BENCHMARKS.md.",
+  "commit": "3a7a5a4",
+  "entry_path": "registry: c.size(c.prepare(params)); eVTOL prepare = engineInputs (see finding F-19)",
+  "cases": [
+    {
+      "id": "CASE-EVTOL-001",
+      "class": "evtol",
+      "config": "hybrid",
+      "params": "DEFAULT_PARAMS",
+      "expected": {
+        "MTOW_kg": 2772.06,
+        "Wempty_kg": 1588.99,
+        "Wbat_kg": 728.08,
+        "payload_kg": 455,
+        "Etot_kWh": 164.85,
+        "PackkWh": 203.519,
+        "PackUsablekWh": 164.85,
+        "PackInstalledkWh": 204.883,
+        "Phov_kW": 596.81,
+        "Pcr_kW": 232.96,
+        "Pcl_kW": 355.44,
+        "Pres_kW": 142.09,
+        "LDact": 9.77,
+        "Swing_m2": 19.83,
+        "bWing_m": 13.36,
+        "MAC_m": 1.555,
+        "Re_MAC": 8017158,
+        "Mach": 0.1991,
+        "CD0tot": 0.043324,
+        "CD0gear": 0.015,
+        "Vstall_ms": 40.28,
+        "CLcruise": 0.549481,
+        "CDi": 0.0129001,
+        "downloadFraction": 0.0735,
+        "rho_hover": 1.22321,
+        "rho_cruise": 1.111643
+      },
+      "segments_kWh": {
+        "Eto": 4.973,
+        "Ecl": 19.139,
+        "Ecr": 76.417,
+        "Edc": 0.331,
+        "Eld": 4.973,
+        "Eres": 59.016
+      },
+      "closure": {
+        "mass_residual_kg": 0.01,
+        "energy_residual_kWh": 0.001
+      }
+    },
+    {
+      "id": "CASE-EVTOL-002",
+      "class": "evtol",
+      "config": "hybrid",
+      "params": "DEFAULT_PARAMS + gearType=retractable",
+      "purpose": "isolates finding F-09",
+      "expected": {
+        "MTOW_kg": 2450.99,
+        "CD0tot": 0.0329152,
+        "CD0gear": 0.003,
+        "LDact": 11.99
+      }
+    },
+    {
+      "id": "CASE-EVTOL-003",
+      "class": "evtol",
+      "params": "DEFAULT_PARAMS + sedCell=1",
+      "purpose": "isolates finding F-01: the L1 seed is published as MTOW",
+      "expected": {
+        "MTOW_kg": 142042.75,
+        "MTOW1_kg": 142042.75,
+        "itersR1": 1,
+        "r2Converged": false,
+        "r2Diverged": true
+      },
+      "note": "12.5x the tool's own 11400 kg ceiling. Flagged to the user by the App.jsx:2347 banner."
+    },
+    {
+      "id": "CASE-TRAINER-001",
+      "class": "trainer",
+      "params": "TRAINER_DEFAULTS",
+      "expected": {
+        "grossLb": 2605.42,
+        "emptyLb": 1540.05,
+        "payloadLb": 800,
+        "usableFuelLb": 265.37,
+        "cruiseFuelLb": 204.42,
+        "reserveFuelLb": 38.23,
+        "converged": true
+      }
+    },
+    {
+      "id": "CASE-TRAINER-002",
+      "class": "trainer",
+      "params": "TRAINER_DEFAULTS + rangeNm=-518",
+      "purpose": "isolates finding F-02: negative fuel with converged=true",
+      "expected": {
+        "grossLb": 1804.1,
+        "usableFuelLb": -108.86,
+        "cruiseFuelLb": -153.63,
+        "converged": true,
+        "stopReason": null
+      }
+    },
+    {
+      "id": "CASE-TRANSPORT-001",
+      "class": "transport",
+      "params": "TRANSPORT_DEFAULTS",
+      "expected": {
+        "grossLb": 173724.41,
+        "emptyLb": 89311,
+        "oewLb": 96083,
+        "payloadLb": 36477,
+        "zeroFuelLb": 132560,
+        "fuelLb": 41164.34,
+        "wingAreaFt2": 1407.09,
+        "cruiseLD": 18.175,
+        "converged": true,
+        "iterations": 38,
+        "final_residual_lb": 0.4317
+      }
+    },
+    {
+      "id": "CASE-TRANSPORT-002",
+      "class": "transport",
+      "params": "TRANSPORT_DEFAULTS, fuelMethod sweep",
+      "purpose": "isolates the simplified-vs-integrated spread",
+      "expected": {
+        "mission_grossLb": 173724,
+        "loftin_grossLb": 169039,
+        "regulatory_grossLb": 197947,
+        "spread_pct": 13.94
+      }
+    },
+    {
+      "id": "CASE-BIZJET-001",
+      "class": "bizjet",
+      "params": "BIZJET_DEFAULTS",
+      "expected": {
+        "grossLb": 27664,
+        "emptyLb": 18202,
+        "oewLb": 19221,
+        "payloadLb": 800,
+        "fuelLb": 7643
+      }
+    },
+    {
+      "id": "CASE-TURBOPROP-001",
+      "class": "turboprop",
+      "params": "TURBOPROP_DEFAULTS",
+      "expected": {
+        "grossLb": 55990,
+        "emptyLb": 32515,
+        "oewLb": 34522,
+        "payloadLb": 14242,
+        "fuelLb": 7226
+      }
+    },
+    {
+      "id": "CASE-DRONE-001",
+      "class": "drone",
+      "params": "drone defaults",
+      "expected": {
+        "MTOM_kg": 4.091
+      }
+    }
+  ]
+}

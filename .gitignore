@@ -28,3 +28,7 @@ yarn-error.log*
 .eslintcache
 .vite/
 .tabrender-*
+
+# Python bytecode from the AUDIT reference scripts
+__pycache__/
+*.pyc

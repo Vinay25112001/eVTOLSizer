@@ -1205,3 +1205,50 @@ remediation item for the phase that owns it.
 **Nothing in this work supports a claim that the repository is dimensionally consistent.** Of
 the relations the analyser can fully dimension, none contradicts itself; it can fully dimension
 too few of them for that to certify the tree.
+
+### N-19 — THE LOCAL GATE'S THIRD EXIT CODE COULD NOT FAIL, AND IT HAS BEEN COVERING A STALE VALIDATION.md
+
+The standing rule is that every commit gets the full gate green first, TEST_EXIT,
+REPORT_EXIT and CHECK_EXIT all 0. CHECK_EXIT has been 0 by construction.
+
+The local gate runner executed, in this order:
+
+    npm test              -> TEST_EXIT
+    npm run report        -> REGENERATES VALIDATION.md
+    npm run report:check  -> compares the harnesses against VALIDATION.md
+
+`npm run report` writes VALIDATION.md; `report:check` then compares the harnesses
+against the file written seconds earlier by the same run. The check was answering
+"does this build match itself", which it always does. **A check that runs on
+something that cannot fail is not a check** — the lesson this audit has already had
+to learn at the register gate's prefix allowance and twice in its own tooling, here
+in the gate runner.
+
+**THE REPOSITORY'S CI WAS NEVER WRONG.** `.github/workflows/verify.yml` runs
+`npm test` and then `npm run report:check` with no regeneration between them, which
+is the correct question: does the COMMITTED report still describe what the code
+produces? The defect was in the local runner only, and it is audit tooling rather
+than anything the repository ships.
+
+**WHAT IT WAS COVERING.** VALIDATION.md at HEAD is STALE. `npm run report:check`
+against the committed file returns 1 and reports 2,033 differing lines, which all
+cascade from a single one-line offset at line 3087 in the aircraft-classes
+change-fence output — the fence already recorded as printing SKIP on this branch.
+Measured at `545d212` and again at the register reconstruction commit, the two
+failure reports are BYTE-IDENTICAL, so the staleness pre-dates the units work and is
+not caused by it; `validation/aircraft-classes.mjs` does not read `AUDIT/` at all.
+
+**WHY NOTHING ELSE CAUGHT IT.** `verify.yml` triggers on pushes to `main`/`master`
+and on pull requests. `shared-auth` has no upstream and carries 56 local-only
+commits, so CI has never run on any of this work. The only gate these commits have
+seen is the local one, and its third exit code could not fail.
+
+**FIXED IN THE TOOLING.** The runner now runs `report:check` against the committed
+VALIDATION.md, untouched, and performs the regeneration afterwards into a scratch
+copy, restoring the working tree. REPORT_EXIT is still recorded and can no longer
+decide the check's outcome.
+
+**NOT FIXED, AND DELIBERATELY SO.** VALIDATION.md is still stale, so CHECK_EXIT is
+now honestly 1. Regenerating and committing it would close it, and it was explicitly
+reverted rather than committed in the register reconstruction, so it is left as a
+recorded open item rather than resolved by a side effect of this note.

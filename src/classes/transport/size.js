@@ -309,7 +309,7 @@ function missionFuel(p, grossLb, Sft2, thrustEachLbf, swetOverS, rangeNm = p.des
   const m = { rangeNm, cruiseAltFt: p.cruiseAltFt, cruiseMach: p.cruiseMach, climbCasKt: p.climbCasKt,
               descentCasKt: p.descentCasKt, taxiMin: p.taxiMin, takeoffFuelFraction: p.takeoffFuelFraction,
               reserve: p.reservePolicy, alternateNm: p.alternateNm, alternateAltFt: p.alternateAltFt,
-              alternateMach: p.alternateMach };
+              alternateMach: p.alternateMach, reserveMin: p.reserveMin };
   const r = flyMission(a, e, m, grossLb * LB * G);
   const toLb = (n) => n / G / LB;
   return { ...r, totalLb: toLb(r.total), tripLb: toLb(r.trip), reserveLb: toLb(r.reserve),

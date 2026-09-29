@@ -30,7 +30,17 @@ const hasIca = (p) => p.icaRequirement !== "off";
 const JET_WHEN = {
   reservePolicy: isMission, climbCasKt: isMission, descentCasKt: isMission, climbThrottle: isMission,
   taxiMin: isMission, takeoffFuelFraction: isMission, alternateAltFt: isMission, alternateMach: isMission,
-  reserveIncrementNm: isLoftin, alternateNm: notLoftin, reserveMin: (p) => p.fuelMethod === "regulatory",
+  reserveIncrementNm: isLoftin, alternateNm: notLoftin,
+  /* Shown under BOTH methods that fly a final reserve. It used to be shown
+     only under "regulatory", which was right while the segment mission
+     hardcoded its 45 and 30 minutes and the input was inert (F-03) -- but it
+     meant the finding's own charge, that a control which cannot change the
+     design must not sit on the design panel, was answered by hiding the
+     control rather than by connecting it. The mission method now flies the
+     duration the input names, so the input belongs on the panel there too.
+     "loftin" is the exception and still hides it: that method carries its
+     reserves as a range increment, through reserveIncrementNm above. */
+  reserveMin: notLoftin,
   airfoilTech: isFlops, wingCamber: isFlops, spanEfficiencyFlops: isFlops,
   cfEquivalent: isCf, oswaldCruise: isCf,
   htAreaRatio: byRatio, vtAreaRatio: byRatio, tailCategory: byVolume, tTail: byVolume,

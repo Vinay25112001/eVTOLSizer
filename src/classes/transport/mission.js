@@ -51,6 +51,21 @@ const A0 = isa(0).a, P0 = isa(0).P;
 
 export const RESERVE_POLICIES = Object.freeze(["us-domestic", "us-flag", "easa", "nbaa"]);
 
+/* EACH POLICY'S OWN FINAL-RESERVE DURATION, in minutes. These were written
+   into the three branches of the final-reserve calculation as bare 45s and
+   30s, which meant `reserveMin` -- the input the deck labels "Final reserve
+   at cruise consumption" -- was never consulted under this fuel method at
+   all: a 0 to 600 minute swing moved the design by 0.00 % (F-03). The input
+   now governs, and these remain the figure each policy is defined by, used
+   when a caller supplies no duration of its own:
+     us-domestic  14 CFR 121.639(c), 45 min at normal cruising fuel consumption
+     us-flag      14 CFR 121.645(b), 30 min hold at 1,500 ft
+     easa         EASA AMC/GM Part-CAT, 30 min hold at 1,500 ft
+     nbaa         30 min hold at 5,000 ft (secondary sources only) */
+export const FINAL_RESERVE_MIN = Object.freeze({
+  "us-domestic": 45, "us-flag": 30, easa: 30, nbaa: 30,
+});
+
 /* Calibrated airspeed (m/s) → Mach at pressure p (subsonic, compressible). */
 export function casToMach(casMs, p) {
   const qc = P0 * ((1 + 0.2 * (casMs / A0) ** 2) ** 3.5 - 1);
@@ -199,7 +214,10 @@ function alternateLeg(a, e, W0, m, h0 = 0) {
      a  { S (m²), cd0, k } or { S, cd(M, CL, h m) }
      e  { F0 (N, all engines, sea-level static), tsfcCruise (lb/lbf/h), climbThrottle }
      m  { rangeNm, cruiseAltFt, cruiseMach, climbCasKt, descentCasKt, taxiMin,
-          takeoffFuelFraction, reserve, alternateNm, alternateAltFt, alternateMach } */
+          takeoffFuelFraction, reserve, alternateNm, alternateAltFt, alternateMach,
+          reserveMin }
+        reserveMin is the FINAL-RESERVE duration in minutes; omit it and the
+        chosen policy's own figure (FINAL_RESERVE_MIN) is flown. */
 export function flyMission(a, e, m, grossN) {
   if (!RESERVE_POLICIES.includes(m.reserve)) throw new Error(`Unknown reserve policy "${m.reserve}"`);
   const taxi = deckShape(0, 0).idleFuelPerLbf * e.F0 * (m.taxiMin / 60);   // N
@@ -238,12 +256,20 @@ export function flyMission(a, e, m, grossN) {
   }
   const alt = alternateLeg(a, e, Wr, m, m.reserve === "nbaa" ? NBAA_HOLD_FT * FT : 0);
   r.alternate = alt.fuel; Wr = alt.W;
+  /* THE FINAL RESERVE IS AS LONG AS THE INPUT SAYS. The duration was hardcoded
+     in all three branches, so `reserveMin` was inert under this fuel method
+     while `alternateNm` worked, which made the inertia hard to notice (F-03).
+     A caller that passes no duration still flies its policy's own figure. */
+  /* `== null` catches both null and undefined, because Number(null) is 0
+     and a caller that passes null means "not given", not "no reserve". */
+  const givenMin = m.reserveMin == null ? NaN : Number(m.reserveMin);
+  const finalMin = Number.isFinite(givenMin) ? givenMin : FINAL_RESERVE_MIN[m.reserve];
   if (m.reserve === "us-domestic") {
-    r.final = cruiseFuelFlow(a, e, Wr, hTop, m.cruiseMach) * 45 * 60;
+    r.final = cruiseFuelFlow(a, e, Wr, hTop, m.cruiseMach) * finalMin * 60;
   } else if (m.reserve === "nbaa") {
-    r.final = hold(a, e, Wr, NBAA_HOLD_FT, 30).fuel;
+    r.final = hold(a, e, Wr, NBAA_HOLD_FT, finalMin).fuel;
   } else {
-    r.final = hold(a, e, Wr, 1500, 30).fuel;
+    r.final = hold(a, e, Wr, 1500, finalMin).fuel;
   }
   const reserve = r.contingency + r.missedApproach + r.alternate + r.final;
   return {

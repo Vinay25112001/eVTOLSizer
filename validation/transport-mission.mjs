@@ -7,10 +7,11 @@
    eVTOL_Sizing_Research/datasets/validation-runs/, not claimed here.
    ===================================================================== */
 
-import { flyMission, casToMach, transition, RESERVE_POLICIES } from "../src/classes/transport/mission.js";
+import { flyMission, casToMach, transition, RESERVE_POLICIES, FINAL_RESERVE_MIN } from "../src/classes/transport/mission.js";
 import { deckShape, DECK_ROWS } from "../src/classes/transport/engine-deck.js";
 import { engineSplit, tailAreas, aftNacelleDeltaCd, TAIL_VOLUME } from "../src/classes/transport/layout.js";
 import { sizeTransport, analyzeTransport } from "../src/classes/transport/size.js";
+import { INPUT_DECKS } from "../src/classes/aircraft/input-deck.js";
 import { flopsWeights } from "../src/classes/transport/flops-weights.js";
 import { makeISA } from "../src/engine/atmosphere.js";
 import { makeJetISA } from "../src/classes/transport/atmosphere.js";
@@ -199,6 +200,102 @@ function FLOPS_737() {
     controlSurfaceAreaRatio: 0.333, mainGearOleoIn: 84, noseGearOleoIn: 58.8, nacelleDiameter: 7, nacelleLength: 11.65,
     paintPerArea: 0.07, engineRefMass: 8071, engineRefThrust: 27301, engineSlsThrust: 27301, engineMassExponent: 1.15,
     numEngines: 2, numWingEngines: 2, numFuselageEngines: 0, hydraulicPressure: 3000 };
+}
+
+/* ── THE FINAL RESERVE IS AS LONG AS THE INPUT SAYS (F-03) ─────────────
+   `reserveMin` was declared, published on the deck with a 14 CFR 121.639(c)
+   source, bounded 0 to 90 -- and never read under this fuel method. The
+   minutes were hardcoded in all three branches of the final reserve, so a
+   0 to 600 minute swing moved the sized aeroplane by 0.00 %, while
+   `alternateNm` did work, which is what made the inertia hard to notice.
+
+   Measured before the fix, sizing a transport at each policy:
+
+     policy        reserveMin 30      45       90      600
+     us-domestic       173,724   173,724  173,724  173,724
+     us-flag           176,256   176,256  176,256  176,256
+     easa              173,564   173,564  173,564  173,564
+     nbaa              171,493   171,493  171,493  171,493
+
+   Section A pins that the input now governs; section B pins that each
+   policy still flies its own regulatory figure when no duration is passed,
+   which is what keeps every existing caller of flyMission unmoved. */
+console.log("\n-- the final reserve honours reserveMin, and defaults to the policy's own figure --");
+{
+  /* A. THE INPUT GOVERNS. Longer reserve, more reserve fuel -- in every
+     policy, since each of the three branches was separately hardcoded. */
+  for (const policy of RESERVE_POLICIES) {
+    const base = flyMission(a, e, { ...m, reserve: policy, reserveMin: 30 }, W);
+    const long = flyMission(a, e, { ...m, reserve: policy, reserveMin: 90 }, W);
+    const zero = flyMission(a, e, { ...m, reserve: policy, reserveMin: 0 }, W);
+    check(`${policy}: 30 -> 90 minutes raises the final reserve`,
+      long.segments.final > base.segments.final * 1.5,
+      `${base.segments.final.toFixed(0)} -> ${long.segments.final.toFixed(0)} N`);
+    check(`${policy}:   ...and a zero-minute final reserve burns nothing`,
+      Math.abs(zero.segments.final) < 1e-9, `${zero.segments.final} N`);
+  }
+  /* The duration must be the only thing that moved: the trip is flown
+     before the reserve is drawn, so it cannot change with it. */
+  const t30 = flyMission(a, e, { ...m, reserveMin: 30 }, W);
+  const t90 = flyMission(a, e, { ...m, reserveMin: 90 }, W);
+  check("a longer reserve does not change the trip fuel", rel(t30.trip, t90.trip) < 1e-12,
+    `${t30.trip.toFixed(3)} vs ${t90.trip.toFixed(3)} N`);
+  check("...but it does change the total", t90.total > t30.total);
+
+  /* B. EACH POLICY'S OWN FIGURE IS THE FALLBACK. Callers that build their
+     own mission object -- including the ones in this file, above -- pass no
+     reserveMin, and must be flown exactly as they were before F-03. */
+  for (const policy of RESERVE_POLICIES) {
+    const omitted = flyMission(a, e, { ...m, reserve: policy }, W);
+    const explicit = flyMission(a, e, { ...m, reserve: policy, reserveMin: FINAL_RESERVE_MIN[policy] }, W);
+    check(`${policy}: omitting reserveMin flies FINAL_RESERVE_MIN (${FINAL_RESERVE_MIN[policy]} min)`,
+      rel(omitted.segments.final, explicit.segments.final) < 1e-12,
+      `${omitted.segments.final.toFixed(3)} vs ${explicit.segments.final.toFixed(3)} N`);
+  }
+  check("us-domestic's fallback is the 45 minutes of 14 CFR 121.639(c)", FINAL_RESERVE_MIN["us-domestic"] === 45);
+  check("the other three policies hold for 30 minutes",
+    ["us-flag", "easa", "nbaa"].every((k) => FINAL_RESERVE_MIN[k] === 30));
+  check("every policy has a declared final-reserve duration",
+    RESERVE_POLICIES.every((k) => Number.isFinite(FINAL_RESERVE_MIN[k])),
+    RESERVE_POLICIES.filter((k) => !Number.isFinite(FINAL_RESERVE_MIN[k])).join(", "));
+  /* A non-numeric duration must fall back rather than produce NaN fuel. */
+  const junk = flyMission(a, e, { ...m, reserveMin: null }, W);
+  check("a non-numeric reserveMin falls back instead of poisoning the fuel",
+    Number.isFinite(junk.segments.final) && rel(junk.segments.final, flyMission(a, e, m, W).segments.final) < 1e-12);
+}
+
+/* ── THE SIZED AEROPLANE, BEFORE AND AFTER ────────────────────────────── */
+console.log("\n-- the design responds to the reserve, and the defaults are unmoved --");
+{
+  const at = (over) => sizeTransport(over).grossLb;
+  const base = at({});
+  check("the transport default is unchanged at 173,724.4 lb", Math.abs(base - 173724.4) < 0.05, `got ${base.toFixed(4)}`);
+  /* 45 minutes IS the us-domestic default, so naming it explicitly must
+     reproduce the default design exactly -- that is what says the pass-through
+     is wired to the same number the policy was already flying. */
+  check("  ...and naming reserveMin = 45 explicitly reproduces it",
+    Math.abs(at({ reserveMin: 45 }) - base) < 0.05, `got ${at({ reserveMin: 45 }).toFixed(4)}`);
+  const swing = [0, 30, 90, 600].map((rm) => at({ reserveMin: rm }));
+  check("0 -> 600 minutes now MOVES the design (it moved 0.00 % before F-03)",
+    swing[3] > swing[0] * 1.5, swing.map((g, i) => `${[0, 30, 90, 600][i]}min=${g.toFixed(0)}`).join("  "));
+  check("  ...monotonically", swing.every((g, i) => i === 0 || g > swing[i - 1]), swing.map((g) => g.toFixed(0)).join(" < "));
+}
+
+/* ── AND IT IS ON THE PANEL WHERE IT WORKS ────────────────────────────── */
+console.log("\n-- the deck shows the input under every method that flies it --");
+{
+  const when = INPUT_DECKS.transport.when.reserveMin;
+  /* F-03 charged that "a control that cannot change the design must not sit
+     on the design panel". The deck had answered that by HIDING the control
+     under the default method rather than connecting it -- so the finding's
+     own words were satisfied while the input stayed dead. Now that the
+     mission method flies it, the control belongs there. */
+  check("reserveMin is shown under the default mission method", when({ fuelMethod: "mission" }) === true);
+  check("reserveMin is shown under the regulatory method", when({ fuelMethod: "regulatory" }) === true);
+  check("reserveMin stays hidden under loftin, which carries reserves as a range increment",
+    when({ fuelMethod: "loftin" }) === false);
+  check("  ...and reserveIncrementNm is shown there instead",
+    INPUT_DECKS.transport.when.reserveIncrementNm({ fuelMethod: "loftin" }) === true);
 }
 
 console.log("");

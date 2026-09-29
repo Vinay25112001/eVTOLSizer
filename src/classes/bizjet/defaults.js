@@ -45,6 +45,14 @@ export const BIZJET_INPUTS = Object.freeze({
   alternateAltFt:  over("alternateAltFt", { value: 25000 }),
   alternateMach:   over("alternateMach", { value: 0.65 }),
   alternateNm:     over("alternateNm", { value: 200, status: "sourced", source: "Embraer Praetor 500 brochure: NBAA IFR reserves with a 200 nm alternate" }),
+  /* THIRTY MINUTES, NOT FORTY-FIVE. This was inherited from the transport
+     schema, whose 45 minutes is 14 CFR 121.639(c) for a domestic airliner,
+     while the policy chosen just above is NBAA IFR, whose final reserve is a
+     30-minute hold. The contradiction was invisible while the input was inert
+     (F-03); now that the final reserve is as long as the input says, the
+     business jet flies the figure its own reserve policy is defined by, and
+     the sized aircraft is unchanged at 27,663.7 lb. */
+  reserveMin:      over("reserveMin", { value: 30, status: "sourced", label: "Final reserve (NBAA hold at 5,000 ft)", source: "NBAA IFR reserves: a 30-minute hold, the same figure this class's reserve policy is defined by; see classes/business-jet/METHODS.md" }),
 
   /* Requirements */
   landingFieldLengthM: over("landingFieldLengthM", { value: 1362, min: 600, max: 2500, status: "derived", source: `Citation Latitude: unfactored landing distance 817 m at MLW, divided by 0.6 (14 CFR 121.195(b)), giving a factored landing field length of 1,362 m. The earlier fleet mean (Challenger 350, Praetor 500, Learjet 75) is not used: those three publish landing distance at a "typical" weight, not MLW, so they cannot be read through the Loftin relation (METHODS.md §8.3)` }),

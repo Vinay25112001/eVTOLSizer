@@ -38,7 +38,7 @@ export const TRANSPORT_INPUTS = Object.freeze({
   alternateMach:   { value: 0.7, unit: "", min: 0.4, max: 0.85, section: "Mission", label: "Cruise Mach to the alternate (mission method)", status: "assumed", source: "No rule" },
   reserveIncrementNm: { value: 500, unit: "nm", min: 0, max: 1200, section: "Mission", label: "Reserve range increment (Loftin method)", status: "sourced", source: 'Loftin, NASA RP-1060 p.153: "an increment of 400 to 600 miles to the design range" (midpoint; read as nautical miles, the unit the chapter uses for jets)' },
   alternateNm:     { value: 200, unit: "nm", min: 0, max: 500, section: "Mission", label: "Distance to alternate", status: "sourced", source: "Study practice, NASA CR-2011-216847 (SUGAR) p.101; the rule (14 CFR 121.639(b)) requires an alternate but no distance" },
-  reserveMin:      { value: 45, unit: "min", min: 0, max: 90, section: "Mission", label: "Final reserve at cruise consumption", status: "sourced", source: `${CFR} 121.639(c): "to fly for 45 minutes at normal cruising fuel consumption"` },
+  reserveMin:      { value: 45, unit: "min", min: 0, max: 90, section: "Mission", label: "Final reserve", status: "sourced", source: `${CFR} 121.639(c): "to fly for 45 minutes at normal cruising fuel consumption"` },
 
   /* Field and climb requirements */
   landingFieldLengthM: { value: 1650, unit: "m", min: 900, max: 3500, section: "Requirements", label: "Landing field length (dry, sea level)", status: "sourced", source: `${ACAPS} §3.4.30: flaps 40, dry, sea level, 146,300 lb ≈ 5,410 ft (read from the chart)` },

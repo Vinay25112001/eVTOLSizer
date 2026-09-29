@@ -8,21 +8,21 @@
 
 | Dimension | YES | PARTIAL | of 960 |
 |---|---|---|---|
-| IMPLEMENTED | 617 | 294 | 64.3% YES |
-| EXECUTED | 292 | 264 | 30.4% YES |
-| VERIFIED | 322 | 513 | 33.5% YES |
+| IMPLEMENTED | 616 | 295 | 64.2% YES |
+| EXECUTED | 358 | 198 | 37.3% YES |
+| VERIFIED | 320 | 515 | 33.3% YES |
 | DOCUMENTED | 911 | 0 | 94.9% YES |
-| REGRESSION PROTECTED | 64 | 207 | 6.7% YES |
+| REGRESSION PROTECTED | 128 | 207 | 13.3% YES |
 
 ## Final status distribution
 
 | Status | Count |
 |---|---|
 | NOT EXECUTED | 355 |
-| NO REGRESSION TEST | 305 |
-| INCOMPLETE | 200 |
+| NO REGRESSION TEST | 239 |
+| INCOMPLETE | 202 |
+| COMPLETE | 106 |
 | NOT IMPLEMENTED | 49 |
-| COMPLETE | 42 |
 | NOT VERIFIED | 9 |
 
 ## Measured repository evidence

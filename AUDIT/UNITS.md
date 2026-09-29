@@ -1,6 +1,8 @@
 # UNITS — forensic unit-system audit (Phase 1)
 
-Commit `3a7a5a4`. Method: every conversion factor in the tree was located and compared against
+Commit `3a7a5a4`, **re-verified against the tree 2026-09-29** — five claims below had gone
+stale and are corrected in place, each marked. Method: every conversion factor in the tree was
+located and compared against
 its exact SI definition; every atmosphere and dynamic-pressure formula was dimensionally
 analysed; the display path was traced to check whether a converted value can re-enter a
 calculation.
@@ -9,14 +11,14 @@ calculation.
 
 | question | verdict |
 |---|---|
-| Is there a single canonical internal unit system? | **FAIL** — there are four regimes (see below) |
+| Is there a single canonical internal unit system? | **FAIL** — there are four regimes (see below). Phase 1 asks for one to be ESTABLISHED; §9 records the canonical reference this audit measures against, which is not the same as refactoring the tree to use it |
 | Are the conversion factors themselves accurate? | **PASS** — worst error 0.081 %, all others ≤ 1.2e-4 % |
 | Is the imperial↔SI boundary clean inside each module? | **PASS** — no Raymer/FLOPS/GASP equation is fed metres or kilograms anywhere |
 | Does any display-unit value re-enter a calculation? | **PASS** — none found |
 | Any degree/radian confusion? | **PASS** — none found |
 | Any percentage/fraction confusion? | **PASS** — none in the atmosphere or unit paths |
-| Is any physical constant written twice with different values? | **FAIL** — viscosity (21.7 % apart), Pa→psf (three values), imperial g (0.081 %) |
-| Is a dimensionally wrong formula producing a plausible number? | **FAIL** — `MU0` (F-04), report density (F-07) |
+| Is any physical constant written twice with different values? | **PARTIAL** — viscosity now AGREES (was 21.7 % apart; fixed by CHG-005). Still open: Pa→psf three values (F-36), imperial g 0.081 % (F-37) |
+| Is a dimensionally wrong formula producing a plausible number? | **PARTIAL** — `MU0` (F-04) FIXED by CHG-005; report density (F-07) still open |
 
 ## 1. The four unit regimes
 
@@ -47,16 +49,18 @@ architecture, and the two independent display toggles.
 | `G0` | 9.80665 m/s² | `src/engine/constants.js:43` | exact by definition; cited to NACA TR-824, NDARC, Loftin, Airbus |
 | `R_GAS` | 287.05287 J/(kg·K) | `:74` | **derived**, not looked up: `P0/(rho0 T0)`; confirmed independently by NDARC's published `cs0 = 340.294` |
 | `T0` | 288.15 K | `:45` | ISA |
-| `P0` | 101325 Pa | `:77` | ISA |
+| `P0` | 101325 Pa | `:104` | ISA |
 | `LAPSE` | 0.0065 K/m | `:46` | ISA |
 | `GAMMA` | 1.4 | `:75` | — |
 | `RHO_MSL` | 1.225 kg/m³ | `:44` | ISA; consistent with the three above |
-| **`MU0`** | **1.47e-5** labelled "dynamic viscosity, Pa·s" | `:76` | **FAIL — this is the kinematic value (F-04)** |
+| `MU0` | 1.789e-5 Pa·s | `:103` | **CORRECTED 2026-09-29.** Was 1.47e-5 at `:76` — the KINEMATIC value under a dynamic label (F-04). CHG-005 fixed the value; this row had not followed it |
 
 Independently verified (`AUDIT/reference/evtol_reference.py`):
 `P0/(R_GAS·T0) = 1.225000` exactly, and `sqrt(GAMMA·R_GAS·T0) = 340.2940` m/s, matching NDARC's
 published sea-level speed of sound to four decimals. **The ISA triple is self-consistent and
-correct.** That makes `MU0` the sole broken constant in the file.
+correct.** `MU0` was the sole broken constant in the file and is no longer broken: re-read
+2026-09-29 it is 1.789e-5 Pa·s, which `validation/constants.mjs` now derives independently
+from Sutherland's law (`:156-158`) rather than taking on trust.
 
 ## 3. Conversion-factor table
 
@@ -113,14 +117,18 @@ atmosphere.
 | `T0`, `P0`, `LAPSE` | `constants.js` plus 9 / 4 / 6 inline copies | **AGREE** |
 | `rho_MSL` | `constants.js:44` plus ~20 inline copies, all 1.225 | **AGREE** |
 | gamma | `constants.js:75` 1.4; `transport/size.js:133,210` and `aircraft/engine.js:272,294` write `0.5*1.4`; `turboprop/size.js:100` writes `0.7` (= gamma/2) | numerically AGREE, spelling diverges |
-| **viscosity** | **`constants.js:76` 1.47e-5** vs **`noise.js:197` 1.789e-5** vs **`report.js:396` 1.789e-5** vs **`validation/identities.mjs:30` 1.47e-5** | **DISAGREE by 21.7 % (F-04)** |
+| viscosity | `constants.js:103` 1.789e-5, `noise.js:197` 1.789e-5, `report.js:396` 1.789e-5 | **AGREE — re-read 2026-09-29.** Was a 21.7 % split (F-04); closed by CHG-005 |
 | Pa→lbf/ft² | three values: `0.020885434`, `0.0208854`, `0.020885` | **DISAGREE**, spread 2.1e-3 % (F-36) |
 | kg→lb | `2.20462` (9 sites) / `2.20462262` (2) / `2.2046226218` (1) | DISAGREE ≤1.2e-4 % |
 | kW→hp | `units.js:86` exact; `App.jsx:424`, `report.js:20` `1.34102` | DISAGREE 1.6e-4 % |
 | **cruise density** | engine (gas law) vs `report.js:169,213` (no ΔISA) vs `report.js:395` (ΔISA as a *scaling*) | **DISAGREE up to 7.8 % (F-07)** |
 
-`validation/constants.mjs:141-151` bands **only** gravity (SI + imperial) and `R_GAS`.
-Viscosity, `rho_MSL`, `T0`, `LAPSE`, `P0`, gamma and every unit factor are **ungated**.
+`validation/constants.mjs` bands gravity (SI + imperial), `R_GAS`, **and viscosity — which it
+now derives from Sutherland's law at `:156-158` rather than asserting** (re-read 2026-09-29;
+this sentence previously said viscosity was ungated).
+
+Still ungated there: `rho_MSL`, `T0`, `LAPSE`, `P0` and gamma. The unit FACTORS are no longer
+ungated either — `validation/unit-system.mjs` checks all 25 of them against exact SI (§10).
 
 ## 5. Dimensional analysis
 
@@ -188,3 +196,103 @@ consumer reads a *rounded* field back into a calculation is assessed in
    an accident of the studios being added later. `src/lib/units.js`'s header implies the latter.
 3. `src/engine/turboelectric.js:118-119`'s referred lapse — dimensionally consistent, convention
    unverifiable from this repo (U-02).
+
+## 9. The canonical reference this audit measures against (P01-002)
+
+Phase 1 requires a canonical internal unit system. **This tree does not have one and will not be
+given one here**: each class is a self-contained port of a published method and carries that
+method's units, and converting them would mean rewriting the equations — which is outside what an
+audit may do.
+
+What *is* established is the canonical reference the audit measures against. Every quantity below
+is expressed in these units when this audit compares anything:
+
+| quantity | canonical | quantity | canonical |
+|---|---|---|---|
+| mass | kg | power | W |
+| force | N | energy | J |
+| pressure | Pa (= N/m²) | energy (battery) | Wh, kWh |
+| length | m | mass flow | kg/s |
+| area | m² | density | kg/m³ |
+| volume | m³ | temperature | K (°C where stated) |
+| speed | m/s | angle | rad (deg where stated) |
+
+The imperial units Phase 1 names — ft, in, lb, lbf, hp, knot, nautical mile, statute mile, gallon,
+US gallon — are **boundary units**: legitimate inside a class that ports an imperial method, and
+converted at the class boundary. rpm, revolutions, Mach, dB/dBA, percentages, fractions and
+dimensionless coefficients are system-independent and are marked so in `src/lib/units.js`'s
+`NO_CONVERT`.
+
+**Coverage measured 2026-09-29:** all **37** units Phase 1 names appear in the tree and every one
+has a counterpart in the display layer (`UNIT_TABLE` 37 entries + `NO_CONVERT` 26 entries).
+
+## 10. Engine-side conversion constants (P01-042 … P01-057)
+
+§3 audits the DISPLAY table. This audits the constants each class writes for itself, which is
+where a unit defect actually lands — F-04, F-36 and F-37 are all of that shape.
+
+**Measured: 27 named conversion constants across 20 modules. Worst error 0.00012 %.**
+
+(25 on the first pass. The gate matched only a bare literal, so two constants written as a
+RECIPROCAL — `const NM_PER_SM = 1 / 1.1507794;` — were skipped while this document claimed
+to cover them. Both spellings are now read.)
+
+| name | modules | value(s) | worst error |
+|---|---|---|---|
+| `LB` / `LB_PER_KG` / `KG_PER_LB` | 9 | 2.20462, 2.20462262, 0.45359237 | 1.2e-4 % |
+| `FT` / `M_PER_FT` | 5 | 3.28084, 0.3048 | 0 |
+| `KT` / `KT_PER_MS` | 4 | 0.514444, 1.943844 | 9e-5 % |
+| `DEG` | 1 | 57.2958 | 4e-5 % |
+| `HP` | 1 | 0.745699872 | 0 |
+| `G0` / `G_FT` | 3 | 9.80665, 32.17405 | 0 |
+| `LBF` | 1 | 4.44822 | 0 |
+| `NM_PER_SM` | 1 | 1/1.1507794 | 4e-6 % |
+
+Every one is within 1e-4 relative of its exact SI definition, and this is now **gated**
+(§13). The 16 mistake classes P01-042…057 name are each covered by one of these families.
+
+## 11. Dimensional analysis: arithmetic across unit systems (P01-058)
+
+The strongest dimensional test available without per-symbol units is this: **is any quantity
+ADDED to or SUBTRACTED from the same physical quantity expressed in a different system?** A
+`...Lb` added to a `...Kg` is wrong whatever the formula means, and unlike a multiplication it
+cannot be intentional.
+
+**Measured over the whole tree: 0 sites.** Mass, length, area, speed, distance, power, pressure
+and angle were each checked for both systems.
+
+This is a clean result and it is narrow. It does NOT establish that any formula is
+dimensionally correct — see §12.
+
+## 12. All formulas checked (P01-065)
+
+Phase 1 asks for "all formulas checked". The honest position, measured:
+
+| | |
+|---|---|
+| engineering relations in `FORMULA-REGISTER.md` | **1,288** |
+| relations whose OUTPUT units are known | **190 (14.8 %)** |
+| of those, units STATED in a source comment | 31 |
+| input variables with a resolvable unit | **908 of 5,055 (18.0 %)** |
+| relations dimensionally analysed end to end | **the atmosphere and dynamic-pressure set only** (§5) |
+
+**So "all formulas checked" is NOT satisfied, and cannot be until the units exist.** The register
+records UNKNOWN rather than guessing, and the reason 85 % are UNKNOWN is the finding: most
+computed quantities in this tree do not state their units, by neither naming convention nor
+comment. That is Phase 1's largest piece of remaining work and it is now countable.
+
+## 13. Automated unit tests (P01-067)
+
+`validation/unit-system.mjs` — **6 checks, 6/6 mutants**, registered in both `npm test` and
+`report.mjs`. It gates:
+
+1. every named conversion constant within 1e-4 of exact SI (25 constants, 20 modules);
+2. no addition or subtraction across unit systems (0 sites, bound 0);
+3. the population of near-miss conversion literals is **pinned at exactly one** — `32.2` for
+   imperial gravity, the registered F-37.
+
+Point 3 is a population count rather than an allowlist on purpose. An allowlist keyed on
+(file, value) excuses the very line it describes; a count does not — a SECOND near-miss fails the
+gate even though the first is known and unremediated.
+
+`validation/units.mjs` continues to gate the display layer and is not duplicated here.

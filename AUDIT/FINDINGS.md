@@ -1423,6 +1423,14 @@ records, and it is now known to be materially pessimistic.
 **Not repaired.** A register pass is a change to `AUDIT/FORMULA-REGISTER.md`, which is not
 authorised. **Nothing is re-graded.**
 
+
+**AMENDED 2026-09-30, after the `flight-envelope.js` block.** That block verified a further **31**
+relations against 14 CFR 25.331-25.349 — the regulation text where it is text, and the eCFR's
+equation PNGs where it is not, via the transcriptions in `FLIGHT-ENVELOPE.md` §1 — and the register
+records `source = UNVERIFIED` for **31 of its 32 rows**. The running tally is therefore
+**13 (F3) + 1 (F4) + 9 (G7) + 31 (flight-envelope) = 54 relations checked against a held primary,
+54 passed, 0 found genuinely unsourced.** That is 5.7 % of the 944 the register calls UNVERIFIED,
+and the pass rate is still 100 %. Q10 was again left alone on every row.
 ---
 
 ## F-56 — three unguarded degenerate paths in the stowage chain, each latent against the shipped tyre database — LOW — VERIFIED
@@ -1490,6 +1498,152 @@ than looked up.
 **Not repaired.** Adding a `D_O > D` precondition, testing both operands of (45), and rejecting a
 non-positive or non-integer tyre count are production changes and are not authorised here.
 **Nothing is re-graded.**
+---
+
+## F-57 — the envelope declares one unsourced number and carries at least four; one of them can set V_C, and two are live on the turboprop — MEDIUM — VERIFIED
+
+`flight-envelope.js` states in its returned caveats (l.327-328):
+
+
+> *"The negative stall branch uses |C_N,min| = 0.70 C_N,max. That ratio is ASSUMED: no source opened
+> gives it, and **it is the only unsourced number in the diagram**."*
+
+The declaration of the 0.70 is exemplary. The claim that it is the only one is false. Reading the
+module against 14 CFR 25.335 and 25.341, which are both vendored verbatim, four more numbers carry
+no source, and the regulation supplies none of them:
+
+| value | line | what it does | declared? |
+|---|---|---|---|
+| **1.5** | 201, 206 | a floor on V_C, `Math.max(1.5 * vs1Kt, ...)` | **no** |
+| **1.03** | 168 | `cnOverCl`, the C_N/C_L ratio at the stall | **no** |
+| **0.85** | 219 | MLW/MTOW when `result.mlwKg` is absent, feeding R_1 | **no** |
+| **0.80** | 220 | MZFW/MTOW when `result.mzfwKg` is absent, feeding R_2 | **no** |
+
+**25.335(a) contains no 1.5 V_S1 minimum.** Its three clauses are (a)(1) "sufficiently greater than
+V_B", (a)(2) "V_C may not be less than V_B + 1.32 U_REF", and (a)(3) the Mach limit. The module's
+own comment at l.193 says the fallback "is the REGULATORY MINIMUM, not a guess at the real V_C" —
+but the expression it guards is a maximum of the regulatory minimum **and an unsourced floor**.
+
+**The floor is not inert: it takes over at high wing loading.** Sweeping wing area on the transport:
+
+| W/S lb/ft² | V_S1 kt | V_C kt | 1.5 V_S1 | what sets V_C |
+|---|---|---|---|---|
+| 61.7 | 112.45 | 215.23 | 168.67 | 25.335(a)(2) |
+| 123.5 | 159.03 | 265.99 | 238.54 | 25.335(a)(2) |
+| 176.4 | 190.07 | 296.85 | 285.11 | 25.335(a)(2) |
+| **246.9** | **224.90** | **337.35** | **337.35** | **1.5 V_S1 — the unsourced floor** |
+
+The three shipped classes sit at 61.5 to 123.5 lb/ft², where 25.335(a)(2) governs, so this is latent
+on what ships. It becomes live above roughly 200 lb/ft².
+
+**The 0.85 and 0.80 fallbacks are NOT latent — the turboprop uses both.** `designAircraft({type:"turboprop"})`
+returns no `mlwKg` and no `mzfwKg`, so R_1 and R_2 fall to 0.85 and 0.80, and they feed
+F_gm = √(R_2·tan(πR_1/4)), hence F_g, hence U_ds, hence the gust load factor. Measured:
+
+| R_1 | R_2 | F_g | U_ds ft/s | n_gust | vs the default |
+|---|---|---|---|---|---|
+| **0.85** | **0.80** | 0.82707 | 37.4429 | **1.9405** | the shipped value |
+| 0.95 | 0.90 | 0.88606 | 40.1132 | 2.0076 | +3.46 % |
+| 0.97 | 0.92 | 0.89841 | 40.6725 | 2.0216 | +4.18 % |
+
+The ATR 72-600, the very aircraft the module's header uses as its turboprop benchmark, publishes
+MTOW 23,000 kg, MLW 22,350 kg and MZFW 21,000 kg, i.e. **R_1 = 0.9717 and R_2 = 0.9130**. At those
+ratios n_gust is **2.0203 against the shipped 1.9405 — the defaults understate the gust load factor
+by 4.11 %**, and the reported margin to the manoeuvre case falls from **22.4 % to 19.2 %**.
+
+**The direction matters: the error is NOT conservative.** A lower R_1 and R_2 give a lower F_g, a
+lower U_ds and a lower gust load. The module already flags one other non-conservative substitution
+(the wing lift-curve slope in place of the airplane's) and this one is undeclared.
+
+**Severity MEDIUM.** No wing box is resized by it — the manoeuvre case still governs all three
+classes with 19 to 36 % margin, and 25.337(b) is what the sizing loop reads. It is above LOW because
+a displayed engineering quantity is understated by ~4 % on a shipped class, from two numbers the
+module states it does not have.
+
+**Not repaired.** Sourcing the ratios, deriving MLW and MZFW for the turboprop, or removing the
+1.5 V_S1 floor are production changes and are not authorised here. **Nothing is re-graded.**
+
+---
+
+## F-58 — the envelope validates its aircraft but not its options, and a NaN produces a definite "governing" verdict — LOW — VERIFIED
+
+`flightEnvelope(result, opts)` guards the aircraft well. Wing area, span and MTOW are each
+required finite and positive (l.142) and a Part 23 class is refused outright with its reason
+(l.143-150). Tested: zero, negative and NaN wing area, span and MTOW all return `null`.
+
+**`opts` receives no validation at all**, and two of its values put the whole diagram beyond the
+reals while the result still reports a definite conclusion:
+
+| opts | V_S1 | V_C | n_gust,max | `governing` |
+|---|---|---|---|---|
+| `clMax: 0` | **Infinity** | **Infinity** | **Infinity** | **"gust"** |
+| `clMax: -1.4` | **NaN** | **NaN** | **NaN** | **"manoeuvre"** |
+| `vcKt: -300` | 159.03 | **−300.00** | 0.5758 | "manoeuvre" |
+| `vdKt: 0` | 159.03 | 261.21 | 1.6049 | "manoeuvre" |
+
+The NaN row is the one that matters. `governing` is decided at l.289 by
+
+```js
+const governing = nGustMax > nLim ? "gust" : "manoeuvre";
+```
+
+and `NaN > nLim` is `false`, so a diagram in which **every** speed and load factor is NaN
+reports that the manoeuvre case governs — the same string, and the same confidence, as a sound run.
+Nothing in the returned object says the numbers are not real.
+
+**A second unreported condition, in the V_C fixed point.** Lines 202-209 iterate V_B and V_C to a
+tolerance of 1e-6 with a cap of 40, and **carry no convergence flag**: on exhausting the cap the loop
+exits with its last iterate, indistinguishable from a converged one. The iteration itself is sound,
+and this block proved it rather than assuming it — see the Q18 determinations: the map is a
+**contraction with |f'(V_C*)| = 0.194 to 0.244**, and seeds from 0.01 V_S1 to 1000 V_S1 converge to
+the same V_C within 5.7e-7 kt in **12 to 15 iterations of the 40 available**. So the cap has 2.7×
+headroom on everything measured. The gap is that a future case which exhausted it would not say so.
+
+**Severity rationale — LOW, because `opts` is not reachable from production.** Both callers,
+`fuselage-structure-loads.js:420` and `tabs.jsx:211`, invoke `flightEnvelope(result)` with no
+second argument. `clMax` then falls to `p.clMaxClean`, which comes from the frozen, sourced
+aerofoil table in `airfoil-data.js` (values 1.39 to 1.77), or to the literal 1.4. The module is
+nevertheless exported and its options are a public interface.
+
+**Not repaired.** Validating `opts`, and reporting convergence, are production changes and are not
+authorised here. **Nothing is re-graded.**
+
+---
+
+## F-59 — a registered relation contains arithmetic that cannot change its value — LOW — VERIFIED
+
+`flight-envelope.js:341`, the ISA temperature ratio, is registered as FORMULA-STRUCT-046:
+
+```js
+return h < 11000 ? 1 - 2.25577e-5 * h * (1 / (1 - 0)) * 1 : 0.751865;
+```
+
+`(1 / (1 - 0))` is `1`, and multiplication by `1.0` is exact in IEEE 754, so
+`* (1 / (1 - 0)) * 1` cannot change the result. Checked at 974 altitudes from 0 to 36,000 ft:
+**bitwise identical** to `1 - 2.25577e-5 * h`, worst absolute difference exactly 0.
+
+The value itself is correct: the ISA temperature ratio is θ = 1 − L·h/T_0 with L = 0.0065 K/m and
+T_0 = 288.15 K, and 0.0065/288.15 = 2.25577e-5. The relation was independently checked against the
+exact ISA closed form this block and agrees to **6.4e-8** below the tropopause.
+
+**Why it is worth recording rather than ignoring.** The Phase 10 atmosphere audit already covers this
+line (`ATMOSPHERE-AUDIT.md` row for `flight-envelope.js:344-349`, verdict **PASS** at ≤1.3e-4 %) —
+but it transcribes the expression as `theta = 1 − 2.25577e-5 h`, silently normalising the dead
+factor away. So the arithmetic is unremarked everywhere: the audit that looked at it did not see it,
+and the register records the line verbatim without comment. Inert arithmetic in a sourced relation
+invites a reader to hunt for a meaning that is not there — most likely a lapse-rate or
+tropopause-ratio parameterisation that was removed without removing its skeleton.
+
+This is the **F-45 shape**: a construct that carries no information, recorded because carrying no
+information is itself the finding.
+
+**Severity LOW, and it changes nothing.** No value, no unit, no verdict anywhere in the tool depends
+on it.
+
+**Not repaired.** Deleting the factor is a production change and is not authorised here.
+**Nothing is re-graded.**
+
+
 
 
 

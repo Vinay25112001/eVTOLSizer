@@ -984,6 +984,402 @@ imports treated as edges, and the recomputation must state that a module-level e
 relation-level coverage. `scratchpad/dyn_probe.mjs` holds the measurement. The register's
 `regression` column is Phase-0 output, so correcting it reopens a Phase-0 quantity rather than a
 Phase-2 one.
+---
+
+## F-44 — the gear module's returned `basis` string misattributes the main-gear station it did not use — LOW — VERIFIED
+
+`gearlayout.js:201-207` returns `basis`, a provenance sentence emitted on every applicable call,
+reading *"longitudinal and lateral stations measured from the RAVEN SWFT public release (nose
+0.0824 fL, main 0.4114 fL, track/span 0.1903)"*. **The main station actually used is 0.4062 fL.**
+
+`geometry.js:2438` passes `raven: RAVEN_GEAR`, and `RAVEN_GEAR.mainXoverFL` is **0.4062**
+(`geometry.js:393`), documented there as the *mean* of v01_003 (0.4009) and SWFT (0.4114). So
+0.4062 is not SWFT's number, and the sentence attributes it to SWFT. Measured: all six
+configurations report `xMainRaven / fL = 0.4062` while the same call's `basis` says 0.4114
+(`scratchpad/gear_probe2.mjs`).
+
+That this is unpropagated drift rather than a typo is corroborated inside `RAVEN_GEAR` itself:
+`wheelbaseOverFL = 0.3290` equals `0.4114 - 0.0824` exactly, while its own `mainXoverFL` implies
+0.3238. The same stale 0.4114 also stands in the module header (l.37), in the in-line fallback
+`?? 0.4114` (l.111), and in the measured-range claim at l.119-121.
+
+**What this is not.** It is a provenance and documentation defect, **not a formula failure**.
+STRUCT-199's expression `(R.mainXoverFL ?? 0.4114) * fL` is correct as written, and the live
+coefficient 0.4062 is properly sourced with its spread recorded at `geometry.js:377-394`. The
+register records STRUCT-199 `source = UNVERIFIED`, and **Q10 is therefore unchanged by this
+finding** — the register is the authority for Q10 and was not edited. The fallback literal is
+unreachable in production because `geometry.js` always supplies `RAVEN_GEAR`; what reaches the
+user is a false sentence, not a wrong number.
+
+---
+
+## F-45 — `mainAftOfCG` is an algebraic identity of the formula that produces `xMain`, so it cannot fail — LOW — VERIFIED
+
+The module header (l.47-48) presents *"The main gear must still come out aft of the CG, and that is
+asserted"* as a check. `xMain` is defined by the moment balance at l.129, and substituting it gives
+
+    x_main - x_cg = f (x_cg - x_nose) / (1 - f)
+
+which is strictly positive for every `f` in the clamped range (0.01, 0.45) whenever the CG is aft of
+the nose gear. Mutation over **1,845 cases**, `f` from 0.01 to 0.45 against `x_cg` from 0.10 to
+0.90 fL: **false in 0**, with `min(x_main - x_cg) = 0.0015 m` (`scratchpad/gear_probe2.mjs`). It
+falsifies only at `x_cg = 0.05 fL`, forward of the 0.0824 fL nose wheel, which is not a tricycle
+layout.
+
+**What this is not.** It is **not a failed engineering criterion**, and no configuration violates it:
+the main gear genuinely is aft of the CG on every layout measured. The defect is that the flag
+carries no information — it restates an identity as though it were a measurement, so it cannot
+detect the condition it is named for. This is the N-16 / F-42 shape again: a check that passes for a
+reason other than the one it advertises. **No ledger verdict changes from this finding.**
+
+---
+
+## F-46 — the gear mass centroid disagrees with `CG_STATIONS.gear` by 0.95-1.24 m, and nothing compares them — MEDIUM — VERIFIED
+
+Three facts, separable and separately evidenced.
+
+**(a) The disagreement, measured.** `xMassCentroidFrac` is **0.3759-0.4096 fL** across the six
+configurations. `cg.js:51` carries `gear: { frac: 0.52, src: "LAY" }`, and cg.js's own itemisation
+places the gear at station **4.479 m**. The gap is **0.951-1.241 m** on an 8.613 m fuselage.
+
+**(b) There is no gate.** The header (l.67-71) states the value is *"returned for a gate to check,
+not quietly reconciled"*. Verified: nothing imports `gearlayout.js` except `geometry.js:45`, by
+either a static or a dynamic edge. No harness reaches it. The value is returned and nothing reads
+it, so the disagreement the module was built to surface has never been surfaced.
+
+**(c) The aircraft-level impact.** Computed from cg.js's *own* itemised masses rather than a
+fraction quoted elsewhere in that file: the gear is **4.13-5.68 %** of itemised mass, so relocating
+it from 0.52 fL to the measured centroid moves the total CG by **0.039-0.071 m, 0.46-0.82 % of fL**,
+forward in every configuration (`scratchpad/gear_probe4.mjs`).
+
+**What is not established: that the CG model is wrong.** Two parts of the tool disagree and either
+could be the one in error. `0.52` is tagged `[LAY]`, a layout assumption; the centroid is a
+consequence of the gear `landinggear.js` sizes, whose tyre mass is `[CAL]` and flagged *in that
+module* as "the weakest number in this module". Deciding between them needs an independent gear-mass
+source, which this audit did not obtain. Recorded as a disagreement of measured magnitude, not as a
+defect in either module.
+
+---
+
+## F-47 — the turnover criterion is declined on a corpus claim that no longer holds, but the blocking quantity is a missing vertical CG — MEDIUM — VERIFIED
+
+Four facts, separable and separately evidenced.
+
+**(a) Source existence.** The header (l.29-32) states *"The corpus still has no tipback or turnover
+criterion in any of its 879 extracted full texts"*. The corpus now carries a dedicated
+`classes/cross-class/sources/gear/` tree holding **NACA-SR-63** (Wenzinger & Kantrowitz, *Notes on
+Factors Affecting Geometrical Arrangement of Tricycle-Type Landing Gears*), which states the
+turnover-triangle criterion — *"if this resultant vector intersects the ground ... outside the
+triangle, then it will overturn"* — and **MIL-A-8863B §3.14.10.3**, tipback loads. Those sit
+*outside* `extracted/`, so the sentence is literally true as scoped, and it is the scope that makes
+it true. Inside `extracted/`, `classes/transport/extracted/NASA-TM-20240001480` (PEGASUS) treats
+tipback and tipover as gear-placement constraints.
+
+**(b) Relevance.** PEGASUS is a NASA account of this exact omission: gear on the fuselage, roll-over
+angle left out of the constraint set, and *"the resulting tipover angle was violated and would
+require moving the landing gear off the fuselage."* `gearlayout.js` mounts both legs on the
+fuselage underside (`geometry.js:2441`) and asserts no turnover criterion. Two of the six
+configurations — multicopter and sideBySide — fall back to the body-width track floor
+(`trackFromSpan: false`), the narrowest track the module can produce.
+
+**(c) The blocking quantity.** The criterion is **not computable in this tree as it stands**. It
+needs the CG height, and `runSizing` exposes `xCGtotal` and `xCGempty` and **no vertical CG at
+all**; `vertical-cg.js` exists only in the separate `src/classes/aircraft/` tree, of which
+`gearlayout.js` is not part. The module's conclusion — assert no angle — therefore remains correct
+today, for a reason it does not give.
+
+**(d) What is not established: that any configuration overturns.** No turnover angle was computed,
+because the input to compute it does not exist. No threshold is asserted either — the classical 63°
+limit would be a number from memory, and a bound this audit cannot source is not a gate. This
+finding records an unasserted criterion and a missing prerequisite, and says **nothing** about any
+aircraft's ground stability.
+
+**Remediation.** A vertical CG in the engine tree is the prerequisite; `src/classes/aircraft/vertical-cg.js`
+is an existing referent. Until then the honest record is that the criterion is unevaluated, which is
+what the ledger's UNVERIFIED already says.
+---
+
+## F-48 — the register records `source = UNVERIFIED` for all 13 F3 relations whose source is cited by equation number, and is now verified verbatim — MEDIUM — VERIFIED
+
+`src/classes/aircraft/fuselage-bending-material.js` states its provenance in its own header —
+*"WHAT IS SOURCED - MIT TASOPT 2.00 (Drela), Appendix A"* — and then names the equations it
+implements, (A.84) through (A.100). The register nevertheless records **`source = UNVERIFIED` on
+all 13 of its retained relations**, with `sourceLoc` pointing back at the module's own path rather
+than at any document.
+
+Those equations have now been checked against the corpus text, not against the module's
+transcription of it (`datasets/mission-methods/extracted/MIT-Drela_TASOPT-2.00_Technical-Description.txt`):
+
+| TASOPT | statement in the source | status |
+|---|---|---|
+| (A.14) | `sigma_x = (dp/2) R_fuse/t_shell` | verbatim |
+| (A.15) | `sigma_theta = dp R_fuse/t_skin` | verbatim, with Drela's own reason for the two different thicknesses — *"the stringers share the axial loads, but the frames do not share the hoop loads"* |
+| (A.79) | distributed term names exactly `W_pay+W_padd+W_shell+W_window+W_insul+W_floor+W_seat` | verbatim; the module's smeared set is the same seven |
+| (A.87) | `I_hbend = max(M h/sigma_Mh - I_hshell/r_E, 0)` | verbatim |
+| (A.88) | `sigma_Mh = sigma_bend - r_E (dp/2) R/t_shell` | verbatim |
+| (A.89)-(A.92) | the quadratic and its three coefficients | verbatim |
+| (A.96) | the closed-form back volume | verbatim |
+| (A.97) | `V_c = 1/2[A(x_b)+A(x_f)] c_o wbar` | verbatim |
+
+The module's quotation of Drela on `W_fix` — *"concentrated near the aircraft nose, and hence it
+does not impose either a distributed load or a point load on the rear fuselage, and hence does not
+appear in (A.79)"* — is also verbatim, and is what justifies excluding nose-stationed items from the
+smear.
+
+**Consequence for a number this audit reports.** Q10's UNVERIFIED count is the register's `source`
+column by construction (the gate binds them with no escape clause), so **944 UNVERIFIED overstates
+the real sourcing gap by at least these 13 rows.** This is the same class as F-41 and F-43: a
+quantity the audit publishes, derived from an instrument that under-records.
+
+**What this is not.** Not a repository defect — the module is sourced, and sourced correctly; it is
+the *register* that does not say so. **Q10 is left UNVERIFIED on all 13 rows and the register is not
+edited**, because the register is the authority the gate checks Q10 against, and editing it so that
+it agrees with a conclusion drawn from it is the F-42 error. Correcting this needs an authorised
+register change, recorded here so the cap is not mistaken for an absence of provenance.
+
+---
+
+## F-49 — `xb` and `xf` denote the opposite box faces from TASOPT's `x_b` and `x_f`, in a module that cites those equations by number — LOW — VERIFIED
+
+In `fuselage-bending-material.js` (l.235) `xb` is the box FORWARD face and `xf` the box AFT face.
+In TASOPT, (A.93)-(A.94) put `x_f = x_wing + dx_wing + c_o wbar/2` and
+`x_b = x_wing - dx_wing + c_o wbar/2`: `x_b` is the real aft box face, and `x_f` is the FRONT face
+*mirrored onto the aft side*, because Drela computes the front volume over the back by symmetry.
+The two symbol sets are therefore transposed.
+
+**The computation is correct.** `vClosedBack` (l.256) implements (A.96) with the module's `xf` —
+the real aft face — which is exactly Drela's `x_b`, the correct lower limit; verified numerically
+below. `vFront` integrates the real forward diagram from the nose rather than mirroring, which the
+module states outright as a deliberate departure: F1 computes a genuine forward moment diagram, so
+the symmetry assumption is not needed.
+
+The hazard is traceability, in a module whose stated value is that its equations can be checked
+against Drela by number: a reader comparing l.256 with (A.96) finds the symbol on the page and the
+symbol in the code denoting opposite ends of the wing box. **No output is wrong and nothing is
+re-graded.**
+---
+
+## F-50 — the knot conversion has two values in one codebase: the unit system's exact 1852/3600 and the class tree's truncated 0.514444 — LOW — VERIFIED
+
+`src/lib/units.js` — the authoritative unit table — converts knots with `k: 1852 / 3600`, the
+exact definition (0.5144444…). `src/lib/regdb.js` and `App.jsx` use the same exact form. But five
+modules in the class tree each declare their own truncated copy, `KT = 0.514444`:
+
+| file | line |
+|---|---|
+| `src/classes/aircraft/engine.js` | 40 |
+| `src/classes/aircraft/flight-envelope.js` | 58 |
+| `src/classes/aircraft/control-surfaces.js` | 84 |
+| `src/classes/aircraft/fuselage-structure-loads.js` | 181 |
+| `src/classes/transport/mission.js` | 48 |
+
+The relative difference is **8.64e-7** on a speed. Because dynamic pressure goes as V², it reaches
+**1.73e-6** on F1's `q_NE` (STRUCT-120) and the same on (A.72)'s `L_hmax`. Measured: recomputing
+`q_NE` with the exact conversion gives a relative difference of 1.73e-6 against the module, and
+recomputing it with the module's own constant gives **0.00e+0** — which isolates the deviation to
+the constant and clears the equation.
+
+**Severity rationale, and what this is not.** It is **immaterial to every engineering result
+measured here**: 1.7e-6 is orders below any tolerance in the F1/F3 gates, and on the default
+configurations `q_NE` does not reach a load at all, because `CL_hmax` has no default and the tail
+airload is reported as not evaluated. It is recorded because a physical constant with two values in
+one repository is a provenance defect regardless of magnitude, and because the copy that disagrees
+with the authoritative unit table is the one in the engineering modules. **Not a defect in any F1
+equation** — the equations verified exactly against their own constant.
+
+**Not repaired.** Changing a shared constant is a production change and is not authorised in this
+block. It is also the kind of change that belongs with the unit-register work rather than alongside
+it. Recorded here so the measurement exists before anything is touched.
+---
+
+## F-51 — the 25.365(d) burst factor is applied as a sizing case while the module that owns it says it is "quoted, not applied", and nothing selects 1.33 from 1.67 — LOW — VERIFIED
+
+14 CFR 25.365(d) is verbatim in the corpus
+(`classes/transport/extracted/14CFR_25.365.txt`, line 10): the shell must withstand the relief-valve
+differential *"multiplied by a factor of 1.33 for airplanes to be approved for operation to 45,000
+feet **or by a factor of 1.67 for airplanes to be approved for operation above 45,000 feet**,
+omitting other loads."* **The factor is a branch on the maximum operating altitude.**
+
+`fuselage-structure.js:263` hardcodes `burstFactor: 1.33`, and its own `burstNote` (l.264) states:
+
+> *"This tool has no maximum operating altitude and no relief-valve setting, so the factor is quoted,
+> not applied"*
+
+**It is applied.** `fuselage-pressure-shell.js:183` builds a sizing case at `burstFactor * deltaPPa`
+and `l.187-192` lets it compete for the governing skin thickness. So two things hold at once:
+
+1. **The note is stale and now false** — it describes behaviour the codebase no longer has, in the
+   module that owns the constant. This is the F-44 shape: a statement about what the tool does that
+   the tool contradicts.
+2. **The branch is unguarded.** Nothing establishes that an aeroplane qualifies for 1.33 rather than
+   1.67, because the selecting quantity — maximum operating altitude — does not exist anywhere in
+   the tool. The note says so itself. The bizjet class cruises at **43,000 ft**, close enough to the
+   threshold that real aircraft in the class certificate above it.
+
+**Severity rationale — LOW, because it changes no output.** Measured on all three Part 25 classes at
+dp = 59.3 kPa: **minimum gauge governs everywhere**, by a factor of 3 to 5.
+
+| class | t built | t pressure demands | governing | burst case at 1.67 would need |
+|---|---|---|---|---|
+| transport | 1.600 mm | 0.3534 mm | gauge | 0.4336 mm — still below built |
+| bizjet | 1.270 mm | 0.2059 mm | gauge | 0.2527 mm — still below built |
+| turboprop | 1.020 mm | 0.2616 mm | gauge | 0.3210 mm — still below built |
+
+So on every shipped configuration the 1.33-versus-1.67 choice **cannot change the skin thickness**:
+the gauge floor is thicker than either. The defect is latent, and it becomes live only if a
+configuration ever drives the pressure cases above the gauge floor.
+
+**Not repaired.** Correcting the note, or gating the factor on a maximum operating altitude the tool
+does not yet carry, are both production changes and are not authorised here. **Nothing is re-graded**
+— no skin thickness, stress or mass in the audit record depends on the branch.
+---
+
+## F-52 — the torsion caveat cites the wing-box stiffness equation for the fuselage torsional case, and TASOPT's actual fuselage torsion shear flow is in the held corpus — LOW — VERIFIED
+
+`fuselage-shear-flow.js` declines torsion twice, and both times names the same source:
+
+> l.80: *"Torsion is not in this. Drela (A.202) sources the torsional case; it is a separate load and a separate flow, and it is not summed here."*
+> l.206: *"Torsion is not included: Drela (A.202) sources it as a separate flow and it is not summed here."*
+
+**(A.202) is not a fuselage relation.** Read verbatim in the corpus extract
+(`datasets/mission-methods/extracted/MIT-Drela_TASOPT-2.00_Technical-Description.txt` l.2783) it is
+
+```
+G J_bar = 4 (w_bar - t_web)^2 (h_avg - t_cap)^2 / [ 2 r_h h_bar - t_cap ) / (G_web t_web) + 2 (w_bar - t_web) / (G_cap t_cap) ]
+```
+
+— the **torsional stiffness GJ of the wing or tail box**, chord-normalised, sitting under the heading
+*"The areas and the bending and torsion inertias, all normalized by the normal chord"* (l.2730). It is
+a stiffness of a different structure, not a shear flow of this one.
+
+**The codebase itself identifies it correctly, twice, in other modules.**
+`fuselage-structure-loads.js:13-14` calls TASOPT *"the same document this codebase already cites for
+Bredt-Batho torsion in **the wing box** (A.202)"*, and `wing-structure.js:32` cites *"A.190-A.202"* for
+the **wing box** idealisation. So the repository holds both readings of (A.202) at once, and the
+fuselage module has the wrong one.
+
+**TASOPT does give the fuselage torsion shear flow, and it is held.** At l.1192-1196 of the same
+extract, driven by the vertical tail's torque:
+
+```
+(A.61)  L_vmax = q_NE S_v C_Lvmax
+(A.62)  Q_v    = L_vmax b_v / 3 x (1 + 2 lambda_v) / (1 + lambda_v)
+(A.63)  Q_v    = 2 A_cone tau_cone t_cone
+```
+
+(A.63) is the Bredt-Batho torsion-shell relation applied to the tail cone — precisely "the torsional
+case" for a fuselage, and precisely what the caveat should point at. The corpus also carries
+*"Figure A.3: Fuselage cross-section, shell/web junction tension flows, and torsion shear flow"* (l.727).
+
+**Severity rationale — LOW, because it changes no number.** Torsion genuinely is not computed: the
+module declines it, the decline is correct, and no output depends on which equation the decline
+cites. This is the **F-44 shape** — a provenance string that misattributes — and, like **F-47**, a
+capability declined against a corpus claim weaker than the corpus. Unlike F-47 there is no blocking
+quantity: `Q_v` needs only `q_NE`, `S_v`, `C_Lvmax`, `b_v` and `lambda_v`, all of which the tool carries.
+
+**Not repaired.** Correcting a citation is a production change and is not authorised here. **Nothing
+is re-graded.**
+
+---
+
+## F-53 — the boom placement's stated reason, that no boom sits on the vertical axis, is false for every odd boom count, and the harness tests only even ones — LOW — VERIFIED
+
+The module header gives the reason the booms sit where they do (l.62-67):
+
+> *"The booms sit at theta_r = pi/2 + pi(2r + 1)/n, measured from the starboard horizontal, so that **NO boom sits on the vertical axis** and one panel straddles the top. That panel is the cut: by antisymmetry its flow is zero for a vertical load through the centre..."*
+
+The research note repeats it (`FUSELAGE-STRUCTURE.md` section 2.1, build record).
+
+**For every odd n, boom (n-1)/2 sits exactly on the vertical axis, at theta = 270 degrees.**
+Setting pi/2 + pi(2r+1)/n = -pi/2 (mod 2 pi) gives 2r + 1 = n(2k - 1), which is solvable precisely
+when n is odd. Measured:
+
+| n | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 15 | 16 | 31 | 32 | 33 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| boom on the load axis | **yes, boom 1** | no | **yes, boom 2** | no | **yes, boom 3** | no | **yes, boom 4** | **yes, boom 7** | no | **yes, boom 15** | no | **yes, boom 16** |
+
+n = 3 is reachable: `boomShearFlow` clamps at `Math.max(3, Math.floor(nBooms))`, so every input below 3
+lands exactly there.
+
+**The conclusion the false reason is invoked to secure nevertheless holds, and was verified rather
+than assumed.** At n = 3, 5, 7, 9, 15, 17, 31, 33, 63 and 65 every gated property survives to machine
+precision: resultant `|Fy/S_y - 1| <= 2.9e-16`, `|Fx|/S_y <= 3.0e-16`, closing constant
+`|q0|/q_max <= 4.9e-16`, the (A.13) identity `<= 2.5e-16`, and the straddling panel's flow
+`<= 4.7e-16` of q_max. The straddling panel's mid-angle is exactly 90.000000 degrees at every n,
+odd or even.
+
+**The property actually doing the work is not the stated one.** What the derivation needs is that the
+boom SET be symmetric about the load axis, so that the discretised flow is antisymmetric and vanishes
+in the panel straddling the top. Reflection theta -> pi - theta maps the set onto itself for **every**
+n >= 3, whether or not a boom lies on the axis. A boom sitting at the bottom is harmless because the
+true flow there is zero, so the jump it introduces is symmetric about the cut.
+
+**Severity rationale — LOW: a documentation defect, not a computational one.** No shipped
+configuration is affected — `DEFAULT_BOOMS` is 32 and the only production caller passes no override.
+The cost is to the audit trail: a reader checking the derivation is handed a false reason for a
+correct design choice. This is the **F-49 shape** — the computation is right and the stated
+justification is not.
+
+**Why it survived.** `validation/fuselage-shear.mjs` exercises n = 4, 8, 16, 32, 64, 128, 256 and 64
+only. **No odd boom count is tested anywhere**, so the claim was never put in a position to fail.
+
+**Not repaired.** Correcting the header sentence, or adding an odd-n case to the gate, are production
+changes and are not authorised here. **Nothing is re-graded.**
+
+---
+
+## F-54 — the reported boom area and boom count are the unclamped input, not the ones the ring used, and nothing compares them — LOW — VERIFIED
+
+`boomShearFlow` clamps the boom count before using it (l.106-107):
+
+```js
+const n = Math.max(3, Math.floor(nBooms)), R = radiusM;
+const B = (2 * Math.PI * R * tShellM) / n;
+```
+
+`fuselageShearFlow` then reports the section with the **raw** value (l.199-200):
+
+```js
+section: { radiusM: R, tSkinM, tShellM, nBooms, material: {...},
+           boomAreaM2: (2 * Math.PI * R * tShellM) / nBooms },
+```
+
+where `nBooms = opts.nBooms ?? DEFAULT_BOOMS` (l.155) is neither floored nor clamped. So
+`section.boomAreaM2` and `section.nBooms` describe a ring that was not analysed. Measured on the
+transport at dp = 59.3 kPa:
+
+| `opts.nBooms` | `section.nBooms` | `ring.nBooms` | `section.boomAreaM2` | `ring.boomAreaM2` | disagreement |
+|---|---|---|---|---|---|
+| *(absent)* | 32 | 32 | 6.066458e-4 | 6.066458e-4 | **0.0e+0** |
+| 32 | 32 | 32 | 6.066458e-4 | 6.066458e-4 | **0.0e+0** |
+| 12.5 | 12.5 | 12 | 1.553013e-3 | 1.617722e-3 | **4.0 %** |
+| 2 | 2 | 3 | 9.706333e-3 | 6.470889e-3 | **50 %** |
+| 0 | 0 | 3 | **Infinity** | 6.470889e-3 | — |
+
+**Nothing compares them.** `validation/fuselage-shear.mjs:133` checks `section.radiusM`,
+`section.tShellM` and `section.tSkinM` against F2 by identity, and never reads
+`section.boomAreaM2` or `section.nBooms` at all. This is the **F-46 shape**: one quantity computed
+twice, by two expressions, with no gate holding them together.
+
+**Severity rationale — LOW, and latent rather than live.** The sole production consumer is
+`tabs.jsx:709`, which calls `fuselageShearFlow(result, { deltaPPa, material })` and passes no
+`nBooms`. The default 32 is already an integer >= 3, so the clamp is the identity and the two
+expressions agree exactly on every shipped configuration. The defect becomes live only if a caller
+ever supplies a non-integer or sub-3 count. **No stress, margin or mass depends on it** — the
+reported area is display-only and does not re-enter the calculation.
+
+**Not repaired.** Dividing by the clamped `n`, or returning the ring's own `boomAreaM2`, are
+production changes and are not authorised here. **Nothing is re-graded.**
+
+
+
+
+
+
+
+
+
+
 
 ---
 

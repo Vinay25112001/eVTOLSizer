@@ -1370,6 +1370,128 @@ reported area is display-only and does not re-enter the calculation.
 
 **Not repaired.** Dividing by the clamped `n`, or returning the ring's own `boomAreaM2`, are
 production changes and are not authorised here. **Nothing is re-graded.**
+---
+
+## F-55 — the register records `source = UNVERIFIED` for all nine stowage relations whose T&RA coefficients are quoted verbatim from a vendored primary, and this is the third block in which that has happened — MEDIUM — VERIFIED
+
+Every coefficient in `src/engine/gear/stowage.js` was checked this block against the Tire and Rim
+Association rules as reprinted in the **Goodyear Aircraft Tire Data Book 2018**, which is vendored
+whole at `classes/cross-class/sources/gear/Goodyear-databook-2018.{pdf,txt}` plus page images
+`gy-page20.png`, `gy-page21.png`, `gy-page22.png`. Two were read verbatim out of the **text
+extract**, not merely the research note:
+
+> l.1692-1695: *"TIRE ASSEMBLIES  The approximate value for the radius of gyration for tire assemblies
+> is calculated by the formula: Radius of gyration = Max O.D. + Min O.D. / 5.12"*
+> l.1697-1699: *"WHEEL ASSEMBLIES  The approximate (+/- 20 %) value ... Radius of gyration (Incl.
+> rotating brake parts) = 0.40 x \"D\" (\"D\" = rim ledge diameter)"*
+
+matching `K_TYRE_DIVISOR = 5.12`, `K_WHEEL_FACTOR = 0.40` and `K_WHEEL_TOLERANCE = 0.20` exactly.
+The growth and clearance coefficients (1.115, 0.075, 1.04, 17.02, 2.61, 3.348, 0.019, 0.23, 0.029,
+0.15, 0.01, 0.10) sit on pp. 21-22, which the PDF carries as **images**, so they do not appear in the
+text extract; they were verified against the T&RA reprint transcribed in
+`LANDING-GEAR.md` §1.7a/§1.7b and, independently, by **recomputing every relation longhand from the
+printed equations and comparing against the module across all 294 database rows at relative
+error 0.0e+0** (267 bias, 27 radial).
+
+**The register nevertheless records `source = UNVERIFIED` on all nine.**
+
+**This is now a pattern, not an incident.** Counting only blocks completed so far:
+
+| block | relations verified verbatim, register says UNVERIFIED | finding |
+|---|---|---|
+| `fuselage-bending-material.js` (F3) | 13 | F-48 |
+| `fuselage-shear-flow.js` (F4) | 1 (STRUCT-098, (A.13)) | recorded in the ledger basis |
+| `gear/stowage.js` (G7) | 9 | this finding |
+| **total** | **23** | |
+
+Twenty-three of the 944 relations the register calls source-UNVERIFIED have now been checked against
+a held primary and **every one of them passed**. Nothing has yet been checked and found genuinely
+unsourced. **So Q10's 944 UNVERIFIED (73.3 %) is not a measurement of the tool's sourcing — it is a
+measurement of the register's recording**, and it overstates the real gap by an amount no one has
+bounded. N-21 already flagged the 73.3 % as carried forward rather than derived from evidence.
+
+**Q10 was left alone on all nine rows, and the register was not edited.** The gate binds Q10 to the
+register's `source` column with no escape clause, and **editing the instrument so that it agrees
+with a conclusion drawn from it is the F-42 error**. The correct output of an audit that finds its
+own instrument under-recording is a finding, not a patch.
+
+**Severity MEDIUM, and it is a measurement defect rather than an engineering one.** No shipped
+number is wrong because of it. It is raised above LOW because the 73.3 % figure is one of the
+headline statistics of the whole audit, it appears in the Phase 0, Phase 1 and Phase 2 status
+records, and it is now known to be materially pessimistic.
+
+**Not repaired.** A register pass is a change to `AUDIT/FORMULA-REGISTER.md`, which is not
+authorised. **Nothing is re-graded.**
+
+---
+
+## F-56 — three unguarded degenerate paths in the stowage chain, each latent against the shipped tyre database — LOW — VERIFIED
+
+`stowage.js` is among the better-guarded modules in the tree: `grownEnvelope` refuses a row whose
+rim diameter, section width or outside diameter is missing, zero, negative or NaN (l.64-66);
+`clearances` refuses a speed that is not positive with the `!(speedMph > 0)` idiom, which correctly
+also rejects NaN and undefined (l.83); and the radial branch refuses a rim width that is missing,
+zero, NaN or not below the grown width (l.87-89). All of that was executed and confirmed. Three
+paths are nevertheless open.
+
+**1. The radial clearance takes a square root the module does not guard, beside one it does.**
+Line 90 evaluates `Math.sqrt(D_G - D)` and `Math.sqrt(W_G - rimWidthIn)`. The **second** argument
+is guarded at l.87; the **first** is not. `grownEnvelope` requires D, W and D_O to be finite and
+positive but never requires `D_O > D`, so a row with an outside diameter below its rim diameter is
+accepted. Measured on a radial forced to `odMaxIn = 5` against `rimDiaIn = 12`:
+
+```
+grownEnvelope resolved? true    D_G = 5   D = 12   ->  D_G - D = -7
+clearances    C_R = NaN   R_x = NaN
+```
+
+The NaN propagates unannounced into `bayHalfHeightIn`, `crossSectionIn2` and `crossSectionM2`.
+On the bias path the same input gives no NaN but a **negative section height**, `H = -1`, and a
+grown diameter of 2.909 in, again without refusal.
+
+**2. `radiiOfGyration` guards one operand of a two-operand sum.** Line 104 is
+`Number.isFinite(tyre.odMinIn) ? (tyre.odMaxIn + tyre.odMinIn) / K_TYRE_DIVISOR : null` — the test
+is on `odMinIn`, the expression also reads `odMaxIn`. With `odMinIn` finite and `odMaxIn` absent
+or NaN the result is `NaN` rather than the `null` the function uses everywhere else to mean
+"not formable", and `kTyreNote` stays `null`, so the output asserts a number it does not have.
+
+**3. `tyresPerLeg = 0` defeats the nullish coalesce.** Line 132 is
+`tyresPerLeg ?? sel.wheelsPerAxle ?? sel.tyres ?? 1`, and `0` is not nullish, so it is kept:
+
+| `tyresPerLeg` | `perLeg.tyres` | `bayWidthIn` | `crossSectionM2` |
+|---|---|---|---|
+| null / undefined | 2 | 11.607 | 0.11713 |
+| 1 | 1 | 5.804 | 0.05856 |
+| **0** | **0** | **0.000** | **0.00000** |
+| **-3** | **-3** | **-17.411** | **-0.17569** |
+| **2.5** | **2.5** | **14.509** | **0.14641** |
+
+A negative tyre count yields a **negative bay width and a negative cross-sectional area**, and a
+fractional count yields two and a half tyres, all reported as resolved.
+
+**Severity rationale — LOW, because all three are latent against everything that ships.** Checked
+across all **294 rows** of the generated tyre database:
+
+| condition | rows | margin |
+|---|---|---|
+| `odMax <= rimDia` (would NaN the radial root) | **0** | smallest `odMax - rimDia` is **6.70 in** |
+| `odMin` finite while `odMax` is not (would NaN k_tyre) | **0** | — |
+| radial with `rimWidth >= W_G` | **0** of 27 | smallest `W_G - A` is **1.15 in** |
+| `speedMph` missing or non-positive | **0** | — |
+
+and `tyresPerLeg` reaches the module only from `gear.js:166`, which passes `wheelsPerAxle` from the
+frozen table `MAIN_WHEELS_PER_AXLE = { transport: 2, bizjet: 2, turboprop: 2, trainer: 1 }` with a
+`?? 2` fallback, or the literal `2` for the nose. The reachable set is `{1, 2}`.
+
+These become live only if the database is regenerated from a different edition, if a caller supplies
+its own tyre object — all four functions are exported — or if a wheel count is ever computed rather
+than looked up.
+
+**Not repaired.** Adding a `D_O > D` precondition, testing both operands of (45), and rejecting a
+non-positive or non-integer tyre count are production changes and are not authorised here.
+**Nothing is re-graded.**
+
+
 
 
 

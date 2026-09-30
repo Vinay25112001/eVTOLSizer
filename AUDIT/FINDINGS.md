@@ -823,6 +823,168 @@ of `NORM`'s chain, or anchor the line rules with `^[ \t]*` instead of `^\s*`. Ei
 class rather than this instance. `validation/report.mjs` is shipped tooling that CI executes, so
 the change is outside this audit's authorisation and is recorded as a remediation item.
 
+## F-41 — the Phase-2 coverage metric conflated two populations and then destroyed its own reproducibility — MEDIUM — VERIFIED (self-inflicted, same day)
+
+Two defects in `PHASE-2-COVERAGE.md` as first committed at `c816e5e`. Both are in this audit's
+own tooling, neither touches the repository, and both were found while trying to USE the document
+to prioritise work — which is the only way this class of error surfaces.
+
+**1. IT MEASURED ALL 2,429 SITES AND WAS READ AS THE LEDGER'S 1,288.** The figures 20.7 % and
+27.5 % are correct for the population they describe: every implementation site in the register.
+But the Phase-2 ledger's scope is the **1,288 retained engineering relations** (class C1), and the
+document's per-domain table was used to set the order of work as though the two were the same
+population. They are not, and for one domain the difference is enormous:
+
+| domain | all sites | retained relations |
+|---|---|---|
+| **GEOM** | **387** | **24** |
+| STRUCT | 227 | 131 |
+| REG | 81 | 51 |
+| SIZING | 483 | 319 |
+
+GEOM's 387 is mostly class **C5 geometric construction — 369 sites**, which the classification
+rule deliberately excluded from the engineering relations. So the conclusion drawn from the table,
+that GEOM is "the second largest domain in the engine and the least reached" and should be worked
+first, is **wrong within the ledger's scope**: GEOM is the third *smallest* retained domain.
+Measured over the retained relations at ±3 lines, coverage is **REG 9.8 % (51), STRUCT 10.7 %
+(131), GEOM 12.5 % (24), STAB 15.3 % (111)**, so the neglected domain that actually carries volume
+is **STRUCT**, not GEOM. Restated over the right population, overall coverage is **306 of 1,288
+(23.8 %) at the exact line and 396 (30.7 %) within ±3**, not 20.7 / 27.5 %.
+
+**A domain's SITE count is not its RELATION count, and the register keeps them in two different
+tables for exactly that reason.** Any figure taken from the register must say which of the two it
+counts.
+
+**2. WRITING THE LEDGER DESTROYED THE METRIC.** The measurement counts every `file.js:line`
+citation in every `AUDIT/*.md` document and excluded `FORMULA-REGISTER*` as an inventory rather
+than a finding. `PHASE-2-LEDGER.md` was not excluded, and it cites **all 1,288 retained relations
+by file and line**. So from the moment the ledger existed, re-running the measurement reported
+**100 % coverage of every retained relation in every domain**.
+
+The committed figures were therefore **not reproducible from the tree that contains them** — the
+F-39 shape, a document that cannot be re-derived from itself, reintroduced by the very pass that
+closed F-39's truncation. It is worse than a stale number because the failure is silent and
+flattering: the metric does not break, it reports success.
+
+**The fix is a definition, not a patch.** The register and the ledger are both INVENTORIES of the
+register, not audit findings about it, so both are excluded from the citation set, along with the
+coverage document itself. `scratchpad/coverage_v2.mjs` does this and reproduces the original
+all-sites figures exactly — 504 / 669 / 912 of 2,429 — which confirms the v1 numbers were right
+when taken and that only their reproducibility was lost.
+
+**Why it was not caught at the time.** The measurement was taken BEFORE the ledger existed, so it
+was correct when written and self-contaminated a few minutes later by the next artefact in the
+same pass. Nothing re-ran it, because it was prose rather than a gated quantity. **An ungated
+measurement is a measurement that is true once** — which is the same argument that justified
+gating the ledger in N-24, applied to a number that did not get a gate.
+
+---
+## F-42 — the Phase-2 ledger recorded six repository FAILs that are all the analyser, walking into this audit's own documented trap — MEDIUM — VERIFIED (self-inflicted, same day)
+
+The ledger built at `c816e5e` maps the register's `unit verif = CONFLICT` to a Phase-2 verdict of
+**FAIL** on question 3, "are units correct?". Six relations carry it. **All six are the analyser,
+not the code. The correct count of Q3 FAILs is zero.**
+
+`CHANGE-CONTROL.md` N-16 already records the rule this breaks: *every dimensional conflict across
+four triage rounds (13 → 12 → 8 → 4 → 1) was the ANALYSER, not the code*, and *before calling any
+conflict a repository defect, ask: did the analyser cause it?* The ledger asked nothing. It
+promoted a recorded disagreement into an assertion that the repository is wrong, which is the one
+thing this audit is not allowed to do without evidence.
+
+**A `CONFLICT` IS NOT A DEFECT. IT IS AN UNRESOLVED RECORD.** The register's own provenance column
+says so on five of the six: *"NAME vs HAND VERDICT ... neither is adopted"* and *"NAME vs ALGEBRA:
+both are known and they disagree; neither is adopted"*. A field that explicitly adopts neither
+reading cannot support a FAIL.
+
+**All six, checked individually against the source:**
+
+| relation | site | what the register recorded | what the code does |
+|---|---|---|---|
+| STRUCT-031 | `flight-envelope.js:223` | NAME vs HAND VERDICT | `RHO0_SLUG` is `0.0023769 slug/ft³` (declared at `:61`) times a dimensionless density ratio, so **slug/ft³**. The hand verdict is right and the name-derived label is wrong. |
+| STAB-101 | `autorotation.js:76` | NAME vs HAND VERDICT | `(m·R·R)/3` is a moment of inertia, **kg·m²**. Correct. |
+| SIZING-240 | `engine.js:1216` | NAME vs HAND VERDICT | a fraction of a mission energy, **kW·h**. Correct. |
+| MISSION-075 | `mission.js:223` | NAME vs HAND VERDICT | a fuel mass, **kg**. Correct. |
+| WEIGHT-249 | `weights.js:246` | NAME vs ALGEBRA | the recorded equation `5.66411 * fLGloc_w` is **truncated mid-expression**, so the "algebra" it was compared against is not the line. An extraction artefact, not a unit error. |
+| AERO-183 | `profile.js:194` | *"two operands that must agree do not"* — `kW*h - 1 (dimensionless)` | **The only one that looked real, and it is not.** `acc` is `let acc = 0` at `:190` and `acc += x.energyKWh` at `:203`, so it is kW·h. `(available - acc)` is kW·h − kW·h. **The analyser took the unit from the literal `0` initialiser instead of the accumulation.** |
+
+AERO-183 is the instructive one: its provenance is *not* the name-versus-verdict pattern, so it was
+the single case that could have been a genuine subtraction across unit systems — the defect class
+`validation/unit-system.mjs` check 2 exists to catch and measures at 0 across the tree. Reading
+three lines of context dissolves it. **Five of the six were the naming heuristic; the sixth was the
+initialiser heuristic. Six of six are the analyser.**
+
+**Corrected Q3 tally: 363 PASS, 0 FAIL, 925 UNVERIFIED** — the six move from FAIL to UNVERIFIED,
+which is what "neither is adopted" means. They are **not** moved to PASS: reading a right-hand side
+by hand establishes what the expression computes, but the register declines to adopt it, and the
+ledger must not adopt what its own source refuses to.
+
+**The mapping is fixed in both places, because one of them is a gate.** `build_p2_ledger.mjs` no
+longer emits FAIL for CONFLICT, and `validation/phase2-ledger.mjs`'s `wantUnits` is changed to
+match — otherwise the gate would have enforced the defect. **FAIL is deliberately kept reachable**
+for a dimensional error that is hand-verified in the code, so the fix narrows the mapping without
+making the verdict unreachable; there is simply no relation that currently earns it.
+
+**Why the gate did not catch this.** It checked that Q3 AGREES WITH the register, and it did agree —
+faithfully reproducing a wrong interpretation. **A consistency gate cannot detect a wrong mapping,
+only a drifting one**, which is the same limitation N-24 states in its "what is not checked"
+section and is worth restating with a concrete instance behind it.
+
+## F-43 — the register's `regression` column is blind to `await import()`, so 78 relations are recorded as ungated on no evidence — MEDIUM — VERIFIED
+
+The register records, per relation, how many harnesses exercise it. **133 of 1,288 relations carry
+`NONE`. 78 of those 133 are an artefact of how the column is computed, not a statement about the
+tree.**
+
+**The control makes the cause unambiguous.** Harnesses under `validation/` reach `src/` modules
+131 ways statically and 27 ways through `await import(...)`; twelve modules are reached **only**
+dynamically. Splitting the register on that one distinction:
+
+| how a harness reaches the module | relations recording `NONE` |
+|---|---|
+| **only via `await import()`** | **78 of 78 — 100.0 %** |
+| via a static `import` (control) | **0 of 1,155 — 0.0 %** |
+| whole register | 133 of 1,288 — 10.3 % |
+
+**100 % against 0 % on a single binary discriminator.** The column is derived from a static import
+graph, and a dynamic import is not an edge in one. Nothing else needs to be posited.
+
+**The twelve modules, and the 78 relations affected:** `flight-envelope.js` **32**,
+`transport/high-lift.js` **17**, `transport/landing.js` **15**, `aircraft/airfoils.js` **7**,
+`engine/aeropropulsive.js` **5**, `aircraft/compliance.js` **2**; the other six
+(`risk.js`, `uncertainty.js`, `validation-residuals.js`, `drone/flight-worker.js`, `route.js`,
+`engine/handlingcompare.js`) hold no retained relations, so they cost nothing here.
+
+`flight-envelope.js` is the clearest case: `validation/aircraft-engine.mjs:721` reaches it with
+`await import("../src/classes/aircraft/flight-envelope.js")`, and `validation/load-factor-source.mjs`
+names the file explicitly, yet **all 32 of its relations record `NONE`.**
+
+**WHAT THIS DOES AND DOES NOT ESTABLISH.** It establishes that `NONE` is **unreliable** for those
+78 — it was recorded on the absence of a static edge, not on the absence of a test. It does **not**
+establish that all 78 are covered: a harness importing a module proves the module is reached, not
+that every relation inside it is asserted. **True coverage of the 78 lies somewhere above zero and
+at or below 78, and fixing it requires per-relation analysis, not a global re-label.** Nothing is
+re-graded here on the strength of an import edge alone; that would replace one unevidenced number
+with another.
+
+**What it corrects immediately** is a conclusion drawn from the column earlier the same day:
+"51 of STRUCT's 131 relations have no regression harness, in two files". Of those 51, the 32 in
+`flight-envelope.js` are exercised and only the **19 in `src/engine/gearlayout.js` are genuinely
+unreferenced by any harness, static or dynamic**. The remaining **55** of the register's 133 `NONE`
+rows sit in modules no harness reaches by either route, and those are the real gap.
+
+**Why this matters beyond the number.** The five-column COMPLETE bar makes *regression protected*
+one of five requirements, and **11 of Phase 0's 58 requirements score exactly `NO REGRESSION TEST`.**
+A column that under-reports coverage therefore suppresses the audit's own completion figures, and it
+does so **silently and pessimistically** — the mirror image of F-41, where an ungated metric failed
+silently and flatteringly. Both are the same defect class: **a derived quantity whose derivation is
+not stated alongside it cannot be trusted in either direction.**
+
+**Remediation (audit tooling, not repository code).** The column must be recomputed with dynamic
+imports treated as edges, and the recomputation must state that a module-level edge is not
+relation-level coverage. `scratchpad/dyn_probe.mjs` holds the measurement. The register's
+`regression` column is Phase-0 output, so correcting it reopens a Phase-0 quantity rather than a
+Phase-2 one.
+
 ---
 
 # Geometry and chart findings

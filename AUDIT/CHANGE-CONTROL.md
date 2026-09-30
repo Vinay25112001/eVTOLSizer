@@ -1481,3 +1481,114 @@ forbids.
 **Phase 2 remains 0 of 112 COMPLETE.** Gating the ledger does not answer a single one of the
 twenty questions; it only stops the answers already recorded from drifting away from the code.
 
+---
+
+### N-25 — FIRST REAL PHASE 2 WORK: THE GUST CHAIN IS SOUND AND WELL DECLARED, AND THE LEDGER WAS NOT
+
+Worked the STRUCT domain, which F-41 established is the neglected domain that actually carries
+volume — **131 retained relations at 10.7 % coverage**, not GEOM. Its largest single concentration
+is `src/classes/aircraft/flight-envelope.js` with **32 relations**, governed by 14 CFR 25.331-25.349,
+all of which are vendored in `../eVTOL_Sizing_Research`.
+
+**THE RESULT IS LARGELY A POSITIVE ONE, AND THE CORPUS CORRECTED ME TWICE ON THE WAY.** The chain
+computes the modern discrete-gust velocity `U_ds = U_ref · F_g · (H/350)^(1/6)` from 25.341(a)(4)-(6)
+and then feeds it into the Pratt-Walker increment `Δn = K_g·U_ds·V_e·a/(498·w)`, which looked like an
+illegitimate mixture of a current rule with a superseded one. It is not:
+
+- **Pratt-Walker is NOT the "older sharp-edged formula".** NACA Report 1206's own summary says the
+  gust factor *"is calculated on the basis of a one-minus-cosine gust shape … in contrast to the
+  ramp gust shape"* it replaced. The corpus records that the brief calling it sharp-edged was wrong.
+- **`K_g` IS in the current regulation** — in the 25.335(d) image `ER09FE96.017`, defining the `V_B`
+  minimum. **Amendment 25-86 did not delete Pratt-Walker; it moved it**, replacing the gust *load*
+  formula while keeping `K_g` for the gust *corner speed*.
+- **`498` is derived, not magic**: ρ₀/2 × 1.6878 ft·s⁻¹ per knot = 0.0020060 = 1/498.5.
+- **`μ = 2(W/S)/(ρ·c̄·a·g)` matches DOT/FAA/AR-98/28 §4.3.4 Eq (9) verbatim**, the FAA's own current
+  reduction of recorded flight data, which also confirms `K_g = 0.88μ/(5.3+μ)`.
+
+**And the module declares its own shortfall, which is what the research ruled it must do.** It
+implements `H* = min(12.5·c̄, 350)` with the bridge labelled as officially unjoined; it warns that
+`V_B` is built from the RAW `U_ref` while the load uses `U_ds`, so the two disagree for a reason
+that looks like a bug and is not; and it states outright that *"25.341(a)(1) requires a dynamic
+analysis … Treat this as screening, not compliance."* The corpus's §3.4 ruling — that there is no
+sanctioned conceptual route to 25.341(a) and the tool must not imply there is — is honoured in the
+code.
+
+**SO THE REGISTER'S `source = UNVERIFIED` ON THESE RELATIONS IS A PROVENANCE-RECORDING GAP, NOT AN
+ENGINEERING DEFECT.** The evidence exists, in the corpus and in the module's own comments, and was
+never linked into the register. That is a correctable class and it means **Q10's 944 UNVERIFIED
+understates what is actually sourced.** Nothing is re-graded here on that basis, because doing it
+properly means linking documents per relation rather than asserting it wholesale.
+
+**THEN THE LEDGER'S OWN DEFECT, WHICH IS THE MORE IMPORTANT FINDING (F-42).** Chasing the one
+recorded dimensional `CONFLICT` in `flight-envelope.js` showed that the ledger maps `CONFLICT` to a
+Phase-2 **FAIL**, asserting six repository defects. **All six are the analyser.** Five are the
+naming heuristic disagreeing with the expression, on rows whose own provenance says *"neither is
+adopted"*; the sixth, `AERO-183`, was the only one that could have been a genuine subtraction across
+unit systems and dissolves in three lines — `acc` is `let acc = 0` then `acc += x.energyKWh`, so the
+analyser took its unit from the literal `0`.
+
+**N-16 ALREADY REQUIRED ASKING "DID THE ANALYSER CAUSE IT?" BEFORE CALLING A CONFLICT A DEFECT, AND
+THE LEDGER ASKED NOTHING.** Corrected tally: **363 PASS, 0 FAIL, 925 UNVERIFIED**; determinations
+fall 2,251 → 2,245. The six are moved to UNVERIFIED and **not** to PASS, because the register
+declines to adopt either reading and the ledger must not adopt what its source refuses to.
+
+**THE GATE WOULD HAVE ENFORCED THE DEFECT, SO IT IS FIXED IN BOTH PLACES.** `build_p2_ledger.mjs`
+no longer emits FAIL for CONFLICT, and `phase2-ledger.mjs`'s `wantUnits` matches. A **21st check**
+pins it explicitly rather than leaving it implicit in the agreement check. **FAIL is deliberately
+kept REACHABLE** for a dimensional error hand-verified in the code, and that is now tested in the
+direction that must pass, not only in the direction that must fail.
+
+**A CONSISTENCY GATE CANNOT DETECT A WRONG MAPPING, ONLY A DRIFTING ONE.** The gate checked that Q3
+agrees with the register and it did agree — faithfully reproducing a wrong interpretation. That is
+the limit N-24 stated in the abstract; this is the concrete instance.
+
+**A THIRD BAD TEST, IN THE SAME SESSION AS THE TWO MIS-ANCHORED MUTANTS.** The reachability test
+first reported the escape hatch UNREACHABLE. The hatch works; the test flipped a verdict and its
+basis and nothing else, so the ledger's leading summary no longer matched its body and check 7
+failed — correctly. A legitimate hand-verified FAIL has to leave the document self-consistent, which
+is what check 7 is for. Mutation run: **17 killed, 0 survived, 0 not applied, plus the reachability
+case passing.** **Phase 2 remains 0 of 112 COMPLETE.**
+
+---
+
+### N-26 — A PHASE-0 COLUMN REOPENED FROM PHASE-2 WORK: `regression` IS BLIND TO `await import()`
+
+Found while trying to establish which STRUCT relations are genuinely unprotected. It is a
+**Phase-0** quantity, reopened by Phase-2 work, and is recorded as **F-43**.
+
+The register's `regression` column says how many harnesses exercise each relation. **133 of 1,288
+carry `NONE`, and 78 of those are an artefact of the derivation.** The discriminator is a single
+binary: harnesses reach 27 `src/` modules through `await import(...)` and 131 through a static
+`import`, twelve only dynamically.
+
+| how a harness reaches the module | relations recording `NONE` |
+|---|---|
+| **only via `await import()`** | **78 of 78 — 100.0 %** |
+| via a static `import` (control) | **0 of 1,155 — 0.0 %** |
+
+**100 % against 0 % on one distinction.** The column comes from a static import graph, and a
+dynamic import is not an edge in one. `flight-envelope.js` is the clean case:
+`validation/aircraft-engine.mjs:721` does `await import("../src/classes/aircraft/flight-envelope.js")`,
+and all 32 of its relations still record `NONE`.
+
+**IT DOES NOT FOLLOW THAT THE 78 ARE COVERED, AND NOTHING IS RE-GRADED.** An import edge proves the
+module is reached, not that any particular relation inside it is asserted. True coverage is above
+zero and at or below 78, and settling it needs per-relation analysis. Re-labelling all 78 on the
+strength of an edge would swap one unevidenced number for another, which is the error this audit
+keeps finding in its own tooling.
+
+**What it corrects immediately**: the claim made earlier the same day that "51 of STRUCT's 131
+relations have no harness, in two files". Of those 51, the 32 in `flight-envelope.js` are reached;
+only the **19 in `src/engine/gearlayout.js`** are unreferenced by any harness by either route. The
+other **55** of the 133 `NONE` rows are in modules no harness reaches at all, and those are the real
+gap.
+
+**WHY IT MATTERS BEYOND THE COUNT.** *Regression protected* is one of the five columns the COMPLETE
+bar requires, and **11 of Phase 0's 58 requirements score exactly `NO REGRESSION TEST`**. A column
+that under-reports coverage therefore suppresses the audit's own completion figures — **silently and
+pessimistically**, the mirror image of F-41, where an ungated metric failed silently and
+flatteringly. Same class both times: **a derived quantity whose derivation is not stated beside it
+cannot be trusted in either direction.** Three of the four findings in this pass (F-41, F-42, F-43)
+are defects in the audit's own instruments rather than in the repository, which is what happens the
+first time those instruments are used to make a decision.
+

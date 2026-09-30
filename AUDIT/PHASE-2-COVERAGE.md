@@ -8,6 +8,28 @@ than an impression.
 
 ---
 
+> ## CORRECTED THE SAME DAY — READ THIS BEFORE THE FIGURES BELOW (F-41)
+>
+> Everything below measures **all 2,429 implementation sites**. The Phase-2 ledger's scope is the
+> **1,288 retained engineering relations**, and the two are different populations. Restated over
+> the ledger's scope, coverage is **306 of 1,288 (23.8 %) at the exact line and 396 (30.7 %) within
+> ±3 lines** — not the 20.7 / 27.5 % below.
+>
+> **The prioritisation in §4 and §7 was wrong.** GEOM's 387 sites are mostly class C5 *geometric
+> construction* (369 sites), which the classification rule excluded from the engineering relations;
+> **GEOM holds only 24 retained relations and is the third *smallest* retained domain, not the
+> second largest.** Corrected per-domain coverage over the retained relations is in **§4b**, and
+> the corrected order of work in **§7**. The genuinely neglected domain that carries volume is
+> **STRUCT (131 relations at 10.7 %)**, with **REG (51 at 9.8 %)** the lowest-covered.
+>
+> **The figures below were also not reproducible when committed.** The metric counts `file:line`
+> citations across `AUDIT/*.md` and excluded only `FORMULA-REGISTER*`; `PHASE-2-LEDGER.md` cites
+> all 1,288 retained relations, so once it existed the measurement reported **100 %** coverage
+> everywhere. Both the register and the ledger are inventories of the register rather than findings
+> about it, so both are now excluded, along with this document. `scratchpad/coverage_v2.mjs`
+> reproduces the all-sites figures below exactly (504 / 669 / 912 of 2,429), which confirms they
+> were right when taken and that only their reproducibility had been lost. See **F-41**.
+
 ## 1. Why this measurement exists
 
 `PHASE-BY-PHASE-STATUS.md` has carried this note against Phase 2:
@@ -69,7 +91,38 @@ structures (227, 10.1 %), regulatory (81, 11.1 %) and stability (173, 18.5 %)**,
 are **868 sites — 35.7 % of the register — at 11.0 % coverage**. GEOM alone is the second
 largest domain in the engine and the least reached.
 
-This is precisely the failure mode P02-002 names, and it is now quantified.
+This is precisely the failure mode P02-002 names, and it is now quantified. **But see §4b: the
+table above counts SITES, and the per-domain conclusion changes once it is restated over the
+relations the ledger actually covers.**
+
+## 4b. The same measurement over the 1,288 RETAINED relations (corrected, F-41)
+
+This is the population the Phase-2 ledger covers, so this is the table that sets the order of work.
+Citations counted at ±3 lines, with the register, the ledger and this document excluded.
+
+| domain | cited | retained relations | share | all sites, for contrast |
+|---|---|---|---|---|
+| REG | 5 | 51 | **9.8 %** | 81 |
+| STRUCT | 14 | 131 | **10.7 %** | 227 |
+| GEOM | 3 | 24 | **12.5 %** | 387 |
+| STAB | 17 | 111 | **15.3 %** | 173 |
+| MISC | 14 | 60 | 23.3 % | 91 |
+| WEIGHT | 47 | 184 | 25.5 % | 289 |
+| AERO | 50 | 186 | 26.9 % | 294 |
+| ATM | 3 | 7 | 42.9 % | 15 |
+| PROP | 48 | 109 | 44.0 % | 195 |
+| SIZING | 141 | 319 | 44.2 % | 483 |
+| MISSION | 44 | 90 | 48.9 % | 166 |
+| BATTERY | 10 | 16 | 62.5 % | 28 |
+| **total** | **396** | **1,288** | **30.7 %** | 2,429 |
+
+**The qualitative finding of §4 survives and the ordering does not.** Coverage still tracks how
+headline a domain is — battery, mission, sizing and propulsion at the top; regulatory, structures
+and stability at the bottom. But **GEOM moves from "second largest and least reached" to a
+24-relation domain**, because the gap between its 387 sites and its 24 relations is 369 excluded
+geometric constructions. **By uncited volume the largest gaps are SIZING 178, WEIGHT 137, AERO 136,
+STRUCT 117 and STAB 94** — and among the genuinely neglected domains, STRUCT is the one that
+carries weight.
 
 ## 5. What this does NOT license
 
@@ -98,9 +151,13 @@ must state that share rather than let it read as a pass rate.
    populating first what is **mechanically determinable** from evidence already held:
    Q9 duplication (the register's C7 class, 422 sites), Q3 units (the units column),
    Q10 coefficient sourcing (the `source` column), Q20 zero/negative/NaN guards (source scan).
-2. Then work the 82 named physics domains (P02-004…P02-085) in register order, **worst-covered
-   domain first** — GEOM, STRUCT, REG, STAB — because that is where the phase's own prohibition
-   has been violated, and because the best-covered domains already have prose to build on.
+2. Then work the 82 named physics domains (P02-004…P02-085), **worst-covered first**. **CORRECTED
+   (F-41): the order is STRUCT (131 relations at 10.7 %), REG (51 at 9.8 %), STAB (111 at 15.3 %),
+   then GEOM (24 at 12.5 %)** — not GEOM first. GEOM was put first on a SITE count of 387, of which
+   369 are excluded geometric constructions; it holds 24 retained relations and is the third
+   smallest retained domain. **STRUCT is the neglected domain that carries volume**, and REG is the
+   lowest-covered. The reasoning is otherwise unchanged: this is where P02-002's prohibition has
+   actually been violated, and the best-covered domains already have prose to build on.
 3. ~~Gate it, as Phase 0 and Phase 1 were gated.~~ **DONE the same day (N-24):**
    `validation/phase2-ledger.mjs`, **20 checks, 16 of 16 mutants killed**, wired into `npm test`
    after `formula-register.mjs`. Without it the ledger would have scored NO REGRESSION TEST, the

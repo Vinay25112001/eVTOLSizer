@@ -187,13 +187,40 @@ console.log("\n-- 4. the register-derived verdicts still agree with the register
 
 const Q = (n) => n - 1;                       // Q3 is index 2
 
+/* F-42: A `CONFLICT` IS NOT A DEFECT, IT IS AN UNRESOLVED RECORD, so it maps to
+   UNVERIFIED and not to FAIL. The register's own provenance reads "neither is
+   adopted" on those rows, and a field that adopts neither reading cannot support an
+   assertion that the repository is wrong. All six proved to be the analyser: five the
+   naming heuristic, one the literal-`0` initialiser. N-16 had already made this a
+   rule -- ask whether the analyser caused it before calling a conflict a defect --
+   and the first ledger did not ask.
+
+   FAIL IS DELIBERATELY STILL REACHABLE. A dimensional error hand-verified in the code
+   should be recorded as one, so a Q3 FAIL is accepted when, and only when, the row's
+   basis says it was hand-verified. That narrows the mapping without making the verdict
+   unreachable, and it keeps the basis requirement doing the work. */
 const wantUnits = (r) =>
-  r.unitVerif === "DECLARED" || r.unitVerif === "DERIVED" ? "P"
-  : r.unitVerif === "CONFLICT" ? "F" : "U";
-const unitsBad = rows.filter((r) => r.v[Q(3)] !== wantUnits(regById.get(r.ID)));
+  r.unitVerif === "DECLARED" || r.unitVerif === "DERIVED" ? "P" : "U";
+const HAND_FAIL = /hand-verified code defect/i;
+const unitsBad = rows.filter((r) => {
+  const want = wantUnits(regById.get(r.ID));
+  const got = r.v[Q(3)];
+  if (got === want) return false;
+  return !(got === "F" && HAND_FAIL.test(r.notes));
+});
 check("Q3 units agrees with the register's `unit verif` on every row", unitsBad.length === 0,
   unitsBad.length ? `${unitsBad.length} disagree, first ${unitsBad[0].ID}`
                   : `${rows.filter((r) => r.v[Q(3)] === "P").length} PASS, ${rows.filter((r) => r.v[Q(3)] === "F").length} FAIL, ${rows.filter((r) => r.v[Q(3)] === "U").length} UNVERIFIED`);
+
+/* F-42 pinned explicitly, not left implicit in the agreement check above: no row whose
+   only evidence is a recorded dimensional CONFLICT may carry a repository FAIL. */
+const conflictRows = rows.filter((r) => regById.get(r.ID).unitVerif === "CONFLICT");
+const conflictAsFail = conflictRows.filter((r) => r.v[Q(3)] === "F" && !HAND_FAIL.test(r.notes));
+check("no recorded dimensional CONFLICT is asserted as a repository FAIL",
+  conflictAsFail.length === 0,
+  conflictAsFail.length
+    ? `${conflictAsFail.length} of ${conflictRows.length} CONFLICT rows claim FAIL without hand verification, first ${conflictAsFail[0].ID}`
+    : `${conflictRows.length} CONFLICT rows, all UNVERIFIED — every one proved to be the analyser (F-42)`);
 
 const wantSrc = (r) =>
   r.source === "DIRECTLY STATED" || r.source === "MEASURED FROM SOURCE" ? "P"

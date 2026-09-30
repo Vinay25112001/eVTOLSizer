@@ -25,7 +25,7 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 |---|---|---|---|---|---|
 | 1 | mathematical expression correct (P02-087) **— untouched** | 0 | 0 | 0 | 1288 |
 | 2 | variable definition correct (P02-088) **— untouched** | 0 | 0 | 0 | 1288 |
-| 3 | units correct (P02-089) | 363 | 0 | 6 | 919 |
+| 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
 | 4 | sign convention correct (P02-090) **— untouched** | 0 | 0 | 0 | 1288 |
 | 5 | reference conditions correct (P02-091) **— untouched** | 0 | 0 | 0 | 1288 |
 | 6 | efficiencies applied in the correct direction (P02-092) **— untouched** | 0 | 0 | 0 | 1288 |
@@ -44,7 +44,7 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 19 | sensitive to variable scaling (P02-105) **— untouched** | 0 | 0 | 0 | 1288 |
 | 20 | zero/negative/NaN handled (P02-106) | 0 | 250 | 0 | 1038 |
 
-**Determined 2251 of 25760 (8.7 %). Sixteen of the twenty questions are untouched for every relation.**
+**Determined 2245 of 25760 (8.7 %). Sixteen of the twenty questions are untouched for every relation.**
 
 ## 2. What the four answered questions rest on
 
@@ -240,7 +240,7 @@ calculation is exactly what has not been done.
 | FORMULA-SIZING-236 | `src/engine.js:1208` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-SIZING-237 | `src/engine.js:1209` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-SIZING-238 | `src/engine.js:1210` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-SIZING-240 | `src/engine.js:1216` | U | U | F | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 3: dimensional CONFLICT recorded by the register; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
+| FORMULA-SIZING-240 | `src/engine.js:1216` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
 | FORMULA-SIZING-243 | `src/engine.js:1227` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-SIZING-244 | `src/engine.js:1228` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-SIZING-245 | `src/engine.js:1229` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
@@ -524,7 +524,7 @@ calculation is exactly what has not been done.
 | FORMULA-AERO-179 | `src/engine/profile.js:161` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-AERO-180 | `src/engine/profile.js:162` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-AERO-181 | `src/engine/profile.js:165` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-AERO-183 | `src/engine/profile.js:194` | U | U | F | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: dimensional CONFLICT recorded by the register; 9: equation shape is unique in the retained set |
+| FORMULA-AERO-183 | `src/engine/profile.js:194` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-AERO-184 | `src/engine/profile.js:240` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-AERO-185 | `src/engine/wing.js:50` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
 | FORMULA-AERO-186 | `src/engine/wing.js:57` | U | U | P | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
@@ -751,7 +751,7 @@ calculation is exactly what has not been done.
 | FORMULA-WEIGHT-239 | `src/engine/cg.js:209` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-242 | `src/engine/cg.js:246` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-WEIGHT-244 | `src/engine/cg.js:249` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-WEIGHT-249 | `src/engine/weights.js:246` | U | U | F | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: dimensional CONFLICT recorded by the register; 9: equation shape is unique in the retained set |
+| FORMULA-WEIGHT-249 | `src/engine/weights.js:246` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-250 | `src/engine/weights.js:247` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-251 | `src/engine/weights.js:248` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-252 | `src/engine/weights.js:249` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
@@ -793,7 +793,7 @@ calculation is exactly what has not been done.
 | FORMULA-STRUCT-028 | `src/classes/aircraft/flight-envelope.js:212` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-STRUCT-029 | `src/classes/aircraft/flight-envelope.js:216` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-STRUCT-030 | `src/classes/aircraft/flight-envelope.js:219` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-STRUCT-031 | `src/classes/aircraft/flight-envelope.js:223` | U | U | F | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: dimensional CONFLICT recorded by the register; 9: equation shape is unique in the retained set |
+| FORMULA-STRUCT-031 | `src/classes/aircraft/flight-envelope.js:223` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-STRUCT-032 | `src/classes/aircraft/flight-envelope.js:224` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-STRUCT-033 | `src/classes/aircraft/flight-envelope.js:225` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-STRUCT-035 | `src/classes/aircraft/flight-envelope.js:230` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
@@ -967,7 +967,7 @@ calculation is exactly what has not been done.
 | FORMULA-STAB-097 | `src/classes/drone/dynamics.js:1174` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-STAB-099 | `src/classes/drone/dynamics.js:1192` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-STAB-100 | `src/classes/drone/dynamics.js:1229` | U | U | U | U | U | U | U | U | W | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape appears 2x in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-STAB-101 | `src/engine/autorotation.js:76` | U | U | F | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: dimensional CONFLICT recorded by the register; 9: equation shape is unique in the retained set |
+| FORMULA-STAB-101 | `src/engine/autorotation.js:76` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-STAB-105 | `src/engine/autorotation.js:99` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-STAB-109 | `src/engine/autorotation.js:105` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-STAB-111 | `src/engine/constraints.js:51` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
@@ -1172,7 +1172,7 @@ calculation is exactly what has not been done.
 | FORMULA-MISSION-069 | `src/classes/transport/mission.js:162` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-MISSION-071 | `src/classes/transport/mission.js:192` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-MISSION-074 | `src/classes/transport/mission.js:207` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISSION-075 | `src/classes/transport/mission.js:223` | U | U | F | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 3: dimensional CONFLICT recorded by the register; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
+| FORMULA-MISSION-075 | `src/classes/transport/mission.js:223` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
 | FORMULA-MISSION-080 | `src/classes/transport/mission.js:231` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-MISSION-082 | `src/classes/transport/mission.js:237` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-MISSION-084 | `src/classes/transport/mission.js:242` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |

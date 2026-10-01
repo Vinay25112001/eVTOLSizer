@@ -285,14 +285,25 @@ const excused = (file, value, lineText) =>
    into an accidental one. */
 const ROOTS = ["src", "validation"];
 
-/* Two files are skipped whole, because their subject IS the wrong value
-   and they have to be able to write it down. Neither computes anything:
+/* Three files are skipped whole, because their subject IS the wrong value
+   and they have to be able to write it down. None computes anything:
    this gate holds the defect's history in its own prose and needs 9.81,
-   9.8 and 32.2 as fixtures for its positive controls, and report.mjs
-   carries the paragraph describing all of it into VALIDATION.md. */
+   9.8 and 32.2 as fixtures for its positive controls, and the report
+   carries the paragraph describing all of it into VALIDATION.md.
+
+   THE THIRD ENTRY IS THAT SAME PARAGRAPH, RELOCATED. The report's harness
+   list moved out of report.mjs into harness-manifest.mjs so that the gate
+   checking the list against package.json could import it instead of parsing
+   it as text. The descriptions moved with it — including this gate's own,
+   which quotes 9.81, 32.2, 287 and the near-miss band as the defects it
+   records — so the prose that was already skipped in one file now lives in
+   another and is skipped there. Nothing new is excused: report.mjs retains
+   its entry and no longer contains the list, so if the array is ever moved
+   back the skip that covers it is still in place. */
 const SKIP = [
   ["validation/constants.mjs", "this gate — its controls are made of the wrong values"],
   ["validation/report.mjs",    "prose only: the harness description that explains this gate"],
+  ["validation/harness-manifest.mjs", "prose only: the harness descriptions themselves, moved out of report.mjs; pure data, it declares no constant"],
 ];
 const skipped = (rel) => SKIP.some(([f]) => f === rel);
 

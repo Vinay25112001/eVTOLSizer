@@ -182,6 +182,25 @@ check("every verdict is PASS, FAIL, WARNING or UNVERIFIED", badTok.length === 0,
 check(`every row carries all ${NQ} verdicts`, rows.every((r) => r.v.length === NQ),
   `${rows.filter((r) => r.v.length !== NQ).length} rows with a different count`);
 
+/* THE CHECK ABOVE CANNOT SEE A WIDENED ROW, so this one reads the raw width.
+   A literal bar in a note — a mathematical abs() written with vertical bars —
+   splits the row into extra cells, but the parser takes the verdicts BY INDEX
+   and folds every surplus cell back into the notes, so `v.length === NQ` stays
+   true and the gate passed. Eleven rows in the fuselage-bending-material block
+   carried `|M|` through every run until they were counted by hand. A row is
+   1 ID + 1 site + NQ verdicts + 1 notes cell, and nothing else. */
+const WIDTH = 2 + NQ + 1;
+const widthBad = [];
+for (const raw of read("AUDIT/PHASE-2-LEDGER.md").split("\n")) {
+  if (!/^\|\s*FORMULA-/.test(raw)) continue;
+  const c = raw.trim().replace(/^\|/, "").replace(/\|$/, "").split("|");
+  if (c.length !== WIDTH) widthBad.push(`${c[0].trim()} has ${c.length} cells, not ${WIDTH}`);
+}
+check(`every ledger row is exactly ${WIDTH} cells wide, so no note hides a bar`,
+  widthBad.length === 0,
+  widthBad.length ? `${widthBad.length} malformed, first ${widthBad[0]}`
+                  : `all ${rows.length} rows are ${WIDTH} cells`);
+
 /* ── 4. the register-derived questions still agree with the register ── */
 console.log("\n-- 4. the register-derived verdicts still agree with the register --");
 
@@ -290,6 +309,50 @@ check("the stated determination total matches the ledger body",
   !!stated && num(stated[1]) === determined && num(stated[2]) === required,
   stated ? `states ${stated[1]} of ${stated[2]}, body has ${determined} of ${required}`
          : "no determination total found in the document");
+
+/* THE UNTOUCHED-QUESTION COUNT IS STATED THREE TIMES AND WAS CHECKED ZERO TIMES.
+   It appears in the Determined sentence, in the section 2 heading as its
+   complement, and as a per-row tag in the summary table. A ledger claiming any
+   number at all used to pass: the total regex above stops at `of <required>`
+   and never reads the rest of the line. All three are now re-derived from the
+   body, because a count nobody recomputes is a count that drifts. */
+const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
+  "nineteen", "twenty"];
+const wordVal = (w) => WORDS.indexOf(String(w).toLowerCase());
+const untouched = tally.reduce((n, t) => n + (t.P + t.W + t.F === 0 ? 1 : 0), 0);
+const answered = NQ - untouched;
+
+const sentence = doc.match(new RegExp(
+  String.raw`([A-Za-z]+)\s+of\s+the\s+` + WORDS[NQ] + String.raw`\s+questions\s+are\s+untouched`));
+check("the stated untouched-question count matches the ledger body",
+  !!sentence && wordVal(sentence[1]) === untouched,
+  sentence ? `states "${sentence[1]}" (${wordVal(sentence[1])}), body has ${untouched}`
+           : "no untouched-question sentence found in the document");
+
+const heading = doc.match(/^##\s*2\.\s*What the\s+([A-Za-z]+)\s+answered questions rest on/m);
+check("the section 2 heading's answered-question count matches the ledger body",
+  !!heading && wordVal(heading[1]) === answered,
+  heading ? `heading says "${heading[1]}" (${wordVal(heading[1])}), body has ${answered} answered`
+          : "no section 2 heading found in the document");
+
+const tagBad = [];
+let tagged = 0;
+for (const m of doc.matchAll(
+  /^\|\s*(\d{1,2})\s*\|([^|]*)\|\s*\d+\s*\|\s*\d+\s*\|\s*\d+\s*\|\s*\d+\s*\|\s*$/gm)) {
+  const n = +m[1];
+  if (n < 1 || n > NQ) continue;
+  const t = tally[n - 1];
+  const isTagged = /untouched/.test(m[2]);
+  const isUntouched = t.P + t.W + t.F === 0;
+  if (isTagged) tagged++;
+  if (isTagged !== isUntouched)
+    tagBad.push(isTagged
+      ? `Q${n} is tagged untouched but the body has ${t.P + t.W + t.F} determination(s)`
+      : `Q${n} has no determinations but is not tagged untouched`);
+}
+check("the summary table tags exactly the questions the body leaves untouched", tagBad.length === 0,
+  tagBad.length ? tagBad[0] : `${tagged} tagged, ${untouched} untouched in the body`);
 
 console.log("");
 console.log(fail

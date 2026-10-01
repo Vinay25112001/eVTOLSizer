@@ -1431,6 +1431,17 @@ records `source = UNVERIFIED` for **31 of its 32 rows**. The running tally is th
 **13 (F3) + 1 (F4) + 9 (G7) + 31 (flight-envelope) = 54 relations checked against a held primary,
 54 passed, 0 found genuinely unsourced.** That is 5.7 % of the 944 the register calls UNVERIFIED,
 and the pass rate is still 100 %. Q10 was again left alone on every row.
+
+**NOT AMENDED by the `fuselage-structure.js` block, 2026-09-30, and the reason is worth recording.**
+That block audited 6 relations and added **no** relation to this tally, breaking a run of four. Five of
+the six carry no coefficient of their own -- STRUCT-129 is a call, STRUCT-130 is the 4/pi of an
+equal-area circle, STRUCT-131 is a subtraction of two stations, STRUCT-134 is a division, and
+STRUCT-124's Ramanujan coefficients (3, 10, 4, 3) are **genuinely absent from the corpus**: a search
+for Ramanujan, ellipse perimeter and ellipse circumference across the research tree returns nothing,
+so `source = UNVERIFIED` is the CORRECT record there, not a pessimistic one. It was instead verified
+without a source, against the exact perimeter computed two independent ways. The sixth, STRUCT-126, is
+already recorded `DIRECTLY STATED`. **The tally therefore stands at 54 of 944, unchanged.** Do not pad
+it with relations that do not fit the pattern -- the finding rests on a clean 54 checked, 54 passed.
 ---
 
 ## F-56 — three unguarded degenerate paths in the stowage chain, each latent against the shipped tyre database — LOW — VERIFIED
@@ -1642,6 +1653,156 @@ on it.
 
 **Not repaired.** Deleting the factor is a production change and is not authorised here.
 **Nothing is re-graded.**
+---
+
+## F-60 — the nose and tail-cone lengths relabel themselves as Torenbeek-sourced on legal inputs, the promotion is tautological, and the check that guards it only ever samples four cases — MEDIUM — VERIFIED
+
+The pressurized shell's two bulkhead stations are the general arrangement's nose and tail-cone
+lengths. `fuselage-structure.js:154-157` declares what they are:
+
+> *"Both of those lengths are drawing conventions in the general arrangement, so the two bulkhead
+> stations are conventions too and are reported as such."*
+
+`geometry.js` builds them as the smaller of a length fraction and a Torenbeek fineness cap:
+
+```js
+const noseLen = conePart(Math.min(0.14 * L, FUSELAGE_FINENESS.nose * D), FUSELAGE_FINENESS.noseRange, "nose");
+const tailLen = conePart(Math.min(0.26 * L, FUSELAGE_FINENESS.tailCone * D), FUSELAGE_FINENESS.tailConeRange, "tail-cone");
+```
+
+and `conePart` marks the result `sourced` when the fineness it ends up with lands inside the
+published range, `drawn` otherwise. The comment above it states, as measured fact:
+
+> *"MEASURED, AND IT DOES NOT. On every class this tool sizes, the length fraction binds and the
+> result falls BELOW both published ranges ... **So the 1.8 and 3.0 caps never bind and are inert**,
+> and these lengths stay declared conventions carrying no dimension line."*
+
+**That is true at the four class defaults and false across the declared input population.** Sweeping
+the three fuselage inputs over the min/max each class publishes in its own `defaults.js`
+(transport L 60-250 ft, W 8-22, H 8-25; turboprop 40-150, 6-14, 6-15; bizjet 30-110, 4-12, 4-12;
+trainer 15-40, 2.5-6, 3-7), 7 points per axis, 343 cases per class, **1,372 cases**:
+
+| class | nose cap binds | nose marked sourced | tail cap binds | tail marked sourced |
+|---|---|---|---|---|
+| transport | 55 | **106** | 70 | **122** |
+| turboprop | 40 | **90** | 64 | **119** |
+| bizjet | 34 | **56** | 55 | **91** |
+| trainer | 2 | **8** | 4 | **14** |
+| **total** | **131** | **260** | **193** | **346** |
+
+So 260 of 1,372 nose lengths and 346 of 1,372 tail-cone lengths carry
+`sourced: true` and a Torenbeek citation, not the convention the owning module describes. The
+smallest legal input that flips the nose, per class:
+
+| class | inputs | nose fineness | label |
+|---|---|---|---|
+| transport | L 85.78 ft, W 8, H 8 | 1.501 | `sourced: true` |
+| turboprop | L 64.32 ft, W 6, H 6 | 1.501 | `sourced: true` |
+| bizjet | L 42.86 ft, W 4, H 4 | 1.500 | `sourced: true` |
+| trainer | L 32.21 ft, W 2.5, D 3 | 1.503 | `sourced: true` |
+
+with the cite read straight off the object:
+*"nose fineness 1.50 — inside the published 1.5–2, Torenbeek 1982, §3.5.1, pp. 93-94"*.
+
+**The promotion is tautological whenever the cap is what binds.** The nose cap is 1.8 and the
+published range is 1.5 to 2.0; the tail cap is 3.0 and the range is 2.5 to 3.0. When `Math.min`
+picks the cap, the fineness is *exactly* the cap, so `within(fineness, range)` cannot fail. The
+drawing then attributes the cone length to Torenbeek when the number came from the tool's own
+ceiling. 129 of the 260 nose promotions and 166 of the 346 tail promotions arrive the legitimate way
+(the length fraction binds and happens to land in range); the rest are the cap certifying itself.
+
+**And at the tail the test sits ON a closed endpoint, so a last bit decides the label.** In 13 of the
+transport cases the tail cap binds, yet the length is marked a convention, because
+
+```
+len = 3.0 * D = 9.44880000000000209      D = 3.14960000000000040
+fineness = len / D = 3.00000000000000044   -> fineness <= 3.0 is FALSE by 4.441e-16
+```
+
+The message it then prints contradicts itself:
+*"tail-cone fineness 3.00 is outside the published 2.5–3"*. Over 200,000 values of D,
+`(3.0*D)/D > 3.0` in **13,321** of them — 6.7 % of the reals land on the wrong side of the
+endpoint. The nose has margin (1.8 against an upper bound of 2.0) and never ties: 0 of 200,000.
+
+**Why the shipped check does not catch it.** `validation/fuselage-outline.mjs` §7 asserts the
+claim directly —
+
+```js
+const anyInside = measured.some(([, , , inside]) => inside);
+check(!anyInside, "no class currently draws a cone inside Torenbeek's ranges -- the caps are inert", ...);
+```
+
+— but `measured` is built from `designAircraft({ type, mode: "size", params: {} })` for the four
+classes and nothing else. Measured at those four points: nose fineness 1.34, 1.07, 1.27, 0.85 and
+tail 2.49, 1.99, 2.36, 1.57, all outside, all marked conventions. The check is correct and passes
+for the right reason at the only four points it looks at. Its own comment anticipates the wrong
+trigger — *"If a future change makes a cone slender enough to land in range, this check fails and
+the comment in geometry.js has to be re-measured"* — but no future change is needed. A user typing a
+legal fuselage length does it today, and the check never sees it.
+
+**What is NOT wrong.** The station VALUES are correct in every one of the 1,372 cases: longhand
+`fwdX = noseL` and `aftX = L - tailL` reproduce FORMULA-STRUCT-131 exactly, 0 mismatches, and
+`sized` is `false` on both lengths throughout — so `fuselage-structure.js`'s own
+`boundariesSized: false` is right on every case, and its prose errs conservatively rather than
+overclaiming. No length, area, count or pitch changes. What changes is the provenance a reader is
+shown, on the one view whose governing rule (STRUCTURAL-LAYOUT.md §4.5) is that a line is either a
+computed quantity or a sourced convention and *"a drawing that invents structure is worse than one
+that shows less."*
+
+**Severity MEDIUM.** Reachable from the published input ranges without any code change, on all four
+classes; it mislabels the provenance of a drawn dimension, which is precisely the failure the
+module's own rule exists to prevent; the guarding assertion is blind to it; and a production comment
+states the opposite as a measured result. It is below HIGH because no engineering number moves.
+
+**Not repaired.** Tightening `conePart` so a cap-bound length cannot certify itself, comparing the
+fineness with a tolerance at the closed endpoint, and re-measuring the geometry.js comment are all
+production changes and are not authorised here. **Nothing is re-graded.**
+
+---
+
+## F-61 — the trainer frame-pitch band is declared 10-23 in against the 10.0-22.75 in of the only held transcription — LOW — VERIFIED
+
+`fuselage-structure.js:87-88` declares the light-aircraft frame pitch:
+
+```js
+trainer: { pitchM: 16.8 * IN, loM: 10 * IN, hiM: 23 * IN, sourced: true,
+           source: "10-23 in, mean 16.8 in: FAA-H-8083-31B Fig. 1-88, measured over the frames of a light aircraft" },
+```
+
+The FAA handbook itself is not vendored. The only held transcription of that figure is
+`eVTOL_Sizing_Research/classes/cross-class/STRUCTURAL-LAYOUT.md` §3.2, which records it as:
+
+> **FAA-H-8083-31B Fig. 1-88, p. 1-38** | unidentified light twin, side view, 23 stations
+> FS −97.0 … FS 273.52 | **10.0 – 22.75 in**, mean ≈ 16.8 in
+
+The lower bound and the mean match exactly. **The upper bound does not: the code carries 23 in where
+the transcription carries 22.75 in**, a 0.25 in (1.1 %) widening of the band, in the direction that
+makes the acceptance test easier to pass. The transport band needs no such rounding and gets none:
+the code's 20-21 in is exactly the two held primaries, NASA CR-2000-209337 (IAS) Fig. 5-4 p. 65 at
+**20.0 in** and NASA CR-4734 (ATCAS) §5.1 p. 5-1 at **21 in nominal**, and §3.2 endorses the pair in
+its own words — *"Two sources, two programmes, two materials, 20-21 in. That is a defensible
+convention."*
+
+**The widened bound is inert on everything the tool can be asked to draw.** `fp.hiM` is read in
+three places: it decides `frames.inBand` (l.174), it is reported verbatim as `frames.bandHiM`
+(l.173), and it is printed into the out-of-band caveat (l.315). Only the first has any
+consequence; the other two are display. Over the 343 declared trainer cases the drawn pitch spans
+**16.29 to 18.00 in**,
+so it clears 22.75 in by 26 % and the two bounds cannot be distinguished by any legal input. The
+band is genuinely capable of failing — it is not a bound that can never bite: at a shell length of
+5 m the transport rounding puts the pitch at 19.685 in, outside its own 20-21 in band — but the
+smallest transport shell in the declared population is 10.97 m, so the out-of-band caveat at
+`l.313-317` is itself unreachable, 0 of 686 frame-drawing cases.
+
+**Severity LOW.** No drawn pitch is affected, no verdict rests on it, and the direction of the
+rounding is the only reason it is recorded at all: a threshold that does not match its cited source
+is worth a line even when it is inert, because the next change to the pitch or the shell length is
+what would make it matter.
+
+**Not repaired.** Correcting `hiM` to 22.75 in is a production change and is not authorised here.
+**Nothing is re-graded.**
+
+
 
 
 

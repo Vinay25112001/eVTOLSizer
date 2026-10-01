@@ -1442,6 +1442,19 @@ so `source = UNVERIFIED` is the CORRECT record there, not a pessimistic one. It 
 without a source, against the exact perimeter computed two independent ways. The sixth, STRUCT-126, is
 already recorded `DIRECTLY STATED`. **The tally therefore stands at 54 of 944, unchanged.** Do not pad
 it with relations that do not fit the pattern -- the finding rests on a clean 54 checked, 54 passed.
+
+**NOT AMENDED by the `gear/strut.js` block, 2026-10-01, for a different reason than last time.**
+That block's eight relations split 5/3 on the register's `source` column, and NEITHER side adds to
+this tally. The five carrying `DIRECTLY STATED` -- STRUCT-179, -180, -181, -182 and -188 -- were
+checked against their primaries this block and the record is CORRECT, not pessimistic: NACA TN
+4110's Cz = 0.02 for type I and 0.03 for types III and VII appears verbatim twice in the vendored
+text, the coefficient 2.4 and the 0.6 exponent and the `(p + 0.08 p_r) w sqrt(wd)` denominator are
+all legible in it, and the report states in words that eq. (24) is the *single continuous equation
+form*, which is the form the module uses. 14 CFR 25.723(b)'s 12 f.p.s. is verbatim in the vendored
+regulation. The three carrying `UNVERIFIED` -- STRUCT-184, -186 and -187 -- carry no coefficient of
+their own: a subtraction of two tabulated lengths, and the denominator and quotient of eq. (23).
+**The tally stands at 54 of 944, unchanged for the second block running.** A verified primary does
+not enlarge this finding when the register already says the source is stated.
 ---
 
 ## F-56 — three unguarded degenerate paths in the stowage chain, each latent against the shipped tyre database — LOW — VERIFIED
@@ -1801,6 +1814,412 @@ what would make it matter.
 
 **Not repaired.** Correcting `hiM` to 22.75 in is a production change and is not authorised here.
 **Nothing is re-graded.**
+---
+
+## F-62 — the derived tyre-efficiency curve loses its own analytic bound at small deflection, and the check that pins the bound samples only where the arithmetic is well conditioned — LOW — VERIFIED
+
+`strut.js` derives the tyre energy-absorption efficiency in closed form, integrating
+NACA TN 4110's eq. (24) against MIL-L-8552C section 3.5.2's definition. The mathematics bounds the
+result: both limits are one half and the interior is below it, so **eta_t lies in (0, 0.5) for every
+positive deflection ratio**. The gate asserts exactly that:
+
+```js
+const samples = [0.05, 0.1, 0.2, 0.4, 0.8, 2, 10, 100];
+check(samples.every((X) => tyreEfficiency(X) < 0.5),
+  "and never exceeds one half, at any deflection", ...);
+```
+
+**The coded form does not satisfy that bound, and the eight samples are all in the range where it
+does.** The numerator differences `X^2/2 - Cz X + (Cz^2/0.6)(1 - exp(-0.6X/Cz))` cancel to
+leading order as X falls, and the subtraction is done in the order written:
+
+| X | eta_t returned | analytic value |
+|---|---|---|
+| 1e-5 | 0.4999750058 | 0.4999750 |
+| 1e-7 | 0.4999957748 | 0.5000000 |
+| **1e-8** | **0.5008150516** | 0.5000000 |
+| 1e-9 | 0.3778560326 | 0.5000000 |
+| 1e-10 | **21.6719156376** | 0.5000000 |
+| 1e-12 | **6206.7785989993** | 0.5000000 |
+| 1e-13 | **-16590738.3175** | 0.5000000 |
+| 1e-14 | **-1830576988.714** | 0.5000000 |
+
+So the function returns a value above one half from X = 1e-8, exceeds the bound by four orders of
+magnitude by 1e-12, and goes **negative** below 1e-13 — a negative energy-absorption efficiency.
+The gate's lowest sample is 0.05, six orders of magnitude above where this starts.
+
+**It is a conditioning defect, not an algebra defect.** Rewriting the same expression with
+`-Math.expm1(-0.6 * X / cz)` in place of `1 - Math.exp(...)` holds the analytic value to
+**4.4e-16 or better at every X tested from 1e-12 to 0.25**, and agrees with the shipped form to
+0.0e+0 wherever the shipped form is sound. The closed form itself was independently confirmed this
+block against 200-node Gauss-Legendre quadrature (relative 0.0e+0 to 1.6e-15) and a 200,000-step
+Simpson rule (7.1e-15) at seven deflection ratios including the production median and the textbook
+0.407, so the integral is right and only its evaluation is fragile.
+
+**Severity LOW, because nothing production reaches it.** The two callers obtain X from the shipped
+tyre table, where all 294 rows give X between **0.018750 and 0.378378**; the smallest is 2.0e6 times
+larger than where the bound first breaks. `tyreEfficiency` is nevertheless exported and takes an
+arbitrary deflection ratio.
+
+**Not repaired.** Substituting `expm1` is a production change and is not authorised here.
+**Nothing is re-graded.**
+
+---
+
+## F-63 — the stroke solver validates four of its seven inputs, and the three it does not include the two that can make the stroke negative while it still reports success — LOW — VERIFIED
+
+`strokeFromEnergy({ V, L, N, etaS, etaT, deltaT, g })` solves LANDING-GEAR.md eq. (23). Four
+inputs are guarded at l.143 and the denominator at l.148, and both guards work: zero, negative and
+NaN values of V, N, eta_s and g are each refused with a reason, and `eta_s N = 1 - L` **exactly**
+is refused rather than divided by, confirmed by execution.
+
+**eta_t, delta_t and L are not validated at all**, and two of them put the result outside physics
+while `resolved` stays true:
+
+| input | value | result | `resolved` |
+|---|---|---|---|
+| `etaT` | NaN | `strokeM` = NaN | **true** |
+| `etaT` | 5 (an efficiency above 1) | `strokeM` = -0.344884 m | **true** |
+| `deltaT` | NaN | `strokeM` = NaN | **true** |
+| `deltaT` | -0.1 m | `strokeM` = +0.376742 m | **true** |
+| `L` | 5 | `strokeM` = -0.002426 m | **true** |
+
+A NaN stroke reported as resolved is the F-58 shape: the caller is handed the same success flag a
+sound run produces. A negative stroke is worse than NaN, because it is a number a consumer will
+format and display.
+
+**L is not held to the regulation's ceiling.** LANDING-GEAR.md records L as the lift-to-weight ratio,
+**at most 1.0 for Part 25 per 25.473(b)** and at most 2/3 for Part 23 per 23.473(e), and 25.723(b)
+itself says *"assuming airplane lift not greater than airplane weight"*. L = 5 passes, because the
+only test applied to L is whether `etaS * N - (1 - L)` comes out positive, and an L above 1
+makes that term larger rather than smaller. The signature's default is L = 1.0, which is the Part 25
+value; measured, all three Part 25 classes run at exactly that (denominator 1.5 = 0.75 x 2), and the
+trainer never reaches the strut at all, refusing earlier for want of a wheelbase. At L = 2/3 the same
+case gives a stroke **39.66 % longer**, so a Part 23 class arriving on the default would be under-strutted.
+
+**A smaller instance of the same shape next door.** `tn4110Force` guards with
+`if (!(x > 0)) return 0;` and so returns a **force of zero for a NaN deflection** rather than
+refusing; a zero force is a plausible number, and NaN would at least propagate. Its Cz argument is
+unguarded too: Cz = 0 silently returns the un-offset line and a negative Cz returns a negative force
+(-10.0137 at x = 0.25).
+
+**Severity LOW, all latent.** `gear.js` supplies eta_t from `tyreEfficiencyFor`, which is
+bounded in (0, 0.5) by the mathematics and measured at 0.448 to 0.469 over the whole tyre table;
+eta_s from the frozen `ETA_OLEO.variableOrifice` = 0.75; delta_t from the tyre geometry; and L
+by omission, taking the Part 25 default. Measured strokes on the three Part 25 classes are 255 to
+283 mm, all positive. The module is exported and its options are a public interface.
+
+**Not repaired.** Validating the remaining inputs, bounding L at 1.0 and refusing a NaN deflection
+are production changes and are not authorised here. **Nothing is re-graded.**
+
+---
+
+## F-64 — one row of the shipped tyre table gives a deflection of 1.2 percent where the table's median is 17, the tool computes from it without comment, and a load window of 239 lb selects it — LOW — VERIFIED
+
+The tyre deflection that feeds both the efficiency and the stroke is
+`odMaxIn / 2 - slrIn` (FORMULA-STRUCT-184). For `25.5x8.0-14` 16 PR, part
+`461B-3233-TL`, the shipped table gives odMaxIn 25.5 and slrIn **12.6**, so the deflection is
+**0.15 in on a 12.75 in radius, 1.18 %**, and the deflection ratio is **0.018750** against a
+median of **0.251613** across the 294 rows — a factor of 13.
+
+**The transcription is faithful; the anomaly is in the primary.** Column 18 of the data book's table
+is the Static Loaded Radius, and the two rows for this very size read:
+
+| row | part | odMax | odMin | width | ... | **SLR** | flat radius |
+|---|---|---|---|---|---|---|---|
+| 16 PR | 461B-3233-TL | 25.5 | 24.8 | 8 | ... | **12.6** | 9.40 |
+| 20 PR | 461B-3529-TL | 25.5 | 24.8 | 8 | ... | **10.94** | 9.40 |
+
+and the radial of the same size also prints 10.94. Across the whole table `slrIn / (odMaxIn / 2)`
+has a median of **0.8282**; this row is **0.9882**, the highest, and the next highest is 0.8983. The
+internal ordering stays consistent, SLR above the flat-tyre radius, so nothing in the row
+contradicts itself and no parser would reject it.
+
+**It is reachable.** `smallestTyre` returns the first load-sorted row that satisfies the demand,
+and this row is that row for a required rating from **13,701 to 13,939 lb** — a 239 lb window.
+`selectMainTyre({ mainLoadTotalLb: 13701, legs: 1, wheelsPerAxle: 1 })` selects it, confirmed
+by execution.
+
+**What it then does.** Against the 20 PR row of the same size, at the same 10 ft/s design case:
+
+| row | deflection ratio | eta_t | delta_t | stroke |
+|---|---|---|---|---|
+| 16 PR | 0.018750 | **0.468781** | 3.8 mm | **313.4 mm** |
+| 20 PR | 0.226250 | 0.456230 | 46.0 mm | 287.8 mm |
+
+So the anomalous row yields the **highest eta_t in the entire table from the smallest deflection in
+it**, which is the opposite of the trend the module's own header explains, and a stroke **8.9 %
+longer**. It is also the only row of 294 that falls below the efficiency curve's interior minimum at
+X = 0.0918, i.e. the only one on the branch where eta_t *falls* as deflection grows.
+
+**Severity LOW, and the direction is why.** The stroke comes out longer, not shorter, so the strut
+is over-sized rather than under-sized and no margin is consumed. But eta_t is displayed on the gear
+tab as a headline number, and nothing between the table and the display asks whether a tyre that
+deflects 1.2 % of its radius at rated load is credible. There is no plausibility guard on any tyre
+row anywhere in the tool, measured.
+
+**Not repaired.** Correcting or flagging a data row, and adding a plausibility check, are production
+changes and are not authorised here. **Nothing is re-graded.**
+
+---
+
+## F-65 — the ledger's own zero/negative/NaN scan is wrong in both directions, and one file receives both errors — MEDIUM — VERIFIED — AUDIT TOOL, NOT THE REPOSITORY
+
+This is a defect in the Phase-2 instrument, not in the engine. It is recorded here because
+**question 20's verdicts rest on it for all 1,288 relations**, and because N-16 requires asking
+whether the analyser caused a result before believing it.
+
+`scratchpad/build_p2_ledger.mjs` decides question 20 by searching a window of plus or minus 25
+lines around each site for a guard, with this pattern:
+
+```js
+const GUARD = /Number\.isFinite|isNaN|Math\.max\s*\(\s*0|Math\.min|<=\s*0|<\s*0|>\s*0\s*\?|\|\|\s*0|\?\?\s*0|clamp|Math\.abs|EPS|guard/i;
+```
+
+and the asymmetry it implements is correct in principle: absence of a guard is evidence the case is
+unhandled, so it yields WARNING, while presence proves nothing a scan can read, so it yields
+UNVERIFIED.
+
+**IT CANNOT SEE THIS REPOSITORY'S COMMONEST REFUSAL IDIOM.** The pattern has
+`> 0 ?` — a ternary — but nothing matching `!(x > 0)`, which is how this tree refuses
+non-positive input nearly everywhere. All eight guards in `gear/strut.js` are of that form and
+the pattern matches **none** of them:
+
+```
+if (!(x > 0)) return 0;                                            no match
+if (!(X > 0)) return null;                                         no match
+if (!(rect > 0)) return null;                                      no match
+if (!tyre or !(tyre.widthMaxIn > 0)) return null;                  no match
+if (!(deflectionIn > 0)) return null;                              no match
+if (!(V > 0) or !(N > 0) or !(etaS > 0) or !(g > 0)) {             no match
+if (!(denom > 0)) {                                                no match
+if (!(designFps > 0) or !(reserveFps > 0)) return null;            no match
+```
+
+Ledger-wide, **25 of the 250 question-20 WARNINGs the scanner itself produces (10.0 %)** sit in
+windows that do contain such a refusal. **(Re-measured. An earlier wording said "25 of the 275
+(9.1 %)", which mixed two populations: 275 is the LEDGER's current question-20 WARNING count after
+earlier blocks' hand corrections, not the scanner's own denominator of 250. See the severity
+reassessment below.)** Those rows assert *"no zero/negative/NaN guard within +/-25 lines of the site"* about code
+that guards one line away. Examples: FORMULA-WEIGHT-001 and -002 at `balance.js:160-161`
+(`if (!(L > 0 && S > 0 && b > 0)) return null;`), FORMULA-STRUCT-126 at
+`fuselage-structure.js:126`, FORMULA-STRUCT-155 at `ground-loads.js:82`,
+FORMULA-WEIGHT-231 at `cg.js:93`.
+
+**AND IT MATCHES ENGLISH PROSE.** Three alternatives are bare words -- `EPS`, `clamp`,
+`guard` -- applied case-insensitively to a window that includes comments. **30 question-20
+UNVERIFIEDs were reached only through a match landing inside a comment, 27 of them carried by one of
+those three bare words** (re-measured; this was first recorded as 18, which understated it), among them
+FORMULA-SIZING-472 to -477, where `/EPS/i` matched the letters inside the ordinary English word
+**"keeps"** in *"an aircraft where the shaft keeps both rotors turning"*, and FORMULA-WEIGHT-261 to
+-264 on *"codebase keeps finding"*. FORMULA-SIZING-279 matched the word `guard` in a sentence
+about a guard.
+
+**THE TWO ERRORS MEET IN ONE FILE, WHICH IS THE CLEAREST DEMONSTRATION.** In
+`gear/strut.js`, FORMULA-STRUCT-179, -184 and -188 were recorded WARNING because the pattern
+could not see their guards, while FORMULA-STRUCT-186 and -187 were recorded UNVERIFIED because
+`/EPS/i` matched *"ke**eps** no constant of its own"* in the comment above them. Same file, same
+idiom, two different verdicts, neither arrived at for a reason about the code.
+
+**What this does and does not mean.** It does not make the engine less safe and it moves no
+engineering quantity; question 20 still carries **no PASS anywhere**, by construction. What it
+damages is the WARNING side, which is the side that carries evidential weight: a WARNING asserts
+that nothing guards the case, and for 25 relations that assertion is false. The 225 remaining
+WARNINGs have no guard of either kind in the window, measured, and stand.
+
+**This block's own eight rows are corrected from the source, by hand** -- WARNING where a hole was
+hand-verified, UNVERIFIED where a guard is present and no hole was found, which is the phase's rule.
+**The 47 affected rows elsewhere are NOT re-graded here** — 19 false WARNINGs and 28 comment-only
+UNVERIFIEDs, this block's 8 having been corrected by hand: they belong to other relations and a
+re-grade needs its own block and its own authorisation.
+
+### F-65 severity, reassessed explicitly against the Phase 27 scale — RECLASSIFIED LOW to MEDIUM
+
+**This reassessment was requested, and the magnitudes it rests on were re-measured from scratch
+rather than carried forward.** The re-measurement reproduced the original scanner exactly — same
+`GUARD` pattern, same ±25-line window, same register rows through `parseRegister()` — and then
+classified every question-20 verdict. **It confirmed one of this finding's two figures, corrected
+the other three, and found the damage larger than first recorded.** Those corrections are applied
+above; they are listed together in *"Magnitudes corrected"* below.
+
+**THE SCALE.** Per this document's own statement of the Phase 27 scale: **CRITICAL** changes
+engineering conclusions or invalidates sizing · **HIGH** is a significant numerical or physical
+error · **MEDIUM** is meaningful but localized · **LOW** is presentation, documentation or minor
+numerical.
+
+**AXIS 1 — EFFECT ON PRODUCTION ENGINEERING CALCULATIONS: NONE, AND THIS IS MEASURED.**
+`build_p2_ledger.mjs` is audit tooling that exists only in a scratchpad. It is referenced nowhere
+in `src/`, nowhere in `validation/`, and nowhere in `package.json` — checked. It does not run in
+`npm test`, it does not ship, and by its own header it *"does NOT run the engine and does NOT
+inspect the numerical output of any formula."* It reads source text and emits verdicts. **No sizing
+quantity, no mass, no energy and no geometry depends on it in any way.** On this axis the finding
+is not even LOW; it is zero. Nothing a user of the sizing tool experiences is affected, and no
+engineering conclusion in this audit rests on a question-20 verdict.
+
+**AXIS 2 — EFFECT ON CONFIDENCE IN THE PHASE-2 LEDGER: MATERIAL, AND BIDIRECTIONAL.**
+Re-measured ledger-wide:
+
+| measure | value |
+|---|---|
+| question-20 WARNINGs the scanner itself produces | **250** |
+| of those, WARNINGs asserting "no guard" where the window holds `!(x > 0)` | **25 = 10.0 %** |
+| question-20 UNVERIFIEDs the scanner produces | **1,038** |
+| of those, reached ONLY by a match inside a comment | **30 = 2.9 %** |
+| of those 30, carried by a bare word (`EPS`, `clamp`, `guard`) | **27** |
+| relations whose question-20 verdict was not reached for a reason about the code | **55 of 1,288 = 4.27 %** |
+| the same 55 as a share of all 25,760 determination cells | **0.214 %** |
+| already corrected by hand in this block | **8** (6 WARNINGs, 2 UNVERIFIEDs) |
+| **still outstanding elsewhere in the ledger** | **47** (19 WARNINGs, 28 UNVERIFIEDs) |
+
+**THE RULING: MEDIUM, scoped as "MEDIUM for audit integrity, NONE for production engineering."**
+Four reasons, in order of weight:
+
+1. **"Meaningful but localized" is the precise fit.** It is meaningful because **10.0 % of
+   question 20's positive assertions are false** — a WARNING asserts that nothing guards the case,
+   and for 25 relations a guard sits one line away. It is localized because it touches one question
+   of twenty, through one tool, with zero production reach.
+2. **LOW's "documentation" means presentation of results; this is a defective measurement.** The
+   Phase-2 ledger is not presentation — it is this audit's primary evidentiary record, and a
+   question-20 WARNING is an assertion of fact about the code. An instrument that makes false
+   factual assertions about a tenth of its own positive findings has not mis-formatted a result; it
+   has mis-measured one. Within the audit, that is the analogue of a numerical error, scaled down
+   by its localisation — which lands on MEDIUM, not LOW.
+3. **Severity should track what a reader would wrongly conclude.** A reader of this ledger would
+   wrongly conclude that 25 relations have no zero, negative or NaN protection, and might "repair"
+   guards that already exist or distrust code that is sound. In the other direction, 30 rows record
+   that *"a guard exists nearby"* on the strength of an English word in a comment, which is false
+   reassurance. Both directions corrupt the product the ledger exists to provide.
+4. **The measured reach grew on inspection.** The comment-only population was first recorded as 18
+   and measures **30**. A defect whose magnitude increases when it is finally measured properly
+   does not belong in the lowest bucket.
+
+**THE CASE FOR RETAINING LOW, stated fairly, because it is not weak.** Zero production effect; only
+**0.214 %** of determination cells; and question 20 **can never PASS by design**, so it is the
+weakest-evidence column in the ledger and its WARNINGs were never load-bearing for any PASS claim.
+On a scale whose every rung is worded in engineering terms, a defect with no engineering effect
+arguably cannot exceed LOW. **This case is rejected on one point:** the scale's rungs are worded for
+the engine because the audit did not anticipate auditing its own instrument, and reading "no
+engineering effect" as "therefore minor" would make every possible defect in the audit tooling
+unreportable above LOW — including one that silently invalidated a whole question. Severity must be
+able to describe damage to the evidence as well as damage to the aeroplane.
+
+**A GAP IN THE SCALE ITSELF, FOR THE HOLDER.** The Phase 27 scale has **no audit-integrity axis**.
+F-65 is the first finding against the audit's own instrument, and it had to be forced onto a ladder
+built for engineering defects. The MEDIUM above is therefore recorded **with its axis named** rather
+than as a bare word. **Whether the scale should gain an explicit audit-integrity dimension is the
+holder's call and is not decided here.**
+
+**Magnitudes corrected in this finding by the re-measurement.** Recorded openly, because this
+finding is itself about a mis-measurement and must not repeat the fault:
+
+- **"25 of the 275 question-20 WARNINGs (9.1 %)" mixed two populations.** The numerator is the
+  scanner's own output; **275 is the LEDGER's current question-20 WARNING count**, which differs
+  because earlier blocks hand-corrected rows. Measured in one population: **25 of the scanner's 250
+  WARNINGs = 10.0 %**. The ledger's current column is **275 WARNING / 1,013 UNVERIFIED**; the
+  scanner's raw output is **250 / 1,038**. Both sum to 1,288.
+- **"18 question-20 UNVERIFIEDs" understated the comment-only population.** Measured: **30**, of
+  which **27** are carried by one of the three bare words. The 18 was not reproducible as any
+  natural subset.
+- **"The 220 remaining WARNINGs"** is **225** — the scanner's 250 less the 25 identified.
+- **"The other 25 are NOT re-graded here"** should be **19**: of the 25 false WARNINGs, **6 are this
+  block's own rows** (STRUCT-179, -180, -181, -182, -184, -188) and were corrected by hand here, as
+  were 2 comment-only UNVERIFIEDs (STRUCT-186, -187). **47 affected rows remain outstanding
+  elsewhere**, not 25.
+
+**Not repaired.** Widening the pattern to the negated idiom, requiring a code-shaped match, and
+excluding comments are changes to the audit tooling, and re-deriving question 20 across 1,288
+relations is a block of its own. **Nothing is re-graded outside this block's eight relations.**
+
+---
+
+## F-66 — the stroke relation cites the corpus subsection that quotes a primary, where the equation it uses is the one the corpus labels derived — LOW — VERIFIED
+
+**EXACT PRODUCTION LOCATION.** Two sites in `src/engine/gear/strut.js`, both in the module that
+computes the oleo stroke:
+
+```
+l.159  the `src:` string returned by `strokeFromEnergy`, in the resolved result object:
+         src: "LANDING-GEAR.md section 1.4b eq. (23), from the energy balance (22)",
+l.18   the module header comment, which introduces the same equation:
+         THE ENERGY BALANCE, section 1.4b, eq. (22):
+```
+
+`l.5` of the same header cites *"LANDING-GEAR.md section 1.4"* — the parent section, with no
+letter. **That one is correct and must not be "fixed".**
+
+**STATED CITATION.** Section **1.4b**, for eq. (22) and eq. (23).
+
+**CORRECT CITATION.** Section **1.4c**, *"Assembling the stroke equation"*. In
+`../eVTOL_Sizing_Research/classes/cross-class/LANDING-GEAR.md`, measured: §1.4c opens at **l.443**
+and carries **(22) at l.448**, **(23) at l.457** and **(24) at l.465**.
+
+**PRIMARY AND CORPUS EVIDENCE.** The two subsections are different in kind, which is what makes the
+slip worth recording:
+
+- **§1.4b (l.396–442), *"The energy balance — stated by the FAA itself"*** quotes **FAA
+  AC 25.723-1 §5 verbatim** — the free-drop heights and the effective-weight formula — and carries
+  the numbered equations **(19)** h = 18.7 in at MLW and 6.7 in at MTOW, **(20)**
+  W_e = W[h + (1 − L)d]/(h + d), and **(21)** the 27-inch reserve-energy height. **It contains
+  neither (22) nor (23).**
+- **§1.4c (from l.443)** derives (22), (23) and (24), and labels them in its own words:
+  *"derived from (17)–(21); this is algebra on primary results, not a quoted equation"*.
+
+So the cited subsection is the one that **quotes a primary**, while the equation actually
+implemented lives in the subsection the corpus **explicitly marks as derived**.
+
+**THE EQUATION ITSELF REMAINS CORRECT — MEASURED, NOT ASSUMED.** Recomputed longhand from the
+corpus text over a swept legal population of **16,660 cases** (V 6–12 fps, L 0–1, N 1.5–3.5,
+η_s 0.60–0.85, η_t 0.44–0.50, δ_t 0–0.15 m; 140 further combinations correctly refused for a
+non-positive denominator):
+
+| check | worst result |
+|---|---|
+| module stroke vs eq. (23) recomputed longhand | **0.00e+0** (exact) |
+| eq. (22) energy-balance residual at the module's stroke, as a fraction of the kinetic term | **7.81e-15** |
+| `collapsedForm` vs eq. (24) at L = 1 | **0.00e+0** (exact) |
+
+The implementation matches the equation, and the equation satisfies the balance that the citation
+names. **Nothing about the arithmetic is in question.**
+
+**NUMERICAL EFFECT: NONE DEMONSTRATED.** No engineering quantity moves. The defect is in a string,
+not in an expression; the string is never parsed, compared or computed with.
+
+**REACHABILITY, MEASURED.** The mis-citation is live rather than dead, but bounded. Walking every
+reachable value for the literal `1.4b`:
+
+- **It is present** at `gear.strut.src` for all three tricycle classes through
+  `gearOf(designAircraft({type}))`, on a resolved branch with real strokes — transport
+  **0.2554 m**, bizjet **0.2834 m**, turboprop **0.2791 m**.
+- **It does not escape** into the public API (`size()` for the same three types: 0 hits), into a
+  **saved design record** (0 hits, and the literal is absent from the serialised JSON), or into the
+  rendered gear tab, which displays the stroke, η strut and η tyre and cites MIL-L-8552C §3.5.2
+  for the strut efficiency — correctly.
+
+So the wrong citation is visible to an in-process consumer of `gearOf` and to anyone reading the
+module, and is not visible to an end user of the application.
+
+**WHY THIS IS A PROVENANCE AND TRACEABILITY DEFECT RATHER THAN A PHYSICS DEFECT.** The physics is
+verified above. What fails is the audit trail. A provenance string exists so that a reader can go
+from an implemented expression to the exact place its authority rests, and judge how strong that
+authority is. This string sends the reader to the subsection that quotes the FAA verbatim, and
+therefore **overstates the provenance class of the equation it labels**: it implies quoted-primary
+support for algebra that the corpus itself declines to call a quoted equation. A reader who
+followed the citation would find AC 25.723-1's effective-weight formula, not the stroke equation,
+and would either conclude the tool had mis-derived the stroke from (20), or would record the
+stroke as primary-sourced when the corpus marks it derived. Both are traceability failures, and
+the second is the error F-42 names — a record asserting stronger support than exists.
+
+**Severity LOW.** It is a documentation and traceability defect with no demonstrated numerical
+effect, which is what the Phase 27 scale's LOW describes. It is not lower than LOW: the string is
+reachable, it is wrong in a way that misdirects provenance rather than merely mis-spelling it, and
+the audit's own rule is that a claim is not evidence.
+
+**NOT REPAIRED. PASS A MODIFIES NO PRODUCTION CODE.** The correction is one character in each of
+two places — `1.4b` to `1.4c` at l.159 and l.18 — and `src/engine/gear/strut.js` is production
+code, so it is deliberately left untouched here and belongs to a remediation pass under its own
+authorisation. **No file under `src/` was modified by this finding.**
+
+
 
 
 

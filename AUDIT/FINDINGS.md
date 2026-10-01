@@ -2419,6 +2419,203 @@ row outside the record may show that same shape. It also re-derives the baseline
 byte-for-byte, so a change to the sources that would alter question 20 fails the check instead of
 silently rewriting the evidence.
 
+---
+
+## F-68 — the gust mass ratio is built from the mean AERODYNAMIC chord where the primary, the regulation, the corpus recipe and the module's own header all specify the mean GEOMETRIC chord, and the error is non-conservative — MEDIUM — VERIFIED
+
+**EXACT PRODUCTION LOCATION.** `src/engine/loadcases.js:220`
+
+```
+  const cBar = Math.max(0.1, g.MAC ?? 1.5);
+```
+
+consumed one line later at **l.223** by `FORMULA-STRUCT-221`:
+
+```
+  const mu = 2 * WS / (rho * cBar * a * G0);
+```
+
+`g.MAC` is the mean **aerodynamic** chord. Both call sites pass it as such —
+`engine.js:1259` and `engine.js:2558` supply `MAC`, computed at `engine.js:848`
+and `l.1694` as `(2/3)·Cr·(1+λ+λ²)/(1+λ)`, which is the standard MAC of a
+trapezoidal wing and is not the mean geometric chord.
+
+**FOUR INDEPENDENT SOURCES SAY THE CHORD IS GEOMETRIC, AND ONE OF THEM IS THIS
+FILE.**
+
+1. **NACA TR 1206's own symbol list** (printed p. 2, vendored verbatim in
+   `FLIGHT-ENVELOPE.md`): `c` = *"reference wing chord mean geometric chord,
+   (Wing area / Wing span)"*.
+2. **14 CFR 25.335(d)(1)**: *"c = mean geometric chord of the wing (feet)"*.
+3. **The corpus's own implementation recipe** for this method, step 5:
+   `cbar = S/b`.
+4. **This module's own header**, which quotes the MOC gust shape with
+   *"C_bar = mean geometric chord"* and then writes
+   `mu = 2 (W/S) / (rho * c_bar * a * g)`. **The file states the correct
+   definition and then codes a different quantity.**
+
+**AND THE AUDITED SIBLING DOES IT CORRECTLY.** `flight-envelope.js:157`:
+
+```
+  const cBarFt = (S / b) / FT;                       // mean GEOMETRIC chord, 25.335(d)
+```
+
+and it exports the value as `meanGeometricChordFt`. The same primary equation is
+implemented twice in this repository, once right and once wrong, and the register
+already records the neighbouring `Kg` line as a **C7 duplicated implementation**.
+
+**THE ERROR IS A CLOSED FORM, SO ITS BOUND IS EXACT.** For a trapezoidal wing
+`S = b·Cr·(1+λ)/2`, so `MGC = S/b = Cr(1+λ)/2`, and
+
+```
+  MAC / MGC = (4/3) (1 + λ + λ²) / (1 + λ)²
+```
+
+verified against the geometry identities to the last bit at six taper ratios.
+Over the declared taper range **0.2 to 0.8** this is **1.0041 to 1.1481**, and it
+is **never below 1**, with equality only at λ = 1.
+
+**THE DIRECTION IS NON-CONSERVATIVE.** `mu ∝ 1/c`, so an overstated chord
+understates `mu`; `Kg = 0.88μ/(5.3+μ)` is strictly increasing in `μ`
+(`dKg/dμ = 0.88·5.3/(5.3+μ)² > 0`); and `Δn ∝ Kg`. A larger chord therefore
+**under-predicts the gust load factor**, which is the wrong way for a structural
+sizing input.
+
+**MEASURED ON THE REAL POPULATION, NOT ONLY SWEPT.** 1,620 designs sized through
+the public API across the four winged layouts over the declared slider ranges
+(taper 0.2–0.8, AR 4–16, cruise 30–120 m/s, altitude 200–3000 m, wing loading
+700–2200 N/m²):
+
+| quantity | measured |
+|---|---|
+| mass ratio `mu` spanned | **2.72 to 94.98** |
+| cases where the GUST governs, not the manoeuvre | **512 of 1,620 — 31.6 %** |
+| worst under-prediction of `nLimit` | **5.35 %** (4.9830 coded against 5.2647 corrected) |
+| worst shortfall in `nUltimate`, the factor `wingBox` is sized to | **0.4363 g** |
+
+**It is not latent.** In 31.6 % of the declared design space the gust case sets
+the limit load factor, and `engine.js:2562` passes `nz: lcase.nUltimate`
+straight into `wingBox`. A wider parameter sweep that is not restricted to sized
+designs reaches **8.52 %** on `nLimit` (ultimate 12.3725 against 13.5253).
+
+**WHAT IS NOT WRONG.** The equation form is right: a longhand reproduction of the
+whole chain — `WS`, `mu`, `Kg`, the three gust cases and the maximum — agrees
+with the shipped module at relative **0.0e+0** across 729 swept cases. The module
+computes exactly what it documents. The defect is which quantity is bound to
+`c`, which is why question 2, variable definition, is recorded **FAIL** on
+STRUCT-221 while question 1 stands at PASS.
+
+**NOT REPAIRED. PASS A MODIFIES NO PRODUCTION CODE.** The correct quantity is
+already in scope at both call sites — `engine.js:1691` computes
+`bWing = sqrt(p.AR*Swing)`, so `S/b` is one expression away — but
+`src/engine/loadcases.js` is production code and is deliberately left untouched.
+**No file under `src/` was modified by this finding.**
+
+---
+
+## F-69 — the gust increment pairs sea-level density with TRUE airspeed where the primary requires EQUIVALENT airspeed, overstating the gust by up to 16 % at altitude — MEDIUM — VERIFIED
+
+**EXACT PRODUCTION LOCATION.** `src/engine/loadcases.js:259`, `FORMULA-STRUCT-225`:
+
+```
+  const dn = Kg * gc.Ude * V * a * rho0 / (2 * WS);
+```
+
+where `V` comes from `speeds[gc.speedKey]`, built at **l.229–231** from
+`const VH = g.vCruise`, and `rho0` is `g.rho0 ?? 1.225` — sea level, as the
+comment at l.218 says.
+
+**WHAT THE PRIMARY REQUIRES.** NACA TR 1206 Eq (11), vendored verbatim:
+
+```
+            m ρ₀ S V_e U_de
+  Δn_max = ───────────────── K_g
+                 2W
+```
+
+with, from the symbol list, *"ρ₀ = air density at sea level"* and
+*"V_e = equivalent airspeed, fps"*. The sea-level density is paired with
+**equivalent** airspeed; that pairing is what makes the formula altitude-correct
+without a density ratio.
+
+**WHAT IS SUPPLIED INSTEAD.** `p.vCruise` is TRUE airspeed everywhere else in
+this engine, which is the evidence that it is TAS here too:
+
+- `engine.js:840` `const qCr_i = 0.5*rhoCr*p.vCruise**2` — dynamic pressure
+  against the density **at altitude**, which is only correct for TAS;
+- `engine.js:770` `machCr_ = p.vCruise/sqrt(1.4*287.05287*(288.15-0.0065*cruiseAlt))`
+  — Mach from the speed of sound at altitude, again TAS;
+- `engine.js:849` `Re_i = rhoCr*p.vCruise*MAC_i/muCr` — Reynolds number with the
+  density at altitude.
+
+**MEASURED MAGNITUDE.** `V_e = V_t·sqrt(ρ/ρ₀)`, so the correct product is
+`V_t·sqrt(ρ₀ρ)` while the code forms `ρ₀·V_t`; the ratio is `sqrt(ρ₀/ρ)`:
+
+| altitude | ρ (ISA) | V_e/V_t | Δn overstated by |
+|---|---|---|---|
+| 200 m | 1.20165 | 0.99042 | **0.97 %** |
+| 1000 m | 1.11164 | 0.95261 | **4.97 %** |
+| 2000 m | 1.00649 | 0.90644 | **10.32 %** |
+| 3000 m | 0.90912 | 0.86148 | **16.08 %** |
+
+**THE DIRECTION IS CONSERVATIVE**, which is why this is MEDIUM and not higher: it
+over-predicts the gust. **It does not cancel F-68.** Correcting both together,
+the net error on `nLimit` runs from **7.74 % non-conservative** (λ = 0.2, 200 m)
+to **14.67 % conservative** (λ = 0.8, 3000 m) — the sign depends on taper and
+altitude, so neither defect excuses the other.
+
+**THE REGISTER ALREADY FLAGS THE AMBIGUITY** it does not resolve: the row records
+`V=AMBIGUOUS` in its inputs and `unit verif: UNRESOLVED`. Question 5, reference
+conditions, is therefore recorded **FAIL** on STRUCT-225 — the reference
+condition for `V` is equivalent airspeed and true airspeed is supplied — while
+question 1 stands at PASS, because the expression itself is Eq (11).
+
+**NOT REPAIRED. No file under `src/` was modified by this finding.** The sibling
+`flight-envelope.js` shows the intended discipline: its helper is
+`gustIncrement({ kg, uDsFtS, veKt, aPerRad, wLbFt2 })` — the airspeed parameter
+is **named** `veKt`, knots EAS.
+
+---
+
+## F-70 — the gust method is applied far outside the regime its primary validates, and the primary's own validity statement is not carried into the module — LOW — VERIFIED
+
+**A PROVENANCE AND TRACEABILITY DEFECT, with no numerical effect of its own.**
+
+`src/engine/loadcases.js` §"HOW THE LOAD FACTOR IS OBTAINED" cites the method as
+*"the form CS-23.341 and FAR 23.341 use"*. Those are downstream users of the same
+expression; the **primary is NACA TR 1206 (Pratt, 1954)**, which the module never
+names. The corpus says of TR 1206's assumptions, in terms: *"this is the validity
+statement the tool must repeat"*.
+
+**WHAT THE PRIMARY STATES AND THE MODULE DOES NOT.** TR 1206, printed p. 3,
+verbatim: the aeroplane is *"a rigid body"*, at *"constant"* forward speed, in
+*"steady level flight prior to entry into the gust"*, *"can rise but cannot
+pitch"*, with fuselage and tail lift increments *"negligible"*, in a gust
+*"uniform across the wing span"*. Printed p. 2 adds that the pitch correction is
+an empirical adjustment *"reasonable only for conventional aircraft having
+satisfactory flying qualities"*, and p. 3 that *"the present method will not be
+suitable for all airplane configurations. **Unusual airplanes will require
+special analysis.**"*
+
+**WHY IT MATTERS HERE RATHER THAN BEING A STYLE POINT.** The module applies this
+method to an eVTOL — the configuration class the primary's caveat is aimed at —
+and at mass ratios this audit measured down to **mu = 2.72** over 1,620 sized
+designs. `Kg` is a **curve fit to a numerical solution**, and TR 1206 states its
+accuracy as *"an error less than ±0.01"* in `Kg`. That is an absolute tolerance,
+so its relative weight grows as `Kg` falls: at the low-`mu` end it is **4.0 % of
+Kg**, against **1.2 %** at the high end. The module reports `gustAlleviation` and
+a governing load factor with no statement of either limit, so a reader cannot
+tell that the quoted fit tolerance alone is a four-percent uncertainty in the
+regime this tool actually occupies.
+
+The module is otherwise unusually candid — it declares the (1-cos) substitution,
+the `[LAY]` speed proportions and the asymmetric-gust treatment. This finding is
+the one gap in that record, and it is recorded as **LOW** because nothing
+numerical moves: the omission affects how the output should be read, not what it
+is. Questions 7 on STRUCT-221, STRUCT-224 and STRUCT-225 carry the WARNING.
+
+**No file under `src/` was modified by this finding.**
+
 
 
 

@@ -2126,7 +2126,15 @@ finding is itself about a mis-measurement and must not repeat the fault:
   were 2 comment-only UNVERIFIEDs (STRUCT-186, -187). **47 affected rows remain outstanding
   elsewhere**, not 25.
 
-**Not repaired.** Widening the pattern to the negated idiom, requiring a code-shaped match, and
+**REMEDIATED BY F-67 (the question-20 integrity block).** The detector was rebuilt to read code
+only and to recognise the negated refusal forms, and **31 WARNING cells carrying a false "no guard"
+assertion were withdrawn to UNVERIFIED**, each inspected individually against the source, taking the
+ledger to 244 W / 1,044 U and the global total to 2,670 of 25,760. **The 33 hand-audited WARNINGs
+were left untouched**, and the comment-only UNVERIFIEDs were **not** flipped to WARNING, because that
+would assert a hole from the absence of a detected guard. **The window-scope defect is NOT fixed and
+is left open in F-67**; the magnitude quoted for it anywhere must be treated as unmeasured.
+
+**Not repaired by THIS finding.** Widening the pattern to the negated idiom, requiring a code-shaped match, and
 excluding comments are changes to the audit tooling, and re-deriving question 20 across 1,288
 relations is a block of its own. **Nothing is re-graded outside this block's eight relations.**
 
@@ -2218,6 +2226,198 @@ the audit's own rule is that a claim is not evidence.
 two places — `1.4b` to `1.4c` at l.159 and l.18 — and `src/engine/gear/strut.js` is production
 code, so it is deliberately left untouched here and belongs to a remediation pass under its own
 authorisation. **No file under `src/` was modified by this finding.**
+
+---
+
+## F-67 — question 20's mechanically-derived verdicts carried a false "no guard" assertion on 31 relations; the detector is corrected, the cells are withdrawn, and the window-scope defect is left open — MEDIUM — VERIFIED — AUDIT TOOL, NOT THE REPOSITORY
+
+This is the F-65 remediation block. It is a defect in the Phase-2 instrument, not
+in the engine, and **no production file is touched by it.**
+
+**ROOT CAUSE.** `build_p2_ledger.mjs` decided question 20 by testing one
+case-insensitive regex against the raw text of a fixed ±25-line window:
+
+```js
+const GUARD = /Number\.isFinite|isNaN|Math\.max\s*\(\s*0|Math\.min|<=\s*0|<\s*0|>\s*0\s*\?|\|\|\s*0|\?\?\s*0|clamp|Math\.abs|EPS|guard/i;
+```
+
+Three properties of that one line produced every error. It read **raw text, so
+comments counted as protection**; three alternatives were **bare words**, so
+English prose counted; and it contained **no negated form**, so this
+repository's commonest refusal idiom `!(x > 0)` was invisible. The asymmetry it
+implemented was correct in principle — absence of a guard is evidence, presence
+proves nothing — but it mis-measured both sides of that asymmetry at once.
+
+**WHAT THE BASELINE SHOWS, REPRODUCED EXACTLY BEFORE ANYTHING WAS CHANGED.** The
+old mechanism was re-run verbatim — same regex, same window, same register site
+mapping through `parseRegister()` — over all 1,288 relations:
+
+| population | count |
+|---|---|
+| scanner WARNING | **250** |
+| scanner UNVERIFIED | **1,038** |
+| ledger WARNING before this block | **275** |
+| ledger UNVERIFIED before this block | **1,013** |
+| rows where ledger and scanner disagree | **29** |
+
+**The 29 disagreements are all legitimate and were left alone.** Every one is a
+`FORMULA-STRUCT-*` row in a file an audit block had already worked by hand —
+`gearlayout.js`, `fuselage-shear-flow.js`, `stowage.js`, `flight-envelope.js`,
+`fuselage-structure.js`, `gear/strut.js` — so each is a hole a person verified,
+which is precisely what WARNING is reserved for. **This also settles the
+denominator F-65 got wrong:** 275 is the ledger's column after those hand
+corrections, 250 is the scanner's own output, and quoting a numerator from one
+against a denominator from the other is what produced "25 of the 275 (9.1 %)".
+
+**THE CORRECTED DETECTOR, AND WHAT IT DELIBERATELY DOES NOT DO.** Two defects are
+fixed and nothing else: evidence is sought in **code only** - a character-level state machine
+removes **comment text AND string and template literal contents**, keeping `${...}`
+interpolations because those are code, and preserving every newline and column so a cited
+evidence line still points at the real source line;
+and the **negated refusal forms are recognised** — `!(x > 0)`, compound
+`!(a > 0 && b > 0)`, mixed `!d || !(x > 0)`, and `!isFinite(...)`. `EPS` must be
+an identifier at word boundaries, `clamp` must be a call. The contract is
+unchanged and enforced in the suite: **evidence yields UNVERIFIED, never PASS**;
+absence of evidence is a reason to read the source, not an engineering
+conclusion; `?? 0` and `|| 0` are reported but **not credited**, because
+substituting zero for an absent value does not protect against a supplied zero,
+a negative or a NaN.
+
+**THE DIRECTION OF CORRECTION IS ONE-WAY, AND THAT IS THE CENTRAL DESIGN
+DECISION.** Under the asymmetry a WARNING asserts *"nothing guards this case"* —
+a positive, load-bearing claim — while UNVERIFIED asserts nothing at all. So a
+WARNING contradicted by real code may be withdrawn mechanically, because
+withdrawing a false assertion is always safe. **An UNVERIFIED reached only
+through a comment was NOT flipped to WARNING**, because doing so would assert a
+hole from the absence of a detected guard, which is the old bug wearing a new
+regex. Those cells are already the conservative verdict; what was wrong is the
+rationale, and a rationale is a finding, not a cell edit.
+
+**WHAT CHANGED: 31 question-20 cells, W → UNVERIFIED, each inspected
+individually against the source.** No bulk conversion was performed. For every
+one, the production source was read, the guarding line located by number, and the
+coverage characterised:
+
+- **19 rows where the guard constrains quantities the relation itself consumes** —
+  for example `balance.js:152` `if (!(L > 0 && S > 0 && b > 0)) return null;`
+  guarding the `L` used at l.160–161; `cg.js:91` `if (!(fL > 0 && D > 0))`
+  guarding l.93; `ground-loads.js:81` `if (!(z >= 0) || z >= 1)` guarding the
+  `sqrt(1 - z*z)` on the next line; `controlauthority.js:85`
+  `if (![T, R, Vt, fm].every((x) => isFinite(x) && x > 0)) return null;`, which
+  covers all four inputs for zero **and** non-finiteness; and `engine.js:1285`
+  `const cwOK = isFinite(cw.total) && cw.total>0 && cw.total<MTOW;`, whose result
+  is consumed directly by the relation at l.1296.
+- **12 rows where a real guard sits in the window but governs other quantities.**
+  UNVERIFIED is the verdict defined for exactly this case — *"a guard exists
+  nearby but was not shown to cover this relation"* — so the cell is correct and
+  the recorded reason now says which quantities the guard does and does not reach.
+
+Each row's **basis was rewritten as well as its cell.** All 31 carried the
+sentence *"20: no zero/negative/NaN guard within +/-25 lines of the site"*, which
+is false on every one of them; leaving that string beside a corrected cell would
+have moved the defect rather than repaired it. Each now names the rule, the line
+number and what the guard covers.
+
+**LEADS PRESERVED RATHER THAN DISCARDED.** Withdrawing a WARNING is not a claim
+that an edge is handled. `engine.js:1691–1696` (SIZING-280…285) divides by
+`bWing`, which is `0` whenever `hasWing` is false, so a non-finite wing geometry
+is reachable in principle; the guard in that window governs the MTOW iterate at
+l.1672, not these inputs. **That hole is NOT hand-verified here and is recorded
+for a future block.** Two further rows are noted as cases where question 20 has
+nothing to guard: `PROP-011` is a dimensionless constant (`2π/60`), and
+`MISC-017` is a regular-expression test on a string.
+
+**THREE POPULATIONS THAT MUST NOT BE CONFLATED.** A detector flagging a row is not the same thing
+as the ledger having been wrong, and neither is the same as a verdict that survives inspection.
+Stated separately, with the measured count of each:
+
+| population | count | what it means |
+|---|---|---|
+| **mechanically suspect**: ledger WARNING where the corrected detector finds executable evidence | **64** | the DETECTOR disagrees with the cell. A candidate for inspection, and nothing more. |
+| **false WARNINGs actually withdrawn** after per-row source inspection | **31** | the LEDGER was wrong here: it asserted no guard where one demonstrably executes. These are the only cells changed. |
+| **WARNINGs retained because independent source inspection supports them** | **33** | the LEDGER is RIGHT here. A person had already read the source and hand-verified the hole, so the detector's disagreement is the detector's limitation - chiefly the window scope - not a ledger defect. |
+
+**So the as-built scanner's error rate and the ledger's error rate are different numbers.** The
+scanner's mechanical output disagrees with code on 64 WARNING rows; the ledger, which already
+carried human corrections on top of that output, was wrong on **31**. Saying the scanner "was
+wrong on 64 WARNING rows" would silently convict 33 verdicts that independent inspection upholds.
+
+**WHAT WAS DELIBERATELY NOT CHANGED.**
+
+| population | count | why |
+|---|---|---|
+| hand-audited WARNING rows the detector contradicts | **33** | a person verified the hole; the tool does not overrule them |
+| UNVERIFIED rows whose only old evidence was a comment | **23** | UNVERIFIED already asserts nothing; the rationale was wrong, not the cell |
+| UNVERIFIED rows where the new detector finds no evidence | **33** | flipping these to WARNING would assert a hole from absence |
+
+**AN UNRESOLVED DEFECT, STATED RATHER THAN QUIETLY FIXED: THE ±25-LINE WINDOW IS
+THE WRONG SCOPE.** A guard controlling a relation can sit outside the window, and
+a guard inside the window can belong to an unrelated function. A first attempt at
+re-scoping question 20 to the enclosing function produced **513 proposed changes**
+and was **discarded as unsound**: sampling the source showed the scope finder
+returned a two-line "function" for `polarCurve` (really l.381–395) and excluded
+the live `eps` tolerance at `engine.js:346` from SIZING-032's scope, so its mass
+of U→W flips were artefacts of the heuristic. **The magnitude of the scope defect
+is therefore NOT reliably measured here, and no number for it should be quoted
+from this block.** Measuring it needs a real AST-based scope, and re-scoping
+question 20 would silently redefine every one of its 1,288 verdicts — a ruling for
+the holder, not a side effect of a tool. **It is left open.**
+
+**THE STRING-LITERAL FALSE POSITIVE IS FIXED, NOT MERELY DOCUMENTED.** An earlier version of
+this detector removed comments but treated string contents as code, so guard-shaped text inside
+a message string credited a guard that does not execute. The scrubber now removes literal text
+as well, and the tests assert each case by name: `Number.isFinite(x)`, `!(x > 0)` and `EPS`
+inside a string do **not** count, a template literal's text does **not** count, a `${...}`
+interpolation **does**, and every executable counterpart still does.
+**The fix does not move the adjudicated set: the 31 withdrawals are byte-identical before and
+after it, and no cited evidence line number changed.** It does change the detector's own
+distribution - 244 W / 1,044 U with comments-only scrubbing against **334 W / 954 U** with
+literals scrubbed as well - because **90 relations had their only apparent evidence inside a
+literal**. None of those are ledger changes, since this block only ever withdraws a WARNING.
+
+**ONE REMAINING LIMIT.** One rule, `refusal-truthy-mix`, is **provably redundant**: its inner
+expression is parenthesis-free by construction, so the token before `> 0` is always
+an identifier, which `refusal-positivity` already matches. It can never be the sole
+carrier of a verdict, is declared as subsumed, and is credited to nothing.
+
+**MUTANT PROTECTION, AND IT LIVES IN THE REPOSITORY.** The suite is
+`AUDIT/reference/q20/q20-tests.mjs`, **66 assertions, 0 failures, 0 dead rules**, run with
+`node AUDIT/reference/q20/q20-tests.mjs`. Four layers: 29 fixtures covering every failure mode
+named for this block, including the ones that must receive no evidence; a
+necessity layer that deletes each rule in turn and requires some fixture's verdict
+to move, with redundant rules declared in advance rather than discovered; a layer
+that reproduces the F-65 bug itself and shows the old regex misclassifying all
+five prose fixtures where the new detector does not, attributing each fix to
+comment blanking (2) or to rule shape (3); and an asymmetry layer proving PASS is
+unreachable for every fixture and for degenerate empty input.
+
+**EFFECT ON THE LEDGER.** Question 20 goes **275 W / 1,013 U → 244 W / 1,044 U**,
+and because a WARNING is a determination and UNVERIFIED is not, the global total
+falls **2,701 → 2,670 of 25,760 (10.5 % → 10.4 %)**. The six untouched questions
+are unchanged, question 20 still carries **no PASS anywhere**, and **no engineering
+quantity moves** — the determination count falls because 31 false assertions were
+withdrawn, which makes the ledger more honest and not less complete.
+
+**THE EVIDENCE IS IN THE REPOSITORY, SO THIS FINDING OUTLIVES ANY SCRATCHPAD.** Five artefacts,
+and deliberately only five - no probes, no discarded detector versions, no logs, no backups:
+
+| path | what it is |
+|---|---|
+| `AUDIT/data/q20-baseline.tsv` | the as-built question-20 derivation for all **1,288** relations: site, window bounds, verdict, and the text the old regex matched |
+| `AUDIT/data/q20-change-record.tsv` | the **31** withdrawals: relation, site, old, proposed and final verdict, the evidence line, and the human reason. Never machine-written |
+| `AUDIT/reference/q20/q20-detector.mjs` | the detector **actually used** to generate the candidates |
+| `AUDIT/reference/q20/q20-reproduce.mjs` | a deterministic generator: `--write` rebuilds the baseline, no flag verifies it and exits non-zero on drift |
+| `AUDIT/reference/q20/q20-tests.mjs` | the detector's regression and mutation tests |
+
+They live under `AUDIT/` rather than `validation/` on purpose: `report-manifest.mjs` enumerates
+`validation/` and treats every `.mjs` there as a harness, so putting audit tooling in that directory
+would make the manifest gate report it as an undescribed harness. **Nothing enumerates `AUDIT/`**, so
+the test runner, the report manifest and the `constants.mjs` numeral scan are all untouched.
+The verifier checks the record in **both directions**: every recorded row must have been WARNING in
+the baseline, must be UNVERIFIED in the ledger now, and must still show executable evidence; and no
+row outside the record may show that same shape. It also re-derives the baseline and compares it
+byte-for-byte, so a change to the sources that would alter question 20 fails the check instead of
+silently rewriting the evidence.
 
 
 

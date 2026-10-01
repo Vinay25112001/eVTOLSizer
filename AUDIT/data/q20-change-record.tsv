@@ -1,0 +1,32 @@
+relationID	site	oldQ20	proposedQ20	finalQ20	evidence	reason
+FORMULA-SIZING-256	src/engine.js:1296	W	U	U	finite-check at l.1285 (NaN and Infinity)	guard constrains consumed quantities
+FORMULA-SIZING-257	src/engine.js:1300	W	U	U	finite-check at l.1285 (NaN and Infinity)	guard constrains consumed quantities
+FORMULA-SIZING-280	src/engine.js:1691	W	U	U	refusal-finite at l.1672 (NaN and Infinity)	real guard in window, governs other quantities; lead: bWing is 0 when hasWing is false, so a quotient by bWing can be non-finite; NOT hand-verified here
+FORMULA-SIZING-281	src/engine.js:1692	W	U	U	refusal-finite at l.1672 (NaN and Infinity)	real guard in window, governs other quantities; lead: same bWing-zero path as 280
+FORMULA-SIZING-282	src/engine.js:1693	W	U	U	refusal-finite at l.1672 (NaN and Infinity)	real guard in window, governs other quantities; lead: divides by bWing, which is 0 when hasWing is false; NOT hand-verified here
+FORMULA-SIZING-283	src/engine.js:1694	W	U	U	refusal-finite at l.1672 (NaN and Infinity)	real guard in window, governs other quantities; lead: inherits the taper quotient from 282
+FORMULA-SIZING-284	src/engine.js:1695	W	U	U	refusal-finite at l.1672 (NaN and Infinity)	real guard in window, governs other quantities; lead: inherits the taper quotient from 282
+FORMULA-SIZING-285	src/engine.js:1696	W	U	U	refusal-finite at l.1672 (NaN and Infinity)	real guard in window, governs other quantities; lead: inherits MAC from 283
+FORMULA-SIZING-325	src/engine.js:1933	W	U	U	refusal-finite at l.1949 (NaN and Infinity)	guard constrains consumed quantities
+FORMULA-AERO-170	src/engine/drag.js:99	W	U	U	finite-check at l.100 (NaN and Infinity)	real guard in window, governs other quantities
+FORMULA-WEIGHT-001	src/classes/aircraft/balance.js:160	W	U	U	refusal-compound at l.152 (zero and negative across several inputs)	guard constrains consumed quantities
+FORMULA-WEIGHT-002	src/classes/aircraft/balance.js:161	W	U	U	refusal-compound at l.152 (zero and negative across several inputs)	guard constrains consumed quantities
+FORMULA-WEIGHT-003	src/classes/aircraft/balance.js:201	W	U	U	refusal-compound at l.192 (zero and negative across several inputs)	guard constrains consumed quantities
+FORMULA-WEIGHT-006	src/classes/aircraft/balance.js:204	W	U	U	refusal-compound at l.192 (zero and negative across several inputs)	guard constrains consumed quantities
+FORMULA-WEIGHT-231	src/engine/cg.js:93	W	U	U	refusal-compound at l.91 (zero and negative across several inputs)	guard constrains consumed quantities
+FORMULA-STRUCT-155	src/engine/gear/ground-loads.js:82	W	U	U	refusal-positivity at l.81 (zero and negative)	guard constrains consumed quantities
+FORMULA-STRUCT-163	src/engine/gear/ground-loads.js:159	W	U	U	refusal-positivity at l.150 (zero and negative)	guard constrains consumed quantities
+FORMULA-STRUCT-167	src/engine/gear/sink-speed.js:94	W	U	U	refusal-positivity at l.90 (zero and negative)	guard constrains consumed quantities
+FORMULA-STAB-061	src/classes/drone/dynamics.js:656	W	U	U	refusal-positivity at l.641 (zero and negative)	real guard in window, governs other quantities
+FORMULA-STAB-126	src/engine/controlauthority.js:86	W	U	U	finite-check at l.85 (NaN and Infinity)	guard constrains consumed quantities
+FORMULA-STAB-127	src/engine/controlauthority.js:87	W	U	U	finite-check at l.85 (NaN and Infinity)	guard constrains consumed quantities
+FORMULA-PROP-011	src/classes/drone/motor.js:87	W	U	U	refusal-positivity at l.98 (zero and negative)	real guard in window, governs other quantities; note: the relation is a dimensionless constant with no inputs, so Q20 has nothing to guard
+FORMULA-PROP-024	src/classes/drone/motor.js:223	W	U	U	refusal-positivity at l.222 (zero and negative)	guard constrains consumed quantities
+FORMULA-PROP-120	src/engine/configuration.js:828	W	U	U	refusal-positivity at l.826 (zero and negative)	guard constrains consumed quantities
+FORMULA-PROP-121	src/engine/configuration.js:829	W	U	U	refusal-positivity at l.826 (zero and negative)	guard constrains consumed quantities
+FORMULA-PROP-122	src/engine/configuration.js:830	W	U	U	refusal-positivity at l.826 (zero and negative)	guard constrains consumed quantities
+FORMULA-MISC-017	src/classes/drone/radio.js:179	W	U	U	refusal-positivity at l.193 (zero and negative)	real guard in window, governs other quantities; note: the relation is a regular-expression test on a string, not a numeric quantity
+FORMULA-MISC-018	src/classes/drone/radio.js:203	W	U	U	refusal-positivity at l.193 (zero and negative)	guard constrains consumed quantities
+FORMULA-REG-009	src/engine/certification.js:145	W	U	U	refusal-finite at l.136 (NaN and Infinity)	guard constrains consumed quantities
+FORMULA-REG-077	src/engine/uncertainty.js:287	W	U	U	refusal-finite at l.298 (NaN and Infinity)	real guard in window, governs other quantities
+FORMULA-BATTERY-011	src/classes/drone/flight-energy.js:106	W	U	U	refusal-positivity at l.125 (zero and negative)	real guard in window, governs other quantities

@@ -1,0 +1,1289 @@
+relationID	file	line	windowStart	windowEnd	asBuiltQ20	asBuiltMatch
+FORMULA-SIZING-002	src/classes/aircraft/engine.js	140	116	165	U	?? 0
+FORMULA-SIZING-003	src/classes/aircraft/engine.js	166	142	191	W	
+FORMULA-SIZING-004	src/classes/aircraft/engine.js	167	143	192	W	
+FORMULA-SIZING-005	src/classes/aircraft/engine.js	168	144	193	W	
+FORMULA-SIZING-008	src/classes/aircraft/engine.js	245	221	270	W	
+FORMULA-SIZING-009	src/classes/aircraft/engine.js	258	234	283	U	Number.isFinite
+FORMULA-SIZING-010	src/classes/aircraft/engine.js	270	246	295	U	Number.isFinite
+FORMULA-SIZING-013	src/classes/aircraft/engine.js	275	251	300	U	Number.isFinite
+FORMULA-SIZING-015	src/classes/aircraft/engine.js	294	270	319	U	Number.isFinite
+FORMULA-SIZING-017	src/classes/aircraft/engine.js	297	273	322	U	Number.isFinite
+FORMULA-SIZING-018	src/classes/aircraft/engine.js	298	274	323	U	Number.isFinite
+FORMULA-SIZING-019	src/classes/aircraft/engine.js	299	275	324	U	Number.isFinite
+FORMULA-SIZING-021	src/classes/aircraft/engine.js	326	302	351	U	> 0 ?
+FORMULA-SIZING-023	src/classes/aircraft/engine.js	328	304	353	U	> 0 ?
+FORMULA-SIZING-024	src/classes/aircraft/engine.js	329	305	354	U	> 0 ?
+FORMULA-SIZING-025	src/classes/aircraft/engine.js	330	306	355	U	> 0 ?
+FORMULA-SIZING-026	src/classes/aircraft/engine.js	336	312	361	U	> 0 ?
+FORMULA-SIZING-027	src/classes/aircraft/engine.js	337	313	362	U	> 0 ?
+FORMULA-SIZING-028	src/classes/aircraft/engine.js	339	315	364	U	> 0 ?
+FORMULA-SIZING-032	src/classes/aircraft/engine.js	351	327	376	U	> 0 ?
+FORMULA-SIZING-033	src/classes/aircraft/engine.js	363	339	388	U	> 0 ?
+FORMULA-SIZING-034	src/classes/aircraft/engine.js	366	342	391	U	eps
+FORMULA-SIZING-035	src/classes/aircraft/engine.js	368	344	393	U	eps
+FORMULA-SIZING-038	src/classes/aircraft/engine.js	390	366	415	U	Math.min
+FORMULA-SIZING-039	src/classes/aircraft/engine.js	409	385	434	U	Number.isFinite
+FORMULA-SIZING-041	src/classes/aircraft/engine.js	447	423	472	U	Number.isFinite
+FORMULA-SIZING-042	src/classes/aircraft/engine.js	477	453	502	U	Math.min
+FORMULA-SIZING-043	src/classes/aircraft/engine.js	489	465	514	U	Number.isFinite
+FORMULA-SIZING-045	src/classes/aircraft/engine.js	492	468	517	U	Number.isFinite
+FORMULA-SIZING-046	src/classes/aircraft/engine.js	493	469	518	U	Number.isFinite
+FORMULA-SIZING-047	src/classes/trainer/size.js	37	13	62	U	Math.min
+FORMULA-SIZING-048	src/classes/trainer/size.js	38	14	63	U	Math.min
+FORMULA-SIZING-049	src/classes/trainer/size.js	43	19	68	U	Math.min
+FORMULA-SIZING-050	src/classes/trainer/size.js	44	20	69	U	Math.min
+FORMULA-SIZING-053	src/classes/trainer/size.js	48	24	73	U	Math.min
+FORMULA-SIZING-054	src/classes/trainer/size.js	49	25	74	U	Math.min
+FORMULA-SIZING-055	src/classes/trainer/size.js	51	27	76	U	Math.min
+FORMULA-SIZING-058	src/classes/trainer/size.js	78	54	103	W	
+FORMULA-SIZING-061	src/classes/trainer/size.js	113	89	138	U	> 0 ?
+FORMULA-SIZING-062	src/classes/trainer/size.js	114	90	139	U	> 0 ?
+FORMULA-SIZING-065	src/classes/trainer/size.js	121	97	146	U	> 0 ?
+FORMULA-SIZING-066	src/classes/trainer/size.js	122	98	147	U	> 0 ?
+FORMULA-SIZING-068	src/classes/trainer/size.js	210	186	235	U	Number.isFinite
+FORMULA-SIZING-069	src/classes/trainer/size.js	211	187	236	U	Number.isFinite
+FORMULA-SIZING-074	src/classes/trainer/size.js	237	213	250	U	Number.isFinite
+FORMULA-SIZING-077	src/classes/transport/size.js	120	96	145	U	eps
+FORMULA-SIZING-078	src/classes/transport/size.js	131	107	156	U	eps
+FORMULA-SIZING-083	src/classes/transport/size.js	171	147	196	W	
+FORMULA-SIZING-085	src/classes/transport/size.js	176	152	201	W	
+FORMULA-SIZING-087	src/classes/transport/size.js	198	174	223	W	
+FORMULA-SIZING-089	src/classes/transport/size.js	200	176	225	W	
+FORMULA-SIZING-090	src/classes/transport/size.js	201	177	226	W	
+FORMULA-SIZING-091	src/classes/transport/size.js	202	178	227	W	
+FORMULA-SIZING-092	src/classes/transport/size.js	203	179	228	W	
+FORMULA-SIZING-094	src/classes/transport/size.js	223	199	248	W	
+FORMULA-SIZING-096	src/classes/transport/size.js	226	202	251	W	
+FORMULA-SIZING-097	src/classes/transport/size.js	236	212	261	W	
+FORMULA-SIZING-103	src/classes/transport/size.js	258	234	283	W	
+FORMULA-SIZING-104	src/classes/transport/size.js	259	235	284	W	
+FORMULA-SIZING-105	src/classes/transport/size.js	261	237	286	W	
+FORMULA-SIZING-108	src/classes/transport/size.js	264	240	289	W	
+FORMULA-SIZING-109	src/classes/transport/size.js	265	241	290	W	
+FORMULA-SIZING-110	src/classes/transport/size.js	289	265	314	W	
+FORMULA-SIZING-111	src/classes/transport/size.js	296	272	321	W	
+FORMULA-SIZING-112	src/classes/transport/size.js	297	273	322	W	
+FORMULA-SIZING-113	src/classes/transport/size.js	298	274	323	W	
+FORMULA-SIZING-115	src/classes/transport/size.js	307	283	332	W	
+FORMULA-SIZING-119	src/classes/transport/size.js	325	301	350	U	Math.max(0
+FORMULA-SIZING-120	src/classes/transport/size.js	326	302	351	U	Math.max(0
+FORMULA-SIZING-121	src/classes/transport/size.js	327	303	352	U	Math.max(0
+FORMULA-SIZING-123	src/classes/transport/size.js	329	305	354	U	Math.max(0
+FORMULA-SIZING-124	src/classes/transport/size.js	331	307	356	U	Math.max(0
+FORMULA-SIZING-127	src/classes/transport/size.js	334	310	359	U	Math.max(0
+FORMULA-SIZING-128	src/classes/transport/size.js	346	322	371	U	Math.max(0
+FORMULA-SIZING-129	src/classes/transport/size.js	347	323	372	U	Math.max(0
+FORMULA-SIZING-131	src/classes/transport/size.js	350	326	375	U	Math.max(0
+FORMULA-SIZING-135	src/classes/transport/size.js	357	333	382	U	Math.max(0
+FORMULA-SIZING-137	src/classes/transport/size.js	365	341	390	U	Math.max(0
+FORMULA-SIZING-138	src/classes/transport/size.js	399	375	424	U	> 0 ?
+FORMULA-SIZING-139	src/classes/transport/size.js	400	376	425	U	> 0 ?
+FORMULA-SIZING-141	src/classes/transport/size.js	416	392	441	U	> 0 ?
+FORMULA-SIZING-142	src/classes/transport/size.js	419	395	444	U	> 0 ?
+FORMULA-SIZING-143	src/classes/transport/size.js	433	409	458	U	> 0 ?
+FORMULA-SIZING-144	src/classes/transport/size.js	440	416	465	U	> 0 ?
+FORMULA-SIZING-145	src/classes/transport/size.js	450	426	475	U	Number.isFinite
+FORMULA-SIZING-147	src/classes/transport/size.js	488	464	513	U	Math.abs
+FORMULA-SIZING-149	src/classes/transport/size.js	493	469	518	U	Math.min
+FORMULA-SIZING-152	src/classes/transport/size.js	519	495	544	U	Math.min
+FORMULA-SIZING-155	src/classes/transport/size.js	533	509	558	U	Math.max(0
+FORMULA-SIZING-156	src/classes/transport/size.js	560	536	565	U	Math.max(0
+FORMULA-SIZING-157	src/classes/transport/size.js	561	537	565	U	Math.max(0
+FORMULA-SIZING-158	src/engine.js	160	136	185	U	clamp
+FORMULA-SIZING-159	src/engine.js	178	154	203	U	Math.min
+FORMULA-SIZING-160	src/engine.js	179	155	204	U	Math.min
+FORMULA-SIZING-161	src/engine.js	193	169	218	U	Math.min
+FORMULA-SIZING-162	src/engine.js	209	185	234	U	?? 0
+FORMULA-SIZING-164	src/engine.js	331	307	356	U	||0
+FORMULA-SIZING-165	src/engine.js	343	319	368	U	||0
+FORMULA-SIZING-166	src/engine.js	364	340	389	U	?? 0
+FORMULA-SIZING-167	src/engine.js	385	361	410	W	
+FORMULA-SIZING-168	src/engine.js	405	381	430	W	
+FORMULA-SIZING-169	src/engine.js	444	420	469	U	?? 0
+FORMULA-SIZING-172	src/engine.js	466	442	491	U	?? 0
+FORMULA-SIZING-173	src/engine.js	467	443	492	U	Clamp
+FORMULA-SIZING-174	src/engine.js	491	467	516	U	eps
+FORMULA-SIZING-175	src/engine.js	492	468	517	U	eps
+FORMULA-SIZING-176	src/engine.js	528	504	553	U	guard
+FORMULA-SIZING-177	src/engine.js	529	505	554	U	guard
+FORMULA-SIZING-178	src/engine.js	530	506	555	U	guard
+FORMULA-SIZING-180	src/engine.js	554	530	579	U	Math.abs
+FORMULA-SIZING-181	src/engine.js	599	575	624	U	?? 0
+FORMULA-SIZING-182	src/engine.js	600	576	625	U	?? 0
+FORMULA-SIZING-183	src/engine.js	660	636	685	U	|| 0
+FORMULA-SIZING-184	src/engine.js	703	679	728	U	<= 0
+FORMULA-SIZING-186	src/engine.js	770	746	795	U	??0
+FORMULA-SIZING-187	src/engine.js	833	809	858	U	guard
+FORMULA-SIZING-189	src/engine.js	840	816	865	U	eps
+FORMULA-SIZING-190	src/engine.js	846	822	871	U	eps
+FORMULA-SIZING-191	src/engine.js	847	823	872	U	eps
+FORMULA-SIZING-192	src/engine.js	848	824	873	U	eps
+FORMULA-SIZING-194	src/engine.js	850	826	875	U	guard
+FORMULA-SIZING-195	src/engine.js	851	827	876	U	guard
+FORMULA-SIZING-196	src/engine.js	860	836	885	U	guard
+FORMULA-SIZING-197	src/engine.js	861	837	886	U	guard
+FORMULA-SIZING-198	src/engine.js	865	841	890	U	guard
+FORMULA-SIZING-199	src/engine.js	866	842	891	U	guard
+FORMULA-SIZING-200	src/engine.js	867	843	892	U	guard
+FORMULA-SIZING-201	src/engine.js	868	844	893	U	guard
+FORMULA-SIZING-202	src/engine.js	869	845	894	U	??0
+FORMULA-SIZING-203	src/engine.js	910	886	935	U	||0
+FORMULA-SIZING-205	src/engine.js	912	888	937	U	||0
+FORMULA-SIZING-206	src/engine.js	915	891	940	U	||0
+FORMULA-SIZING-207	src/engine.js	917	893	942	U	||0
+FORMULA-SIZING-210	src/engine.js	933	909	958	U	||0
+FORMULA-SIZING-211	src/engine.js	934	910	959	U	||0
+FORMULA-SIZING-212	src/engine.js	935	911	960	U	||0
+FORMULA-SIZING-213	src/engine.js	990	966	1015	U	Math.min
+FORMULA-SIZING-214	src/engine.js	1015	991	1040	U	Math.min
+FORMULA-SIZING-215	src/engine.js	1058	1034	1083	U	<0
+FORMULA-SIZING-218	src/engine.js	1098	1074	1123	U	Math.max(0
+FORMULA-SIZING-219	src/engine.js	1099	1075	1124	U	Math.max(0
+FORMULA-SIZING-220	src/engine.js	1100	1076	1125	U	Math.max(0
+FORMULA-SIZING-221	src/engine.js	1107	1083	1132	U	Math.max(0
+FORMULA-SIZING-222	src/engine.js	1109	1085	1134	U	Math.max(0
+FORMULA-SIZING-223	src/engine.js	1116	1092	1141	U	Math.max(0
+FORMULA-SIZING-224	src/engine.js	1117	1093	1142	U	Math.max(0
+FORMULA-SIZING-225	src/engine.js	1119	1095	1144	U	>0 ?
+FORMULA-SIZING-226	src/engine.js	1125	1101	1150	U	?? 0
+FORMULA-SIZING-227	src/engine.js	1143	1119	1168	U	Math.max(0
+FORMULA-SIZING-228	src/engine.js	1146	1122	1171	U	Math.max(0
+FORMULA-SIZING-232	src/engine.js	1204	1180	1229	U	Math.max(0
+FORMULA-SIZING-234	src/engine.js	1206	1182	1231	U	Math.max(0
+FORMULA-SIZING-235	src/engine.js	1207	1183	1232	U	Math.max(0
+FORMULA-SIZING-236	src/engine.js	1208	1184	1233	U	Math.max(0
+FORMULA-SIZING-237	src/engine.js	1209	1185	1234	U	Math.max(0
+FORMULA-SIZING-238	src/engine.js	1210	1186	1235	U	Math.max(0
+FORMULA-SIZING-240	src/engine.js	1216	1192	1241	U	Math.max(0
+FORMULA-SIZING-243	src/engine.js	1227	1203	1252	U	Math.max(0
+FORMULA-SIZING-244	src/engine.js	1228	1204	1253	U	Math.max(0
+FORMULA-SIZING-245	src/engine.js	1229	1205	1254	U	Math.max(0
+FORMULA-SIZING-247	src/engine.js	1232	1208	1257	U	??0
+FORMULA-SIZING-249	src/engine.js	1236	1212	1261	U	??0
+FORMULA-SIZING-250	src/engine.js	1237	1213	1262	U	??0
+FORMULA-SIZING-252	src/engine.js	1246	1222	1271	U	??0
+FORMULA-SIZING-253	src/engine.js	1247	1223	1272	U	??0
+FORMULA-SIZING-254	src/engine.js	1248	1224	1273	U	??0
+FORMULA-SIZING-255	src/engine.js	1252	1228	1277	U	??0
+FORMULA-SIZING-256	src/engine.js	1296	1272	1321	W	
+FORMULA-SIZING-257	src/engine.js	1300	1276	1325	W	
+FORMULA-SIZING-258	src/engine.js	1380	1356	1405	U	>0?
+FORMULA-SIZING-259	src/engine.js	1386	1362	1411	U	>0?
+FORMULA-SIZING-261	src/engine.js	1408	1384	1433	U	>0?
+FORMULA-SIZING-262	src/engine.js	1414	1390	1439	U	Math.min
+FORMULA-SIZING-263	src/engine.js	1429	1405	1454	U	Math.max(0
+FORMULA-SIZING-264	src/engine.js	1430	1406	1455	U	Math.max(0
+FORMULA-SIZING-268	src/engine.js	1477	1453	1502	U	>0?
+FORMULA-SIZING-269	src/engine.js	1478	1454	1503	U	>0?
+FORMULA-SIZING-270	src/engine.js	1485	1461	1510	U	>0?
+FORMULA-SIZING-273	src/engine.js	1614	1590	1639	U	<0
+FORMULA-SIZING-276	src/engine.js	1628	1604	1653	U	Math.min
+FORMULA-SIZING-279	src/engine.js	1685	1661	1710	U	guard
+FORMULA-SIZING-280	src/engine.js	1691	1667	1716	W	
+FORMULA-SIZING-281	src/engine.js	1692	1668	1717	W	
+FORMULA-SIZING-282	src/engine.js	1693	1669	1718	W	
+FORMULA-SIZING-283	src/engine.js	1694	1670	1719	W	
+FORMULA-SIZING-284	src/engine.js	1695	1671	1720	W	
+FORMULA-SIZING-285	src/engine.js	1696	1672	1721	W	
+FORMULA-SIZING-286	src/engine.js	1697	1673	1722	W	
+FORMULA-SIZING-288	src/engine.js	1704	1680	1729	W	
+FORMULA-SIZING-290	src/engine.js	1738	1714	1763	U	??0
+FORMULA-SIZING-292	src/engine.js	1744	1720	1769	U	??0
+FORMULA-SIZING-293	src/engine.js	1745	1721	1770	U	??0
+FORMULA-SIZING-294	src/engine.js	1750	1726	1775	U	??0
+FORMULA-SIZING-295	src/engine.js	1751	1727	1776	U	??0
+FORMULA-SIZING-296	src/engine.js	1752	1728	1777	U	??0
+FORMULA-SIZING-297	src/engine.js	1753	1729	1778	U	??0
+FORMULA-SIZING-298	src/engine.js	1754	1730	1779	U	??0
+FORMULA-SIZING-299	src/engine.js	1765	1741	1790	U	??0
+FORMULA-SIZING-300	src/engine.js	1769	1745	1794	U	??0
+FORMULA-SIZING-301	src/engine.js	1770	1746	1795	U	??0
+FORMULA-SIZING-303	src/engine.js	1793	1769	1818	U	??0
+FORMULA-SIZING-305	src/engine.js	1799	1775	1824	U	??0
+FORMULA-SIZING-306	src/engine.js	1800	1776	1825	U	??0
+FORMULA-SIZING-307	src/engine.js	1806	1782	1831	U	??0
+FORMULA-SIZING-308	src/engine.js	1842	1818	1867	U	Math.min
+FORMULA-SIZING-310	src/engine.js	1847	1823	1872	U	Math.min
+FORMULA-SIZING-311	src/engine.js	1848	1824	1873	U	Math.min
+FORMULA-SIZING-312	src/engine.js	1849	1825	1874	U	Math.min
+FORMULA-SIZING-313	src/engine.js	1850	1826	1875	U	Math.min
+FORMULA-SIZING-316	src/engine.js	1866	1842	1891	U	Math.min
+FORMULA-SIZING-317	src/engine.js	1868	1844	1893	U	Math.min
+FORMULA-SIZING-318	src/engine.js	1878	1854	1903	U	??0
+FORMULA-SIZING-319	src/engine.js	1879	1855	1904	U	??0
+FORMULA-SIZING-322	src/engine.js	1909	1885	1934	U	<=0
+FORMULA-SIZING-325	src/engine.js	1933	1909	1958	W	
+FORMULA-SIZING-326	src/engine.js	1950	1926	1975	U	?? 0
+FORMULA-SIZING-327	src/engine.js	1951	1927	1976	U	?? 0
+FORMULA-SIZING-328	src/engine.js	1954	1930	1979	U	?? 0
+FORMULA-SIZING-329	src/engine.js	1955	1931	1980	U	?? 0
+FORMULA-SIZING-330	src/engine.js	1960	1936	1985	U	?? 0
+FORMULA-SIZING-331	src/engine.js	1961	1937	1986	U	?? 0
+FORMULA-SIZING-335	src/engine.js	1978	1954	2003	U	?? 0
+FORMULA-SIZING-336	src/engine.js	1979	1955	2004	U	?? 0
+FORMULA-SIZING-338	src/engine.js	1994	1970	2019	U	?? 0
+FORMULA-SIZING-339	src/engine.js	2043	2019	2068	U	clamp
+FORMULA-SIZING-344	src/engine.js	2053	2029	2078	U	clamp
+FORMULA-SIZING-345	src/engine.js	2063	2039	2088	W	
+FORMULA-SIZING-349	src/engine.js	2086	2062	2111	W	
+FORMULA-SIZING-350	src/engine.js	2092	2068	2117	W	
+FORMULA-SIZING-352	src/engine.js	2094	2070	2119	W	
+FORMULA-SIZING-353	src/engine.js	2099	2075	2124	W	
+FORMULA-SIZING-355	src/engine.js	2111	2087	2136	W	
+FORMULA-SIZING-357	src/engine.js	2140	2116	2165	W	
+FORMULA-SIZING-358	src/engine.js	2142	2118	2167	W	
+FORMULA-SIZING-359	src/engine.js	2143	2119	2168	W	
+FORMULA-SIZING-360	src/engine.js	2144	2120	2169	W	
+FORMULA-SIZING-361	src/engine.js	2170	2146	2195	U	Math.abs
+FORMULA-SIZING-364	src/engine.js	2173	2149	2198	U	Math.abs
+FORMULA-SIZING-365	src/engine.js	2176	2152	2201	U	Math.abs
+FORMULA-SIZING-366	src/engine.js	2178	2154	2203	U	Math.abs
+FORMULA-SIZING-367	src/engine.js	2182	2158	2207	U	Math.abs
+FORMULA-SIZING-368	src/engine.js	2183	2159	2208	U	Math.abs
+FORMULA-SIZING-370	src/engine.js	2195	2171	2220	U	Math.abs
+FORMULA-SIZING-371	src/engine.js	2196	2172	2221	W	
+FORMULA-SIZING-372	src/engine.js	2197	2173	2222	W	
+FORMULA-SIZING-373	src/engine.js	2198	2174	2223	W	
+FORMULA-SIZING-376	src/engine.js	2212	2188	2237	U	eps
+FORMULA-SIZING-377	src/engine.js	2225	2201	2250	U	eps
+FORMULA-SIZING-378	src/engine.js	2226	2202	2251	U	eps
+FORMULA-SIZING-380	src/engine.js	2235	2211	2260	U	eps
+FORMULA-SIZING-381	src/engine.js	2236	2212	2261	U	eps
+FORMULA-SIZING-383	src/engine.js	2238	2214	2263	U	eps
+FORMULA-SIZING-384	src/engine.js	2239	2215	2264	U	eps
+FORMULA-SIZING-386	src/engine.js	2246	2222	2271	U	eps
+FORMULA-SIZING-387	src/engine.js	2247	2223	2272	U	eps
+FORMULA-SIZING-389	src/engine.js	2285	2261	2310	U	Math.min
+FORMULA-SIZING-391	src/engine.js	2287	2263	2312	U	Math.min
+FORMULA-SIZING-392	src/engine.js	2290	2266	2315	U	Math.min
+FORMULA-SIZING-393	src/engine.js	2291	2267	2316	U	Math.min
+FORMULA-SIZING-394	src/engine.js	2295	2271	2320	U	Math.min
+FORMULA-SIZING-397	src/engine.js	2309	2285	2334	U	Math.min
+FORMULA-SIZING-400	src/engine.js	2363	2339	2388	U	Math.min
+FORMULA-SIZING-401	src/engine.js	2369	2345	2394	U	Math.min
+FORMULA-SIZING-402	src/engine.js	2370	2346	2395	U	Math.min
+FORMULA-SIZING-405	src/engine.js	2394	2370	2419	U	Math.min
+FORMULA-SIZING-407	src/engine.js	2401	2377	2426	U	Math.max(0
+FORMULA-SIZING-408	src/engine.js	2407	2383	2432	U	Clamp
+FORMULA-SIZING-409	src/engine.js	2409	2385	2434	U	Clamp
+FORMULA-SIZING-410	src/engine.js	2410	2386	2435	U	Clamp
+FORMULA-SIZING-411	src/engine.js	2415	2391	2440	U	Math.abs
+FORMULA-SIZING-412	src/engine.js	2418	2394	2443	U	Math.abs
+FORMULA-SIZING-414	src/engine.js	2423	2399	2448	U	Math.max(0
+FORMULA-SIZING-415	src/engine.js	2428	2404	2453	U	eps
+FORMULA-SIZING-416	src/engine.js	2446	2422	2471	U	eps
+FORMULA-SIZING-417	src/engine.js	2447	2423	2472	U	eps
+FORMULA-SIZING-418	src/engine.js	2451	2427	2476	U	eps
+FORMULA-SIZING-419	src/engine.js	2452	2428	2477	U	eps
+FORMULA-SIZING-421	src/engine.js	2460	2436	2485	U	eps
+FORMULA-SIZING-422	src/engine.js	2461	2437	2486	U	eps
+FORMULA-SIZING-423	src/engine.js	2462	2438	2487	U	eps
+FORMULA-SIZING-424	src/engine.js	2463	2439	2488	U	eps
+FORMULA-SIZING-425	src/engine.js	2464	2440	2489	U	eps
+FORMULA-SIZING-426	src/engine.js	2466	2442	2491	U	eps
+FORMULA-SIZING-427	src/engine.js	2467	2443	2492	U	eps
+FORMULA-SIZING-428	src/engine.js	2471	2447	2496	U	Math.abs
+FORMULA-SIZING-429	src/engine.js	2473	2449	2498	U	Math.abs
+FORMULA-SIZING-430	src/engine.js	2475	2451	2500	U	Math.abs
+FORMULA-SIZING-431	src/engine.js	2487	2463	2512	U	Math.max(0
+FORMULA-SIZING-432	src/engine.js	2488	2464	2513	U	Math.max(0
+FORMULA-SIZING-433	src/engine.js	2489	2465	2514	U	Math.max(0
+FORMULA-SIZING-434	src/engine.js	2490	2466	2515	U	Math.max(0
+FORMULA-SIZING-435	src/engine.js	2491	2467	2516	U	Math.max(0
+FORMULA-SIZING-436	src/engine.js	2493	2469	2518	U	Math.max(0
+FORMULA-SIZING-437	src/engine.js	2494	2470	2519	U	Math.max(0
+FORMULA-SIZING-438	src/engine.js	2498	2474	2523	U	Math.abs
+FORMULA-SIZING-439	src/engine.js	2500	2476	2525	U	Math.abs
+FORMULA-SIZING-440	src/engine.js	2593	2569	2618	U	??0
+FORMULA-SIZING-442	src/engine.js	2599	2575	2624	U	??0
+FORMULA-SIZING-443	src/engine.js	2616	2592	2641	U	??0
+FORMULA-SIZING-444	src/engine.js	2681	2657	2706	U	?? 0
+FORMULA-SIZING-447	src/engine.js	2790	2766	2815	U	< 0
+FORMULA-SIZING-448	src/engine.js	2791	2767	2816	U	< 0
+FORMULA-SIZING-451	src/engine.js	2914	2890	2939	W	
+FORMULA-SIZING-453	src/engine.js	2967	2943	2992	U	> 0 ?
+FORMULA-SIZING-454	src/engine.js	3008	2984	3033	U	?? 0
+FORMULA-SIZING-455	src/engine.js	3229	3205	3254	U	> 0 ?
+FORMULA-SIZING-456	src/engine.js	3230	3206	3255	U	> 0 ?
+FORMULA-SIZING-459	src/engine.js	3338	3314	3363	U	Math.abs
+FORMULA-SIZING-461	src/engine.js	3341	3317	3366	U	< 0
+FORMULA-SIZING-462	src/engine.js	3343	3319	3368	U	< 0
+FORMULA-SIZING-463	src/engine.js	3437	3413	3462	U	?? 0
+FORMULA-SIZING-467	src/engine.js	3474	3450	3499	U	Math.max(0
+FORMULA-SIZING-472	src/engine.js	3608	3584	3633	U	eps
+FORMULA-SIZING-473	src/engine.js	3609	3585	3634	U	eps
+FORMULA-SIZING-477	src/engine.js	3618	3594	3643	U	eps
+FORMULA-SIZING-478	src/engine.js	3675	3651	3700	U	Number.isFinite
+FORMULA-SIZING-479	src/engine.js	3676	3652	3701	U	Number.isFinite
+FORMULA-SIZING-480	src/engine.js	3689	3665	3714	U	Number.isFinite
+FORMULA-SIZING-483	src/engine.js	3692	3668	3717	U	Number.isFinite
+FORMULA-AERO-001	src/classes/aircraft/airfoils.js	76	52	101	U	Math.min
+FORMULA-AERO-003	src/classes/aircraft/airfoils.js	81	57	106	U	Math.min
+FORMULA-AERO-005	src/classes/aircraft/airfoils.js	88	64	113	U	Math.min
+FORMULA-AERO-006	src/classes/aircraft/airfoils.js	95	71	120	U	Math.min
+FORMULA-AERO-007	src/classes/aircraft/airfoils.js	123	99	148	U	Number.isFinite
+FORMULA-AERO-008	src/classes/aircraft/airfoils.js	134	110	159	U	?? 0
+FORMULA-AERO-009	src/classes/aircraft/airfoils.js	148	124	173	U	Number.isFinite
+FORMULA-AERO-010	src/classes/aircraft/wing-structure.js	139	115	164	U	?? 0
+FORMULA-AERO-011	src/classes/aircraft/wing-structure.js	153	129	178	U	?? 0
+FORMULA-AERO-012	src/classes/aircraft/wing-structure.js	169	145	194	U	?? 0
+FORMULA-AERO-016	src/classes/aircraft/wing-structure.js	222	198	247	U	Math.max(0
+FORMULA-AERO-021	src/classes/aircraft/wing-structure.js	240	216	265	U	> 0 ?
+FORMULA-AERO-022	src/classes/aircraft/wing-structure.js	241	217	266	U	> 0 ?
+FORMULA-AERO-024	src/classes/aircraft/wing-structure.js	249	225	274	W	
+FORMULA-AERO-025	src/classes/aircraft/wing-structure.js	250	226	275	W	
+FORMULA-AERO-026	src/classes/aircraft/wing-structure.js	279	255	304	U	> 0 ?
+FORMULA-AERO-027	src/classes/aircraft/wing-structure.js	337	313	362	U	Math.abs
+FORMULA-AERO-033	src/classes/aircraft/wing-structure.js	355	331	380	U	Math.abs
+FORMULA-AERO-035	src/classes/aircraft/wing-structure.js	358	334	383	U	Math.abs
+FORMULA-AERO-036	src/classes/aircraft/wing-structure.js	359	335	384	U	Math.abs
+FORMULA-AERO-039	src/classes/aircraft/wing-structure.js	373	349	398	U	Math.min
+FORMULA-AERO-040	src/classes/aircraft/wing-structure.js	375	351	400	U	Math.min
+FORMULA-AERO-041	src/classes/aircraft/wing-structure.js	376	352	401	U	Math.min
+FORMULA-AERO-042	src/classes/aircraft/wing-structure.js	377	353	402	U	Math.min
+FORMULA-AERO-048	src/classes/aircraft/wing-structure.js	412	388	437	U	> 0 ?
+FORMULA-AERO-049	src/classes/aircraft/wing-structure.js	413	389	438	U	> 0 ?
+FORMULA-AERO-052	src/classes/aircraft/wing-structure.js	421	397	446	U	> 0 ?
+FORMULA-AERO-054	src/classes/trainer/performance.js	52	28	77	U	<= 0
+FORMULA-AERO-055	src/classes/trainer/performance.js	53	29	78	U	<= 0
+FORMULA-AERO-056	src/classes/trainer/performance.js	54	30	79	U	<= 0
+FORMULA-AERO-057	src/classes/trainer/performance.js	81	57	94	W	
+FORMULA-AERO-058	src/classes/transport/flops-aero.js	48	24	73	U	Math.min
+FORMULA-AERO-061	src/classes/transport/flops-aero.js	75	51	100	U	Math.min
+FORMULA-AERO-062	src/classes/transport/flops-aero.js	80	56	105	U	Math.min
+FORMULA-AERO-064	src/classes/transport/flops-aero.js	96	72	121	U	Math.min
+FORMULA-AERO-065	src/classes/transport/flops-aero.js	112	88	137	U	Math.min
+FORMULA-AERO-066	src/classes/transport/flops-aero.js	114	90	139	U	Math.min
+FORMULA-AERO-067	src/classes/transport/flops-aero.js	115	91	140	U	Math.min
+FORMULA-AERO-068	src/classes/transport/flops-aero.js	119	95	144	W	
+FORMULA-AERO-069	src/classes/transport/flops-aero.js	120	96	145	W	
+FORMULA-AERO-070	src/classes/transport/flops-aero.js	122	98	147	W	
+FORMULA-AERO-071	src/classes/transport/flops-aero.js	126	102	151	U	Math.abs
+FORMULA-AERO-072	src/classes/transport/flops-aero.js	135	111	160	U	Math.abs
+FORMULA-AERO-073	src/classes/transport/flops-aero.js	136	112	161	U	Math.abs
+FORMULA-AERO-075	src/classes/transport/flops-aero.js	138	114	163	U	Math.abs
+FORMULA-AERO-076	src/classes/transport/flops-aero.js	139	115	164	U	Math.abs
+FORMULA-AERO-077	src/classes/transport/flops-aero.js	140	116	165	U	Math.abs
+FORMULA-AERO-078	src/classes/transport/flops-aero.js	142	118	167	U	Math.abs
+FORMULA-AERO-079	src/classes/transport/flops-aero.js	145	121	170	U	Math.abs
+FORMULA-AERO-080	src/classes/transport/flops-aero.js	146	122	171	U	Math.abs
+FORMULA-AERO-081	src/classes/transport/flops-aero.js	147	123	172	U	Math.abs
+FORMULA-AERO-082	src/classes/transport/flops-aero.js	148	124	173	U	Math.abs
+FORMULA-AERO-083	src/classes/transport/flops-aero.js	149	125	174	U	Math.abs
+FORMULA-AERO-084	src/classes/transport/flops-aero.js	150	126	175	U	Math.abs
+FORMULA-AERO-085	src/classes/transport/flops-aero.js	154	130	179	U	Math.abs
+FORMULA-AERO-086	src/classes/transport/flops-aero.js	155	131	180	U	Math.abs
+FORMULA-AERO-087	src/classes/transport/flops-aero.js	158	134	183	U	Math.abs
+FORMULA-AERO-088	src/classes/transport/flops-aero.js	168	144	193	U	Math.abs
+FORMULA-AERO-089	src/classes/transport/flops-aero.js	171	147	196	U	Math.abs
+FORMULA-AERO-090	src/classes/transport/flops-aero.js	172	148	197	U	Math.abs
+FORMULA-AERO-091	src/classes/transport/flops-aero.js	173	149	198	U	Math.abs
+FORMULA-AERO-092	src/classes/transport/flops-aero.js	176	152	201	U	?? 0
+FORMULA-AERO-093	src/classes/transport/flops-aero.js	185	161	210	U	?? 0
+FORMULA-AERO-094	src/classes/transport/flops-aero.js	186	162	211	U	?? 0
+FORMULA-AERO-095	src/classes/transport/flops-aero.js	189	165	214	U	?? 0
+FORMULA-AERO-096	src/classes/transport/flops-aero.js	211	187	236	U	Number.isFinite
+FORMULA-AERO-098	src/classes/transport/flops-aero.js	221	197	246	U	Number.isFinite
+FORMULA-AERO-099	src/classes/transport/flops-aero.js	222	198	247	U	Number.isFinite
+FORMULA-AERO-100	src/classes/transport/flops-aero.js	223	199	248	U	Number.isFinite
+FORMULA-AERO-102	src/classes/transport/flops-aero.js	227	203	252	U	?? 0
+FORMULA-AERO-103	src/classes/transport/flops-aero.js	229	205	254	U	?? 0
+FORMULA-AERO-104	src/classes/transport/flops-aero.js	230	206	255	U	?? 0
+FORMULA-AERO-105	src/classes/transport/flops-aero.js	235	211	260	U	?? 0
+FORMULA-AERO-107	src/classes/transport/flops-aero.js	245	221	270	U	?? 0
+FORMULA-AERO-108	src/classes/transport/flops-aero.js	257	233	282	U	<= 0
+FORMULA-AERO-111	src/classes/transport/flops-aero.js	264	240	289	U	<= 0
+FORMULA-AERO-112	src/classes/transport/flops-aero.js	266	242	291	U	<= 0
+FORMULA-AERO-113	src/classes/transport/flops-aero.js	267	243	292	U	<= 0
+FORMULA-AERO-114	src/classes/transport/flops-aero.js	268	244	293	U	<= 0
+FORMULA-AERO-115	src/classes/transport/flops-aero.js	269	245	294	U	<= 0
+FORMULA-AERO-116	src/classes/transport/flops-aero.js	270	246	295	U	<= 0
+FORMULA-AERO-117	src/classes/transport/flops-aero.js	282	258	307	U	<= 0
+FORMULA-AERO-119	src/classes/transport/flops-aero.js	295	271	320	U	?? 0
+FORMULA-AERO-120	src/classes/transport/flops-aero.js	314	290	328	U	?? 0
+FORMULA-AERO-121	src/classes/transport/flops-aero.js	316	292	328	U	?? 0
+FORMULA-AERO-125	src/classes/transport/high-lift.js	137	113	162	U	Math.min
+FORMULA-AERO-126	src/classes/transport/high-lift.js	141	117	166	U	Math.min
+FORMULA-AERO-127	src/classes/transport/high-lift.js	144	120	169	U	Math.min
+FORMULA-AERO-129	src/classes/transport/high-lift.js	153	129	178	U	Math.min
+FORMULA-AERO-131	src/classes/transport/high-lift.js	351	327	376	W	
+FORMULA-AERO-132	src/classes/transport/high-lift.js	358	334	383	W	
+FORMULA-AERO-133	src/classes/transport/high-lift.js	359	335	384	W	
+FORMULA-AERO-134	src/classes/transport/high-lift.js	366	342	391	W	
+FORMULA-AERO-135	src/classes/transport/high-lift.js	380	356	405	W	
+FORMULA-AERO-137	src/classes/transport/high-lift.js	394	370	419	W	
+FORMULA-AERO-139	src/classes/transport/high-lift.js	409	385	434	W	
+FORMULA-AERO-140	src/classes/transport/high-lift.js	410	386	435	W	
+FORMULA-AERO-141	src/classes/transport/high-lift.js	413	389	438	W	
+FORMULA-AERO-142	src/classes/transport/high-lift.js	418	394	443	W	
+FORMULA-AERO-143	src/classes/transport/high-lift.js	426	402	451	W	
+FORMULA-AERO-146	src/classes/transport/high-lift.js	480	456	505	U	?? 0
+FORMULA-AERO-147	src/classes/transport/high-lift.js	482	458	507	U	?? 0
+FORMULA-AERO-150	src/engine/aeropropulsive.js	116	92	141	U	|| 0
+FORMULA-AERO-152	src/engine/aeropropulsive.js	122	98	147	U	|| 0
+FORMULA-AERO-153	src/engine/aeropropulsive.js	144	120	169	U	Math.max(0
+FORMULA-AERO-156	src/engine/aeropropulsive.js	167	143	180	U	|| 0
+FORMULA-AERO-158	src/engine/aeropropulsive.js	169	145	180	U	|| 0
+FORMULA-AERO-160	src/engine/airfoils.js	47	23	72	U	clamp
+FORMULA-AERO-161	src/engine/airfoils.js	59	35	84	U	clamp
+FORMULA-AERO-162	src/engine/airfoils.js	60	36	85	U	clamp
+FORMULA-AERO-163	src/engine/airfoils.js	92	68	117	U	?? 0
+FORMULA-AERO-164	src/engine/airfoils.js	113	89	138	U	?? 0
+FORMULA-AERO-168	src/engine/drag.js	49	25	74	U	?? 0
+FORMULA-AERO-170	src/engine/drag.js	99	75	117	W	
+FORMULA-AERO-173	src/engine/profile.js	77	53	102	U	eps
+FORMULA-AERO-175	src/engine/profile.js	83	59	108	U	eps
+FORMULA-AERO-176	src/engine/profile.js	84	60	109	U	eps
+FORMULA-AERO-178	src/engine/profile.js	154	130	179	U	?? 0
+FORMULA-AERO-179	src/engine/profile.js	161	137	186	U	?? 0
+FORMULA-AERO-180	src/engine/profile.js	162	138	187	U	?? 0
+FORMULA-AERO-181	src/engine/profile.js	165	141	190	U	?? 0
+FORMULA-AERO-183	src/engine/profile.js	194	170	219	U	?? 0
+FORMULA-AERO-184	src/engine/profile.js	240	216	250	U	> 0 ?
+FORMULA-AERO-185	src/engine/wing.js	50	26	75	U	< 0
+FORMULA-AERO-186	src/engine/wing.js	57	33	82	U	< 0
+FORMULA-AERO-187	src/engine/wing.js	58	34	83	U	< 0
+FORMULA-AERO-188	src/engine/wing.js	59	35	84	U	< 0
+FORMULA-AERO-190	src/engine/wing.js	154	130	172	W	
+FORMULA-AERO-191	src/engine/wing.js	161	137	172	W	
+FORMULA-AERO-192	src/engine/wing.js	162	138	172	W	
+FORMULA-AERO-196	src/engine/wingPosition.js	122	98	147	U	Math.abs
+FORMULA-AERO-197	src/engine/wingPosition.js	130	106	155	U	Math.abs
+FORMULA-AERO-203	src/engine/wingbox.js	168	144	193	U	Math.max(0
+FORMULA-AERO-204	src/engine/wingbox.js	172	148	197	U	Math.max(0
+FORMULA-AERO-205	src/engine/wingbox.js	175	151	200	U	Math.max(0
+FORMULA-AERO-206	src/engine/wingbox.js	176	152	201	U	Math.max(0
+FORMULA-AERO-215	src/engine/wingbox.js	214	190	239	U	Math.max(0
+FORMULA-AERO-216	src/engine/wingbox.js	215	191	240	U	Math.max(0
+FORMULA-AERO-219	src/engine/wingbox.js	252	228	277	U	Math.min
+FORMULA-AERO-220	src/engine/wingbox.js	253	229	278	U	Math.min
+FORMULA-AERO-223	src/engine/wingbox.js	268	244	293	U	Math.min
+FORMULA-AERO-224	src/engine/wingbox.js	270	246	295	U	Math.min
+FORMULA-AERO-225	src/engine/wingbox.js	271	247	296	U	Math.min
+FORMULA-AERO-226	src/engine/wingbox.js	279	255	304	U	Math.min
+FORMULA-AERO-227	src/engine/wingbox.js	281	257	306	U	Math.min
+FORMULA-AERO-229	src/engine/wingbox.js	293	269	318	U	Math.min
+FORMULA-AERO-231	src/engine/wingbox.js	305	281	330	U	Math.min
+FORMULA-AERO-232	src/engine/wingbox.js	306	282	331	U	Math.min
+FORMULA-AERO-233	src/engine/wingbox.js	307	283	332	U	Math.min
+FORMULA-AERO-238	src/engine/wingbox.js	319	295	344	U	Math.max(0
+FORMULA-AERO-241	src/engine/wingbox.js	336	312	361	U	Math.max(0
+FORMULA-AERO-243	src/engine/wingbox.js	343	319	368	U	?? 0
+FORMULA-AERO-244	src/engine/wingbox.js	344	320	369	U	?? 0
+FORMULA-AERO-246	src/engine/wingbox.js	365	341	390	U	?? 0
+FORMULA-AERO-248	src/engine/wingbox.js	367	343	392	U	eps
+FORMULA-AERO-249	src/engine/wingbox.js	372	348	397	U	?? 0
+FORMULA-AERO-250	src/engine/wingbox.js	373	349	398	U	?? 0
+FORMULA-AERO-257	src/engine/wingmodes.js	64	40	89	U	> 0 ?
+FORMULA-AERO-258	src/engine/wingmodes.js	65	41	90	U	> 0 ?
+FORMULA-AERO-259	src/engine/wingmodes.js	71	47	96	U	> 0 ?
+FORMULA-AERO-260	src/engine/wingmodes.js	72	48	97	U	> 0 ?
+FORMULA-AERO-261	src/engine/wingmodes.js	76	52	101	U	> 0 ?
+FORMULA-AERO-263	src/engine/wingmodes.js	81	57	106	U	> 0 ?
+FORMULA-AERO-267	src/engine/wingmodes.js	157	133	182	U	|| 0
+FORMULA-AERO-268	src/engine/wingmodes.js	167	143	192	U	> 0 ?
+FORMULA-AERO-269	src/engine/wingmodes.js	169	145	194	U	> 0 ?
+FORMULA-AERO-270	src/engine/wingmodes.js	170	146	195	U	> 0 ?
+FORMULA-AERO-271	src/engine/wingmodes.js	171	147	196	U	> 0 ?
+FORMULA-AERO-272	src/engine/wingmodes.js	176	152	201	U	> 0 ?
+FORMULA-AERO-273	src/engine/wingmodes.js	177	153	202	U	> 0 ?
+FORMULA-AERO-274	src/engine/wingmodes.js	178	154	203	U	> 0 ?
+FORMULA-AERO-276	src/engine/wingmodes.js	180	156	205	U	> 0 ?
+FORMULA-AERO-277	src/engine/wingmodes.js	182	158	207	U	> 0 ?
+FORMULA-AERO-278	src/engine/wingmodes.js	183	159	208	U	> 0 ?
+FORMULA-AERO-279	src/engine/wingmodes.js	184	160	209	U	> 0 ?
+FORMULA-AERO-282	src/engine/wingmodes.js	196	172	221	U	> 0 ?
+FORMULA-AERO-283	src/engine/wingmodes.js	197	173	222	U	> 0 ?
+FORMULA-AERO-284	src/engine/wingmodes.js	198	174	223	U	> 0 ?
+FORMULA-AERO-285	src/engine/wingmodes.js	199	175	224	U	> 0 ?
+FORMULA-AERO-286	src/engine/wingmodes.js	201	177	226	U	Eps
+FORMULA-AERO-287	src/engine/wingmodes.js	202	178	227	U	Eps
+FORMULA-AERO-289	src/engine/wingmodes.js	205	181	230	U	> 0 ?
+FORMULA-AERO-290	src/engine/wingmodes.js	211	187	236	U	> 0 ?
+FORMULA-AERO-291	src/engine/wingmodes.js	212	188	237	U	> 0 ?
+FORMULA-AERO-293	src/engine/wingmodes.js	243	219	268	U	< 0
+FORMULA-AERO-294	src/engine/wingmodes.js	248	224	269	U	< 0
+FORMULA-WEIGHT-001	src/classes/aircraft/balance.js	160	136	185	W	
+FORMULA-WEIGHT-002	src/classes/aircraft/balance.js	161	137	186	W	
+FORMULA-WEIGHT-003	src/classes/aircraft/balance.js	201	177	226	W	
+FORMULA-WEIGHT-006	src/classes/aircraft/balance.js	204	180	229	W	
+FORMULA-WEIGHT-009	src/classes/aircraft/balance.js	235	211	260	U	Number.isFinite
+FORMULA-WEIGHT-010	src/classes/aircraft/balance.js	250	226	275	U	Number.isFinite
+FORMULA-WEIGHT-011	src/classes/aircraft/balance.js	261	237	286	U	Math.abs
+FORMULA-WEIGHT-012	src/classes/aircraft/balance.js	263	239	288	U	Math.abs
+FORMULA-WEIGHT-013	src/classes/aircraft/balance.js	264	240	289	U	Math.abs
+FORMULA-WEIGHT-015	src/classes/aircraft/balance.js	272	248	297	U	Number.isFinite
+FORMULA-WEIGHT-016	src/classes/aircraft/balance.js	273	249	298	U	Number.isFinite
+FORMULA-WEIGHT-017	src/classes/aircraft/balance.js	287	263	312	U	Number.isFinite
+FORMULA-WEIGHT-018	src/classes/aircraft/balance.js	296	272	321	U	?? 0
+FORMULA-WEIGHT-019	src/classes/aircraft/balance.js	299	275	324	U	?? 0
+FORMULA-WEIGHT-020	src/classes/aircraft/balance.js	300	276	325	U	?? 0
+FORMULA-WEIGHT-021	src/classes/aircraft/balance.js	301	277	326	U	?? 0
+FORMULA-WEIGHT-022	src/classes/aircraft/balance.js	302	278	327	U	?? 0
+FORMULA-WEIGHT-023	src/classes/aircraft/balance.js	303	279	328	U	?? 0
+FORMULA-WEIGHT-024	src/classes/aircraft/balance.js	308	284	333	U	?? 0
+FORMULA-WEIGHT-025	src/classes/aircraft/balance.js	325	301	350	U	eps
+FORMULA-WEIGHT-027	src/classes/aircraft/balance.js	327	303	352	U	eps
+FORMULA-WEIGHT-028	src/classes/aircraft/balance.js	331	307	356	U	eps
+FORMULA-WEIGHT-029	src/classes/aircraft/balance.js	332	308	357	U	eps
+FORMULA-WEIGHT-030	src/classes/aircraft/balance.js	333	309	358	U	eps
+FORMULA-WEIGHT-031	src/classes/aircraft/balance.js	336	312	361	U	eps
+FORMULA-WEIGHT-032	src/classes/aircraft/balance.js	337	313	362	U	eps
+FORMULA-WEIGHT-034	src/classes/aircraft/balance.js	340	316	365	U	> 0 ?
+FORMULA-WEIGHT-035	src/classes/aircraft/balance.js	342	318	367	U	> 0 ?
+FORMULA-WEIGHT-036	src/classes/aircraft/balance.js	343	319	368	U	> 0 ?
+FORMULA-WEIGHT-037	src/classes/aircraft/balance.js	355	331	380	U	Math.abs
+FORMULA-WEIGHT-038	src/classes/aircraft/balance.js	356	332	381	U	Math.abs
+FORMULA-WEIGHT-040	src/classes/aircraft/balance.js	358	334	383	U	Math.abs
+FORMULA-WEIGHT-041	src/classes/aircraft/balance.js	360	336	385	U	Math.abs
+FORMULA-WEIGHT-042	src/classes/aircraft/balance.js	369	345	394	U	Math.abs
+FORMULA-WEIGHT-043	src/classes/aircraft/balance.js	372	348	397	U	Math.abs
+FORMULA-WEIGHT-047	src/classes/aircraft/balance.js	377	353	402	U	Math.abs
+FORMULA-WEIGHT-048	src/classes/aircraft/balance.js	378	354	403	U	Math.abs
+FORMULA-WEIGHT-049	src/classes/aircraft/balance.js	382	358	407	U	Math.abs
+FORMULA-WEIGHT-050	src/classes/aircraft/balance.js	387	363	412	U	Math.abs
+FORMULA-WEIGHT-051	src/classes/aircraft/balance.js	392	368	417	U	Math.abs
+FORMULA-WEIGHT-053	src/classes/aircraft/balance.js	394	370	419	U	Math.abs
+FORMULA-WEIGHT-054	src/classes/aircraft/balance.js	431	407	456	W	
+FORMULA-WEIGHT-055	src/classes/aircraft/loading-diagram.js	143	119	168	U	Math.min
+FORMULA-WEIGHT-057	src/classes/aircraft/loading-diagram.js	268	244	293	U	?? 0
+FORMULA-WEIGHT-059	src/classes/aircraft/loading-diagram.js	304	280	329	U	Math.min
+FORMULA-WEIGHT-061	src/classes/aircraft/loading-diagram.js	321	297	346	U	Math.max(0
+FORMULA-WEIGHT-062	src/classes/aircraft/loading-diagram.js	322	298	347	U	Math.max(0
+FORMULA-WEIGHT-065	src/classes/aircraft/loading-diagram.js	328	304	353	U	> 0 ?
+FORMULA-WEIGHT-066	src/classes/aircraft/loading-diagram.js	330	306	355	U	> 0 ?
+FORMULA-WEIGHT-090	src/classes/aircraft/vertical-cg.js	171	147	196	U	Math.max(0
+FORMULA-WEIGHT-092	src/classes/aircraft/vertical-cg.js	190	166	215	U	Math.max(0
+FORMULA-WEIGHT-093	src/classes/aircraft/vertical-cg.js	191	167	216	U	Math.max(0
+FORMULA-WEIGHT-095	src/classes/aircraft/vertical-cg.js	214	190	239	U	> 0 ?
+FORMULA-WEIGHT-097	src/classes/aircraft/vertical-cg.js	217	193	242	W	
+FORMULA-WEIGHT-098	src/classes/aircraft/vertical-cg.js	286	262	311	U	?? 0
+FORMULA-WEIGHT-102	src/classes/drone/sizing.js	222	198	247	U	clamp
+FORMULA-WEIGHT-105	src/classes/drone/sizing.js	281	257	306	U	?? 0
+FORMULA-WEIGHT-106	src/classes/drone/sizing.js	286	262	311	U	?? 0
+FORMULA-WEIGHT-107	src/classes/drone/sizing.js	288	264	313	U	?? 0
+FORMULA-WEIGHT-108	src/classes/drone/sizing.js	320	296	345	U	Math.abs
+FORMULA-WEIGHT-113	src/classes/trainer/weights.js	23	1	48	W	
+FORMULA-WEIGHT-115	src/classes/trainer/weights.js	44	20	69	U	Math.min
+FORMULA-WEIGHT-116	src/classes/trainer/weights.js	51	27	76	U	Math.min
+FORMULA-WEIGHT-118	src/classes/trainer/weights.js	53	29	78	U	Math.min
+FORMULA-WEIGHT-120	src/classes/trainer/weights.js	56	32	81	U	Math.min
+FORMULA-WEIGHT-121	src/classes/trainer/weights.js	57	33	82	U	Math.min
+FORMULA-WEIGHT-122	src/classes/trainer/weights.js	58	34	83	U	Math.min
+FORMULA-WEIGHT-123	src/classes/trainer/weights.js	59	35	84	U	Math.min
+FORMULA-WEIGHT-124	src/classes/trainer/weights.js	62	38	87	U	Math.min
+FORMULA-WEIGHT-125	src/classes/trainer/weights.js	68	44	93	U	Math.min
+FORMULA-WEIGHT-126	src/classes/trainer/weights.js	84	60	109	U	Math.abs
+FORMULA-WEIGHT-127	src/classes/trainer/weights.js	85	61	110	U	Math.abs
+FORMULA-WEIGHT-128	src/classes/trainer/weights.js	87	63	112	U	Math.abs
+FORMULA-WEIGHT-129	src/classes/trainer/weights.js	88	64	113	U	Math.abs
+FORMULA-WEIGHT-131	src/classes/trainer/weights.js	95	71	120	U	Math.abs
+FORMULA-WEIGHT-132	src/classes/trainer/weights.js	99	75	124	U	Math.abs
+FORMULA-WEIGHT-133	src/classes/trainer/weights.js	106	82	131	U	Math.abs
+FORMULA-WEIGHT-134	src/classes/trainer/weights.js	113	89	138	U	Math.abs
+FORMULA-WEIGHT-135	src/classes/trainer/weights.js	114	90	139	U	Math.abs
+FORMULA-WEIGHT-136	src/classes/trainer/weights.js	117	93	142	U	Math.abs
+FORMULA-WEIGHT-137	src/classes/trainer/weights.js	118	94	143	U	Math.abs
+FORMULA-WEIGHT-139	src/classes/trainer/weights.js	125	101	150	W	
+FORMULA-WEIGHT-140	src/classes/trainer/weights.js	126	102	151	W	
+FORMULA-WEIGHT-141	src/classes/trainer/weights.js	127	103	152	W	
+FORMULA-WEIGHT-143	src/classes/trainer/weights.js	134	110	159	W	
+FORMULA-WEIGHT-144	src/classes/trainer/weights.js	139	115	164	W	
+FORMULA-WEIGHT-145	src/classes/trainer/weights.js	150	126	175	W	
+FORMULA-WEIGHT-146	src/classes/trainer/weights.js	151	127	176	W	
+FORMULA-WEIGHT-147	src/classes/trainer/weights.js	152	128	177	W	
+FORMULA-WEIGHT-148	src/classes/trainer/weights.js	153	129	178	W	
+FORMULA-WEIGHT-149	src/classes/trainer/weights.js	177	153	202	W	
+FORMULA-WEIGHT-150	src/classes/trainer/weights.js	178	154	203	W	
+FORMULA-WEIGHT-151	src/classes/trainer/weights.js	193	169	216	W	
+FORMULA-WEIGHT-152	src/classes/trainer/weights.js	202	178	216	W	
+FORMULA-WEIGHT-153	src/classes/trainer/weights.js	206	182	216	W	
+FORMULA-WEIGHT-154	src/classes/trainer/weights.js	208	184	216	W	
+FORMULA-WEIGHT-155	src/classes/trainer/weights.js	209	185	216	W	
+FORMULA-WEIGHT-156	src/classes/trainer/weights.js	210	186	216	W	
+FORMULA-WEIGHT-157	src/classes/transport/flops-weights.js	21	1	46	U	> 0 ?
+FORMULA-WEIGHT-158	src/classes/transport/flops-weights.js	24	1	49	U	> 0 ?
+FORMULA-WEIGHT-159	src/classes/transport/flops-weights.js	26	2	51	U	> 0 ?
+FORMULA-WEIGHT-161	src/classes/transport/flops-weights.js	32	8	57	U	> 0 ?
+FORMULA-WEIGHT-163	src/classes/transport/flops-weights.js	37	13	62	U	> 0 ?
+FORMULA-WEIGHT-164	src/classes/transport/flops-weights.js	38	14	63	U	> 0 ?
+FORMULA-WEIGHT-167	src/classes/transport/flops-weights.js	41	17	66	U	> 0 ?
+FORMULA-WEIGHT-168	src/classes/transport/flops-weights.js	42	18	67	U	> 0 ?
+FORMULA-WEIGHT-169	src/classes/transport/flops-weights.js	43	19	68	U	> 0 ?
+FORMULA-WEIGHT-170	src/classes/transport/flops-weights.js	44	20	69	U	> 0 ?
+FORMULA-WEIGHT-172	src/classes/transport/flops-weights.js	47	23	72	U	> 0 ?
+FORMULA-WEIGHT-173	src/classes/transport/flops-weights.js	51	27	76	U	> 0 ?
+FORMULA-WEIGHT-176	src/classes/transport/flops-weights.js	74	50	99	W	
+FORMULA-WEIGHT-177	src/classes/transport/flops-weights.js	75	51	100	W	
+FORMULA-WEIGHT-178	src/classes/transport/flops-weights.js	76	52	101	W	
+FORMULA-WEIGHT-179	src/classes/transport/flops-weights.js	77	53	102	W	
+FORMULA-WEIGHT-180	src/classes/transport/flops-weights.js	78	54	103	W	
+FORMULA-WEIGHT-181	src/classes/transport/flops-weights.js	79	55	104	W	
+FORMULA-WEIGHT-182	src/classes/transport/flops-weights.js	80	56	105	W	
+FORMULA-WEIGHT-183	src/classes/transport/flops-weights.js	81	57	106	W	
+FORMULA-WEIGHT-184	src/classes/transport/flops-weights.js	82	58	107	W	
+FORMULA-WEIGHT-186	src/classes/transport/flops-weights.js	84	60	109	W	
+FORMULA-WEIGHT-187	src/classes/transport/flops-weights.js	85	61	110	W	
+FORMULA-WEIGHT-188	src/classes/transport/flops-weights.js	86	62	111	W	
+FORMULA-WEIGHT-189	src/classes/transport/flops-weights.js	87	63	112	W	
+FORMULA-WEIGHT-190	src/classes/transport/flops-weights.js	90	66	115	W	
+FORMULA-WEIGHT-192	src/classes/transport/flops-weights.js	93	69	118	W	
+FORMULA-WEIGHT-193	src/classes/transport/flops-weights.js	94	70	119	W	
+FORMULA-WEIGHT-194	src/classes/transport/flops-weights.js	95	71	120	W	
+FORMULA-WEIGHT-195	src/classes/transport/flops-weights.js	97	73	122	W	
+FORMULA-WEIGHT-196	src/classes/transport/flops-weights.js	98	74	123	W	
+FORMULA-WEIGHT-197	src/classes/transport/flops-weights.js	99	75	124	W	
+FORMULA-WEIGHT-198	src/classes/transport/flops-weights.js	106	82	131	U	<= 0
+FORMULA-WEIGHT-200	src/classes/transport/flops-weights.js	112	88	137	U	<= 0
+FORMULA-WEIGHT-202	src/classes/transport/flops-weights.js	114	90	139	U	<= 0
+FORMULA-WEIGHT-203	src/classes/transport/flops-weights.js	115	91	140	U	<= 0
+FORMULA-WEIGHT-204	src/classes/transport/flops-weights.js	116	92	141	U	<= 0
+FORMULA-WEIGHT-205	src/classes/transport/flops-weights.js	117	93	142	U	<= 0
+FORMULA-WEIGHT-206	src/classes/transport/flops-weights.js	123	99	148	U	<= 0
+FORMULA-WEIGHT-207	src/classes/transport/flops-weights.js	125	101	150	U	<= 0
+FORMULA-WEIGHT-208	src/classes/transport/flops-weights.js	126	102	151	U	<= 0
+FORMULA-WEIGHT-209	src/classes/transport/flops-weights.js	131	107	156	U	<= 0
+FORMULA-WEIGHT-210	src/classes/transport/flops-weights.js	132	108	157	U	<= 0
+FORMULA-WEIGHT-211	src/classes/transport/flops-weights.js	134	110	159	U	<= 0
+FORMULA-WEIGHT-212	src/classes/transport/flops-weights.js	135	111	160	U	<= 0
+FORMULA-WEIGHT-213	src/classes/transport/flops-weights.js	137	113	162	U	<= 0
+FORMULA-WEIGHT-214	src/classes/transport/flops-weights.js	139	115	164	U	<= 0
+FORMULA-WEIGHT-217	src/classes/transport/flops-weights.js	154	130	179	W	
+FORMULA-WEIGHT-218	src/classes/transport/flops-weights.js	155	131	180	W	
+FORMULA-WEIGHT-219	src/classes/transport/flops-weights.js	156	132	181	W	
+FORMULA-WEIGHT-220	src/classes/transport/flops-weights.js	157	133	182	W	
+FORMULA-WEIGHT-221	src/classes/transport/flops-weights.js	158	134	183	W	
+FORMULA-WEIGHT-222	src/classes/transport/flops-weights.js	159	135	184	W	
+FORMULA-WEIGHT-223	src/classes/transport/flops-weights.js	160	136	185	W	
+FORMULA-WEIGHT-226	src/classes/transport/flops-weights.js	169	145	186	W	
+FORMULA-WEIGHT-231	src/engine/cg.js	93	69	118	W	
+FORMULA-WEIGHT-233	src/engine/cg.js	139	115	164	U	?? 0
+FORMULA-WEIGHT-234	src/engine/cg.js	141	117	166	U	?? 0
+FORMULA-WEIGHT-236	src/engine/cg.js	147	123	172	U	?? 0
+FORMULA-WEIGHT-237	src/engine/cg.js	148	124	173	U	?? 0
+FORMULA-WEIGHT-238	src/engine/cg.js	149	125	174	U	?? 0
+FORMULA-WEIGHT-239	src/engine/cg.js	209	185	234	U	<= 0
+FORMULA-WEIGHT-242	src/engine/cg.js	246	222	271	W	
+FORMULA-WEIGHT-244	src/engine/cg.js	249	225	274	W	
+FORMULA-WEIGHT-249	src/engine/weights.js	246	222	271	U	?? 0
+FORMULA-WEIGHT-250	src/engine/weights.js	247	223	272	U	?? 0
+FORMULA-WEIGHT-251	src/engine/weights.js	248	224	273	U	?? 0
+FORMULA-WEIGHT-252	src/engine/weights.js	249	225	274	U	?? 0
+FORMULA-WEIGHT-253	src/engine/weights.js	250	226	275	U	?? 0
+FORMULA-WEIGHT-254	src/engine/weights.js	251	227	276	U	?? 0
+FORMULA-WEIGHT-255	src/engine/weights.js	252	228	277	U	?? 0
+FORMULA-WEIGHT-258	src/engine/weights.js	275	251	300	U	Math.max(0
+FORMULA-WEIGHT-261	src/engine/weights.js	279	255	304	U	eps
+FORMULA-WEIGHT-262	src/engine/weights.js	280	256	305	U	eps
+FORMULA-WEIGHT-263	src/engine/weights.js	281	257	306	U	eps
+FORMULA-WEIGHT-264	src/engine/weights.js	282	258	307	U	eps
+FORMULA-WEIGHT-265	src/engine/weights.js	283	259	308	U	eps
+FORMULA-WEIGHT-268	src/engine/weights.js	325	301	350	W	
+FORMULA-WEIGHT-269	src/engine/weights.js	326	302	351	W	
+FORMULA-WEIGHT-270	src/engine/weights.js	327	303	352	W	
+FORMULA-WEIGHT-274	src/engine/weights.js	433	409	458	W	
+FORMULA-WEIGHT-275	src/engine/weights.js	449	425	474	U	eps
+FORMULA-WEIGHT-279	src/engine/weights.js	623	599	648	U	?? 0
+FORMULA-WEIGHT-282	src/engine/weights.js	638	614	663	U	?? 0
+FORMULA-WEIGHT-283	src/engine/weights.js	639	615	664	U	?? 0
+FORMULA-WEIGHT-284	src/engine/weights.js	642	618	667	U	?? 0
+FORMULA-STRUCT-001	src/classes/aircraft/flight-envelope.js	100	76	125	U	Math.max(0
+FORMULA-STRUCT-003	src/classes/aircraft/flight-envelope.js	102	78	127	U	Math.max(0
+FORMULA-STRUCT-004	src/classes/aircraft/flight-envelope.js	103	79	128	U	Math.max(0
+FORMULA-STRUCT-006	src/classes/aircraft/flight-envelope.js	105	81	130	U	Math.max(0
+FORMULA-STRUCT-007	src/classes/aircraft/flight-envelope.js	111	87	136	U	Math.max(0
+FORMULA-STRUCT-010	src/classes/aircraft/flight-envelope.js	122	98	147	U	Math.min
+FORMULA-STRUCT-011	src/classes/aircraft/flight-envelope.js	127	103	152	U	Math.min
+FORMULA-STRUCT-013	src/classes/aircraft/flight-envelope.js	155	131	180	U	?? 0
+FORMULA-STRUCT-016	src/classes/aircraft/flight-envelope.js	158	134	183	U	?? 0
+FORMULA-STRUCT-018	src/classes/aircraft/flight-envelope.js	175	151	200	U	?? 0
+FORMULA-STRUCT-019	src/classes/aircraft/flight-envelope.js	177	153	202	U	?? 0
+FORMULA-STRUCT-020	src/classes/aircraft/flight-envelope.js	178	154	203	U	?? 0
+FORMULA-STRUCT-022	src/classes/aircraft/flight-envelope.js	192	168	217	U	?? 0
+FORMULA-STRUCT-023	src/classes/aircraft/flight-envelope.js	201	177	226	U	?? 0
+FORMULA-STRUCT-024	src/classes/aircraft/flight-envelope.js	203	179	228	U	?? 0
+FORMULA-STRUCT-025	src/classes/aircraft/flight-envelope.js	204	180	229	U	?? 0
+FORMULA-STRUCT-026	src/classes/aircraft/flight-envelope.js	205	181	230	U	?? 0
+FORMULA-STRUCT-028	src/classes/aircraft/flight-envelope.js	212	188	237	U	?? 0
+FORMULA-STRUCT-029	src/classes/aircraft/flight-envelope.js	216	192	241	U	?? 0
+FORMULA-STRUCT-030	src/classes/aircraft/flight-envelope.js	219	195	244	U	?? 0
+FORMULA-STRUCT-031	src/classes/aircraft/flight-envelope.js	223	199	248	U	?? 0
+FORMULA-STRUCT-032	src/classes/aircraft/flight-envelope.js	224	200	249	U	?? 0
+FORMULA-STRUCT-033	src/classes/aircraft/flight-envelope.js	225	201	250	U	Math.abs
+FORMULA-STRUCT-035	src/classes/aircraft/flight-envelope.js	230	206	255	U	Math.abs
+FORMULA-STRUCT-036	src/classes/aircraft/flight-envelope.js	232	208	257	U	<= 0
+FORMULA-STRUCT-037	src/classes/aircraft/flight-envelope.js	241	217	266	U	Math.min
+FORMULA-STRUCT-038	src/classes/aircraft/flight-envelope.js	250	226	275	U	Math.min
+FORMULA-STRUCT-039	src/classes/aircraft/flight-envelope.js	251	227	276	U	Math.min
+FORMULA-STRUCT-044	src/classes/aircraft/flight-envelope.js	296	272	321	W	
+FORMULA-STRUCT-046	src/classes/aircraft/flight-envelope.js	341	317	349	U	?? 0
+FORMULA-STRUCT-048	src/classes/aircraft/flight-envelope.js	346	322	349	U	?? 0
+FORMULA-STRUCT-049	src/classes/aircraft/flight-envelope.js	347	323	349	U	?? 0
+FORMULA-STRUCT-050	src/classes/aircraft/fuselage-bending-material.js	85	61	110	U	Number.isFinite
+FORMULA-STRUCT-051	src/classes/aircraft/fuselage-bending-material.js	91	67	116	U	Number.isFinite
+FORMULA-STRUCT-052	src/classes/aircraft/fuselage-bending-material.js	92	68	117	U	Number.isFinite
+FORMULA-STRUCT-053	src/classes/aircraft/fuselage-bending-material.js	93	69	118	U	Number.isFinite
+FORMULA-STRUCT-054	src/classes/aircraft/fuselage-bending-material.js	94	70	119	U	Number.isFinite
+FORMULA-STRUCT-056	src/classes/aircraft/fuselage-bending-material.js	112	88	137	W	
+FORMULA-STRUCT-059	src/classes/aircraft/fuselage-bending-material.js	129	105	154	W	
+FORMULA-STRUCT-062	src/classes/aircraft/fuselage-bending-material.js	179	155	204	U	Math.abs
+FORMULA-STRUCT-064	src/classes/aircraft/fuselage-bending-material.js	223	199	248	U	<= 0
+FORMULA-STRUCT-066	src/classes/aircraft/fuselage-bending-material.js	228	204	253	U	<= 0
+FORMULA-STRUCT-067	src/classes/aircraft/fuselage-bending-material.js	237	213	262	W	
+FORMULA-STRUCT-068	src/classes/aircraft/fuselage-bending-material.js	242	218	267	W	
+FORMULA-STRUCT-071	src/classes/aircraft/fuselage-bending-material.js	256	232	281	W	
+FORMULA-STRUCT-072	src/classes/aircraft/fuselage-pressure-shell.js	97	73	122	U	Number.isFinite
+FORMULA-STRUCT-073	src/classes/aircraft/fuselage-pressure-shell.js	102	78	127	U	Number.isFinite
+FORMULA-STRUCT-074	src/classes/aircraft/fuselage-pressure-shell.js	107	83	132	U	Number.isFinite
+FORMULA-STRUCT-075	src/classes/aircraft/fuselage-pressure-shell.js	108	84	133	U	Number.isFinite
+FORMULA-STRUCT-076	src/classes/aircraft/fuselage-pressure-shell.js	109	85	134	U	Number.isFinite
+FORMULA-STRUCT-077	src/classes/aircraft/fuselage-pressure-shell.js	110	86	135	U	Number.isFinite
+FORMULA-STRUCT-078	src/classes/aircraft/fuselage-pressure-shell.js	137	113	162	W	
+FORMULA-STRUCT-080	src/classes/aircraft/fuselage-pressure-shell.js	175	151	200	W	
+FORMULA-STRUCT-083	src/classes/aircraft/fuselage-pressure-shell.js	197	173	222	W	
+FORMULA-STRUCT-084	src/classes/aircraft/fuselage-pressure-shell.js	198	174	223	W	
+FORMULA-STRUCT-085	src/classes/aircraft/fuselage-pressure-shell.js	201	177	226	W	
+FORMULA-STRUCT-086	src/classes/aircraft/fuselage-pressure-shell.js	202	178	227	W	
+FORMULA-STRUCT-089	src/classes/aircraft/fuselage-shear-flow.js	97	73	122	W	
+FORMULA-STRUCT-090	src/classes/aircraft/fuselage-shear-flow.js	107	83	132	W	
+FORMULA-STRUCT-092	src/classes/aircraft/fuselage-shear-flow.js	124	100	149	U	Math.abs
+FORMULA-STRUCT-098	src/classes/aircraft/fuselage-shear-flow.js	147	123	172	U	Math.abs
+FORMULA-STRUCT-099	src/classes/aircraft/fuselage-shear-flow.js	150	126	175	U	Math.abs
+FORMULA-STRUCT-102	src/classes/aircraft/fuselage-shear-flow.js	178	154	203	U	Math.abs
+FORMULA-STRUCT-103	src/classes/aircraft/fuselage-shear-flow.js	200	176	223	U	Math.abs
+FORMULA-STRUCT-106	src/classes/aircraft/fuselage-structure-loads.js	168	144	193	W	
+FORMULA-STRUCT-108	src/classes/aircraft/fuselage-structure-loads.js	172	148	197	W	
+FORMULA-STRUCT-109	src/classes/aircraft/fuselage-structure-loads.js	278	254	303	U	Math.min
+FORMULA-STRUCT-110	src/classes/aircraft/fuselage-structure-loads.js	291	267	316	U	Math.min
+FORMULA-STRUCT-112	src/classes/aircraft/fuselage-structure-loads.js	312	288	337	U	Math.min
+FORMULA-STRUCT-113	src/classes/aircraft/fuselage-structure-loads.js	356	332	381	U	> 0 ?
+FORMULA-STRUCT-114	src/classes/aircraft/fuselage-structure-loads.js	358	334	383	U	> 0 ?
+FORMULA-STRUCT-118	src/classes/aircraft/fuselage-structure-loads.js	411	387	436	U	Math.max(0
+FORMULA-STRUCT-119	src/classes/aircraft/fuselage-structure-loads.js	412	388	437	U	Math.max(0
+FORMULA-STRUCT-120	src/classes/aircraft/fuselage-structure-loads.js	426	402	451	U	> 0 ?
+FORMULA-STRUCT-124	src/classes/aircraft/fuselage-structure.js	119	95	144	W	
+FORMULA-STRUCT-126	src/classes/aircraft/fuselage-structure.js	126	102	151	W	
+FORMULA-STRUCT-129	src/classes/aircraft/fuselage-structure.js	151	127	176	U	Math.max(0
+FORMULA-STRUCT-130	src/classes/aircraft/fuselage-structure.js	152	128	177	U	Math.max(0
+FORMULA-STRUCT-131	src/classes/aircraft/fuselage-structure.js	159	135	184	U	Math.max(0
+FORMULA-STRUCT-134	src/classes/aircraft/fuselage-structure.js	168	144	193	U	Math.max(0
+FORMULA-STRUCT-152	src/classes/aircraft/gear.js	124	100	149	W	
+FORMULA-STRUCT-154	src/classes/trainer/performance.js	46	22	71	U	eps
+FORMULA-STRUCT-155	src/engine/gear/ground-loads.js	82	58	107	W	
+FORMULA-STRUCT-160	src/engine/gear/ground-loads.js	119	95	144	U	> 0 ?
+FORMULA-STRUCT-163	src/engine/gear/ground-loads.js	159	135	166	W	
+FORMULA-STRUCT-165	src/engine/gear/pavement.js	99	75	124	U	ePs
+FORMULA-STRUCT-167	src/engine/gear/sink-speed.js	94	70	119	W	
+FORMULA-STRUCT-168	src/engine/gear/sink-speed.js	135	111	144	W	
+FORMULA-STRUCT-169	src/engine/gear/stowage.js	68	44	93	U	Number.isFinite
+FORMULA-STRUCT-170	src/engine/gear/stowage.js	72	48	97	U	Number.isFinite
+FORMULA-STRUCT-171	src/engine/gear/stowage.js	73	49	98	U	Number.isFinite
+FORMULA-STRUCT-172	src/engine/gear/stowage.js	74	50	99	U	Number.isFinite
+FORMULA-STRUCT-173	src/engine/gear/stowage.js	90	66	115	U	Number.isFinite
+FORMULA-STRUCT-175	src/engine/gear/stowage.js	94	70	119	U	Number.isFinite
+FORMULA-STRUCT-176	src/engine/gear/stowage.js	95	71	120	U	Number.isFinite
+FORMULA-STRUCT-177	src/engine/gear/stowage.js	104	80	129	U	Math.max(0
+FORMULA-STRUCT-178	src/engine/gear/stowage.js	105	81	130	U	Math.max(0
+FORMULA-STRUCT-179	src/engine/gear/strut.js	93	69	118	W	
+FORMULA-STRUCT-180	src/engine/gear/strut.js	103	79	128	W	
+FORMULA-STRUCT-181	src/engine/gear/strut.js	104	80	129	W	
+FORMULA-STRUCT-182	src/engine/gear/strut.js	105	81	130	W	
+FORMULA-STRUCT-184	src/engine/gear/strut.js	115	91	140	W	
+FORMULA-STRUCT-186	src/engine/gear/strut.js	147	123	172	U	eps
+FORMULA-STRUCT-187	src/engine/gear/strut.js	153	129	173	U	eps
+FORMULA-STRUCT-188	src/engine/gear/strut.js	171	147	173	W	
+FORMULA-STRUCT-189	src/engine/gear/tyre-select.js	113	89	138	U	eps
+FORMULA-STRUCT-191	src/engine/gear/tyre-select.js	156	132	181	U	Math.min
+FORMULA-STRUCT-195	src/engine/gearlayout.js	78	54	103	U	|| 0
+FORMULA-STRUCT-196	src/engine/gearlayout.js	80	56	105	U	|| 0
+FORMULA-STRUCT-197	src/engine/gearlayout.js	106	82	131	U	|| 0
+FORMULA-STRUCT-198	src/engine/gearlayout.js	110	86	135	U	|| 0
+FORMULA-STRUCT-199	src/engine/gearlayout.js	111	87	136	U	|| 0
+FORMULA-STRUCT-200	src/engine/gearlayout.js	129	105	154	U	Math.min
+FORMULA-STRUCT-201	src/engine/gearlayout.js	130	106	155	U	|| 0
+FORMULA-STRUCT-204	src/engine/gearlayout.js	140	116	165	U	|| 0
+FORMULA-STRUCT-205	src/engine/gearlayout.js	160	136	185	U	|| 0
+FORMULA-STRUCT-206	src/engine/gearlayout.js	161	137	186	U	|| 0
+FORMULA-STRUCT-207	src/engine/gearlayout.js	162	138	187	U	|| 0
+FORMULA-STRUCT-210	src/engine/gearlayout.js	171	147	196	U	Math.max(0
+FORMULA-STRUCT-211	src/engine/gearlayout.js	172	148	197	U	Math.max(0
+FORMULA-STRUCT-212	src/engine/gearlayout.js	173	149	198	U	Math.max(0
+FORMULA-STRUCT-215	src/engine/gearlayout.js	176	152	201	U	Math.max(0
+FORMULA-STRUCT-216	src/engine/gearlayout.js	177	153	202	U	Math.max(0
+FORMULA-STRUCT-217	src/engine/gearlayout.js	179	155	204	U	Math.max(0
+FORMULA-STRUCT-218	src/engine/gearlayout.js	181	157	206	U	Math.max(0
+FORMULA-STRUCT-219	src/engine/gearlayout.js	182	158	207	U	Math.max(0
+FORMULA-STRUCT-220	src/engine/loadcases.js	216	192	241	U	Math.max(0
+FORMULA-STRUCT-221	src/engine/loadcases.js	223	199	248	U	Math.max(0
+FORMULA-STRUCT-224	src/engine/loadcases.js	231	207	256	U	Math.max(0
+FORMULA-STRUCT-225	src/engine/loadcases.js	259	235	284	W	
+FORMULA-STRUCT-226	src/engine/loadcases.js	260	236	285	W	
+FORMULA-STAB-005	src/classes/drone/dynamics.js	135	111	160	U	Math.abs
+FORMULA-STAB-006	src/classes/drone/dynamics.js	137	113	162	U	Math.abs
+FORMULA-STAB-007	src/classes/drone/dynamics.js	138	114	163	U	Math.abs
+FORMULA-STAB-008	src/classes/drone/dynamics.js	139	115	164	U	Math.abs
+FORMULA-STAB-009	src/classes/drone/dynamics.js	143	119	168	U	Math.abs
+FORMULA-STAB-010	src/classes/drone/dynamics.js	144	120	169	U	Math.abs
+FORMULA-STAB-011	src/classes/drone/dynamics.js	145	121	170	U	Math.abs
+FORMULA-STAB-012	src/classes/drone/dynamics.js	146	122	171	U	Math.abs
+FORMULA-STAB-013	src/classes/drone/dynamics.js	149	125	174	U	Math.abs
+FORMULA-STAB-014	src/classes/drone/dynamics.js	175	151	200	W	
+FORMULA-STAB-017	src/classes/drone/dynamics.js	202	178	227	U	Math.abs
+FORMULA-STAB-019	src/classes/drone/dynamics.js	283	259	308	U	Clamp
+FORMULA-STAB-021	src/classes/drone/dynamics.js	297	273	322	U	Clamp
+FORMULA-STAB-024	src/classes/drone/dynamics.js	467	443	492	U	eps
+FORMULA-STAB-025	src/classes/drone/dynamics.js	468	444	493	U	eps
+FORMULA-STAB-026	src/classes/drone/dynamics.js	482	458	507	U	eps
+FORMULA-STAB-027	src/classes/drone/dynamics.js	486	462	511	U	eps
+FORMULA-STAB-028	src/classes/drone/dynamics.js	487	463	512	U	eps
+FORMULA-STAB-029	src/classes/drone/dynamics.js	488	464	513	U	eps
+FORMULA-STAB-030	src/classes/drone/dynamics.js	495	471	520	U	?? 0
+FORMULA-STAB-031	src/classes/drone/dynamics.js	504	480	529	U	?? 0
+FORMULA-STAB-033	src/classes/drone/dynamics.js	506	482	531	U	eps
+FORMULA-STAB-034	src/classes/drone/dynamics.js	507	483	532	U	eps
+FORMULA-STAB-035	src/classes/drone/dynamics.js	508	484	533	U	eps
+FORMULA-STAB-036	src/classes/drone/dynamics.js	509	485	534	U	eps
+FORMULA-STAB-039	src/classes/drone/dynamics.js	522	498	547	U	eps
+FORMULA-STAB-042	src/classes/drone/dynamics.js	527	503	552	U	?? 0
+FORMULA-STAB-043	src/classes/drone/dynamics.js	528	504	553	U	?? 0
+FORMULA-STAB-046	src/classes/drone/dynamics.js	534	510	559	U	Math.min
+FORMULA-STAB-048	src/classes/drone/dynamics.js	543	519	568	U	Math.min
+FORMULA-STAB-049	src/classes/drone/dynamics.js	544	520	569	U	Math.min
+FORMULA-STAB-050	src/classes/drone/dynamics.js	545	521	570	U	Math.min
+FORMULA-STAB-051	src/classes/drone/dynamics.js	554	530	579	U	?? 0
+FORMULA-STAB-053	src/classes/drone/dynamics.js	565	541	590	U	Math.abs
+FORMULA-STAB-054	src/classes/drone/dynamics.js	571	547	596	U	?? 0
+FORMULA-STAB-056	src/classes/drone/dynamics.js	573	549	598	U	?? 0
+FORMULA-STAB-057	src/classes/drone/dynamics.js	612	588	637	U	Math.max(0
+FORMULA-STAB-058	src/classes/drone/dynamics.js	617	593	642	U	Math.max(0
+FORMULA-STAB-061	src/classes/drone/dynamics.js	656	632	681	W	
+FORMULA-STAB-063	src/classes/drone/dynamics.js	669	645	694	W	
+FORMULA-STAB-067	src/classes/drone/dynamics.js	721	697	746	U	< 0
+FORMULA-STAB-072	src/classes/drone/dynamics.js	798	774	823	U	clamp
+FORMULA-STAB-075	src/classes/drone/dynamics.js	806	782	831	U	eps
+FORMULA-STAB-077	src/classes/drone/dynamics.js	817	793	842	U	Math.min
+FORMULA-STAB-078	src/classes/drone/dynamics.js	842	818	867	U	Math.max(0
+FORMULA-STAB-079	src/classes/drone/dynamics.js	843	819	868	U	Math.max(0
+FORMULA-STAB-080	src/classes/drone/dynamics.js	846	822	871	U	Math.max(0
+FORMULA-STAB-082	src/classes/drone/dynamics.js	910	886	935	U	< 0
+FORMULA-STAB-084	src/classes/drone/dynamics.js	934	910	959	U	?? 0
+FORMULA-STAB-085	src/classes/drone/dynamics.js	935	911	960	U	?? 0
+FORMULA-STAB-086	src/classes/drone/dynamics.js	941	917	966	U	?? 0
+FORMULA-STAB-087	src/classes/drone/dynamics.js	1024	1000	1049	U	Math.abs
+FORMULA-STAB-088	src/classes/drone/dynamics.js	1029	1005	1054	U	Math.abs
+FORMULA-STAB-089	src/classes/drone/dynamics.js	1033	1009	1058	U	Math.max(0
+FORMULA-STAB-090	src/classes/drone/dynamics.js	1104	1080	1129	U	Math.abs
+FORMULA-STAB-091	src/classes/drone/dynamics.js	1105	1081	1130	U	Math.abs
+FORMULA-STAB-093	src/classes/drone/dynamics.js	1169	1145	1194	U	?? 0
+FORMULA-STAB-094	src/classes/drone/dynamics.js	1170	1146	1195	U	?? 0
+FORMULA-STAB-095	src/classes/drone/dynamics.js	1171	1147	1196	U	?? 0
+FORMULA-STAB-096	src/classes/drone/dynamics.js	1173	1149	1198	U	?? 0
+FORMULA-STAB-097	src/classes/drone/dynamics.js	1174	1150	1199	U	?? 0
+FORMULA-STAB-099	src/classes/drone/dynamics.js	1192	1168	1217	U	Math.min
+FORMULA-STAB-100	src/classes/drone/dynamics.js	1229	1205	1254	W	
+FORMULA-STAB-101	src/engine/autorotation.js	76	52	101	U	<= 0
+FORMULA-STAB-105	src/engine/autorotation.js	99	75	124	U	<= 0
+FORMULA-STAB-109	src/engine/autorotation.js	105	81	130	U	<= 0
+FORMULA-STAB-111	src/engine/constraints.js	51	27	76	U	> 0 ?
+FORMULA-STAB-112	src/engine/constraints.js	62	38	87	U	> 0 ?
+FORMULA-STAB-113	src/engine/constraints.js	63	39	88	U	> 0 ?
+FORMULA-STAB-114	src/engine/constraints.js	70	46	95	U	> 0 ?
+FORMULA-STAB-115	src/engine/constraints.js	71	47	96	U	> 0 ?
+FORMULA-STAB-116	src/engine/constraints.js	78	54	103	U	> 0 ?
+FORMULA-STAB-117	src/engine/constraints.js	79	55	104	U	> 0 ?
+FORMULA-STAB-118	src/engine/constraints.js	84	60	109	U	> 0 ?
+FORMULA-STAB-120	src/engine/constraints.js	117	93	142	U	Math.min
+FORMULA-STAB-121	src/engine/constraints.js	118	94	143	U	Math.min
+FORMULA-STAB-122	src/engine/constraints.js	119	95	144	U	Math.min
+FORMULA-STAB-123	src/engine/constraints.js	134	110	159	U	Math.min
+FORMULA-STAB-124	src/engine/constraints.js	191	167	216	U	?? 0
+FORMULA-STAB-125	src/engine/constraints.js	201	177	226	U	?? 0
+FORMULA-STAB-126	src/engine/controlauthority.js	86	62	111	W	
+FORMULA-STAB-127	src/engine/controlauthority.js	87	63	112	W	
+FORMULA-STAB-129	src/engine/controlauthority.js	107	83	132	U	<= 0
+FORMULA-STAB-130	src/engine/controlauthority.js	144	120	169	U	<= 0
+FORMULA-STAB-131	src/engine/controlauthority.js	149	125	174	U	<= 0
+FORMULA-STAB-133	src/engine/controlauthority.js	180	156	205	U	Math.abs
+FORMULA-STAB-135	src/engine/controlauthority.js	250	226	275	W	
+FORMULA-STAB-136	src/engine/controlauthority.js	251	227	276	W	
+FORMULA-STAB-137	src/engine/controlauthority.js	361	337	386	U	|| 0
+FORMULA-STAB-140	src/engine/flightcontrols.js	79	55	104	W	
+FORMULA-STAB-141	src/engine/flightcontrols.js	83	59	108	U	Math.max(0
+FORMULA-STAB-142	src/engine/flightcontrols.js	84	60	109	U	Math.max(0
+FORMULA-STAB-143	src/engine/flightcontrols.js	87	63	112	U	Math.max(0
+FORMULA-STAB-144	src/engine/flightcontrols.js	88	64	113	U	Math.max(0
+FORMULA-STAB-145	src/engine/flightcontrols.js	92	68	117	U	Math.max(0
+FORMULA-STAB-148	src/engine/flightcontrols.js	114	90	139	U	Math.max(0
+FORMULA-STAB-151	src/engine/flightcontrols.js	122	98	147	U	Math.max(0
+FORMULA-STAB-153	src/engine/flightcontrols.js	146	122	157	U	eps
+FORMULA-STAB-155	src/engine/flightcontrols.js	152	128	157	U	eps
+FORMULA-STAB-156	src/engine/flyingqualities.js	81	57	106	U	Number.isFinite
+FORMULA-STAB-158	src/engine/flyingqualities.js	111	87	136	U	Number.isFinite
+FORMULA-STAB-159	src/engine/flyingqualities.js	113	89	138	U	Number.isFinite
+FORMULA-STAB-160	src/engine/flyingqualities.js	115	91	140	U	Number.isFinite
+FORMULA-STAB-161	src/engine/hoverdynamics.js	79	55	104	U	|| 0
+FORMULA-STAB-164	src/engine/hoverdynamics.js	90	66	115	U	|| 0
+FORMULA-STAB-165	src/engine/hoverdynamics.js	91	67	116	U	|| 0
+FORMULA-STAB-166	src/engine/hoverdynamics.js	92	68	117	U	|| 0
+FORMULA-STAB-167	src/engine/hoverdynamics.js	96	72	121	U	|| 0
+FORMULA-STAB-170	src/engine/hoverdynamics.js	104	80	123	U	|| 0
+FORMULA-STAB-171	src/engine/hoverqualities.js	70	46	94	U	|| 0
+FORMULA-STAB-173	src/engine/whirlflutter.js	122	98	146	U	> 0 ?
+FORMULA-PROP-001	src/classes/drone/classify.js	72	48	97	W	
+FORMULA-PROP-004	src/classes/drone/esc.js	161	137	186	U	Math.min
+FORMULA-PROP-005	src/classes/drone/esc.js	198	174	223	U	Math.min
+FORMULA-PROP-008	src/classes/drone/esc.js	234	210	259	U	clamp
+FORMULA-PROP-011	src/classes/drone/motor.js	87	63	112	W	
+FORMULA-PROP-012	src/classes/drone/motor.js	126	102	151	U	> 0 ?
+FORMULA-PROP-013	src/classes/drone/motor.js	161	137	186	U	clamp
+FORMULA-PROP-015	src/classes/drone/motor.js	165	141	190	U	clamp
+FORMULA-PROP-018	src/classes/drone/motor.js	184	160	209	U	clamp
+FORMULA-PROP-023	src/classes/drone/motor.js	189	165	214	U	clamp
+FORMULA-PROP-024	src/classes/drone/motor.js	223	199	248	W	
+FORMULA-PROP-025	src/classes/drone/rotor.js	51	27	76	U	clamp
+FORMULA-PROP-028	src/classes/drone/rotor.js	79	55	104	U	clamp
+FORMULA-PROP-030	src/classes/drone/rotor.js	89	65	114	U	Number.isFinite
+FORMULA-PROP-032	src/classes/drone/rotor.js	97	73	122	U	clamp
+FORMULA-PROP-033	src/classes/drone/rotor.js	108	84	133	W	
+FORMULA-PROP-034	src/classes/drone/rotor.js	115	91	140	W	
+FORMULA-PROP-035	src/classes/drone/rotor.js	116	92	141	W	
+FORMULA-PROP-038	src/classes/transport/layout.js	61	37	82	U	<= 0
+FORMULA-PROP-040	src/classes/turboprop/propulsion.js	36	12	48	W	
+FORMULA-PROP-041	src/classes/turboprop/propulsion.js	37	13	48	W	
+FORMULA-PROP-042	src/classes/turboprop/propulsion.js	38	14	48	W	
+FORMULA-PROP-045	src/classes/turboprop/propulsion.js	46	22	48	W	
+FORMULA-PROP-046	src/classes/turboprop/size.js	88	64	113	W	
+FORMULA-PROP-050	src/classes/turboprop/size.js	95	71	120	W	
+FORMULA-PROP-051	src/classes/turboprop/size.js	96	72	121	W	
+FORMULA-PROP-053	src/classes/turboprop/size.js	98	74	123	W	
+FORMULA-PROP-054	src/classes/turboprop/size.js	100	76	125	W	
+FORMULA-PROP-055	src/classes/turboprop/size.js	102	78	127	U	Math.max(0
+FORMULA-PROP-056	src/classes/turboprop/size.js	103	79	128	U	Math.max(0
+FORMULA-PROP-057	src/classes/turboprop/size.js	105	81	130	U	Math.max(0
+FORMULA-PROP-058	src/classes/turboprop/size.js	109	85	134	U	Math.max(0
+FORMULA-PROP-059	src/classes/turboprop/size.js	114	90	139	U	Math.max(0
+FORMULA-PROP-060	src/classes/turboprop/size.js	115	91	140	U	Math.max(0
+FORMULA-PROP-061	src/classes/turboprop/size.js	117	93	142	U	Math.max(0
+FORMULA-PROP-062	src/classes/turboprop/size.js	118	94	143	U	Math.max(0
+FORMULA-PROP-063	src/classes/turboprop/size.js	119	95	144	U	Math.max(0
+FORMULA-PROP-064	src/classes/turboprop/size.js	121	97	146	U	Math.max(0
+FORMULA-PROP-073	src/classes/turboprop/size.js	159	135	184	W	
+FORMULA-PROP-074	src/classes/turboprop/size.js	162	138	187	W	
+FORMULA-PROP-078	src/classes/turboprop/size.js	172	148	197	W	
+FORMULA-PROP-079	src/classes/turboprop/size.js	173	149	198	W	
+FORMULA-PROP-080	src/classes/turboprop/size.js	177	153	202	W	
+FORMULA-PROP-084	src/classes/turboprop/size.js	186	162	211	W	
+FORMULA-PROP-085	src/classes/turboprop/size.js	214	190	239	U	Number.isFinite
+FORMULA-PROP-086	src/classes/turboprop/size.js	221	197	246	U	Number.isFinite
+FORMULA-PROP-087	src/classes/turboprop/size.js	225	201	250	U	Number.isFinite
+FORMULA-PROP-089	src/classes/turboprop/size.js	231	207	256	U	Number.isFinite
+FORMULA-PROP-090	src/classes/turboprop/size.js	234	210	259	U	Number.isFinite
+FORMULA-PROP-093	src/classes/turboprop/size.js	261	237	286	U	Number.isFinite
+FORMULA-PROP-094	src/classes/turboprop/size.js	270	246	287	U	Math.max(0
+FORMULA-PROP-097	src/classes/turboprop/size.js	278	254	287	U	Math.max(0
+FORMULA-PROP-098	src/classes/turboprop/size.js	279	255	287	U	Math.max(0
+FORMULA-PROP-099	src/classes/turboprop/size.js	280	256	287	U	Math.max(0
+FORMULA-PROP-100	src/classes/turboprop/validation-cases.js	30	6	55	W	
+FORMULA-PROP-101	src/classes/turboprop/validation-cases.js	41	17	66	W	
+FORMULA-PROP-102	src/classes/turboprop/warnings.js	16	1	41	W	
+FORMULA-PROP-107	src/engine/blade.js	51	27	76	U	<= 0
+FORMULA-PROP-109	src/engine/blade.js	53	29	78	U	<= 0
+FORMULA-PROP-110	src/engine/blade.js	127	103	148	U	<= 0
+FORMULA-PROP-114	src/engine/coaxial.js	58	34	83	U	Math.max(0
+FORMULA-PROP-115	src/engine/coaxial.js	107	83	132	W	
+FORMULA-PROP-116	src/engine/coaxial.js	108	84	133	W	
+FORMULA-PROP-117	src/engine/coaxial.js	163	139	188	U	<= 0
+FORMULA-PROP-118	src/engine/coaxial.js	165	141	190	U	<= 0
+FORMULA-PROP-119	src/engine/coaxial.js	171	147	196	U	<= 0
+FORMULA-PROP-120	src/engine/configuration.js	828	804	853	W	
+FORMULA-PROP-121	src/engine/configuration.js	829	805	854	W	
+FORMULA-PROP-122	src/engine/configuration.js	830	806	855	W	
+FORMULA-PROP-123	src/engine/configuration.js	938	914	963	U	eps
+FORMULA-PROP-124	src/engine/configuration.js	943	919	968	U	eps
+FORMULA-PROP-125	src/engine/configuration.js	950	926	975	U	eps
+FORMULA-PROP-127	src/engine/drivefailure.js	87	63	112	U	Number.isFinite
+FORMULA-PROP-130	src/engine/drivefailure.js	98	74	115	U	Number.isFinite
+FORMULA-PROP-132	src/engine/drivesystem.js	94	70	119	U	Math.max(0
+FORMULA-PROP-133	src/engine/drivesystem.js	95	71	120	U	Math.max(0
+FORMULA-PROP-134	src/engine/drivesystem.js	99	75	124	U	Math.max(0
+FORMULA-PROP-135	src/engine/drivesystem.js	100	76	125	U	Math.max(0
+FORMULA-PROP-136	src/engine/drivesystem.js	101	77	126	U	Math.max(0
+FORMULA-PROP-137	src/engine/drivesystem.js	119	95	144	U	Math.max(0
+FORMULA-PROP-141	src/engine/motormass.js	45	21	70	W	
+FORMULA-PROP-144	src/engine/motormass.js	53	29	78	U	Math.max(0
+FORMULA-PROP-145	src/engine/motormass.js	55	31	78	U	Math.max(0
+FORMULA-PROP-146	src/engine/motormass.js	66	42	78	U	Math.max(0
+FORMULA-PROP-147	src/engine/motormass.js	71	47	78	U	Math.max(0
+FORMULA-PROP-150	src/engine/nacelle.js	99	75	124	U	?? 0
+FORMULA-PROP-151	src/engine/nacelle.js	104	80	129	U	?? 0
+FORMULA-PROP-152	src/engine/nacelle.js	110	86	129	U	?? 0
+FORMULA-PROP-154	src/engine/nacelle.js	115	91	129	U	Math.max(0
+FORMULA-PROP-155	src/engine/rotorcrafttail.js	94	70	119	U	<= 0
+FORMULA-PROP-157	src/engine/rotorgroup.js	368	344	393	U	?? 0
+FORMULA-PROP-158	src/engine/rotorgroup.js	369	345	394	U	?? 0
+FORMULA-PROP-159	src/engine/rotorgroup.js	372	348	397	U	?? 0
+FORMULA-PROP-160	src/engine/rotorgroup.js	373	349	398	U	?? 0
+FORMULA-PROP-161	src/engine/rotorgroup.js	374	350	399	U	?? 0
+FORMULA-PROP-162	src/engine/rotorgroup.js	377	353	402	W	
+FORMULA-PROP-163	src/engine/rotorgroup.js	378	354	403	W	
+FORMULA-PROP-164	src/engine/rotorgroup.js	381	357	406	U	?? 0
+FORMULA-PROP-166	src/engine/rotorgroup.js	383	359	408	U	?? 0
+FORMULA-PROP-169	src/engine/rotorgroup.js	410	386	435	U	?? 0
+FORMULA-PROP-170	src/engine/rotorgroup.js	429	405	454	U	?? 0
+FORMULA-PROP-171	src/engine/rotorgroup.js	430	406	455	U	?? 0
+FORMULA-PROP-172	src/engine/rotorgroup.js	432	408	457	U	Math.max(0
+FORMULA-PROP-180	src/engine/turboelectric.js	100	76	125	U	clamp
+FORMULA-PROP-181	src/engine/turboelectric.js	101	77	126	U	clamp
+FORMULA-PROP-182	src/engine/turboelectric.js	119	95	144	U	Math.min
+FORMULA-PROP-184	src/engine/turboelectric.js	133	109	158	U	?? 0
+FORMULA-PROP-194	src/engine/turboelectric.js	147	123	160	U	?? 0
+FORMULA-PROP-195	src/engine/turboelectric.js	148	124	160	U	?? 0
+FORMULA-MISSION-002	src/classes/drone/radio.js	218	194	243	U	< 0
+FORMULA-MISSION-003	src/classes/drone/radio.js	219	195	244	U	< 0
+FORMULA-MISSION-004	src/classes/drone/radio.js	235	211	260	U	< 0
+FORMULA-MISSION-005	src/classes/trainer/performance.js	76	52	94	W	
+FORMULA-MISSION-006	src/classes/trainer/performance.js	92	68	94	W	
+FORMULA-MISSION-008	src/classes/transport/landing.js	94	70	119	W	
+FORMULA-MISSION-009	src/classes/transport/landing.js	97	73	122	U	?? 0
+FORMULA-MISSION-011	src/classes/transport/landing.js	114	90	139	U	?? 0
+FORMULA-MISSION-015	src/classes/transport/landing.js	120	96	145	U	?? 0
+FORMULA-MISSION-017	src/classes/transport/landing.js	126	102	151	U	?? 0
+FORMULA-MISSION-018	src/classes/transport/landing.js	127	103	152	U	?? 0
+FORMULA-MISSION-019	src/classes/transport/landing.js	131	107	156	U	?? 0
+FORMULA-MISSION-020	src/classes/transport/landing.js	132	108	157	U	?? 0
+FORMULA-MISSION-021	src/classes/transport/landing.js	133	109	158	U	?? 0
+FORMULA-MISSION-022	src/classes/transport/landing.js	134	110	159	U	?? 0
+FORMULA-MISSION-024	src/classes/transport/landing.js	149	125	174	U	Math.max(0
+FORMULA-MISSION-025	src/classes/transport/landing.js	150	126	175	U	Math.max(0
+FORMULA-MISSION-026	src/classes/transport/landing.js	151	127	176	U	Math.max(0
+FORMULA-MISSION-027	src/classes/transport/landing.js	152	128	177	U	Math.max(0
+FORMULA-MISSION-031	src/classes/transport/landing.js	195	171	197	U	< 0
+FORMULA-MISSION-032	src/classes/transport/mission.js	71	47	96	U	Math.min
+FORMULA-MISSION-033	src/classes/transport/mission.js	72	48	97	U	Math.min
+FORMULA-MISSION-034	src/classes/transport/mission.js	78	54	103	U	Math.min
+FORMULA-MISSION-035	src/classes/transport/mission.js	83	59	108	U	Math.min
+FORMULA-MISSION-037	src/classes/transport/mission.js	85	61	110	U	Math.min
+FORMULA-MISSION-038	src/classes/transport/mission.js	86	62	111	U	Math.min
+FORMULA-MISSION-040	src/classes/transport/mission.js	94	70	119	U	Math.min
+FORMULA-MISSION-042	src/classes/transport/mission.js	96	72	121	U	Math.min
+FORMULA-MISSION-043	src/classes/transport/mission.js	97	73	122	U	Math.min
+FORMULA-MISSION-045	src/classes/transport/mission.js	100	76	125	U	Math.min
+FORMULA-MISSION-046	src/classes/transport/mission.js	101	77	126	U	Math.min
+FORMULA-MISSION-047	src/classes/transport/mission.js	102	78	127	U	Math.min
+FORMULA-MISSION-049	src/classes/transport/mission.js	106	82	131	U	eps
+FORMULA-MISSION-052	src/classes/transport/mission.js	118	94	143	U	> 0 ?
+FORMULA-MISSION-053	src/classes/transport/mission.js	121	97	146	U	> 0 ?
+FORMULA-MISSION-054	src/classes/transport/mission.js	122	98	147	U	> 0 ?
+FORMULA-MISSION-055	src/classes/transport/mission.js	125	101	150	U	> 0 ?
+FORMULA-MISSION-056	src/classes/transport/mission.js	131	107	156	U	> 0 ?
+FORMULA-MISSION-057	src/classes/transport/mission.js	134	110	159	W	
+FORMULA-MISSION-058	src/classes/transport/mission.js	135	111	160	W	
+FORMULA-MISSION-063	src/classes/transport/mission.js	151	127	176	W	
+FORMULA-MISSION-065	src/classes/transport/mission.js	153	129	178	W	
+FORMULA-MISSION-066	src/classes/transport/mission.js	154	130	179	W	
+FORMULA-MISSION-067	src/classes/transport/mission.js	155	131	180	W	
+FORMULA-MISSION-068	src/classes/transport/mission.js	156	132	181	W	
+FORMULA-MISSION-069	src/classes/transport/mission.js	162	138	187	W	
+FORMULA-MISSION-071	src/classes/transport/mission.js	192	168	217	U	Math.max(0
+FORMULA-MISSION-074	src/classes/transport/mission.js	207	183	232	U	Math.max(0
+FORMULA-MISSION-075	src/classes/transport/mission.js	223	199	248	U	Math.max(0
+FORMULA-MISSION-080	src/classes/transport/mission.js	231	207	256	U	Math.max(0
+FORMULA-MISSION-082	src/classes/transport/mission.js	237	213	262	U	Math.max(0
+FORMULA-MISSION-084	src/classes/transport/mission.js	242	218	267	U	Math.max(0
+FORMULA-MISSION-085	src/classes/transport/mission.js	248	224	273	U	Math.max(0
+FORMULA-MISSION-086	src/classes/transport/mission.js	250	226	275	U	Math.max(0
+FORMULA-MISSION-089	src/classes/transport/mission.js	268	244	289	U	Number.isFinite
+FORMULA-MISSION-094	src/classes/transport/takeoff.js	125	101	150	U	eps
+FORMULA-MISSION-096	src/classes/transport/takeoff.js	134	110	159	U	eps
+FORMULA-MISSION-097	src/classes/transport/takeoff.js	135	111	160	U	eps
+FORMULA-MISSION-099	src/classes/transport/takeoff.js	143	119	168	U	Math.abs
+FORMULA-MISSION-100	src/classes/transport/takeoff.js	148	124	173	U	Math.abs
+FORMULA-MISSION-101	src/classes/transport/takeoff.js	152	128	177	U	Math.max(0
+FORMULA-MISSION-102	src/classes/transport/takeoff.js	159	135	184	U	Math.max(0
+FORMULA-MISSION-105	src/classes/transport/takeoff.js	185	161	210	U	Math.max(0
+FORMULA-MISSION-106	src/classes/transport/takeoff.js	187	163	212	U	Math.max(0
+FORMULA-MISSION-109	src/classes/transport/takeoff.js	199	175	224	U	Math.max(0
+FORMULA-MISSION-110	src/classes/transport/takeoff.js	200	176	225	U	Math.max(0
+FORMULA-MISSION-112	src/classes/transport/takeoff.js	211	187	236	U	Math.max(0
+FORMULA-MISSION-113	src/classes/transport/takeoff.js	212	188	237	U	Math.max(0
+FORMULA-MISSION-114	src/classes/transport/takeoff.js	213	189	238	U	Math.max(0
+FORMULA-MISSION-116	src/classes/transport/takeoff.js	216	192	241	U	Math.max(0
+FORMULA-MISSION-117	src/classes/transport/takeoff.js	220	196	245	W	
+FORMULA-MISSION-118	src/classes/transport/takeoff.js	223	199	248	W	
+FORMULA-MISSION-126	src/classes/transport/takeoff.js	251	227	276	U	< 0
+FORMULA-MISSION-130	src/classes/transport/takeoff.js	265	241	290	U	< 0
+FORMULA-MISSION-136	src/engine/certification-climb.js	158	134	183	U	?? 0
+FORMULA-MISSION-137	src/engine/certification-climb.js	186	162	211	U	?? 0
+FORMULA-MISSION-138	src/engine/certification-climb.js	201	177	226	U	Math.max(0
+FORMULA-MISSION-140	src/engine/certification-climb.js	208	184	233	U	<= 0
+FORMULA-MISSION-141	src/engine/landinggear.js	145	121	170	W	
+FORMULA-MISSION-145	src/engine/landinggear.js	182	158	207	U	Math.min
+FORMULA-MISSION-146	src/engine/landinggear.js	183	159	208	U	Math.min
+FORMULA-MISSION-148	src/engine/landinggear.js	190	166	215	U	Math.min
+FORMULA-MISSION-152	src/engine/landinggear.js	201	177	226	U	Math.max(0
+FORMULA-MISSION-154	src/engine/landinggear.js	206	182	231	U	Math.max(0
+FORMULA-MISSION-155	src/engine/landinggear.js	207	183	232	U	Math.max(0
+FORMULA-MISSION-156	src/engine/landinggear.js	211	187	236	U	Math.max(0
+FORMULA-MISSION-157	src/engine/landinggear.js	219	195	244	U	Math.max(0
+FORMULA-MISSION-158	src/engine/landinggear.js	220	196	245	U	Math.max(0
+FORMULA-MISSION-162	src/engine/mission-path.js	68	44	93	U	|| 0
+FORMULA-MISSION-166	src/engine/mission-path.js	149	125	174	U	|| 0
+FORMULA-MISC-002	src/classes/bizjet/warnings.js	26	2	43	U	Number.isFinite
+FORMULA-MISC-005	src/classes/drone/autopilot.js	193	169	218	U	clamp
+FORMULA-MISC-006	src/classes/drone/autopilot.js	205	181	230	U	clamp
+FORMULA-MISC-007	src/classes/drone/autopilot.js	209	185	234	U	clamp
+FORMULA-MISC-008	src/classes/drone/autopilot.js	223	199	248	W	
+FORMULA-MISC-009	src/classes/drone/autopilot.js	234	210	259	W	
+FORMULA-MISC-010	src/classes/drone/autopilot.js	343	319	368	U	clamp
+FORMULA-MISC-011	src/classes/drone/radio.js	66	42	91	U	> 0 ?
+FORMULA-MISC-012	src/classes/drone/radio.js	68	44	93	U	> 0 ?
+FORMULA-MISC-013	src/classes/drone/radio.js	69	45	94	U	> 0 ?
+FORMULA-MISC-014	src/classes/drone/radio.js	74	50	99	U	> 0 ?
+FORMULA-MISC-015	src/classes/drone/radio.js	99	75	124	W	
+FORMULA-MISC-017	src/classes/drone/radio.js	179	155	204	W	
+FORMULA-MISC-018	src/classes/drone/radio.js	203	179	228	W	
+FORMULA-MISC-019	src/classes/drone/sizing.js	87	63	112	U	< 0
+FORMULA-MISC-021	src/classes/drone/sizing.js	89	65	114	U	< 0
+FORMULA-MISC-022	src/classes/drone/sizing.js	369	345	394	W	
+FORMULA-MISC-023	src/classes/drone/sizing.js	370	346	395	W	
+FORMULA-MISC-024	src/classes/drone/trade.js	112	88	137	U	?? 0
+FORMULA-MISC-027	src/classes/drone/trade.js	326	302	330	U	Math.min
+FORMULA-MISC-028	src/classes/trainer/performance.js	40	16	65	U	eps
+FORMULA-MISC-031	src/classes/trainer/performance.js	64	40	89	W	
+FORMULA-MISC-032	src/classes/trainer/performance.js	70	46	94	W	
+FORMULA-MISC-034	src/classes/trainer/performance.js	83	59	94	W	
+FORMULA-MISC-036	src/classes/trainer/performance.js	88	64	94	W	
+FORMULA-MISC-037	src/classes/trainer/performance.js	89	65	94	W	
+FORMULA-MISC-038	src/classes/trainer/validation-cases.js	26	2	41	W	
+FORMULA-MISC-040	src/classes/trainer/warnings.js	41	17	62	U	?? 0
+FORMULA-MISC-042	src/classes/transport/engine-deck.js	61	37	83	U	Math.min
+FORMULA-MISC-044	src/classes/transport/engine-deck.js	71	47	83	U	Math.min
+FORMULA-MISC-045	src/classes/transport/layout.js	71	47	82	U	<= 0
+FORMULA-MISC-046	src/classes/transport/layout.js	72	48	82	U	<= 0
+FORMULA-MISC-049	src/classes/transport/validation-cases.js	31	7	56	W	
+FORMULA-MISC-050	src/classes/transport/warnings.js	17	1	42	U	?? 0
+FORMULA-MISC-052	src/classes/transport/warnings.js	39	15	64	U	?? 0
+FORMULA-MISC-056	src/engine/configuration.js	163	139	188	U	Math.max(0
+FORMULA-MISC-057	src/engine/configuration.js	179	155	204	U	clamp
+FORMULA-MISC-058	src/engine/configuration.js	264	240	289	U	Math.max(0
+FORMULA-MISC-060	src/engine/configuration.js	267	243	292	U	Math.max(0
+FORMULA-MISC-061	src/engine/configuration.js	268	244	293	U	Math.max(0
+FORMULA-MISC-062	src/engine/configuration.js	269	245	294	U	Math.max(0
+FORMULA-MISC-063	src/engine/configuration.js	790	766	815	U	> 0 ?
+FORMULA-MISC-064	src/engine/configuration.js	800	776	825	U	> 0 ?
+FORMULA-MISC-065	src/engine/configuration.js	977	953	1002	U	<= 0
+FORMULA-MISC-068	src/engine/configuration.js	1065	1041	1090	U	clamp
+FORMULA-MISC-069	src/engine/configuration.js	1152	1128	1177	U	|| 0
+FORMULA-MISC-070	src/engine/configuration.js	1162	1138	1187	U	|| 0
+FORMULA-MISC-072	src/engine/configuration.js	1167	1143	1192	U	|| 0
+FORMULA-MISC-073	src/engine/explore.js	228	204	253	U	eps
+FORMULA-MISC-074	src/engine/explore.js	241	217	266	U	Math.min
+FORMULA-MISC-076	src/engine/inertia.js	69	45	94	W	
+FORMULA-MISC-078	src/engine/inertia.js	84	60	109	U	|| 0
+FORMULA-MISC-079	src/engine/inertia.js	118	94	143	U	|| 0
+FORMULA-MISC-080	src/engine/inertia.js	121	97	146	U	|| 0
+FORMULA-MISC-082	src/engine/inertia.js	131	107	156	U	|| 0
+FORMULA-MISC-085	src/engine/sizing-conditions.js	159	135	184	U	|| 0
+FORMULA-MISC-086	src/engine/sizing-conditions.js	200	176	225	U	Math.max(0
+FORMULA-MISC-087	src/engine/sizing-conditions.js	213	189	238	U	Math.max(0
+FORMULA-MISC-088	src/engine/sizing-conditions.js	217	193	242	U	Math.max(0
+FORMULA-MISC-089	src/engine/sizing-conditions.js	256	232	281	U	Math.max(0
+FORMULA-REG-001	src/classes/aircraft/compliance.js	118	94	143	U	Number.isFinite
+FORMULA-REG-002	src/classes/aircraft/compliance.js	144	120	169	U	Number.isFinite
+FORMULA-REG-009	src/engine/certification.js	145	121	156	W	
+FORMULA-REG-014	src/engine/noise.js	32	8	57	W	
+FORMULA-REG-015	src/engine/noise.js	47	23	72	W	
+FORMULA-REG-016	src/engine/noise.js	80	56	105	U	< 0
+FORMULA-REG-020	src/engine/noise.js	92	68	117	U	< 0
+FORMULA-REG-022	src/engine/noise.js	113	89	138	U	< 0
+FORMULA-REG-024	src/engine/noise.js	121	97	146	U	< 0
+FORMULA-REG-025	src/engine/noise.js	132	108	157	U	Math.abs
+FORMULA-REG-026	src/engine/noise.js	133	109	158	U	Math.abs
+FORMULA-REG-027	src/engine/noise.js	134	110	159	U	Math.abs
+FORMULA-REG-029	src/engine/noise.js	146	122	171	U	Math.abs
+FORMULA-REG-031	src/engine/noise.js	150	126	175	U	Math.abs
+FORMULA-REG-032	src/engine/noise.js	152	128	177	U	Math.abs
+FORMULA-REG-033	src/engine/noise.js	154	130	179	U	Math.abs
+FORMULA-REG-034	src/engine/noise.js	155	131	180	U	Math.abs
+FORMULA-REG-036	src/engine/noise.js	163	139	188	U	Math.abs
+FORMULA-REG-037	src/engine/noise.js	164	140	189	U	Math.abs
+FORMULA-REG-039	src/engine/noise.js	182	158	207	U	Math.min
+FORMULA-REG-040	src/engine/noise.js	183	159	208	U	Math.min
+FORMULA-REG-042	src/engine/noise.js	186	162	211	U	Math.min
+FORMULA-REG-043	src/engine/noise.js	189	165	214	U	Math.min
+FORMULA-REG-044	src/engine/noise.js	197	173	222	W	
+FORMULA-REG-046	src/engine/noise.js	200	176	225	W	
+FORMULA-REG-047	src/engine/noise.js	201	177	226	W	
+FORMULA-REG-048	src/engine/noise.js	202	178	227	W	
+FORMULA-REG-049	src/engine/noise.js	231	207	256	W	
+FORMULA-REG-050	src/engine/noise.js	233	209	258	W	
+FORMULA-REG-051	src/engine/noise.js	235	211	260	U	Math.max(0
+FORMULA-REG-052	src/engine/noise.js	237	213	262	U	Math.max(0
+FORMULA-REG-053	src/engine/noise.js	238	214	263	U	Math.max(0
+FORMULA-REG-054	src/engine/noise.js	241	217	266	U	Math.max(0
+FORMULA-REG-055	src/engine/noise.js	242	218	267	U	Math.max(0
+FORMULA-REG-057	src/engine/noise.js	247	223	272	U	Math.max(0
+FORMULA-REG-058	src/engine/noise.js	248	224	273	U	Math.max(0
+FORMULA-REG-059	src/engine/noise.js	249	225	274	U	Math.max(0
+FORMULA-REG-060	src/engine/noise.js	250	226	275	U	Math.max(0
+FORMULA-REG-061	src/engine/noise.js	259	235	284	U	Math.max(0
+FORMULA-REG-062	src/engine/noise.js	260	236	285	U	Math.max(0
+FORMULA-REG-063	src/engine/noise.js	271	247	296	U	Math.max(0
+FORMULA-REG-064	src/engine/noise.js	272	248	297	U	Math.max(0
+FORMULA-REG-066	src/engine/noise.js	277	253	302	U	Math.max(0
+FORMULA-REG-068	src/engine/noise.js	280	256	305	U	Math.max(0
+FORMULA-REG-070	src/engine/noise.js	305	281	330	U	< 0
+FORMULA-REG-071	src/engine/uncertainty.js	125	101	150	U	clamp
+FORMULA-REG-072	src/engine/uncertainty.js	126	102	151	U	clamp
+FORMULA-REG-075	src/engine/uncertainty.js	266	242	291	U	eps
+FORMULA-REG-077	src/engine/uncertainty.js	287	263	312	W	
+FORMULA-REG-078	src/engine/uncertainty.js	314	290	339	U	Math.min
+FORMULA-REG-080	src/engine/uncertainty.js	329	305	354	U	Math.min
+FORMULA-GEOM-001	src/classes/aircraft/control-surface-stations.js	131	107	156	W	
+FORMULA-GEOM-002	src/classes/aircraft/control-surface-stations.js	132	108	157	W	
+FORMULA-GEOM-004	src/classes/aircraft/control-surfaces.js	160	136	185	W	
+FORMULA-GEOM-008	src/classes/aircraft/control-surfaces.js	202	178	227	W	
+FORMULA-GEOM-009	src/classes/aircraft/control-surfaces.js	203	179	228	W	
+FORMULA-GEOM-074	src/classes/drone/obstacles.js	93	69	118	U	Math.abs
+FORMULA-GEOM-077	src/classes/drone/obstacles.js	101	77	126	U	Math.abs
+FORMULA-GEOM-080	src/classes/drone/obstacles.js	104	80	129	U	Math.abs
+FORMULA-GEOM-082	src/classes/drone/obstacles.js	144	120	169	U	<= 0
+FORMULA-GEOM-083	src/classes/drone/obstacles.js	152	128	177	U	<= 0
+FORMULA-GEOM-084	src/classes/drone/obstacles.js	157	133	182	U	<= 0
+FORMULA-GEOM-086	src/classes/drone/obstacles.js	220	196	245	U	Math.max(0
+FORMULA-GEOM-087	src/classes/drone/obstacles.js	239	215	251	U	Math.max(0
+FORMULA-GEOM-088	src/classes/drone/obstacles.js	241	217	251	U	Math.max(0
+FORMULA-GEOM-089	src/classes/drone/obstacles.js	242	218	251	U	Math.max(0
+FORMULA-GEOM-140	src/engine/cabin.js	130	106	155	U	Math.min
+FORMULA-GEOM-143	src/engine/cabin.js	156	132	181	U	Number.isFinite
+FORMULA-GEOM-146	src/engine/control-surfaces.js	138	114	163	U	eps
+FORMULA-GEOM-150	src/engine/control-surfaces.js	170	146	195	U	Number.isFinite
+FORMULA-GEOM-152	src/engine/control-surfaces.js	178	154	203	U	Number.isFinite
+FORMULA-GEOM-153	src/engine/control-surfaces.js	184	160	209	U	Math.min
+FORMULA-GEOM-156	src/engine/control-surfaces.js	204	180	214	U	Math.min
+FORMULA-GEOM-375	src/engine/mesh.js	279	255	304	U	|| 0
+FORMULA-GEOM-376	src/engine/mesh.js	280	256	305	W	
+FORMULA-BATTERY-003	src/classes/drone/battery.js	217	193	242	U	?? 0
+FORMULA-BATTERY-005	src/classes/drone/battery.js	224	200	249	U	?? 0
+FORMULA-BATTERY-006	src/classes/drone/battery.js	230	206	255	U	?? 0
+FORMULA-BATTERY-007	src/classes/drone/battery.js	232	208	257	U	?? 0
+FORMULA-BATTERY-008	src/classes/drone/battery.js	233	209	258	U	?? 0
+FORMULA-BATTERY-009	src/classes/drone/battery.js	328	304	344	U	?? 0
+FORMULA-BATTERY-010	src/classes/drone/battery.js	331	307	344	U	?? 0
+FORMULA-BATTERY-011	src/classes/drone/flight-energy.js	106	82	131	W	
+FORMULA-BATTERY-014	src/engine/battery-thermal.js	170	146	195	U	Math.max(0
+FORMULA-BATTERY-015	src/engine/battery-thermal.js	171	147	196	U	Math.max(0
+FORMULA-BATTERY-018	src/engine/battery-thermal.js	192	168	217	U	?? 0
+FORMULA-BATTERY-021	src/engine/battery-thermal.js	213	189	238	U	Math.max(0
+FORMULA-BATTERY-023	src/engine/battery-thermal.js	215	191	240	U	Math.max(0
+FORMULA-BATTERY-024	src/engine/battery-thermal.js	218	194	243	U	Math.max(0
+FORMULA-BATTERY-025	src/engine/battery-thermal.js	224	200	249	U	Math.max(0
+FORMULA-BATTERY-027	src/engine/battery-thermal.js	227	203	252	U	Math.max(0
+FORMULA-ATM-001	src/classes/transport/atmosphere.js	26	2	31	U	eps
+FORMULA-ATM-003	src/classes/transport/atmosphere.js	28	4	31	U	eps
+FORMULA-ATM-008	src/engine/atmosphere.js	30	6	55	U	Math.max(0
+FORMULA-ATM-010	src/engine/constants.js	136	112	142	U	Math.max(0
+FORMULA-ATM-012	src/engine/constants.js	138	114	142	U	Math.max(0
+FORMULA-ATM-014	src/engine/constants.js	140	116	142	U	Math.max(0
+FORMULA-ATM-015	src/engine/economics/doc-constants.js	257	233	266	U	eps

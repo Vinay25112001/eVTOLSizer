@@ -4058,6 +4058,40 @@ loop itself is unaffected.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-100 — the drone simulation's allocator agrees with ACAI on hover, but on an over-actuated airframe it scales down moment demands ACAI says are attainable, and counts them as allocation failures — LOW — VERIFIED
+
+`src/classes/drone/dynamics.js`, `allocateDegraded` (STAB-019, STAB-021). The mixer comment says the
+simulation and ACAI use "the SAME matrix … so the two analyses cannot silently disagree about what
+the airframe can do".
+
+**On hover they agree.** On Du et al.'s 14 hexacopter cases (both arrangements, intact and every
+single failure) the allocator saturates exactly where ACAI is negative (PPNNPN, rotor 5 or 6
+failed) and nowhere else. The moment-scale bisection is sound: the least-norm thrusts are affine in
+the scale.
+
+**Off hover they do not.** The allocator tests one allocation, the least-norm f = B(BᵀB)⁻¹u, and
+not the set of allocations. Wrenches inside the ACAI ball are attainable by definition. Sampling
+4,000 random directions at 0.95 of the ACAI radius:
+
+| airframe | ACAI | scaled or dropped | worst moment scale |
+|---|---|---|---|
+| hexacopter PNPNPN | 1.4861 | 18.1 % | 0.858 |
+| hexacopter PPNNPN | 1.1295 | 17.3 % | 0.705 |
+| PPNNPN, rotor 2 failed | 0.451 | 6.3 % | 0.770 |
+| octocopter | 1.4968 | 23.1 % | 0.853 |
+| octocopter, rotor 1 failed | 1.0461 | 21.1 % | 0.598 |
+| quadrotor (exactly actuated) | 0.7623 | 0 % | 1.000 |
+
+`simulate` (l.823-828) counts each such case in `allocationFailed`, and can set
+`fullRankButUnattainable`, on demands the airframe can meet.
+
+**Also:** a NaN in the wrench is returned as NaN thrusts marked nominal and undegraded.
+
+**LOW.** The error is pessimistic about authority. It is reached by the drone flight simulation,
+and the controllability verdict ACAI reports is unaffected.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

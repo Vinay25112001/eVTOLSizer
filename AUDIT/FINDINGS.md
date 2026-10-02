@@ -3262,6 +3262,50 @@ would not guess from its interface that none of it refuses anything.
 
 **Not repaired.** PASS A modifies no production code.
 
+
+## F-83 — the payload search never tests the bottom of its own bracket, so when nothing closes it answers "0 kg" as though it had found it — LOW — VERIFIED
+
+`maxPayloadAtMTOM` (`engine/certification.js:134-155`) answers *"given the category and the mission,
+how much can it carry?"* by bisection on payload between `lo = 0` and the bound of FORMULA-REG-009
+(l.145). **It tests the upper end and never the lower one.** When no payload in the bracket closes,
+every probe moves `hi` down, and the function returns the untested `lo` as its answer, under the
+same note a successful search prints. Measured by driving the real sizing loop through a counting
+wrapper:
+
+| case | returned | what is true |
+|---|---|---|
+| limit 500 kg | `payloadKg 0`, `mtowKg null`, *"bisection on payload, 10 sizing evaluations"* | a **1 kg** payload already sizes to **771.2 kg**; nothing closes |
+| range 400 km, default 5,700 kg limit | `payloadKg 0`, same note | every evaluated payload is infeasible |
+| payload `NaN` or `maxPayloadKg NaN` | `payloadKg 0`, *"… 0 sizing evaluations"* | `hi` is `NaN` and the loop never runs; one evaluation was made |
+| limit 3,175 kg (SC-VTOL Issue 1) | 550 kg, *"10 sizing evaluations"* | correct answer; **11** evaluations were made |
+
+**The sibling function in the same file gets both right.** `maxRangeAtMTOM` evaluates the bottom of
+its bracket first (`feasible(1)`, l.104) and, when that fails, says so in words: *"no mission closes
+inside the limit — the airframe alone exceeds it"*. Asked the same 500 kg question it returns that
+sentence. It also starts its evaluation counter at 2, counting both bracket probes; the payload
+function starts at 0 and omits the probe at `hi`, so its `iterations` and its note are one short
+whenever the bisection runs.
+
+**And the lower end is not a payload the engine can size at all.** A zero payload throws inside a
+cabin display string after the loop converges — already recorded as **F-R16** — which `feasible()`
+swallows as *infeasible*. So the value returned when nothing closes is the one point in the bracket
+that is guaranteed not to be a design.
+
+**The rest is sound, measured.** The bound reproduces longhand on ten inputs; the bisection closes a
+910 kg bracket in exactly ⌈log₂ 910⌉ = 10 steps; and its premise holds, MTOW rising monotonically
+in payload with **0 decreases over 91 sized points** (10 to 910 kg, 4.31 kg of MTOW per kg of
+payload). At the default 5,700 kg limit the 455 kg design closes at the doubled bound, and the
+function says so honestly — `bounded: true`, *"feasible at the 910 kg search bound"* — though that
+early return carries no `mtowKg` where the range function's does. The rounding of the reported
+payload past the last feasible value is **not** re-raised here: it is **F-R01p**, with the
+measurement in NUMERICAL-STABILITY.md.
+
+**LATENT, and LOW on that basis.** Both inverse functions are exported from `engine.js:219` and
+consumed **nowhere** in `src/` or `validation/`. Recorded because the function is public API and
+because a confident zero is the F-58 shape — an impossible answer reported as a measured one.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

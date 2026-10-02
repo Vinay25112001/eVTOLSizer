@@ -23,13 +23,13 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 142 | 0 | 0 | 1146 |
-| 2 | variable definition correct (P02-088) | 82 | 6 | 1 | 1199 |
+| 1 | mathematical expression correct (P02-087) | 143 | 0 | 0 | 1145 |
+| 2 | variable definition correct (P02-088) | 82 | 7 | 1 | 1198 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
 | 4 | sign convention correct (P02-090) | 90 | 0 | 0 | 1198 |
 | 5 | reference conditions correct (P02-091) | 25 | 19 | 1 | 1243 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 6 | 0 | 0 | 1282 |
-| 7 | applied within its validity range (P02-093) | 19 | 25 | 0 | 1244 |
+| 7 | applied within its validity range (P02-093) | 19 | 26 | 0 | 1243 |
 | 8 | empirical relation being extrapolated (P02-094) | 3 | 4 | 0 | 1281 |
 | 9 | duplicated elsewhere (P02-095) | 1268 | 20 | 0 | 0 |
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
@@ -39,12 +39,12 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 14 | payload included correctly (P02-100) **— untouched** | 0 | 0 | 0 | 1288 |
 | 15 | empty mass defined consistently (P02-101) **— untouched** | 0 | 0 | 0 | 1288 |
 | 16 | MTOW solved consistently (P02-102) **— untouched** | 0 | 0 | 0 | 1288 |
-| 17 | formula circular (P02-103) | 57 | 2 | 0 | 1229 |
-| 18 | iteration mathematically stable (P02-104) | 4 | 0 | 0 | 1284 |
-| 19 | sensitive to variable scaling (P02-105) | 54 | 4 | 0 | 1230 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 258 | 0 | 1030 |
+| 17 | formula circular (P02-103) | 58 | 2 | 0 | 1228 |
+| 18 | iteration mathematically stable (P02-104) | 5 | 0 | 0 | 1283 |
+| 19 | sensitive to variable scaling (P02-105) | 55 | 4 | 0 | 1229 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 259 | 0 | 1029 |
 
-**Determined 2,837 of 25,760 (11.0 %). Five of the twenty questions are untouched for every relation.**
+**Determined 2,844 of 25,760 (11.0 %). Five of the twenty questions are untouched for every relation.**
 
 ## 2. What the fifteen answered questions rest on
 
@@ -1308,7 +1308,7 @@ calculation is exactly what has not been done.
 | FORMULA-MISC-089 | `src/engine/sizing-conditions.js:256` | U | U | P | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
 | FORMULA-REG-001 | `src/classes/aircraft/compliance.js:118` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-REG-002 | `src/classes/aircraft/compliance.js:144` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-REG-009 | `src/engine/certification.js:145` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 20: a zero, negative or NaN guard IS present in code inside the window - refusal-finite at l.136, covering NaN and Infinity - so the previous "no guard" assertion was FALSE and is withdrawn. The guard constrains quantities this relation consumes, but full coverage is not demonstrated, which is what UNVERIFIED records. Corrected by the Q20 integrity block; see F-67 |
+| FORMULA-REG-009 | `src/engine/certification.js:145` | P | W | P | U | U | U | W | U | P | U | U | U | U | U | U | U | P | P | P | W | 1: the upper end of the payload bisection bracket, hi = max(1, maxPayloadKg if given, else twice the design payload, else twice 455 kg), recomputed longhand for ten inputs and reproduced on every one - 455 and an absent or null payload give 910, a 300 kg payload gives 600, zero or negative payloads and bounds floor at 1; 2: WARNING. hi, lo and best are what they claim to be, but n is not: the returned note prints n as the number of sizing evaluations while n counts only the bisection steps and omits the bound probe at hi, measured with a counting wrapper as 10 reported against 11 made at the 3,175 kg limit. The sibling maxRangeAtMTOM starts its count at 2 for exactly that reason. The lower bracket lo = 0 is assumed feasible and is never evaluated - see 7 and F-83; 3: units resolved and dimensionally consistent; 7: WARNING, measured. The bracket's lower end is OUTSIDE the sizing loop's own input domain - a zero payload throws inside a cabin display string (already F-R16), which feasible() catches as infeasible - and it is never tested. When nothing in the bracket closes the function returns that untested end as its answer: at a 500 kg limit, where even a 1 kg payload sizes to an MTOW of 771.2 kg, it reports payloadKg 0 under the note 'bisection on payload, 10 sizing evaluations', while maxRangeAtMTOM asked the same question reports 'no mission closes inside the limit - the airframe alone exceeds it'. At a range of 400 km it does the same at the default limit. F-83; 9: equation shape is unique in the retained set; 17: not circular. The sizing function is injected rather than imported precisely so this module has no dependency on engine.js, and the bracket is fixed before the first evaluation; 18: stable, measured. Bisection halves the interval every step and terminates on the 1 kg tolerance or the iteration cap max(6, 22): the 910 kg bracket closes in exactly ceil(log2 910) = 10 steps, as observed. Its premise also holds - MTOW rises monotonically in payload, 0 decreases over 91 sized points from 10 to 910 kg at a mean 4.31 kg of MTOW per kg of payload - so feasibility is a single step and the bisection brackets it; 19: linear in the design payload with a factor of exactly 2 and a floor of 1, measured on 455, 300 and the absent case; 20: WARNING, hand-verified by execution. The l.136 finite-check on the LIMIT stands as recorded in the Q20 integrity block, and nothing guards the bracket itself: a NaN payload or a NaN maxPayloadKg makes hi NaN, because Math.max(1, NaN) is NaN, the loop test (NaN - 0) > 1 is false, and the function returns payloadKg 0 with the note 'bisection on payload, 0 sizing evaluations' after making one. A NaN limitKg fails the l.136 check and is reported as 'no limit set', which conflates an invalid limit with a deliberate absence of one. No caller in src or validation reaches either: both inverse functions are exported from engine.js and consumed nowhere |
 | FORMULA-REG-014 | `src/engine/noise.js:32` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-REG-015 | `src/engine/noise.js:47` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-REG-016 | `src/engine/noise.js:80` | U | U | P | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |

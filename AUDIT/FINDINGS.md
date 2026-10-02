@@ -3984,6 +3984,32 @@ a negative index, which is displayed.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-98 — the flight-controls default reproduces its calibration exactly but on a basis that keeps the battery packaging the calibration removed, and the AFDD comparator that justified it keeps the one rotary-wing term NDARC's fixed-pitch rule removes — LOW — VERIFIED
+
+`src/engine/flightcontrols.js`, STAB-140 to 155. The register files this module under STAB. Its
+subject is the flight-controls group MASS.
+
+**What holds.** Every AFDD82 coefficient and exponent was recomputed from NDARC TP-20250010468
+§29-8 (vendored) over 3,240 evaluations, with 0 difference. The default fraction model's
+calibration reproduces from NASA/TM-20210017971 Table 12 (vendored): flight controls over
+(DGW − fuel-system weight) are 2.397, 2.461, 2.432, 2.710, 2.576 and 2.529 %, mean 2.518 %. At
+convergence the group equals 0.025 (MTOW − W_bat) exactly on all six shipped layouts.
+
+**Defects.**
+
+| item | measured |
+|---|---|
+| basis | the calibration subtracted NASA's whole fuel-system line, battery plus packaging (Quad-E: 2,040 lb against 1,570 lb of battery). The engine subtracts only `WbatPrev`, so pack systems stay in the basis: +3.4 to +4.0 % flight controls (liftcruise 59.92 against 57.88 kg) |
+| the comparator's rotary-wing term | NDARC: "the parametric method assumes the rotor flight controls are boosted", and per rotor a fixed-pitch rotor carries "no control weight". The module zeroes the boost and boosted terms for rpm rotors but keeps the non-boosted term. Its `afdd` result for an rpm aircraft is that term alone: 497.2 lb (Quad-E, published 108) and 1,428 lb (L+C-E, published 152). The header's "AFDD is the wrong reference class, by 4-5x" rests on it |
+| fixed wing | only NDARC's stabilizer-only form, which NDARC reserves for helicopters, is coded. Full controls (0.91 W^0.6, 168 lb at 6,000 lb) are absent, and `weights.js` passes `sHt_m2: 0`, so the term is 0 on every layout |
+| group definition | the `afdd` total omits NDARC's cockpit controls and AFCS |
+| inputs | a negative fraction is accepted (−100 kg); nTilting above nRotors gives a 150 % tilting share; any model string other than exactly `"afdd"` silently selects the fraction model |
+
+**LOW.** The production default is the fraction model, and its basis error is about 2 kg of
+MTOW. The comparator is not the default and has no UI control.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

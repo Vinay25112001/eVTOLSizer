@@ -3879,6 +3879,27 @@ which `StabilityTab.jsx` names as the fix, would carry the error to the user unc
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-94 — hover qualities recomputes the disk loading without the hover download the engine applies, and hands the dynamics sea-level density whatever the hover condition — LOW — VERIFIED
+
+`src/engine/hoverqualities.js`, l.70 (STAB-171) and l.75. The module re-derives two quantities the
+sizing result already carries, and differs from both. Measured on the six shipped layouts, at the
+default condition and at a 1,500 m field with ISA+20:
+
+| quantity | module | engine | difference |
+|---|---|---|---|
+| disk loading | MTOW · g / disc area | hover thrust W / (1 − kDL) over the same area (`DL_hover_Nm2`) | lower by (1 − kDL): tiltrotor 0.853, hybrid 0.927, hybridPusher 0.951; equal where kDL = 0 |
+| density | 1.225 kg/m³, a literal | `rhoHov`: 1.22321 at the default hover, 0.98563 hot-and-high | 24.3 % high hot-and-high |
+
+The disk loading and density feed v_i = sqrt(DL / 2ρ) in `hoverdynamics.js`. On the tiltrotor
+hot-and-high, v_i comes out about 17 % low, and every damping derivative of F-93 inherits that
+error. The arithmetic itself is right: the geometry's rotor count and diameter match the sizing
+result on all twelve cases.
+
+**LOW.** The module is reached by no production code (F-93). The error is smaller than F-93's
+and in the same direction on the damping.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

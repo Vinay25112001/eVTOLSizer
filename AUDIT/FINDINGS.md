@@ -3364,6 +3364,85 @@ and outside this block.
 
 **Not repaired.** PASS A modifies no production code.
 
+
+## F-85 — both uncertainty methods accept a DIVERGED baseline, so the screen reports an error bar around a design that never closed — MEDIUM — VERIFIED
+
+`uncertaintyBand` and `sampledBand` (`engine/uncertainty.js:109-112` and `:296-299`) start by sizing the
+baseline, and refuse only if its objective is not a finite number:
+
+    if (base0 == null || !isFinite(base0)) return { error: … };
+
+**A non-converged sizing still returns a finite MTOW**, so it passes. Every *excursion* is then
+filtered on `r2Diverged` (l.129, l.336) — the module knows the flag exists and uses it — but the
+baseline those excursions are measured against is not. Measured on the screen's own path
+(`runSizing(engineInputs(…))`, as `UncertaintyTab.jsx:28` calls it), varying only the rotor count
+from the defaults:
+
+| rotors | baseline | one-at-a-time screen | sampled, N = 10 |
+|---|---|---|---|
+| 4 | **diverged**, MTOW 10,982.78 kg | rss 0.0 %, 0 contributions — no error, no warning | p50 none, 0 of 10 converged |
+| 6 | **diverged**, MTOW 9,838.53 kg | **rss 104.5 %**, *"dominated by propDiam, nPropHover"* | **p50 2,559 kg** (4 of 10 converged) |
+| 8 | converged, 2,523.58 kg | rss 25.1 % | p50 2,538 kg |
+| 12 (default) | converged, 2,469.91 kg | rss 10.5 % | p50 2,559 kg |
+
+At six rotors the screen reports *"MTOW 9,839 kg, ±104.5 %"* and names the two inputs that dominate
+it. The baseline is not a design. One of the two excursions that survive, `nPropHover` at **7.5**
+rotors, closes at 2,811 kg — a converged neighbour 71 % lighter than a non-converged centre. The
+sampled method is equally unguarded: its percentiles are positions among the draws that did
+converge, reported as offsets from a base that did not.
+
+**The fix is the module's own idiom.** It already filters every excursion on `r2Diverged`. Applying
+that test to the baseline would return the existing `error` object. The research note the module
+cites says the same of samples: *"Non-convergent samples must be counted and shown, never dropped"*
+(UNCERTAINTY-AND-RISK.md §1.4). A non-convergent baseline is the extreme case of that rule.
+
+**MEDIUM — meaningful but localized.** Reachable from a stock slider value on the shipped input
+surface, and presented in the UI with no qualification. Localized: the band is displayed by
+`UncertaintyTab.jsx` and consumed by nothing else (`App.jsx` imports `uncertaintyBand` and never
+calls it), so no sizing number depends on it. FORMULA-REG-071, -072 and -078 carry it at Q5.
+
+**Not repaired.** PASS A modifies no production code.
+
+## F-86 — the one-at-a-time screen drops every input it finds inert without trace, counts only the movers as "perturbed", draws rotor counts the sampled method forbids, and divides a clamped excursion by its nominal band — LOW — VERIFIED
+
+Four bookkeeping defects in `uncertaintyBand`, all measured at the defaults on the screen's own
+sizing path. **None of them changes the RSS band at the defaults by more than 0.003 percentage
+points**; each changes what the result says about itself.
+
+1. **Inert inputs vanish.** 28 tagged, non-requirement inputs are perturbed and **22** contributions
+   come back. The other six — `clCruiseMax`, `clDesign` and `climbLDPenalty` (all *unverified*, at
+   ±25 %), `nRotorsStopped`, `vtGamma` and `vtRuddervatorChordFrac` — move MTOW by exactly 0.0000 kg
+   at both ends, and l.142 drops them. They appear in no list: not in `contributions`, not in
+   `inputsSkipped`, not in the note. A reader cannot tell an input that was tested and found inert
+   from one that was never tested. Whether those six SHOULD be inert is a question about the
+   engine, not this module, and is not adjudicated here.
+2. **`inputsPerturbed` is the number that moved, not the number perturbed**: 22 against 28.
+3. **Counts are drawn continuously.** `sampledBand` excludes `COUNT_KEYS` because *"a draw of 10.4
+   rotors is not an aircraft"* (l.224). The one-at-a-time screen applies no such exclusion. At the
+   default 12 rotors, ±25 % lands on 15 and 9 by luck; at **6** rotors it is **7.5 and 4.5**, and
+   at 8 it is 10 and 6. `nRotorsStopped` is perturbed to 2.04 and 1.96.
+4. **A clamped excursion is divided by the unclamped band.** The elasticity (l.151) is
+   `(half / base0) / w`. Where a physical bound clamps the excursion, the input moves less than
+   `w`. At `etaBat` **0.99** — the slider's own maximum — the high side is clamped to 0.995, a
+   0.505 % move, and the governing excursion is that side. The reported elasticity, 0.0456, is
+   **half** the 0.0902 that excursion implies.
+
+Separately, in `sampledBand`, a `NaN` seed is coerced by `>>> 0` to 0 for **every** replicate. All
+five then draw the identical stream (first draw 0.666967, five times) and the replicate spread is
+exactly zero on p5, p50 and p95, where the default seed gives 160.9, 144.4 and 223.3 kg. The
+stability check the replicates exist for becomes vacuous, while the result still reports
+`seed: NaN`. This is unreachable: `sampledBand` has no UI caller.
+
+**What was verified clean**, so the shape of this finding is clear. The generator matches an
+independent BigInt reference over seven million draws, with 0 mismatches. It has the full 2³²
+period by the Hull–Dobell conditions. The five replicate streams share no value in their first
+200,000 draws each. The type-7 quantile is exact three independent ways. The band ends reproduce on
+every input of both methods. Every Latin-hypercube column is one draw per stratum.
+
+**LOW.** Presentation and bookkeeping on an advisory tab.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

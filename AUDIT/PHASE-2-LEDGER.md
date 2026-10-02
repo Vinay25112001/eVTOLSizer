@@ -23,11 +23,11 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 248 | 1 | 8 | 1031 |
-| 2 | variable definition correct (P02-088) | 157 | 32 | 2 | 1097 |
+| 1 | mathematical expression correct (P02-087) | 249 | 1 | 9 | 1029 |
+| 2 | variable definition correct (P02-088) | 158 | 33 | 2 | 1095 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
-| 4 | sign convention correct (P02-090) | 159 | 1 | 0 | 1128 |
-| 5 | reference conditions correct (P02-091) | 29 | 30 | 3 | 1226 |
+| 4 | sign convention correct (P02-090) | 161 | 1 | 0 | 1126 |
+| 5 | reference conditions correct (P02-091) | 29 | 31 | 3 | 1225 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 11 | 0 | 0 | 1277 |
 | 7 | applied within its validity range (P02-093) | 31 | 56 | 0 | 1201 |
 | 8 | empirical relation being extrapolated (P02-094) | 4 | 19 | 0 | 1265 |
@@ -39,12 +39,12 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 14 | payload included correctly (P02-100) **— untouched** | 0 | 0 | 0 | 1288 |
 | 15 | empty mass defined consistently (P02-101) **— untouched** | 0 | 0 | 0 | 1288 |
 | 16 | MTOW solved consistently (P02-102) **— untouched** | 0 | 0 | 0 | 1288 |
-| 17 | formula circular (P02-103) | 176 | 7 | 0 | 1105 |
-| 18 | iteration mathematically stable (P02-104) | 9 | 0 | 0 | 1279 |
-| 19 | sensitive to variable scaling (P02-105) | 132 | 4 | 0 | 1152 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 374 | 0 | 914 |
+| 17 | formula circular (P02-103) | 178 | 7 | 0 | 1103 |
+| 18 | iteration mathematically stable (P02-104) | 10 | 0 | 0 | 1278 |
+| 19 | sensitive to variable scaling (P02-105) | 134 | 4 | 0 | 1150 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 376 | 0 | 912 |
 
-**Determined 3,545 of 25,760 (13.8 %). Four of the twenty questions are untouched for every relation.**
+**Determined 3,559 of 25,760 (13.8 %). Four of the twenty questions are untouched for every relation.**
 
 ## 2. What the sixteen answered questions rest on
 
@@ -972,8 +972,8 @@ calculation is exactly what has not been done.
 | FORMULA-STAB-053 | `src/classes/drone/dynamics.js:565` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-STAB-054 | `src/classes/drone/dynamics.js:571` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-STAB-056 | `src/classes/drone/dynamics.js:573` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-STAB-057 | `src/classes/drone/dynamics.js:612` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-STAB-058 | `src/classes/drone/dynamics.js:617` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
+| FORMULA-STAB-057 | `src/classes/drone/dynamics.js:612` | F | W | U | P | W | U | U | U | P | U | U | U | U | U | U | U | P | U | P | W | 1: FAIL, F-101. The cited Eq. (3) is f_body = -0.5 rho c_body abs(A . v_rel) v_rel: a drag ALONG the relative velocity whose magnitude goes as the speed squared. l.611 applies -0.5 rho c A abs(v_i) v_i to each body component separately, which equals Eq. (3) only along a body axis. Measured with the production derivative: drag magnitude 0.7071 of Eq. (3) at 45 deg in the horizontal plane, 0.5774 on the 3-D diagonal, 0.8907 and 0.7906 in forward flight nose-down 20 and 30 deg, where it also points 12.45 and 11.57 deg off -v, so part of it acts as LIFT. The thrust term itself is right: hover at W/4 per rotor gives zero acceleration; 2: WARNING, F-101: 'airframe drag, opposing the relative airspeed' (the comment) is not what is computed off the body axes - see 1; 4: thrust along body -z in a z-down frame, drag opposing each body component; hover gives exactly zero acceleration; 5: WARNING, by inspection: the relative airspeed is taken as the inertial velocity, so the equations carry no wind; Eq. (3) is written in v_B,rel; 9: equation shape is unique in the retained set; 17: a pure function of the state, the model and the thrusts; 19: quadratic in the velocity components, measured; 20: WARNING, source-inspected and executed: a negative thrust demand is clamped to 0 and an absent one is 0 (l.597); zero thrust with zero drag leaves gravity alone; there is no guard on the state, so a NaN velocity propagates |
+| FORMULA-STAB-058 | `src/classes/drone/dynamics.js:617` | P | P | U | P | U | U | U | U | P | U | U | U | U | U | U | U | P | P | P | W | 1: omega-dot = J^-1 (tau - omega x J omega), Euler's equation. Measured through the production rk4: a torque-free, drag-free tumble for 10 s at 0.5 ms conserves the world-frame angular momentum to 4.7e-14 and the rotational kinetic energy to 2.4e-15, relative; and the moments the equations produce equal Du et al.'s effectiveness-matrix rows (roll, pitch, yaw) to 6.7e-16 N m over 500 random thrust sets; 2: the body angular acceleration; 4: NED body axes; the reaction torque of an anticlockwise rotor (w = +1) is positive about z, the same convention the ACAI matrix uses, confirmed by the comparison; 9: equation shape is unique in the retained set; 17: a pure function of the state; 18: integrated by fixed-step classical RK4 with the quaternion renormalised each step; the invariants above hold to 1e-13 over 20,000 steps; 19: linear in tau, quadratic in omega; 20: WARNING, source-inspected: J^-1 is precomputed by invert3, which throws on a singular tensor at model build; no guard on the state, so a NaN rate propagates |
 | FORMULA-STAB-061 | `src/classes/drone/dynamics.js:656` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 20: a zero, negative or NaN guard IS present in code inside the window - refusal-positivity at l.641, covering zero and negative - so the previous "no guard" assertion was FALSE and is withdrawn. The guard governs other quantities rather than this relation's own inputs, which is exactly the case UNVERIFIED is defined for. Corrected by the Q20 integrity block; see F-67 |
 | FORMULA-STAB-063 | `src/classes/drone/dynamics.js:669` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-STAB-067 | `src/classes/drone/dynamics.js:721` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |

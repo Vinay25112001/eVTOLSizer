@@ -4092,6 +4092,48 @@ and the controllability verdict ACAI reports is unaffected.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-101 — the drone simulation's body drag is applied component by component instead of along the velocity as its cited source writes it, which turns part of the drag into lift and makes forward-flight thrust and energy optimistic — MEDIUM — VERIFIED
+
+`src/classes/drone/dynamics.js` l.611-612 (STAB-057).
+
+**What holds.** The rest of the rigid-body equations are right, measured:
+
+- A 10 s torque-free tumble conserves world angular momentum and rotational kinetic energy to
+  1e-13.
+- Hover is in exact equilibrium.
+- The moments equal Du et al.'s effectiveness matrix to 7e-16 N·m.
+
+**The defect.** Bauersfeld & Scaramuzza (RA-L 2022, Eq. 3), which the module quotes, write
+f_body = −0.5 ρ c_body |A·v_rel| v_rel: a drag along the relative velocity, magnitude ∝ |v|². The
+code applies −0.5 ρ c A |v_i| v_i to each body axis separately. That equals Eq. (3) only along a
+body axis. Measured with the production `derivative`, a test quadrotor, c_body 1, A 0.03 m²:
+
+| condition | drag ÷ Eq. (3) | angle off −v |
+|---|---|---|
+| along body x | 1.0000 | 0° |
+| 45° in the horizontal plane | 0.7071 | 0° |
+| 3-D diagonal | 0.5774 | 0° |
+| forward, nose down 20° | 0.8907 | 12.45° |
+| forward, nose down 30° | 0.7906 | 11.57° |
+
+In forward flight the misdirected component acts as LIFT. Trimmed level flight solved with the
+production equations, compared with the same trim under Eq. (3):
+
+| speed | thrust ÷ Eq. (3) trim | ideal power (T^1.5) |
+|---|---|---|
+| 5 m/s | 0.9991 | 0.9986 |
+| 10 m/s | 0.9866 | 0.9800 |
+| 15 m/s | 0.9477 | 0.9225 |
+| 20 m/s | 0.8909 | 0.8409 |
+
+`simulate` integrates pack energy from those thrusts when energy is enabled (l.849-868), so
+forward-flight energy is optimistic, by about 16 % in ideal power at 20 m/s on this airframe.
+
+**MEDIUM.** The error is non-conservative and speed-dependent, and it is localized to the drone
+flight simulation.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

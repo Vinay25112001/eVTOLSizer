@@ -4010,6 +4010,54 @@ MTOW. The comparator is not the default and has no UI control.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-99 — the constraint diagram's hover ceiling counts the download twice inside the module, and the tab feeding it reads a field the result does not have, so the line the module calls normally binding is drawn up to 17 % optimistic on every layout with a download — MEDIUM — VERIFIED
+
+`src/engine/constraints.js`, STAB-120 and 121, as called by `src/tabs/ConstraintDiagramTab.jsx`.
+The cruise, climb and turn power loadings recompute exactly (72 cases), and the hover density
+equals the engine's.
+
+**The module's formula.** With T = W/(1 − k) on a fixed disc, momentum theory gives
+P/W = (1/FM) √(DL_W / 2ρ) / (1 − k)^1.5. l.117 first converts the disk loading to thrust basis,
+DL/(1 − k). l.118 then applies (1 − k)^1.5 as well, giving (1 − k)^−2:
+
+- ×1.0827 at k = 0.147 on a weight-based input;
+- ×1.1723 on a thrust-based input.
+
+The download is counted twice.
+
+**What the tab does to it.** `ConstraintDiagramTab.jsx` passes the engine's hover disk loading,
+which is already thrust-based, and `downloadFrac: SR.downloadFrac`. The sizing result has no
+such field (it is `downloadFraction`), so k arrives as 0 and the thrust factor 1/(1 − k) is lost
+altogether. Measured against the engine's own hover power:
+
+| layout | k | hover W/P drawn ÷ engine's |
+|---|---|---|
+| tiltrotor | 0.147 | **1.1722** |
+| hybrid | 0.0735 | 1.0793 |
+| hybridPusher | 0.049 | 1.0515 |
+| sideBySide | 0 | 1.0193 (the engine's twin-rotor factor is absent) |
+| liftcruise, multicopter | 0 | 1.0000 |
+
+The drawn ceiling is too HIGH in W/P, meaning a smaller powerplant than the engine requires,
+which is non-conservative. The module calls this the line that is "normally the binding one for
+an eVTOL", and it sets the reported design point where it binds. The header's claim that it is
+"exactly as the sizing loop computes it, so the diagram and the loop cannot disagree" is false.
+(1 − k)·FM / √(DL_T / 2ρ) reproduces the engine to four decimals on five layouts.
+
+**Smaller items.**
+
+- The climb gradient is atan(RoC/V) where the definition gives arcsin: the climb term is 0.29 to
+  1.40 % short of the stated rate.
+- The wing limit uses cruise-altitude density for a transition that happens near the vertiport:
+  10.2 % lower than at sea level. The module itself flags that limit as a two-aircraft fit.
+- The design point is read at the nearest grid point: 1,389.8 for 1,401.5 N/m².
+- An infinite P/W (η or AR of 0) is returned as a power loading of 0.
+
+**MEDIUM.** A production tab displays a non-conservative design point, up to 17 %. The sizing
+loop itself is unaffected.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

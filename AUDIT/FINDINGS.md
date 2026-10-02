@@ -3126,6 +3126,50 @@ region where this bites.
 
 ---
 
+## F-80 — the main-tyre load falls back to the 90/10 rule of thumb that the module owning that quantity declares "not a method, and it is not used here" — LOW — VERIFIED
+
+`gear.js:124`:
+
+> `const mainLoadLb = statics.resolved ? statics.mainLoadTotal : wLb * 0.9;`
+
+**The sibling module rules the fallback out in its own words.** `ground-loads.js`'s header, which
+owns the static split this line falls back from, says verbatim:
+
+> LANDING-GEAR.md section 3.4 measures 4.6-12.7 % on flown aircraft … **The ADP-style "90/10 rule of
+> thumb" is a restatement of a typical outcome, not a method, and it is not used here.**
+
+It is used here — as the **main-tyre sizing load**, which `selectMainTyre` turns into a selected
+tyre, a pressure and a pavement code.
+
+**The rule of thumb is also the wrong side of the measured answer.** The static split this line
+replaces gives main-load fractions of **90.54 % (transport), 91.66 % (bizjet) and 91.19 %
+(turboprop)** — every one *above* 0.9 — so the fallback would **under-state** the main load by
+**0.54 % to 1.66 %**, in the non-conservative direction. LANDING-GEAR.md §3.4's measured band is
+87.3–95.4 % of weight on the mains, so 0.9 sits inside the observed range: it is a plausible typical
+outcome, which is precisely what the sibling module says disqualifies it as a method.
+
+**Reachability: not observed.** `gear.js` returns early at l.102 when the geometry is unresolved,
+so l.124 is reached only with a resolved geometry; `gearGeometry` resolves on the *presence* of two
+gear items and never checks the sign of A or B, while `staticReactions` refuses on a negative arm —
+so the fallback is the path taken when the CG falls outside the gear base. Sweeping 22 transport
+inputs across their declared ranges, **242 sized designs, the geometry resolved and the static split
+refused in 0 of them**, with A and B positive throughout. Measured, not proved: the sweep is
+single-input and covers one class.
+
+**And when forced, it changes nothing on the transport.** Driving the fallback value through
+`selectMainTyre` directly returns the same tyre as the real split — `44.5x16.5-18`, rated
+42,500 lb — because the 0.9 figure returns that tyre for any true fraction between **90.00 % and
+91.40 %**, and the measured fraction is 90.54 %.
+
+**LOW on all three counts:** not observed to be reachable, no output change when forced, and a
+magnitude under 2 %. Recorded because a documented, deliberate exclusion is being contradicted one
+file away, and a reader of `ground-loads.js` would reasonably believe the 90/10 rule appears
+nowhere in the tool.
+
+**Not repaired.** PASS A modifies no production code.
+
+---
+
 # Geometry and chart findings
 
 Full detail, including every numerical assertion, is in `GEOMETRY-AUDIT.md`. Summarised here so

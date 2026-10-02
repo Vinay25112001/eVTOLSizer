@@ -3306,6 +3306,64 @@ because a confident zero is the F-58 shape — an impossible answer reported as 
 
 **Not repaired.** PASS A modifies no production code.
 
+
+## F-84 — the missed-approach climb margin is inverted at the take-off mass while the requirement is stated at the landing mass, so the reported margin is λ times the true one — LOW — VERIFIED
+
+`complianceMatrix` (`classes/aircraft/compliance.js:118`, FORMULA-REG-001) turns the matching chart's
+required thrust-to-weight back into the climb gradient the design achieves:
+
+    achieved = req + (T/W_design − T/W_req) · (nE − 1)/nE
+
+That is the exact inverse of Scholz (5.14), and for the **second segment** it is right, measured to
+2.2e-16 against the chart's own line on nine transport configurations and on the bizjet. **The same
+expression is used for the missed approach, and there it is not the inverse of the line it reads.**
+Scholz (5.22)-(5.24), vendored, states 25.121(d) at the **maximum landing mass** and converts it to
+the take-off mass the matching chart works in:
+
+    T_TO/(m_MTO g) = nE/(nE − 1) · (1/E + sin γ) · m_ML/m_MTO
+
+and `transport/size.js:203` implements exactly that, with `landingToTakeoffMass` = λ. Solving it
+for γ divides the surplus by λ; the relation does not. **The reported margin is therefore λ times
+the true one, exactly**, on every design:
+
+| class | λ | achieved, reported | achieved, true | margin understated |
+|---|---|---|---|---|
+| transport (2, 3 and 4 engines; all three fuel methods) | 0.84 | 7.79 % | 8.87 % | **16.00 %** |
+| bizjet | 0.895 | 16.66 % | 18.36 % | **10.50 %** |
+
+The verdict cannot flip. λ > 0 preserves the sign of the surplus, so a PASS stays a PASS and a FAIL
+a FAIL; only the size of the margin is wrong, and it is wrong conservatively. The row's own note
+already warns that a marginal FAIL on this line may not be real — that note is about the gear-down
+drag increment, worth *"roughly 6 % of gradient"*, and this is a second, undeclared conservatism of
+16 % on the transport stacked on top of it.
+
+**Two smaller things in the same relation, measured.**
+
+1. **The turboprop never reaches it.** Its matching chart computes both lines — in power-to-mass
+   form, `pmSecond` and `pmMissed` (`turboprop/size.js:102,105`) — but `climb()` reads only
+   `twSecond` and `twMissed`, so both rows are reported NOT EVALUATED under the detail *"The matching
+   chart does not report this requirement for this class."* It does. Inverting the turboprop's own
+   lines gives a second-segment gradient of **4.36 %** against 2.4 % and a missed approach of
+   **3.58 %** against 2.1 %; the panel shows 0 passes and 10 rows not evaluated.
+2. **The achieved figure is sin γ, printed as a gradient.** Scholz (5.17) substitutes the gradient
+   for sin γ because the angle is small, which holds at the requirement (0.03 % at 2.4 %). The
+   achieved values are larger: the bizjet's second segment prints **17.33 %**, whose tangent — the
+   quantity 25.121 regulates — is **17.60 %**.
+
+**Not re-raised:** the W-1a and W-1c weight rows that vanish instead of reading NOT EVALUATED are
+**F-R21**. Measured this block, that defect is wider than recorded there: the transport also loses
+W-1c under two of its three fuel methods (regulatory and loftin), because only the segment mission
+returns a trip fuel for FORMULA-REG-002 to convert.
+
+**Observed and NOT adjudicated here:** the default bizjet reports **W-1a FAIL** — operating empty mass plus
+payload 9,081.2 kg against a maximum zero-fuel mass of 8,729.7 kg, 351.6 kg over. The compliance row is
+doing its job; whether the sized empty mass or the 0.6957 ratio is at fault is a WEIGHT-domain question
+and outside this block.
+
+**LOW.** Display only: `tabs.jsx:1173` is the sole consumer, and the verdicts it shows are right.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

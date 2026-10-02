@@ -23,14 +23,14 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 192 | 0 | 4 | 1092 |
-| 2 | variable definition correct (P02-088) | 114 | 16 | 2 | 1156 |
+| 1 | mathematical expression correct (P02-087) | 193 | 0 | 4 | 1091 |
+| 2 | variable definition correct (P02-088) | 114 | 17 | 2 | 1155 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
-| 4 | sign convention correct (P02-090) | 98 | 1 | 0 | 1189 |
-| 5 | reference conditions correct (P02-091) | 29 | 25 | 3 | 1231 |
+| 4 | sign convention correct (P02-090) | 99 | 1 | 0 | 1188 |
+| 5 | reference conditions correct (P02-091) | 29 | 26 | 3 | 1230 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 6 | 0 | 0 | 1282 |
-| 7 | applied within its validity range (P02-093) | 22 | 47 | 0 | 1219 |
-| 8 | empirical relation being extrapolated (P02-094) | 3 | 18 | 0 | 1267 |
+| 7 | applied within its validity range (P02-093) | 22 | 48 | 0 | 1218 |
+| 8 | empirical relation being extrapolated (P02-094) | 4 | 18 | 0 | 1266 |
 | 9 | duplicated elsewhere (P02-095) | 1268 | 20 | 0 | 0 |
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
 | 11 | hidden double-counting (P02-097) | 46 | 5 | 1 | 1236 |
@@ -39,12 +39,12 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 14 | payload included correctly (P02-100) **— untouched** | 0 | 0 | 0 | 1288 |
 | 15 | empty mass defined consistently (P02-101) **— untouched** | 0 | 0 | 0 | 1288 |
 | 16 | MTOW solved consistently (P02-102) **— untouched** | 0 | 0 | 0 | 1288 |
-| 17 | formula circular (P02-103) | 116 | 6 | 0 | 1166 |
+| 17 | formula circular (P02-103) | 117 | 6 | 0 | 1165 |
 | 18 | iteration mathematically stable (P02-104) | 7 | 0 | 0 | 1281 |
-| 19 | sensitive to variable scaling (P02-105) | 91 | 4 | 0 | 1193 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 317 | 0 | 971 |
+| 19 | sensitive to variable scaling (P02-105) | 92 | 4 | 0 | 1192 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 318 | 0 | 970 |
 
-**Determined 3,172 of 25,760 (12.3 %). Four of the twenty questions are untouched for every relation.**
+**Determined 3,181 of 25,760 (12.3 %). Four of the twenty questions are untouched for every relation.**
 
 ## 2. What the sixteen answered questions rest on
 
@@ -1046,7 +1046,7 @@ calculation is exactly what has not been done.
 | FORMULA-STAB-167 | `src/engine/hoverdynamics.js:96` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-STAB-170 | `src/engine/hoverdynamics.js:104` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-STAB-171 | `src/engine/hoverqualities.js:70` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-STAB-173 | `src/engine/whirlflutter.js:122` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
+| FORMULA-STAB-173 | `src/engine/whirlflutter.js:122` | P | W | P | P | W | U | W | P | P | U | U | U | U | U | U | U | P | U | P | W | 1: the reference boundary over the cruise speed converted to knots, recomputed independently with the knot taken from its definition, 3600/1852: 3,519 cases over t/c 0.08 to 0.30 and 5 to 200 m/s, 0 disagreements beyond the two-decimal rounding of the output; the reference is 335 kt at t/c >= 0.23 and 275 kt otherwise on every case. KT_PER_MS 1.943844 differs from 3600/1852 by -2.5e-7; 2: WARNING, F-92. The ratio is defined against CRUISE speed. 14 CFR 23.2245(a) requires freedom from flutter at all speeds within and sufficiently beyond the structural design envelope, so the speed a flutter margin is shown against is the top of that envelope with a margin, not cruise, and a ratio to cruise overstates the margin by the dive-to-cruise ratio. The verdict that reads the ratio also misnames it: for a cruise speed from 211.54 to 274.99 kt, below the 275 kt boundary, it prints 'cruise is AT OR ABOVE the reference boundary', measured; 3: units resolved and dimensionally consistent; 4: a ratio of two positive speeds. A zero or negative cruise speed is refused at the site (vKt > 0) and returns no ratio, measured at 0 and -10 m/s; 5: WARNING, from the primary. Acree's 335 and 275 kt are true airspeeds at sea-level standard conditions, rotor at 457 rpm (76 % of hover design rpm), limited-power trim (Acree 1999, p.2 and Appendix). None of these conditions is carried into the result, and the caller's cruise speed is compared with the sea-level boundary whatever the cruise altitude or rotor speed; 7: WARNING, measured. The reference is one airframe, the XV-15, applied to every tiltrotor, hybrid and side-by-side layout, which the module states. Within the published pair the choice is conservative: a wing of t/c 0.20 to 0.229, nearer the thick wing, receives the thin wing's 275 kt. Below the thin wing it is not: thinnerThanReference is set but the verdict never reads it, so t/c 0.08 at 60 m/s reads 'cruise sits far below the reference boundary' at a ratio of 2.36 against a boundary the module itself calls 'at least this bad'. F-92; 8: no relation is fitted. Every t/c from 0.08 to 0.30 maps to exactly one of the two published boundaries and none is interpolated or extrapolated numerically, measured; the shortfall below t/c 0.15 is recorded under 7; 9: equation shape is unique in the retained set; 17: a pure function of its three inputs and two published constants; 19: inversely proportional to the cruise speed and independent of every other input, measured; the unit conversion is exact to 2.5e-7; 20: WARNING, hand-verified by execution. The site's own test refuses a zero, negative, NaN, infinite, null, empty or absent speed and reports 'cruise speed unknown', which conflates an invalid speed with an unknown one, and a negative speed still prints vCruiseKt -19.4. A NaN or absent t/c silently takes the thin-wing boundary and reports t/c null; a null t/c becomes 0 and sets thinnerThanReference true; the string '70' is coerced to 70 m/s; 1e-9 m/s gives a ratio of 1.4e11. No production code calls the function (F-92) |
 | FORMULA-PROP-001 | `src/classes/drone/classify.js:72` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-PROP-004 | `src/classes/drone/esc.js:161` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-PROP-005 | `src/classes/drone/esc.js:198` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |

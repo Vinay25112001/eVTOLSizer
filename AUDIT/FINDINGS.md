@@ -3802,6 +3802,34 @@ limit, so no answer changes.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-92 — the whirl-flutter screen is called by nothing in the app although the Certification tab says it is computed, it measures its margin against cruise rather than the design envelope, and its verdict mislabels cruise below the boundary as at or above it — LOW — VERIFIED
+
+`src/engine/whirlflutter.js`, the one registered relation, STAB-173 at l.122. **The arithmetic
+and the citation hold, measured.** The margin ratio was recomputed independently for 3,519 cases,
+with 0 disagreements. Every number the module quotes from Acree, Peyran & Johnson (AHS 55th Forum,
+1999) was checked against the paper: 335 kt for the 23 % t/c XV-15 wing, 275 kt for the 15 % t/c
+wing, 529 kt static divergence, and the quoted sentences, verbatim. Johnson & Silva's side-by-side
+sentence was checked verbatim in the vendored copy.
+
+**Four defects, measured.**
+
+| defect | evidence |
+|---|---|
+| no production caller | `whirlFlutterCheck` is imported only by `validation/whirl-flutter.mjs`. Yet `src/tabs/CertificationTab.jsx` tells the user "Whirl flutter and wing modes are computed separately". No tab, panel or report shows a whirl-flutter result |
+| the margin is against cruise | 14 CFR 23.2245(a) requires freedom from flutter "at all speeds within and sufficiently beyond the structural design envelope". A ratio to CRUISE speed overstates the margin by the dive-to-cruise ratio |
+| the verdict mislabels the band below the boundary | from 211.54 to 274.99 kt of cruise (margin ratio from 1.30 down to 1.00, cruise BELOW the 275 kt boundary), the verdict reads "cruise is AT OR ABOVE the reference boundary" |
+| the thin-wing warning never reaches the verdict | a wing thinner than t/c 0.15 sets `thinnerThanReference`. The verdict ignores it: t/c 0.08 at 60 m/s reads "cruise sits far below the reference boundary", against a boundary the module itself calls "at least this bad" |
+
+**Not carried into the result.** Acree's boundaries are true airspeeds at sea-level standard
+conditions, 457 rpm and limited-power trim. None of these conditions is reported.
+
+**LOW.** No production path reaches the function. Its only consumer is a validation harness,
+whose six shipped layouts give margins of 1.58 to 2.81, all outside the mislabelled band. The
+consequence in the app is the Certification tab's claim, which leads a reader to believe that
+whirl flutter is assessed somewhere.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

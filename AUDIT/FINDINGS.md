@@ -1507,6 +1507,16 @@ correct — AERO-057, MISSION-005, MISSION-006, MISC-032, MISC-034, MISC-036 and
 definitions, and MISC-028 is a digitisation of a figure, whose breakpoints are a reading of a chart
 and not a published constant. **The tally is 58 checked, 58 passed, 0 found genuinely unsourced.**
 Q10 was left alone on all thirteen rows.
+
+**AMENDED 2026-10-02, after the `engine/noise.js` block: +3, the tally is now 61 of 944.** Three
+relations carry `source = UNVERIFIED` in the register while their coefficients are printed in a
+held primary: **FORMULA-REG-014**, whose 12194, 20.6, 107.7 and 737.9 are the A-weighting constants
+of Clarke 2021 equation (22); **FORMULA-REG-049**, the 0.7-radius station of Marte and Kurtz's
+V₀.₇; and **FORMULA-REG-055**, the Strouhal number 0.28, printed in Marte and Kurtz Appendix C.
+All three reproduce. **The tally is 61 checked, 61 passed.** For the first time the block also
+found the REVERSE case, which this tally does not count: **FORMULA-REG-031 and FORMULA-REG-032 read
+`DIRECTLY STATED` and are not what their source states** (F-88). Q10 was left alone on all
+forty-two rows.
 ---
 
 ## F-56 — three unguarded degenerate paths in the stowage chain, each latent against the shipped tyre database — LOW — VERIFIED
@@ -3440,6 +3450,228 @@ period by the Hull–Dobell conditions. The five replicate streams share no valu
 every input of both methods. Every Latin-hypercube column is one draw per stratum.
 
 **LOW.** Presentation and bookkeeping on an advisory tab.
+
+**Not repaired.** PASS A modifies no production code.
+
+
+## F-87 — the Schlegel vortex-noise term is 18.6 to 22 dB below the method it cites, the in-code "correction" that put it there replaced the right constant with a wrong one, and the harness pins the right value out — HIGH — VERIFIED — CRITICAL CANDIDATE
+
+**Severity by holder ruling, 2026-10-02: HIGH, and flagged as a CRITICAL candidate for the final
+severity normalisation** if the defect proves to change a formal certification or release
+conclusion rather than an advisory target. The evidence on that question is set out at the end.
+
+**Primary.** Marte, J. E. and Kurtz, D. W., *A Review of Aerodynamic Noise From Propellers, Rotors,
+and Lift Fans*, JPL Technical Report 32-1462 / NASA-CR-107568, 1 January 1970, NTRS 19700005920.
+Vendored by holder ruling at `eVTOL_Sizing_Research/classes/cross-class/sources/acoustics/`, with a
+manifest carrying the URL and SHA-256 `d0fbb51b…c12a7e`. Equations (1) and (3) and Appendix C were
+read on rendered page images, because the OCR layer drops the exponent and the divisor of
+equation (3).
+
+**The primary's own worked example is the oracle.** Appendix C, section 2: a three-blade rotor,
+T = 10,000 lb, R = 21.3 ft, 270 rpm, chord 1.0 ft. The primary computes V₀.₇ = 421 ft/s,
+A_b = 64 ft² and **78.7 dB at 300 ft**.
+
+| | level at 300 ft |
+|---|---|
+| the primary, printed | **78.7 dB** |
+| reproduced longhand from its sea-level form, 10(2 log V₀.₇ + 2 log T − log A_b − 3.57) | 78.74 dB |
+| reproduced from equation (3) with C_L = T / (½ρV₀.₇²A_b) = 0.7406 | 78.75 dB |
+| **the shipped vortex term on the same rotor** (module output, and longhand from the code's own expression) | **60.13 dB** |
+| the form the code cites, K₂ = 1.206e-2 with 1/ρ and the tip speed | 82.10 dB |
+
+**The shipped term is 18.57 dB below the primary's example and 21.97 dB below the form it cites.**
+The two reference forms differ by 3.4 dB because the cited constant assumes a mean lift
+coefficient of 6C_T/σ where the primary's example uses 2T/(ρV₀.₇²A_b). That 3.4 dB is a difference
+between two published readings. The 18.6 dB is not.
+
+**Where the 21.97 dB comes from, factor by factor.** The cited constant is reproduced from the
+primary: √(6.1e-27 / 1e-16 · 0.7⁶ · (6/0.4)²) · 300 ft = **1.2055e-2 s³/ft³**. It belongs to
+
+    p = K₂ · V_tip / (ρ · d) · √(T/σ · T/A)
+
+so it carries s³/ft³, the formula carries 1/ρ, and the speed is the TIP speed, the 0.7 being
+already inside the constant. Its SI value is 1.206e-2 / 0.3048³ = **0.42589**.
+
+| defect in `noise.js` | line | effect |
+|---|---|---|
+| the constant is 0.039566 where the SI value is 0.42589 (FORMULA-REG-015) | 47 | −20.64 dB |
+| the expression has no 1/ρ (FORMULA-REG-051) | 235 | +1.77 dB at sea level |
+| 0.7 is applied to the tip speed a second time (FORMULA-REG-049, -051) | 231, 235 | −3.10 dB |
+| **sum** | | **−21.97 dB**, exactly the difference measured on the worked example |
+
+The expression as coded is declared dimensionless and has units of N/(m·s). The conversion in
+its comment — lbf → N, lbf/ft² → N/m², ft² → m² — follows from the units of neither form.
+
+**The "correction" is the defect.** `noise.js:35-46` and `:220-228` record that the constant *"was
+WRONG once"*, held **0.4259**, and was changed on 2026-08-24 to 0.039566 because the old value did
+not match *"a derivation written directly above it"*. **0.4259 is the right SI value.** The
+derivation it was changed to match is the one that is wrong. Before that change the vortex term
+was 1.33 dB from the cited form (the missing 1/ρ and the extra 0.7 only).
+
+**The harness enshrines it.** `validation/acoustics.mjs:111-121` "recomputes" the constant by
+retyping the same expression, asserts the module equals it, and then **pins 0.4259 out** as
+*"exactly one area conversion"* so that *"the same wrong turn cannot be made silently again"*. The
+check passes because it compares the expression with itself. It is not independent evidence, and
+it now blocks the correct value.
+
+**Consequence, measured through the real engine on the screen's own sizing path.**
+
+| configuration at its defaults | 150 m as shipped | per the primary's example | per the cited form |
+|---|---|---|---|
+| lift+cruise | 46.4 dBA | 61.7 | 65.0 |
+| hybrid (the default) | 50.8 | **66.4** | **69.7** |
+| hybrid pusher | 51.0 | 66.5 | 69.8 |
+| tiltrotor | 50.5 | 67.2 | 70.5 |
+| multicopter | 52.4 | 67.0 | 70.3 |
+| side-by-side | 53.2 | 67.7 | 71.0 |
+
+Over a sweep of the input sliders — six configurations, 2 to 12 rotors, 1 to 5 m diameter, 100 to
+900 kg payload, ISA −15 to +30 °C — **1,017 designs converge. As shipped, 1,001 of them are at or
+under 65 dBA at 150 m. With the vortex term per the primary's example 401 are, and with the cited
+form 90 are: the verdict flips on 600 and on 911 designs.** The vortex term is already the largest
+single-rotor source on 761 of the 1,017 as shipped, so the correction passes almost entirely into
+the total: +2.5 to +19.5 dB (primary) and +4.3 to +22.8 dB (cited).
+
+**Existing claims this contradicts, identified and NOT edited.**
+
+- `AUDIT/UNITS.md:100` records `4.448` and `47.88` inside `SCHLEGEL_K2_SI` as **PASS**. That row
+  checks the two numerals against their exact values, and on that it stands. It does not check
+  whether those are the factors the conversion needs, and they are not.
+- `src/lib/provenance.js:263` marks `dBA_100m` **"validated"**: *"64 dBA against the NASA-measured
+  Joby upper bound of 65 dBA at 100 m … Was +12.6 dB before the vortex-constant fix (a ft^2/m^2
+  conversion applied in the wrong direction, worth 20.6 dB)"*. The agreement it certifies was
+  produced by the change this finding identifies as the error. The figure is also stale: the
+  validation run now prints **54.1 dBA** for that aircraft, not 64.
+- `src/lib/provenance.js:265` marks `dBA_150m` *"sourced … Anchored by the validated 100 m point"*,
+  and `:268`, `:271` mark the contour, the total and the component split *"sourced"*.
+- `docs/THEORY.md` §11.1 lists *"a Schlegel vortex term"*. `noise.js:206` titles it *"VORTEX (BVI)
+  NOISE"*; Schlegel's vortex noise is the broadband shedding term, which the primary treats
+  separately from blade-vortex interaction ("blade slap").
+
+**What this finding does NOT establish, stated plainly.** It does not establish that the higher
+number is the true noise of these aircraft. The only measurement in the repository is the
+one-sided Joby bound, *"below 65 dBA at 100 m"*, and by the provenance record's own account the
+method read 12.6 dB above that bound before the constant was changed. So Schlegel's 1966
+helicopter correlation, applied faithfully, over-predicts the one eVTOL data point held. What is
+established is narrower and is enough: the shipped term is not the method it names, the constant
+is an undeclared calibration presented as a unit conversion, the harness that guards it compares
+it with itself, and the status "validated" certifies that fit.
+
+**On the CRITICAL question — evidence, and a recommendation.** The 65 dBA comparison is consumed
+at `CertificationTab.jsx:233` and `:477` and printed by `export/report.js:665, 953, 1023`. Both tab
+rows describe it as a *target*: *"EASA UAM community noise target … No specific FAA numeric limit
+yet"* and *"(EASA UAM / FAA advisory target)"*. `validate.mjs:234-238` computes the 100 m bound
+test and `:380-383` prints it; nothing else reads it, so it does not gate the exit code. The model
+is hover-only and cannot produce a certification EPNL at all, which `acoustics.mjs` itself says.
+**On this evidence the defect changes an advisory target on most reachable designs and no formal
+certification or release conclusion, so HIGH is recommended to stand.** The flag remains for the
+normalisation pass.
+
+**Not repaired.** PASS A modifies no production code.
+
+## F-88 — the tonal line labelled "Gutin" is not Gutin's equation, the compressibility term is half its own stated derivation, and the broadband term is defined off the tonal one — MEDIUM — VERIFIED
+
+Flagged for the severity normalisation **together with F-87**, since both act on the same output.
+
+**The primary.** Marte and Kurtz equation (1), read on the page image, gives Gutin's result as
+
+    p_m = 169.3 · m·B·R·M_t / (S·A) · [ 0.76·P_h / M_t² − T·cos θ ] · J_mB(0.8·M_t·m·B·sin θ)
+
+with θ measured from the forward axis. `noise.js:152` (FORMULA-REG-032), described as the *"bare
+Gutin loading pressure"*, differs from it in four ways, each measured.
+
+| | the primary | `noise.js` | effect |
+|---|---|---|---|
+| prefactor | m·B·Ω·T / (2√2·π·c·r), a pressure | B·Ω·T / (4π·r·ρ·c²·√2), units of **m/s** | **−58.4 dB** at sea level |
+| Bessel order | **mB** | **1** (`:148-150`, REG-031) | 23.9 dB (3 blades), 41.6 dB (5 blades) |
+| thrust directivity | cos θ — **zero in the rotor plane** | sin θ, evaluated in the rotor plane (`:113`, REG-022) | the term the code computes is the one that vanishes there |
+| the power (torque) term | present, and the only one left in-plane | absent | |
+
+The calibration constant `K_cal` then adds 12 to 15 dB. **Net, at the fundamental and 1 m:** on a
+five-blade rotor at tip Mach 0.46 the shipped level is 98.35 dB against a Gutin maximum of 99.02
+(at 106° from the axis); on the three-blade default-like rotor it is **94.09 dB against 108.53**
+(at 113°), and 104.25 in-plane. The agreement on the first rotor is a coincidence of the
+calibration point, not of the form: for +10 % tip speed at fixed thrust the shipped fundamental
+rises 0.95 dB on that rotor where equation (1) rises 3.76 dB.
+
+**The register records REG-031 and REG-032 as `DIRECTLY STATED`.** They are the first rows this
+audit has found where the register *over*-records a source rather than under-recording one. Q10
+is register-bound and was left as the register has it; editing the register to agree with a
+conclusion drawn from it is the F-42 error.
+
+**The compressibility term contradicts its own comment** (`:117-121`, REG-024). The comment states
+p ∝ 1/√(1 − M²). In decibels that is −10·log(1 − M²). The code has −5. The comment's check values,
+0.89 dB at Mach 0.58 and 1.19 at 0.65, reproduce the coded −5 and are half what the stated
+proportionality gives. It is worth 0.54 to 0.64 dB on reachable designs.
+
+**The calibration is never used where it was fitted.** `K_cal` and the decay slope are referenced
+to a disk loading of 500 N/m², tip Mach 0.58 and **six blades**. Every one of 1,017 reachable
+designs has **2, 3 or 4 blades** and a tip Mach of **0.47 to 0.51**, so the blade-count term always
+extrapolates below its reference (+3.0 to +6.0 dB) and the Mach terms always sit below theirs.
+The fit data — Fleming 2022 and published Joby and Volocopter levels — is not held, so none of
+the coefficients can be checked, and the validity envelope the module enforces does not include
+blade count at all.
+
+**Broadband is tonal minus eight.** `:202` (REG-048) defines the broadband level as the tonal
+level − 8 dB plus two corrections, so it inherits every tonal term: changing only the blade count
+from 5 to 3, with chord, tip speed and thrust fixed, moves the broadband level by **−7.97 dB**,
+exactly as the tonal level moves. And the primary calls vortex noise *"the dominant source of broad
+band noise"*, so the model sums two terms — "BPM broadband" and "Schlegel vortex" — that stand for
+the same source.
+
+**What holds, measured.** An independent longhand chain reproduces the module on **4,320 contexts ×
+9 outputs with 0 outside rounding**. The A-weighting matches its transfer function to 1.4e-4 dB,
+checked against the vendored Clarke 2021 equation (22). The harmonic frequencies, the 2e-5 Pa
+reference, the energy sums, the incoherent rotor sum and the spherical spreading are all exact.
+The vortex peak-frequency rule is the primary's, verbatim.
+
+**MEDIUM, not HIGH, on the evidence held.** The header calls the model *"semi-empirical"* and the
+harness says in terms that the absolute level *"rests on a fit"*. What is established is that the
+form is not the one named, that it is dimensionally inconsistent, and that its sensitivities
+differ from the cited theory's. Without the fit data, no error in the calibrated level can be
+established in either direction.
+
+**Not repaired.** PASS A modifies no production code.
+
+## F-89 — the tip-Mach validity flag can never be false, the Bessel approximation is 3.8 dB outside its stated ±0.4 dB with a 3.7 dB step, and several sentinels are reported as results — LOW — VERIFIED
+
+All measured. **None is reachable from the input sliders**, which hold the tip speed at the
+configuration default (tip Mach 0.47 to 0.51, Bessel argument 0.75 to 1.62). All are reachable
+through the API or a design file, which accept `tipSpeed` and `nBlades`.
+
+1. **`Mtip_ok` is a tautology** (`noise.js:84, 102`). The Mach number is clamped to 0.699 *"for
+   safety"* and the flag then tests the clamped value against 0.70. It is true at a real tip Mach
+   of 0.76 and of 0.97. Above the clamp the level stops rising and then falls as the tip speed
+   rises: 107.06 dBA at Mach 0.699, 106.76 at 0.764, **100.02 at 0.970**. The harness computes that
+   very case — `acoustics.mjs:219`, a tip speed of 260 m/s — and discards the result with `void`;
+   its check 9 asserts only the in-envelope point.
+2. **`DL_ok` reads a different disk loading from the one the model uses.** The flag tests the
+   installed value; every acoustic term uses the hover value, 1.30 times smaller on every
+   reachable design.
+3. **The J₁ small-argument form** (`:143-150`) is described as *"valid to ±0.4 dB for x ≤ 3"*.
+   Against an exact series it is −1.24 dB at x = 2.0 and **−3.78 dB at 2.399**, and the switch to
+   the asymptotic form at 2.4 is a **3.70 dB step**: five blades at 203.9 and 204.3 m/s give tonal
+   levels of **88.0 and 91.7 dBA**. Beside the true zero at 3.83 the asymptotic form is 35 dB out,
+   and the 1e-6 floor that follows turns the zero itself into a 120 dB notch.
+4. **The ground term is a step, so the contour is not unique** (`:279`). The +2.5 dB switches on
+   at 10 m: 75.95 dBA at 10 m, 78.45 at 10.001 m. A target inside the step is crossed at 8.72,
+   10.01 and 11.62 m, and the bisection returns 12 m.
+5. **Sentinels returned as radii** (`:296-299`). A source already below the target at 1 m reports
+   a contour of **1 m**; one that never reaches it reports the search bound, **100,000,000 m**. A
+   NaN level also reports 1 m.
+6. **Nothing refuses a degenerate input.** A zero solidity reports a vortex level of 135.9 dBA and
+   a 65 dBA contour of 4,325 m; a rotor count of 0 reports NaN for every level beside a contour of
+   1 m; a weight of −100 kg reports 65.86 dBA. In every one of those the validity flags all read
+   true. The radius flag does turn false at zero radius, and the Mach flag at a NaN temperature.
+7. **The interaction debit reverses the rotor sum** above 29 rotors (`:259`): −0.15 dB per rotor
+   outruns 10·log N. The slider stops at 10.
+8. **The exported report does not use the engine's propagation.** `export/report.js:857` redraws
+   the level-against-distance curve from `dBA_1m` with a fixed 1.8 dB/km, against the engine's
+   1.69 dB/km on the default design.
+9. **`OASPL_total_1m` is an A-weighted level**, shown on the noise tab under that name in "dB".
+
+**LOW** on reachability. Item 1 is the F-60 shape — a guard that cannot fail — and would be MEDIUM
+if a slider exposed the tip speed.
 
 **Not repaired.** PASS A modifies no production code.
 

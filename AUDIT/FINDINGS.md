@@ -1481,6 +1481,19 @@ h = 3.6 (W/S)^1/2, which the velocity law implies to within the regulation's own
 **STRUCT-168 does not add**: its register `source` already reads DIRECTLY STATED, and the record is
 correct — 23.727(a)'s 1.44 is likewise verbatim. **The tally is 56 checked, 56 passed, 0 found
 genuinely unsourced.** Q10 was left alone on both rows.
+
+**AMENDED 2026-10-01, after the `gear/tyre-select.js` block: +1, the tally is now 57 of 944.**
+**STRUCT-191** carries `source = UNVERIFIED` in the register while the rule it implements is
+verbatim in the vendored **Goodyear Aircraft Tire Data Book 2018** introduction — *"For loads less
+than the maximum, the inflation pressure can be reduced proportionately"* — which the module also
+quotes in its own `src:` string, and which this block checked against the vendored text rather than
+against the quote. **STRUCT-189 does NOT add, and the reason is the one that applied to
+STRUCT-124's Ramanujan coefficients in the `fuselage-structure.js` block:** it asserts that the
+GENERATED tyre table is sorted by rated load, and no primary states the sort order of a generated
+file. It was instead verified **without a source**, by recomputing the invariant over all 294 rows
+(0 inversions) and by proving the two search paths it guards agree over 2,044 cases. `UNVERIFIED`
+is the CORRECT record there, not a pessimistic one. **The tally is 57 checked, 57 passed, 0 found
+genuinely unsourced.** Q10 was left alone on both rows.
 ---
 
 ## F-56 — three unguarded degenerate paths in the stowage chain, each latent against the shipped tyre database — LOW — VERIFIED
@@ -3019,6 +3032,95 @@ principle for class dispatch: *"an unknown class is an error, never a silent fal
 and `classOf` throws accordingly. This dispatch does the opposite: it defaults. A future Part 23
 class — a second light aeroplane is the obvious one — would be assumed Part 25 with no error, no
 warning and no `clipped`/`floors` evidence to make it visible.
+
+**Not repaired.** PASS A modifies no production code.
+
+---
+
+## F-78 — the tyre search promises "the lightest complying tyre" and returns the one with the smallest RATED LOAD, which is a physically larger tyre at 81 % of demand levels and on every live nose selection — MEDIUM — VERIFIED
+
+**What the module promises.** `tyre-select.js`'s header is careful and explicit about the
+distinction it draws, and this finding is about the second half of it:
+
+> `verifyTyre()`  the regulation: does THIS tyre comply? Provable.
+> `select*()`     a tool convention: **the lightest complying tyre**, offered as a starting point
+> and labelled as a convention.
+
+**What it does.** `smallestTyre` (l.140-150) returns the **first row of the table with
+`loadLb >= need`**. The table is sorted by rated load — verified independently this block, 0
+inversions over 294 rows — so that is the smallest *rated load*, not the smallest *tyre*.
+
+**Those are not the same thing, and the table is where they part company.** Measured over the 294
+rows, adjacent pairs invert on physical size constantly: **107 inversions in outside diameter, 109
+in section width, 115 in od·width²**. The starkest adjacency: `17.00-16` (16,000 lb, OD **45.05
+in**) is followed by `25.5x8.0-14` (16,200 lb, OD **25.5 in**) — a higher-rated tyre **19.55 inches
+smaller in diameter**.
+
+**Quantified over the whole demand range.** Sweeping demands from 500 to 70,000 lb in 25 lb steps,
+2,781 levels in all: **2,264 of them — 81.4 % — have a complying tyre (rated at or above the
+demand) that is physically smaller by od·width² than the one returned.** Worst case, at a 12,025 lb
+demand, the returned `15.00-16` is **89.7 % larger by od·width²** than the complying
+`22x6.6-10`.
+
+**It is not theoretical: every live nose selection is affected.**
+
+| class | demand (lb) | returned | a smaller complying tyre | smaller by |
+|---|---|---|---|---|
+| transport | 8,220.80 | H22x8.25-10 | 18x5.7-8 (8,600 lb) | **61.2 %** |
+| turboprop | 3,032.92 | 18x5.5 | 16x4.4 (3,475 lb) | **46.5 %** |
+| bizjet | 1,154.17 | 5.00-4 | 16x4.4 (1,700 lb) | 6.2 % |
+
+**And the chosen tyre is not merely reported — it is consumed.** `gear.js:137` passes
+`main.tyre` to `tyreEfficiencyFor`, so the tyre's tabulated geometry sets the strut's η_t and
+deflection; `stowage.js:119` takes `sel.tyre` and grows it into the **bay envelope**. A tyre
+chosen 45 inches in diameter where a complying 25.5 inch one exists propagates into the stowage
+volume and the strut sizing, not just into a label.
+
+**What this is NOT.** The returned tyre **complies** — it meets the rated-load rule, and
+`verifyTyre()`, the half of the module that states the regulation, is unaffected and correct. The
+module also disclaims the convention honestly: *"A caller who has a tyre in mind should verify it
+rather than accept the suggestion."* So this is a wrong optimisation and an unsupported claim, not a
+compliance or safety defect.
+
+**Severity.** MEDIUM: it changes a selected component and two downstream geometries, which is more
+than presentation, but the result stays compliant and the module labels the selection a convention.
+**Flagged as a candidate for the same severity-normalisation pass as F-68 and F-71** if the holder
+reads 61 % on a live bay envelope as significant rather than localized.
+
+**Not repaired.** PASS A modifies no production code.
+
+---
+
+## F-79 — the operating inflation pressure is clamped above and not below, so a lightly or negatively loaded tyre is reported at an arbitrarily low or NEGATIVE pressure — LOW — VERIFIED
+
+`operatingPsi` (l.155-156) computes
+`ratio = Math.min(1, actualLoadLb / tyre.loadLb)` and returns `tyre.psi * ratio`.
+
+**The source bounds it on one side only, and so does the code.** The vendored Goodyear Aircraft
+Tire Data Book 2018 introduction says, verbatim: *"Loads shown are the recommended maximum for the
+indicated inflation. **For loads less than the maximum, the inflation pressure can be reduced
+proportionately.**"* That is a permission to reduce, with no lower bound stated — and a data book
+introduction is not a licence to extrapolate the proportion to zero. The `Math.min(1, …)` cap
+correctly stops the pressure exceeding the rated figure; nothing stops it falling to nonsense.
+
+**Measured through the public selectors:**
+
+| input | returned |
+|---|---|
+| total main load 1 lb | tyre `5.00-5`, rated 31 psi, **operating 0.01 psi** |
+| total main load 100 lb | tyre `5.00-5`, **operating 0.97 psi** |
+| nose case load 0 | tyre `5.00-5`, **operating 0.00 psi** |
+| nose case load −100 | tyre `5.00-5`, **operating −1.94 psi** |
+
+Each is returned with `resolved: true`. The negative figure is caught one step downstream —
+`pavementCode(−1.94)` returns `{code: null, why: "no inflation pressure"}` — but it is caught
+*after* being fabricated, not at its source, and the zero and near-zero pressures are not caught at
+all: a 0.01 psi aircraft tyre is confidently assigned pavement code **Z, "Low"**.
+
+**LATENT on everything that ships.** Across all six selections on the three resolved classes the
+load ratio runs **0.8085 to 0.9905**, because the search returns the smallest tyre that meets the
+demand and the result is therefore always close to fully loaded. No live design approaches the
+region where this bites.
 
 **Not repaired.** PASS A modifies no production code.
 

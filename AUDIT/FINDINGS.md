@@ -3952,6 +3952,38 @@ required ζ for Class III, which is conservative.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-97 — the control-authority index reproduces Du et al.'s tables wherever the hover point is attainable, but reports a different value from the paper's Theorem 3 when it is not, fails OPEN on a non-finite torque ratio, and the two production callers use different densities — LOW — VERIFIED
+
+`src/engine/controlauthority.js`, nine relations (STAB-126 to 137). **What holds, against the
+primary.** With Du, Quan, Yang & Cai's Table I parameters, the module reproduces their Table II
+exactly: PNPNPN, ACAI 1.4861 intact and 0 on every single failure. It reproduces Table III on 5 of
+7 rows. Every controllability verdict matches. An independent implementation of the paper's
+eq. (14) agrees on all 68 cases where hover is attainable. Other relations checked:
+
+- The torque-to-thrust ratio was recomputed from its three definitions.
+- The spin-arrangement enumeration equals C(m−1, m/2−1) for every even m from 4 to 14.
+- The T/W bisection's predicate was scanned and found monotone on five rings.
+
+**Defects.**
+
+| item | measured |
+|---|---|
+| value when hover is NOT attainable | Theorem 3 defines ACAI = sign(min d_j) · min\|d_j\|. The module keeps min d_j. They differ on 58 of 91 such cases, and on the paper's own Table III: PPNNPN with rotor 5 or 6 failed is printed as **0**, Theorem 3 gives 0, the module gives **−0.2133**. `engine.js` prints this value in a user-facing check: "worst ACAI −7302.4" (liftcruise), −1682, −1609.8, −7142.9. The verdict (sign) agrees with Theorem 3 on all 159 cases |
+| fails open | k_mu NaN, undefined or Infinity, or one rotor with a NaN radius, returns `acai: null, controllable: true`. `engine.js` skips a non-finite ACAI. `RiskPanel.jsx` and `Drone3D.jsx` read `controllable` directly. `torqueToThrustRatio` produces such a k_mu from a density of 0 (Infinity), −1 or NaN (NaN), which its guard does not check |
+| two densities | `engine.js` passes the hover density. `configuration.js`, which sizes the controllable-OEI T/W, passes none and gets 1.225. At 1,500 m ISA+20 their k_mu differ by 11.5 % |
+| inputs outside the model | a figure of merit above 1 is accepted. η outside [0, 1] is accepted (η −1 reverses a rotor's thrust; η 1.5 is taken) |
+
+**Observed in a consumer, carried as a lead for SIZING and not adjudicated here.** `engine.js`
+l.2711 reads `r_.limiting`, but `acai()` returns `limitingAxis`. The engine's
+`oeiControllability.limitingAxis` is therefore null on every shipped layout, and the check's
+"limited in …" clause never prints.
+
+**LOW.** On every shipped path the controllability verdict agrees with the source, and no shipped
+path supplies a non-finite k_mu. The divergence from the cited definition is in the magnitude of
+a negative index, which is displayed.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

@@ -1470,6 +1470,17 @@ own: it is a sum of two moment terms, and the numbers the rule supplies (0.31, 0
 limit factors, all verified verbatim in 25.733(b)) live in the frozen `NOSE_TYRE_CASES` table at
 l.138-145, which is not a C1 relation. **The tally is 55 checked, 55 passed, 0 found genuinely
 unsourced.** Q10 was left alone on all three rows.
+
+**AMENDED 2026-10-01 again, after the `gear/sink-speed.js` block: +1, the tally is now 56 of 944.**
+**STRUCT-167** carries `source = UNVERIFIED` in the register and carries coefficients of its own —
+4.4, the quarter-power exponent, and the 7 and 10 fps clips — every one of which was read verbatim
+this block from the vendored 2011 CFR page text of **14 CFR 23.473(d)**: *"equal to 4.4 (W/S)1/4,
+except that this velocity need not be more than 10 feet per second and may not be less than seven
+feet per second."* It was then corroborated from a SECOND paragraph, 23.725(a)'s
+h = 3.6 (W/S)^1/2, which the velocity law implies to within the regulation's own rounding.
+**STRUCT-168 does not add**: its register `source` already reads DIRECTLY STATED, and the record is
+correct — 23.727(a)'s 1.44 is likewise verbatim. **The tally is 56 checked, 56 passed, 0 found
+genuinely unsourced.** Q10 was left alone on both rows.
 ---
 
 ## F-56 — three unguarded degenerate paths in the stowage chain, each latent against the shipped tyre database — LOW — VERIFIED
@@ -2745,6 +2756,18 @@ and asserts that the wrong weight over-sizes the nose tyre — the right check, 
 production path that actually does it goes untested. A check that demonstrates a failure mode in the
 abstract is not a check that the failure mode is absent.
 
+**AMENDED 2026-10-01, after the `gear/sink-speed.js` block: the same fallback reaches a SECOND
+consumer, and the reach recorded above was therefore understated.** `gear.js:94` passes
+`mlwKg: result.mlwKg || result.mtowKg` into `sinkCases` as well, so for the turboprop the
+**14 CFR 25.473(a)(2) landing case — "a limit descent velocity of 10 fps at the design landing
+weight" — is evaluated at MTOW**, measured: its landing case runs at 25,396.85 kg, identical to its
+take-off case, where the transport and bizjet correctly use 66,192.06 kg and 11,230.51 kg. The
+landing case GOVERNS the energy balance on all three classes by m·V² (transport 6.62e6 against
+2.84e6; turboprop 2.54e6 against 9.14e5), so the substitution lands on the governing case again.
+Direction CONSERVATIVE — a higher mass at the higher sink speed — and the magnitude follows the same
+`landingToTakeoffMass` the class declares and does not use. **One defect, one line, two consumers:
+the nose-tyre rating of 25.733(b)(2) and the landing-energy case of 25.473(a)(2).**
+
 **Not repaired.** PASS A modifies no production code.
 
 ---
@@ -2922,6 +2945,82 @@ pin is not merely refusing everything, and the ledger is restored byte-exactly a
 
 **Still ZERO production effect.** The tooling remains outside `npm test` and outside
 `validation/`; no engine, harness or report behaviour changes.
+
+---
+
+## F-76 — the Part 23 reserve-energy sink speed is derived from the velocity clips of 23.473(d) where 23.727(a) refers to the drop height of 23.725 and its own clips — LOW — VERIFIED
+
+**The rule's chain.** 14 CFR 23.727(a), verbatim from the vendored 2011 CFR page text: *"If
+compliance with the reserve energy absorption requirement in § 23.723(b) is shown by free drop
+tests, the drop height may not be less than **1.44 times that specified in § 23.725**."* And
+23.725(a), verbatim: *"h (inches) = 3.6 (W/S)^1/2 ... However, the free drop height **may not be
+less than 9.2 inches and need not be more than 18.7 inches**."*
+
+**What the module does.** `sink-speed.js:135` computes the reserve as
+`v.fps * Math.sqrt(PART23_SINK.reserveEnergyFactor)` — 1.44 applied to the height implied by
+23.473(d)'s **clipped velocity**, not to 23.725's clipped **height**. The conversion itself is
+exact: a free drop gives V² = 2gh, so a 1.44 factor on height is √1.44 = **1.2 on velocity, exactly
+in floating point**, and the module reproduces both that form and the rule's own height chain at
+**1.6e-16**. The defect is in which clip is used, not in the algebra.
+
+**Why the two differ at all.** The regulation's printed figures are rounded. Deriving the height
+from the velocity law gives h = 12·(4.4)²·(W/S)^½ / (2g) = **3.6104**(W/S)^½ against the rule's
+printed **3.6**, and at the velocity clips h = **9.1378 in** (against 9.2) and **18.6486 in**
+(against 18.7). So the two paragraphs are the same statement to about 0.3 %, and the rule's own
+rounding is what separates them.
+
+**Measured effect, and it is non-conservative:**
+
+| case | module reserve | the rule's height chain | error |
+|---|---|---|---|
+| low clip, V = 7 fps | 8.4000 fps | 8.4285 fps | **−0.339 %** |
+| high clip, V = 10 fps | 12.0000 fps | 12.0165 fps | **−0.138 %** |
+
+**It bites only where a clip binds, and the high clip is REACHABLE.** Sweeping the trainer's own
+declared input ranges — `stallKt` 35–70 and `clMaxLanding` 1.2–2.6 — wing loading spans
+**7.79 to 31.17 psf**, and the 10 fps ceiling binds at **2 of 18** points. The as-designed trainer
+sits at 14.66 psf with V = 8.609 fps, unclipped, 12.02 psf below the ceiling. Away from the clips
+the module and the rule agree exactly, because unclipped the two laws coincide.
+
+**Severity.** LOW: the magnitude is a tenth of a percent, it is confined to the clipped region, and
+the reserve case is a *must-not-fail* check rather than a sizing load. Recorded because it is a
+reference-condition deviation with a measured sign, not because it changes a number anyone reads.
+
+**Not repaired.** PASS A modifies no production code.
+
+---
+
+## F-77 — the certification basis is an allow-list of one with a silent default, so any class that is not the trainer is assumed Part 25 — LOW — VERIFIED
+
+`sink-speed.js:80-82`:
+
+> `export function certificationBasis(type) {`
+> `  return type === "trainer" ? "part23" : "part25";`
+> `}`
+
+**Measured:** `sinkCases({ type: "zzz", ... }).basis` returns **`"part25"`**, and the Part 25
+branch is taken in full — two sizing cases at 10 and 6 fps, `liftFraction` **1.0**, and no
+`floors` object at all.
+
+**Why that matters if it ever fires.** The two bases are not small variations of each other. Part 23
+assumes wing lift of **two-thirds** of the weight (23.473(e)) where Part 25 assumes **all** of it
+(25.473(b)), so a Part 23 gear absorbs materially more of the aeroplane's weight at the same sink
+speed; Part 23 also carries the 2.67 and 2.0 load-factor floors of 23.473(g), which the Part 25
+branch does not return. A class silently routed to Part 25 would therefore be sized on the wrong
+lift fraction and without its floors.
+
+**LATENT, and it is latent by accident rather than by design.** All four classes that reach
+`gearOf` today are routed correctly — trainer to Part 23, transport, bizjet and turboprop to
+Part 25, measured — and `typeOf()` rejects an unknown class upstream before `sinkCases` is
+reached. Nothing is mis-certified now.
+
+**The shape is the one the project elsewhere rules out.** `registry.js`'s own header states the
+principle for class dispatch: *"an unknown class is an error, never a silent fallback to eVTOL"*,
+and `classOf` throws accordingly. This dispatch does the opposite: it defaults. A future Part 23
+class — a second light aeroplane is the obvious one — would be assumed Part 25 with no error, no
+warning and no `clipped`/`floors` evidence to make it visible.
+
+**Not repaired.** PASS A modifies no production code.
 
 ---
 

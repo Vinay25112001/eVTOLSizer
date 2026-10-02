@@ -3711,6 +3711,61 @@ remain verified; they do not make the levels usable while the source terms are w
 
 **Not repaired.** PASS A modifies no production code.
 
+
+## F-90 — the battery thermal stage's "cruise balanced" check cannot fail, its cap limits the cooling mass but not the cooling it credits, the cell-temperature check starts from a fixed 35 °C whatever the day, and pack systems are added on top of an installed-pack specific energy — LOW — VERIFIED
+
+`src/engine/battery-thermal.js`, all eight registered relations, driven by execution. **The
+arithmetic is right**: an independent longhand of the whole function reproduces it on 3,600
+contexts × 9 outputs at 0.0e+0, the plate coefficient 0.048 is confirmed from Navier's series
+(0.04789 at ν = 0.3), and the header's identity M = 0.048·n·m·g holds at 1.1e-16. What follows is
+about what the stage reports and assumes, not about its sums.
+
+1. **"Cruise thermally balanced" is a tautology.** `cruiseBalanced = Qreject >= Qcr` (l.186),
+   where `Qreject = Math.max(Qcr, …)` (l.169). It is true by construction: 0 failures over 80
+   synthetic heat combinations spanning nine decades, and **0 of 499** reachable designs. It is
+   shown as a design check at `engine.js:2844`. The one input that makes it false is a NaN.
+2. **The 20 % cap limits the mass and not the rejection.** When the cap binds (FORMULA-BATTERY-015)
+   the BTMS mass is cut to 20 % of the pack, and the stage goes on crediting the full uncapped
+   heat rejection in the temperature rise and in the check above. A 100 kg pack with 400 kW of
+   hover heat is charged **20 kg** of cooling, credited **300 kW** of rejection, and 20 kg buys
+   **44.4 kW** at the module's own 0.45 kg/kW. **Unreachable today**: the cap binds on 0 of 499
+   designs, whose BTMS runs from 0.3 to 10.8 % of the pack.
+3. **The cell-temperature check starts from 35 °C on every day.** `tAmbientC` is a constant; the
+   ISA-deviation slider is not read. At +30 °C the field air is 45 °C at sea level. Of 475
+   designs that converge there, **3** are reported within the 55 °C limit and exceed it from a
+   45 °C start, and **412** are reported inside the 45 °C optimal band while starting at its edge
+   with a positive rise. The default at +30 °C is reported at 39.8 °C.
+4. **Pack systems are added on top of an installed-pack figure.** Under `sedBasis: "packUsable"`
+   the engine describes the entered specific energy as NASA's *"installed, usable battery specific
+   energy … (pack)"*, *"values for pack, not cell"*. The stage is still called and its mass still
+   added: at 400 Wh/kg, **36.5 kg on a 250.34 kg pack (14.6 %)**; at the default cell basis,
+   62.3 kg on 543.77 kg (11.5 %). **This is recorded as a lead and not adjudicated**: whether an
+   installed-pack figure already contains BMS, cooling and containment is decided where the stage
+   is called, in `engine.js`, which belongs to the SIZING domain.
+5. **The pack is a slab for the tray and a cube for its surface** (FORMULA-BATTERY-025): 22.1 %
+   apart for a 746 kg pack. The cube area is returned as `packFaceAreaM2` and consumed nowhere.
+6. **Sentinels in place of refusals.** A pack mass of zero or below is replaced by 1 kg and
+   returned 6.01 kg of pack systems; a NaN or negative hover heat becomes zero heat and a pass; a
+   missing series count becomes 100; an unknown pack location or runaway strategy silently takes
+   the lighter default while the result reports the string it was given; a negative hover time
+   gives a negative temperature rise and a pass.
+
+**Three things that were checked and are NOT defects.** The dormant location decision — every
+location returns the same mounts below 929 kg — is declared in the header and reproduces exactly
+(929, 1,549 and 4,647 kg). The BMS overlap with the electrical group is declared in
+`weights.js:652-655` and already recorded as **F-M04**. And the header's *"108 kW"* of hover heat
+is a figure from an earlier default; the present default generates 84.7 kW.
+
+**Question 12 opens with this block, and it opens with a PASS.** The four masses the stage
+returns are counted as mass only: they enter the empty weight through `weights.js:656, 741`, and
+the pack energy is formed on the pack mass alone — 152.065 kWh / 543.77 kg = 279.65 Wh/kg, the
+derated cell figure — with MTOW − payload − pack mass equal to the empty weight to 0.01 kg.
+
+**LOW.** Items 1, 3 and 6 reach a displayed check and no mass; item 2 is unreachable; item 5
+reaches nothing. Item 4 does reach MTOW and is left for its owning domain.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

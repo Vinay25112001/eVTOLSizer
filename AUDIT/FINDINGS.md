@@ -3830,6 +3830,55 @@ whirl flutter is assessed somewhere.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-93 — the hover damping derivatives hold the induced velocity fixed, so heave, roll and pitch damping are 2.0 to 3.4 times what blade-element theory gives at the same rotor, and the harness checks the formula against itself — MEDIUM — VERIFIED
+
+`src/engine/hoverdynamics.js`, l.81 and l.90-92 (STAB-164, 165, 166). **What holds.** The
+module's arithmetic reproduces independently on all six shipped layouts. Its geometry is right:
+roll and pitch arms are taken about the CG, and the rotor stations and the CG share the nose
+datum. The quotations from Malpica, Suh & Silva (VFS Forum 80, 2024) were checked against the
+paper and are accurate.
+
+**The defect.** All three damping derivatives rest on one per-rotor thrust slope, dT/dw = T/v_i.
+The header derives it from T = 2ρA v_i (v_i + w), differentiated with **v_i held fixed** while
+the climb rate w changes. At fixed blade pitch and fixed rotor speed the induced velocity is not
+fixed. Blade-element theory combined with momentum theory gives the quasi-steady slope as
+
+  dT/dw = (T / v_i) · aσ / (16 λ_i + aσ),  λ_i = v_i / ΩR
+
+This was derived independently and confirmed numerically to three decimals, both by
+uniform-inflow and by 400-annulus blade-element integration. Measured at each layout's own
+solidity and tip speed from the sizing result (a = 0.9 · 2π):
+
+| layout | σ | λ_i | factor | code τ_heave / τ_roll | corrected | code steady roll rate | corrected |
+|---|---|---|---|---|---|---|---|
+| liftcruise | 0.262 | 0.089 | 0.510 | 1.61 / 1.20 s | 3.16 / 2.36 s | 90.1 °/s | 176.6 °/s |
+| hybrid | 0.253 | 0.096 | 0.482 | 1.64 / 0.56 s | 3.41 / 1.15 s | 61.3 °/s | 127.1 °/s |
+| hybridPusher | 0.263 | 0.095 | 0.494 | 1.63 / 0.60 s | 3.29 / 1.22 s | 57.0 °/s | 115.4 °/s |
+| tiltrotor | 0.240 | 0.100 | 0.459 | 1.70 / 0.65 s | 3.71 / 1.41 s | 63.5 °/s | 138.2 °/s |
+| multicopter | 0.055 | 0.046 | 0.299 | 0.78 / 0.16 s | 2.61 / 0.54 s | 17.1 °/s | 57.2 °/s |
+| sideBySide | 0.058 | 0.050 | 0.294 | 0.85 / 0.18 s | 2.87 / 0.60 s | 41.8 °/s | 142.0 °/s |
+
+The code overstates |Z_w|, |L_p| and |M_q| by **1.96× to 3.40×**. It understates every time
+constant and every steady-state rate by the same factor. The factor's sensitivity to the lift
+slope is small: 0.333 to 0.386 for a from 5.0 to 2π. **The quasi-steady slope is the correct
+comparison** for what the module reports. Malpica et al. admit the reduced model only "for the
+theoretical estimation of the steady state responses". They obtain their derivatives from a
+reduced-order equivalent of their full flapping and dynamic-inflow model, not from momentum
+theory. The header's "classical result" is therefore the module's own and is not in the primary
+it cites.
+
+**The check that cannot catch it.** `validation/hover-dynamics.mjs` check 4 asserts that heave
+damping "falls as 1/sqrt(disk loading), as Zw = -g/vi requires". It tests the formula against
+itself, and would pass with any constant factor in the slope.
+
+**Reach.** No production code reaches the module. Within `src`, `hoverqualities.js` is imported only by
+`handlingcompare.js`, and nothing in `src` imports that. Only validation harnesses call either, and
+`StabilityTab.jsx` says so itself. The numbers are published in `VALIDATION.md`. **MEDIUM**: a physical error of 2 to
+3.4× in the model, localized to a module the app does not yet show. Wiring it into the pipeline,
+which `StabilityTab.jsx` names as the fix, would carry the error to the user unchanged.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

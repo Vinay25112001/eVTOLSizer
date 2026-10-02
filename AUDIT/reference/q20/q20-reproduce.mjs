@@ -25,11 +25,21 @@
    is empty by construction, because those rows are already UNVERIFIED, so
    re-deriving candidates is not a durable test. The durable invariant is
    post-hoc and is checked in BOTH directions: every recorded row must have been
-   WARNING in the as-built baseline, must be UNVERIFIED in the ledger now, and
-   must still show executable evidence in its window; and no row outside the
-   record may show that same shape. */
+   WARNING in the as-built baseline, must still show executable evidence in its
+   window, and must satisfy the CHANGE-RECORD POLICY; and no row outside the
+   record may show that same shape.
+
+   REVISED 2026-10-01 by holder ruling on F-75. This check used to assert that
+   every recorded row still reads UNVERIFIED. That froze the verdict LETTER and
+   so forbade the one thing a later engineering block is meant to be able to do -
+   record a WARNING it has verified by hand - while not actually testing for the
+   failure the pin exists to catch. The policy now lives in
+   q20-detector.mjs/recordRowStatus and protects the FAILURE MODE: a WARNING that
+   re-asserts the withdrawn mechanical claim FAILS, a WARNING with no record of
+   hand or source verification FAILS, PASS always FAILS, and UNVERIFIED always
+   holds. The change record itself remains immutable W -> U -> U evidence. */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { scrubCode, detect, windowOf } from "./q20-detector.mjs";
+import { scrubCode, detect, windowOf, recordRowStatus } from "./q20-detector.mjs";
 
 const WRITE = process.argv.includes("--write");
 const LEDGER = "AUDIT/PHASE-2-LEDGER.md";
@@ -93,13 +103,17 @@ function load(f) {
 const rawLines = (f) => { load(f); const t = rawCache.get(f); return t == null ? null : t.split(/\r?\n/); };
 const scrubLines = (f) => { load(f); const t = scrubCache.get(f); return t == null ? null : t.split(/\r?\n/); };
 
+/* the ledger's question-20 verdict AND its basis: the policy below needs the
+   basis, because a WARNING on a change-record row is judged by what it records,
+   not by its letter */
 const led = new Map();
 for (const raw of readFileSync(LEDGER, "utf8").split(/\r?\n/)) {
   if (!/^\|\s*FORMULA-/.test(raw)) continue;
   const c = raw.trim().replace(/^\|/, "").replace(/\|$/, "").split("|");
   if (c.length < 2 + NQ) continue;
-  led.set(c[0].trim(), c.slice(2, 2 + NQ)[19].trim());
+  led.set(c[0].trim(), { q20: c.slice(2, 2 + NQ)[19].trim(), basis: c.slice(2 + NQ).join("|").trim() });
 }
+const ledQ20 = (id) => (led.has(id) ? led.get(id).q20 : undefined);
 
 const rows = parseRegister();
 
@@ -158,13 +172,22 @@ if (WRITE) {
     const recIds = new Set(recs.map((f) => f[0]));
     chk(recs.length > 0, `the change record is not empty (${recs.length} rows)`);
 
+    let stillU = 0, evolvedW = 0;
     for (const f of recs) {
       const id = f[0];
+      /* the RECORD is immutable historical evidence: W -> U -> U, always */
       chk(f[2] === "W" && f[3] === "U" && f[4] === "U",
         `${id}: record reads W -> U -> U (got ${f[2]} -> ${f[3]} -> ${f[4]})`);
       chk(asBuilt.get(id) === "W",
         `${id}: the as-built scanner did record WARNING, so this was a withdrawal`);
-      chk(led.get(id) === "U", `${id}: the ledger now records UNVERIFIED`);
+      /* the LEDGER may evolve. See recordRowStatus in q20-detector.mjs: U always
+         stands; W only on a hand-verified basis that does not re-assert the
+         withdrawn mechanical claim; P never. */
+      const cur = led.get(id) || {};
+      const st = recordRowStatus(cur);
+      chk(st.ok, `${id}: ledger Q20 = ${cur.q20} is not permitted - ${st.why}`);
+      if (st.ok && cur.q20 === "U") stillU++;
+      if (st.ok && cur.q20 === "W") evolvedW++;
       const r = rows.find((x) => x.ID === id);
       chk(!!r, `${id}: present in the register`);
       if (r) {
@@ -175,12 +198,23 @@ if (WRITE) {
       }
     }
 
+    /* the record's own accounting, printed so the split is visible rather than
+       inferred from an exit code */
+    chk(stillU + evolvedW === recs.length,
+      `every recorded row is accounted for (${stillU} still UNVERIFIED + ${evolvedW} hand-verified WARNING = ${recs.length})`);
+    console.log(`  record rows: ${stillU} still UNVERIFIED, ${evolvedW} evolved to a hand-verified WARNING`);
+
+    /* PASS stays unreachable for question 20, ledger-wide and not merely on the
+       recorded rows */
+    const passes = [...led.entries()].filter(([, v]) => v.q20 === "P").map(([k]) => k);
+    chk(passes.length === 0, `Q20 carries no PASS anywhere (found ${passes.join(", ") || "none"})`);
+
     /* the other direction: no row outside the record may show the same shape */
     const strays = [];
     for (const r of rows) {
       if (recIds.has(r.ID)) continue;
       if (r.ID.startsWith("FORMULA-STRUCT-") && HAND_AUDITED_FILES.has(r.file)) continue;
-      if (asBuilt.get(r.ID) !== "W" || led.get(r.ID) !== "U") continue;
+      if (asBuilt.get(r.ID) !== "W" || ledQ20(r.ID) !== "U") continue;
       const SL = scrubLines(r.file);
       if (!SL) continue;
       const { a, b } = windowOf(r.line, SL.length);

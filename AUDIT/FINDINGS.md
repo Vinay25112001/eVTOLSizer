@@ -1455,6 +1455,21 @@ regulation. The three carrying `UNVERIFIED` -- STRUCT-184, -186 and -187 -- carr
 their own: a subtraction of two tabulated lengths, and the denominator and quotient of eq. (23).
 **The tally stands at 54 of 944, unchanged for the second block running.** A verified primary does
 not enlarge this finding when the register already says the source is stated.
+
+**AMENDED 2026-10-01, after the `gear/ground-loads.js` block: +1, the tally is now 55 of 944.**
+That block audited three relations and **exactly one** fits this pattern. **STRUCT-160** carries
+`source = UNVERIFIED` in the register, and its equation was verified **verbatim against the vendored
+primary this block** — 14 CFR 25.493(e)'s `V_N` read directly from the Federal Register equation
+image `eq-25.493e-VN.png`, reproduced term for term at relative **0.0e+0** over 2,000 cases, with
+every symbol definition (`W_T`, `A`, `B`, `E`, μ = 0.80, `f`) confirmed word for word in the
+vendored rule text. The register's record is pessimistic there, exactly as this finding describes.
+**The other two do not qualify, and the reasons are recorded so the tally stays clean.**
+**STRUCT-155** is already `DIRECTLY STATED` and the record is CORRECT, not pessimistic — f's
+equation is likewise verbatim in `eq-25.493e-f.png`. **STRUCT-163** carries no coefficient of its
+own: it is a sum of two moment terms, and the numbers the rule supplies (0.31, 0.20 and the 1.5
+limit factors, all verified verbatim in 25.733(b)) live in the frozen `NOSE_TYRE_CASES` table at
+l.138-145, which is not a C1 relation. **The tally is 55 checked, 55 passed, 0 found genuinely
+unsourced.** Q10 was left alone on all three rows.
 ---
 
 ## F-56 — three unguarded degenerate paths in the stowage chain, each latent against the shipped tyre database — LOW — VERIFIED
@@ -2633,6 +2648,280 @@ is. Questions 7 on STRUCT-221, STRUCT-224 and STRUCT-225 carry the WARNING.
 
 
 
+
+---
+
+## F-71 — the nose tyre is sized from ONE weight-and-CG combination where 14 CFR 25.733(b) requires the most critical, and for two of the three classes the tyre it selects is under-rated for a loading state the engine itself enumerates — MEDIUM — VERIFIED
+
+**All three of 25.733(b)'s cases are explicit that the load is the one "corresponding to the most
+critical combination of airplane weight ... and center of gravity position"**, verified verbatim in
+the vendored rule (`classes/transport/extracted/raw_25.733.html`). `tyre-select.js:12-15` quotes that
+very sentence back. **The chain evaluates exactly one combination:** `gear-geometry.js:127` takes
+`xCg = balance.takeoff?.xM`, a single station, and `gear.js:109` passes `result.mtowKg` as the ramp
+weight.
+
+**The engine already computes a CG envelope and the gear chain never consults it.** `balance.js:440`
+returns `envelope.fwd` and `envelope.aft` from an 82-point zero-fuel loading sweep spanning
+**43.73 % MAC** (transport), 5.29 % (bizjet) and **57.17 % MAC** (turboprop).
+
+**Measured over that same sweep, each point at its own mass and its own CG — every one a state the
+engine itself enumerates:**
+
+| class | as shipped, binding | worst enumerated state | change | tyre selected | tyre needed | shipped tyre covers it |
+|---|---|---|---|---|---|---|
+| transport | static, **8,220.80 lb/tyre** | **9,753.09 lb/tyre** at 52,682.68 kg, CG 5.01 % MAC | **+18.64 %** | H22x8.25-10, rated 8,300 lb | 8.50-10, rated 9,900 lb | **NO — short by 1,453 lb** |
+| turboprop | 0.31 g fwd, **3,032.92 lb/tyre** | **3,543.74 lb/tyre** at 19,050.63 kg, CG 0.44 % MAC | **+16.84 %** | 18x5.5, rated 3,050 lb | 14.5x5.5-6, rated 3,550 lb | **NO — short by 494 lb** |
+| bizjet | static, 1,154.17 lb/tyre | 999.79 lb/tyre | −13.38 % | 5.00-4, rated 1,200 lb | — | yes |
+
+**There is no margin to absorb it.** The shipped selections sit at **99.05 %** (transport) and
+**99.44 %** (turboprop) of the chosen tyre's rated load, because `selectNoseTyre` picks the smallest
+tyre that meets the requirement it is given. The direction is class-dependent — the bizjet's forward
+CG point is light enough to offset the longer arm — so this is not a uniform conservatism.
+
+**The same sentence's weight basis is also not met.** (b)(1) and (b)(3) say *maximum ramp weight*;
+the tool passes MTOW. Measured from the engine's own taxi-out fuel, ramp weight is understated by
+**0.16 %** (transport, 123.58 kg) and **0.24 %** (bizjet, 30.55 kg); the turboprop reports no taxi
+segment at all. Small beside the CG term, and in the same non-conservative direction.
+
+**A consumer documents a CG basis the chain never used.** `pavement.js:138` records its per-leg load
+as *"static split at the aft CG, G2 (14 CFR 25.733(b)(1)), at the take-off mass"*. The take-off CG is
+**not** the aft limit on any class (transport 28.80 % MAC against an aft limit of 47.87 %; turboprop
+31.21 % against 56.65 %). Evaluated at the basis it claims, the main-leg load would be **6.49 %**
+higher (transport) and **7.32 %** higher (turboprop). The tool prints 45.27 % of weight per leg for
+the transport beside the ACAPs' published 46.7–47.2 %, and the shipped check
+(`validation/pavement.mjs:108`) compares that figure only with the static split it came from, so the
+disagreement with the published value is never tested.
+
+**Severity.** Graded MEDIUM, and **flagged as a HIGH candidate for the same severity-normalisation
+pass as F-68**: the reach is a non-conservative component rating rather than a presentation defect,
+but the magnitude depends on an envelope the tool nowhere claims to sweep, and grading it above F-68
+before F-68's own review would pre-empt that ruling. Calibration anchors: F-68 (MEDIUM, 5.35 %
+non-conservative) and F-57 (MEDIUM, 4.11 %).
+
+**Not repaired.** PASS A modifies no production code.
+
+---
+
+## F-72 — the turboprop runs 25.733(b)(2), a LANDING-weight case, at take-off weight, because `mlwKg` is never normalised for that class — and the flag that would disclose it is computed and read nowhere — MEDIUM — VERIFIED
+
+**25.733(b)(2) fixes its case at maximum landing weight**, verified verbatim: *"the most critical
+combination of airplane weight (up to maximum landing weight) ... combined with forces of 1.0g
+downward and 0.31g forward"*. `gear.js:110` reads
+`const mlwLb = (result.mlwKg || result.mtowKg) * LB_PER_KG;`.
+
+**For the turboprop, `result.mlwKg` is `undefined`, so the `||` substitutes MTOW silently.**
+Measured: the (b)(2) case runs at **55,990.48 lb, exactly the take-off weight**, while the transport
+(145,928.51 lb) and bizjet (24,759.04 lb) run at their real landing weights.
+
+**The cause is a normalisation gap, not a missing input.** `engine.js:212`, the jet-transport
+return, emits `mlwKg: kg(r.grossLb * p.landingToTakeoffMass)`; `engine.js:169`, the turboprop return,
+does not. **The turboprop class declares the input anyway** — `turboprop/defaults.js:41`,
+`landingToTakeoffMass`, value **0.98**, min 0.85, max 1.0, in the user-facing *Requirements* section.
+It is a live slider whose value never reaches this rule.
+
+**It lands on the case that governs.** (b)(2) is the binding case for the turboprop at every ratio
+tested, so the substitution moves the selected tyre's requirement directly:
+
+| landingToTakeoffMass | MLW used (lb) | binding requirement (lb/tyre) | tyre selected | rated (lb) |
+|---|---|---|---|---|
+| **1.00 — what the tool does** | 55,990.48 | **3,032.92** | **18x5.5** | 3,050 |
+| 0.98 — the class's own default | 54,870.67 | 2,972.27 | 18x5.5 | 3,050 |
+| 0.95 | 53,190.95 | 2,881.28 | 14.5x5.5-6 | 2,890 |
+| 0.90 | 50,391.43 | 2,729.63 | 26x10.5-6 | 2,765 |
+| 0.85 — the input's own minimum | 47,591.90 | 2,577.99 | 26x10.5-6 | 2,765 |
+
+**As shipped the error is +2.04 % on the binding requirement and the tyre does not change**; within
+the input's own declared range it does change. The direction is **conservative** — it over-sizes —
+which is why this is MEDIUM and not higher.
+
+**The disclosure exists and is dead.** `gear.js:97` computes
+`const usedLandingWeight = result.mlwKg > 0;` and `gear.js:157` returns it. A walk of every `.js` and
+`.jsx` under `src/` finds **no other reference to it**: nothing reads it, no tab renders it, no
+harness asserts it. The tool knows it substituted the wrong weight and tells no one.
+
+**The shipped gate proves the direction and misses the instance.**
+`validation/landing-gear.mjs:196-212` runs (b)(2) at MTOW against MLW on synthetic 777-200ER numbers
+and asserts that the wrong weight over-sizes the nose tyre — the right check, on a fixture, while the
+production path that actually does it goes untested. A check that demonstrates a failure mode in the
+abstract is not a check that the failure mode is absent.
+
+**Not repaired.** PASS A modifies no production code.
+
+---
+
+## F-73 — 25.493(e), the braked-roll case the module is built around, is computed by code that nothing in the application can reach, and the module does not say so — LOW — VERIFIED
+
+`ground-loads.js` devotes its header, two `[SRC]` blocks and two vendored Federal Register equation
+images to 14 CFR 25.493(d) and (e), and implements them correctly: `brakedNoseReaction` reproduces
+the rule's `V_N` at **0.0e+0** and `dynamicResponseFactor` its `f` at **0.0e+0** (STRUCT-160,
+STRUCT-155). **Neither is reachable from production.** Walking every `.js` and `.jsx` under `src/`:
+
+| export | references in `src/` |
+|---|---|
+| `staticReactions` | `src/classes/aircraft/gear.js` |
+| `noseTyreLoads` | `src/classes/aircraft/gear.js`, `src/engine/gear/tyre-select.js` |
+| **`brakedNoseReaction`** | **none** |
+| **`dynamicResponseFactor`** | **none** |
+
+`gear.js:50` imports exactly `staticReactions` and `noseTyreLoads`. The only caller of either braked
+function anywhere is `validation/landing-gear.mjs:259-275`. **No design, record or rendered tab
+carries a 25.493(e) nose reaction.**
+
+**That is defensible engineering and undeclared scope.** 25.733(b) is the correct rule for a tyre
+*rating*, and 25.493(e) sets a nose-gear *structural design* load, which this tool does not size. But
+the module's own "WHAT THIS MODULE DOES NOT DO" note lists only the **other** ground cases (25.479
+through 25.519) as out of scope and says nothing about (d)/(e), so a reader of the header would
+reasonably believe the braked case is part of the sizing. The gap is in the declaration, not the
+mathematics.
+
+**One omission in the quoted definition.** The rule defines ξ as *"the effective critical damping
+ratio of the rigid body pitching mode **about the main landing gear effective ground contact
+point**"*. The module's header carries the first half and drops the qualifier. Inert today — nothing
+supplies ξ — but it is the qualifier that tells anyone substantiating a lower `f` which axis to
+compute the mode about.
+
+**Numerical effect: none demonstrated.** Both equations are correct; this finding is about reach and
+declaration.
+
+**Not repaired.** PASS A modifies no production code.
+
+---
+
+## F-74 — three functions in one file compute the same static split and guard it three different ways, and the least guarded of them is the one feeding the main-tyre selection — LOW — VERIFIED
+
+Every hole below was executed, not inferred from the absence of a guard.
+
+**1. The same expression, three guard sets.** `nose = (W*B)/wb` at l.95 and `stat = (W*B)/wb` at
+l.120 are the same static split — the register records them as duplicate implementations of each
+other in its C7 table (l.1796, l.1799). Their guards differ:
+
+| function | guard | rejects a negative arm? | rejects a non-finite input? |
+|---|---|---|---|
+| `staticReactions` l.90 | `wb>0, W>0, A>=0, B>=0` | yes | partly |
+| `brakedNoseReaction` l.114 | `wb>0, W>0, E>0` | **no** | **no** |
+| `noseTyreLoads` l.150 | `wb>0, E>=0` | **no** | **no** |
+
+**Measured consequences.** `brakedNoseReaction` with `mainArmB = -1` returns `resolved: true` with
+`staticLoad = -111.111` — a negative static reaction — where `staticReactions` **refuses the same
+geometry**. `noseTyreLoads` with the same geometry returns `resolved: true` and loads of
+**-111.11, -38.00 and -66.67 lb**, and `selectNoseTyre` then returns a real tyre (5.00-5) on a binding
+requirement of **-12.67 lb**.
+
+**2. Neither `f` nor `friction` is guarded at all.** `brakedNoseReaction({ ..., f: NaN })` and
+`({ ..., friction: NaN })` each return `resolved: true` with `load: NaN`. The l.114 guard inspects the
+wheelbase, the weight and the CG height, and never the two coefficients the equation multiplies by.
+
+**3. A positivity guard that `Infinity` satisfies.** `staticReactions({ weight: 1000,
+noseArmA: Infinity, mainArmB: 1 })` passes `!(wb > 0)` — because `Infinity > 0` is true — and returns
+`resolved: true` with `noseLoad: 0` and **`mainLoadTotal: NaN`**. `gear.js:124` reads exactly that
+field and hands it to `selectMainTyre`.
+
+**4. Every invalid damping ratio becomes 2.0.** `dynamicResponseFactor` returns the rule's blanket
+2.0 for `NaN`, `Infinity`, `-0.5` and the string `"abc"` alike. For ξ ≥ 1 — overdamped, and
+physically admissible — it returns the **undamped** 2.0 where the rule's own curve tends to 1. The
+direction is conservative; the silence is not. This is the F-58 shape: a clean, plausible answer from
+a nonsense input.
+
+**All four are LATENT against the shipped classes**, which is why this is LOW: `B` is positive,
+`A` finite and `E` positive on transport, bizjet and turboprop alike, and `f` and `friction` are
+only ever the module's own frozen constants. Nothing here is reachable from the input surface today.
+
+**Not repaired.** PASS A modifies no production code.
+
+---
+
+## F-75 — the committed Q20 regression pin tests a VERDICT where it should test a RATIONALE, so it forbids the hand-verified WARNING the ledger's own methodology requires — MEDIUM — VERIFIED — AUDIT TOOL, NOT THE REPOSITORY
+
+**This block tripped the pin, and the pin is wrong rather than the block.** Reported by
+`node AUDIT/reference/q20/q20-reproduce.mjs`, exit 1:
+
+> `MISMATCH: FORMULA-STRUCT-155: the ledger now records UNVERIFIED`
+> `MISMATCH: FORMULA-STRUCT-163: the ledger now records UNVERIFIED`
+
+The message is the assertion's own claim, not the observed value. The assertion is
+`q20-reproduce.mjs:171`, `chk(led.get(id) === "U", ...)`: **every one of the 31 rows the Q20
+integrity block withdrew must, for ever, read UNVERIFIED in the ledger.**
+
+**Why the pin exists, and why it is right to exist.** F-65 found the as-built Q20 scanner asserting
+*"no zero/negative/NaN guard within ±25 lines"* on relations that plainly had one. `2082ef4`
+withdrew 31 such false WARNINGs to UNVERIFIED and pinned them, so that a future regex could not
+quietly re-assert the same false claim. That is a sound thing to protect.
+
+**What it actually forbids.** The ledger's own section 2 states the Q20 rule: *"A guard that is
+present and does not cover the case is the WARNING condition, not the UNVERIFIED one"*, and it
+records three such cells on `gearlayout.js` as **hand-verified rather than scanned**. The withdrawal
+basis written on these very rows says the same thing in words: *"The guard constrains quantities
+this relation consumes, but full coverage is not demonstrated, which is what UNVERIFIED records."*
+**UNVERIFIED was the honest record of a gap not yet measured — not a permanent verdict.** This block
+measured it, by execution:
+
+- **STRUCT-155** — `dynamicResponseFactor` returns the rule's 2.0 for `NaN`, `Infinity`, `-0.5` and
+  the string `"abc"` alike; the guard at l.81 is present and maps invalid input to a plausible value
+  instead of refusing.
+- **STRUCT-163** — `noseTyreLoads` with a negative main arm returns `resolved: true` and loads of
+  **-111.11, -38.00, -66.67 lb**, and `selectNoseTyre` then returns a real tyre on a binding
+  requirement of **-12.67 lb**; the guard at l.150 checks the wheelbase and the sign of E, and
+  nothing else.
+
+Both are recorded WARNING with that evidence in the basis, which is what the methodology directs.
+**The pin cannot tell a re-asserted regex claim from a hand-verified hole, because it compares the
+cell's letter and never looks at its basis.** It therefore pins the one outcome a later engineering
+block is supposed to be able to produce.
+
+**This is the F-65 family again, one level up.** F-65 was an instrument that could not see a guard
+idiom. F-67 corrected it. F-75 is the *regression guard built around that correction* over-reaching:
+it protects the withdrawal by freezing the verdict rather than by requiring that any later WARNING
+carry a hand-verified basis rather than a scanner's.
+
+**Reach, measured.** 31 rows — the whole change record — are frozen against any future hand-verified
+WARNING. Two of them are this block's. The remaining 29 sit in files no engineering block has
+reached yet, so the same collision is waiting for each of them.
+
+**Production effect: ZERO, measured.** `q20-reproduce.mjs` is not referenced in `package.json` or
+`validation/harness-manifest.mjs`; it does not run in `npm test`, and the full regression is
+unaffected. The scale used is the Phase 27 scale in this file's preamble, and as with F-65 the axes
+are named separately: **MEDIUM for audit integrity, NONE for production engineering.**
+
+**RESOLVED 2026-10-01 BY HOLDER RULING, and the pin is repaired.** The ruling: the change record
+is historical evidence that those rows were correctly withdrawn from false mechanically-derived
+WARNINGs at that checkpoint — **it is not a permanent prohibition against a later hand-verified
+WARNING.** STRUCT-155 and STRUCT-163 keep their WARNINGs. The pin was to be repaired so that it
+protects the original failure mode rather than freezing the verdict letter.
+
+**What the repair is.** The policy now lives in one pure, testable place,
+`q20-detector.mjs/recordRowStatus`, and the reproducer imports it. For each of the 31 recorded rows:
+
+| ledger Q20 | verdict of the pin |
+|---|---|
+| **U** | always valid — the withdrawal stands, unexamined since |
+| **W** | valid **only if** its Q20 basis records independent hand or source verification **and** does not re-assert the withdrawn mechanical claim |
+| **P** | never valid — PASS is unreachable for Q20 by design |
+
+The change record itself stays immutable `W → U → U` historical evidence and is still checked in
+both directions: every recorded row must have been WARNING in the as-built baseline and must still
+show executable evidence in its window, and no row outside the record may show that shape.
+**A WARNING that re-asserts *"no zero/negative/NaN guard within ±25 lines"* FAILS — even when a
+hand-verification marker sits beside it**, because on these 31 rows that claim is known false: the
+guard is demonstrably present. That is the F-65 condition, and it is exactly what the pin is for.
+
+**Honest limit, stated in the tooling rather than hidden.** A textual marker is a *person's
+assertion*, not a proof; it has the same standing as the change record itself. What it buys is that
+a tool sweeping the ledger cannot silently recreate the F-65 condition — to turn one of these rows
+back to WARNING it must delete the mechanical rationale *and* write a claim of hand verification
+that a reader can check against the cited behaviour.
+
+**Proved, not asserted.** `q20-tests.mjs` gains layer E: an untouched UNVERIFIED row passes; a
+hand-verified U→W evolution passes; the old mechanical basis fails; the same basis beside a
+hand-verified marker fails; an unevidenced WARNING fails; PASS fails; and — reading the real ledger
+and record — all 31 rows satisfy the policy as **29 unchanged UNVERIFIED + 2 hand-verified
+WARNING**. Tests now **78 passed / 0 failed / 0 dead rules**. A scratch mutation suite
+(`mutants_q20pin.mjs`, 8 mutants) drives the same cases through the real artefacts: **6 failure
+modes caught, 2 POSITIVE CONTROLS accepted** — a legitimate U→W evolution and a W→U return — so the
+pin is not merely refusing everything, and the ledger is restored byte-exactly after each.
+`node AUDIT/reference/q20/q20-reproduce.mjs` now **exits 0** against the current ledger.
+
+**Still ZERO production effect.** The tooling remains outside `npm test` and outside
+`validation/`; no engine, harness or report behaviour changes.
 
 ---
 

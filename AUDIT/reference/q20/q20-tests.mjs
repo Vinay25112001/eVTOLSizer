@@ -1,12 +1,16 @@
 /* PHASE 2 AUDIT TOOLING - regression and mutation tests for the corrected
-   question-20 detector (F-67). Durable, self-contained, no repository data read.
+   question-20 detector (F-67) and for the change-record policy (F-75).
+   Durable and self-contained. Layers A-D read no repository data at all; layer E
+   reads AUDIT/PHASE-2-LEDGER.md and AUDIT/data/q20-change-record.tsv, because
+   its claim is about the real ledger and cannot be made on fixtures. Run from
+   anywhere, layer E reports itself skipped rather than failing.
 
    Usage, from the repository root:
      node AUDIT/reference/q20/q20-tests.mjs        # exit 0 = all assertions hold
 
    Not a harness and deliberately not in `npm test`; see q20-reproduce.mjs.
 
-   FOUR LAYERS, because "the tests pass" is not evidence a rule is load-bearing:
+   FIVE LAYERS, because "the tests pass" is not evidence a rule is load-bearing:
      A FIXTURES      every failure mode this detector must handle, including the
                      ones that must yield NO evidence.
      B NECESSITY     each rule is deleted in turn and some fixture's verdict must
@@ -17,8 +21,12 @@
                      fixtures where this detector does not, with the mechanism
                      that fixes each one named.
      D ASYMMETRY     PASS must be unreachable, and absence of evidence must never
-                     be reported as more than WARNING. */
-import { scrubCode, detect, RULES, SUBSUMED } from "./q20-detector.mjs";
+                     be reported as more than WARNING.
+     E RECORD POLICY a withdrawn row MAY later carry a hand-verified WARNING, but
+                     the F-65 false-warning claim may never return. Both
+                     directions are proved, including against the real ledger. */
+import { readFileSync, existsSync } from "node:fs";
+import { scrubCode, detect, RULES, SUBSUMED, recordRowStatus } from "./q20-detector.mjs";
 
 const NL = String.fromCharCode(10);
 const Q = String.fromCharCode(34);     /* a double quote, built not escaped */
@@ -138,6 +146,97 @@ ck(p === 0, `no fixture yields PASS (got ${p})`);
 ck(detect(scrubCode("const y = a/b;")).verdict === "W", "bare arithmetic yields WARNING");
 ck(detect(scrubCode("")).verdict === "W", "an empty window yields WARNING");
 console.log(`  ok    PASS unreachable across ${FIXTURES.length} fixtures and 2 degenerate inputs`);
+
+/* ===========================================================================
+   E. THE CHANGE-RECORD POLICY  (holder ruling on F-75)
+   ===========================================================================
+   The pin that guards the 31 F-67 withdrawals must protect the FAILURE MODE -
+   the F-65 false-warning condition returning - and not the verdict letter. The
+   first four cases exercise the policy directly on synthetic bases; the fifth
+   reads the two repository artefacts, because "the 29 unchanged rows are still
+   valid" is a claim about the real ledger and cannot be made on fixtures. */
+console.log(NL + "E. CHANGE-RECORD POLICY - a withdrawal may evolve, the F-65 claim may not");
+
+const OLD_CLAIM = "20: no zero/negative/NaN guard within +/-25 lines of the site";
+const HAND_W = "20: WARNING, hand-verified. A guard IS present at l.81 but it maps NaN to 2.0, "
+             + "measured, so it does not cover the case";
+const BARE_W = "20: WARNING. The case is not handled";
+const WITHDRAWN_U = "20: a zero, negative or NaN guard IS present in code inside the window - "
+                  + "refusal-positivity at l.81, covering zero and negative - so the previous "
+                  + '"no guard" assertion was FALSE and is withdrawn';
+
+/* 1. an original F-67 row, untouched since the withdrawal */
+{
+  const st = recordRowStatus({ q20: "U", basis: "1: x; 9: y; " + WITHDRAWN_U });
+  ck(st.ok, `1. original F-67 UNVERIFIED row must pass (got: ${st.why})`);
+  console.log(`  ok    1. UNVERIFIED, unchanged since the withdrawal -> ${st.why}`);
+}
+/* 2. a later block measures the hole by hand and records WARNING */
+{
+  const st = recordRowStatus({ q20: "W", basis: "1: x; 9: y; " + HAND_W });
+  ck(st.ok, `2. hand-verified U->W evolution must pass (got: ${st.why})`);
+  console.log(`  ok    2. hand-verified WARNING is permitted -> ${st.why}`);
+}
+/* 3. THE FAILURE MODE: the withdrawn mechanical claim written back as a WARNING */
+{
+  const st = recordRowStatus({ q20: "W", basis: "1: x; 9: y; " + OLD_CLAIM });
+  ck(!st.ok, "3. a WARNING re-asserting the old mechanical claim must FAIL");
+  ck(/F-65|mechanical/i.test(st.why), `3. and must say why (got: ${st.why})`);
+  console.log(`  ok    3. the F-65 condition is refused -> ${st.why}`);
+}
+/* 3b. and it is refused even when hand-verification is also claimed: on these
+       rows the mechanical claim is KNOWN FALSE, so re-asserting it is the bug */
+{
+  const st = recordRowStatus({ q20: "W", basis: "1: x; " + OLD_CLAIM + ", and hand-verified: see F-67" });
+  ck(!st.ok, "3b. the old claim is refused even beside a hand-verification marker");
+  console.log(`  ok    3b. refused even beside a hand-verified marker -> ${st.why}`);
+}
+/* 4. a WARNING with no evidence of hand or source verification */
+{
+  const st = recordRowStatus({ q20: "W", basis: "1: x; 9: y; " + BARE_W });
+  ck(!st.ok, "4. a WARNING without hand/source verification must FAIL");
+  ck(/hand or source/i.test(st.why), `4. and must say why (got: ${st.why})`);
+  console.log(`  ok    4. an unevidenced WARNING is refused -> ${st.why}`);
+}
+/* 4b. PASS stays unreachable through this path too */
+{
+  const st = recordRowStatus({ q20: "P", basis: "1: x; " + HAND_W });
+  ck(!st.ok && /PASS/.test(st.why), `4b. PASS must be refused (got: ${st.why})`);
+  console.log(`  ok    4b. PASS is unreachable -> ${st.why}`);
+}
+/* 5. the real ledger: every one of the 31 recorded rows satisfies the policy,
+      and the 29 that no block has revisited are still UNVERIFIED */
+{
+  const LEDGER = "AUDIT/PHASE-2-LEDGER.md";
+  const RECORD = "AUDIT/data/q20-change-record.tsv";
+  if (!existsSync(LEDGER) || !existsSync(RECORD)) {
+    console.log("  --    5. skipped: run from the repository root to check the real ledger");
+  } else {
+    const NQ = 20;
+    const led = new Map();
+    for (const raw of readFileSync(LEDGER, "utf8").split(/\r?\n/)) {
+      if (!/^\|\s*FORMULA-/.test(raw)) continue;
+      const c = raw.trim().replace(/^\|/, "").replace(/\|$/, "").split("|");
+      if (c.length < 2 + NQ) continue;
+      led.set(c[0].trim(), { q20: c.slice(2, 2 + NQ)[19].trim(), basis: c.slice(2 + NQ).join("|").trim() });
+    }
+    const recs = readFileSync(RECORD, "utf8").replace(/\r\n/g, NL).trim().split(NL)
+      .slice(1).filter((l) => l.trim()).map((l) => l.split("\t"));
+    let u = 0, w = 0, bad = 0;
+    for (const f of recs) {
+      const cur = led.get(f[0]) || {};
+      const st = recordRowStatus(cur);
+      if (!st.ok) { bad++; console.log(`  FAIL  5. ${f[0]}: ${st.why}`); }
+      else if (cur.q20 === "U") u++;
+      else if (cur.q20 === "W") w++;
+    }
+    ck(recs.length === 31, `5. the change record still holds 31 rows (got ${recs.length})`);
+    ck(bad === 0, `5. every recorded row satisfies the policy (${bad} failed)`);
+    ck(u + w === recs.length, `5. all ${recs.length} rows accounted for (${u} U + ${w} W)`);
+    ck(u >= 29, `5. at least the 29 unrevisited rows are still UNVERIFIED (got ${u})`);
+    console.log(`  ok    5. real ledger: ${u} unchanged UNVERIFIED + ${w} hand-verified WARNING = ${recs.length}`);
+  }
+}
 
 console.log(NL + `Q20 DETECTOR TESTS: ${pass} passed, ${fail} failed, ${dead.length} dead rule(s)`);
 process.exit(fail ? 1 : 0);

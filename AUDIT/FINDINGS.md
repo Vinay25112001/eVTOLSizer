@@ -2483,7 +2483,9 @@ silently rewriting the evidence.
 
 ---
 
-## F-68 — the gust mass ratio is built from the mean AERODYNAMIC chord where the primary, the regulation, the corpus recipe and the module's own header all specify the mean GEOMETRIC chord, and the error is non-conservative — MEDIUM — VERIFIED
+## F-68 — the gust mass ratio is built from the mean AERODYNAMIC chord where the primary, the regulation, the corpus recipe and the module's own header all specify the mean GEOMETRIC chord, and the error is non-conservative — HIGH — VERIFIED
+
+**SEVERITY NORMALISED BY HOLDER RULING, 2026-10-02: MEDIUM → HIGH.** The grade is the only thing changed. Every measurement, source and rationale below stands as written, including the passages that record the earlier MEDIUM grade and its calibration anchors, which are kept as the history of the grading.
 
 **EXACT PRODUCTION LOCATION.** `src/engine/loadcases.js:220`
 
@@ -2698,7 +2700,9 @@ is. Questions 7 on STRUCT-221, STRUCT-224 and STRUCT-225 carry the WARNING.
 
 ---
 
-## F-71 — the nose tyre is sized from ONE weight-and-CG combination where 14 CFR 25.733(b) requires the most critical, and for two of the three classes the tyre it selects is under-rated for a loading state the engine itself enumerates — MEDIUM — VERIFIED
+## F-71 — the nose tyre is sized from ONE weight-and-CG combination where 14 CFR 25.733(b) requires the most critical, and for two of the three classes the tyre it selects is under-rated for a loading state the engine itself enumerates — HIGH — VERIFIED
+
+**SEVERITY NORMALISED BY HOLDER RULING, 2026-10-02: MEDIUM → HIGH.** The grade is the only thing changed. The **Severity** paragraph below, which graded this MEDIUM and flagged it as a HIGH candidate pending F-68's review, is kept as the history of the grading; that review has now happened and both are HIGH.
 
 **All three of 25.733(b)'s cases are explicit that the load is the one "corresponding to the most
 critical combination of airplane weight ... and center of gravity position"**, verified verbatim in
@@ -3061,6 +3065,8 @@ warning and no `clipped`/`floors` evidence to make it visible.
 ---
 
 ## F-78 — the tyre search promises "the lightest complying tyre" and returns the one with the smallest RATED LOAD, which is a physically larger tyre at 81 % of demand levels and on every live nose selection — MEDIUM — VERIFIED
+
+**SEVERITY NORMALISED BY HOLDER RULING, 2026-10-02: remains MEDIUM.** Reviewed in the same normalisation pass as F-68 and F-71, as its **Severity** paragraph asked, and left where it was. Nothing in the finding is changed.
 
 **What the module promises.** `tyre-select.js`'s header is careful and explicit about the
 distinction it draws, and this finding is about the second half of it:
@@ -3454,7 +3460,9 @@ every input of both methods. Every Latin-hypercube column is one draw per stratu
 **Not repaired.** PASS A modifies no production code.
 
 
-## F-87 — the Schlegel vortex-noise term is 18.6 to 22 dB below the method it cites, the in-code "correction" that put it there replaced the right constant with a wrong one, and the harness pins the right value out — HIGH — VERIFIED — CRITICAL CANDIDATE
+## F-87 — the Schlegel vortex-noise term is 18.6 to 22 dB below the method it cites, the in-code "correction" that put it there replaced the right constant with a wrong one, and the harness pins the right value out — HIGH — VERIFIED
+
+**SEVERITY NORMALISED BY HOLDER RULING, 2026-10-02: remains HIGH, and the CRITICAL-candidate flag is REMOVED.** The passages below that describe the flag and set out the evidence on the CRITICAL question are kept as the record of why it was raised and how it was resolved; the recommendation recorded there, that HIGH stand, is the ruling. See also the domain-level conclusion that follows F-89.
 
 **Severity by holder ruling, 2026-10-02: HIGH, and flagged as a CRITICAL candidate for the final
 severity normalisation** if the defect proves to change a formal certification or release
@@ -3569,7 +3577,9 @@ normalisation pass.
 
 **Not repaired.** PASS A modifies no production code.
 
-## F-88 — the tonal line labelled "Gutin" is not Gutin's equation, the compressibility term is half its own stated derivation, and the broadband term is defined off the tonal one — MEDIUM — VERIFIED
+## F-88 — the tonal line labelled "Gutin" is not Gutin's equation, the compressibility term is half its own stated derivation, and the broadband term is defined off the tonal one — HIGH — VERIFIED
+
+**SEVERITY NORMALISED BY HOLDER RULING, 2026-10-02: MEDIUM → HIGH.** The grade is the only thing changed. The closing paragraph below headed *MEDIUM, not HIGH, on the evidence held* is kept as the auditor's original reasoning; the holder has graded the formulation errors themselves as HIGH. See also the domain-level conclusion that follows F-89.
 
 Flagged for the severity normalisation **together with F-87**, since both act on the same output.
 
@@ -3672,6 +3682,32 @@ through the API or a design file, which accept `tipSpeed` and `nBlades`.
 
 **LOW** on reachability. Item 1 is the F-60 shape — a guard that cannot fail — and would be MEDIUM
 if a slider exposed the tip speed.
+
+**Not repaired.** PASS A modifies no production code.
+
+## Domain-level audit conclusion — the acoustic subsystem (holder ruling, 2026-10-02)
+
+**The present acoustic/noise subsystem (`src/engine/noise.js` and the outputs it feeds) is NOT
+quantitatively validated for engineering decision use until PASS-B remediation and independent
+revalidation.** F-87 and F-88 establish major formulation errors in two of its three source terms:
+the vortex term is 18.6 to 22 dB below the method it cites, and the tonal term is not the equation
+it names, is dimensionally inconsistent and carries a calibration never exercised where it was
+fitted. The broadband term is defined as an offset from the tonal one and inherits its defects.
+
+**What this covers.** Every level the stage returns — `dBA_1m` to `dBA_500m`, `OASPL_total_1m`,
+the `dist_55/65/70/75dBA` contours, `noiseComponents`, `bpfHarmonics` amplitudes and
+`noise_sensitivity` — and every consumer of them: the 65 dBA rows of `CertificationTab.jsx:233` and
+`:477`, the noise tab, the noise section of `export/report.js`, and the 100 m bound test printed by
+`validation/validate.mjs`. The `validated` and `sourced` statuses that `src/lib/provenance.js`
+attaches to those outputs are contradicted by F-87 and are not relied on by this audit.
+
+**What it does not cover.** The conclusion is confined to the acoustic subsystem. `noiseStage` runs
+once on converged values and feeds nothing back into the sizing loop — Q17 is PASS on all 42 of its
+relations — so no mass, power, energy or geometry result depends on it. **This conclusion is not a
+statement about the rest of the sizing engine and must not be read as one.** The parts of the
+stage that were verified exactly — the A-weighting, the harmonic frequencies, the reference
+pressure, the energy and rotor sums, the spherical spreading and the vortex peak-frequency rule —
+remain verified; they do not make the levels usable while the source terms are wrong.
 
 **Not repaired.** PASS A modifies no production code.
 

@@ -4134,6 +4134,42 @@ flight simulation.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-102 — the drone simulation runs ArduPilot's published rate gains as if their output were newton-metres, which makes its rate loop 2.5 to over 100 times softer than ArduPilot's on the same airframe, and its angle limiter is not ArduPilot's sqrt controller — MEDIUM — VERIFIED
+
+`src/classes/drone/dynamics.js`, `controllerStep` (STAB-053, STAB-056).
+
+**What holds.** The gains are transcribed exactly from the ArduPilot release file the module names.
+`Tools/Frame_params/Hexsoon-edu450.param` was fetched today, and its md5 equals the module's
+record. The acceleration limit is in the right units. The lean-for-acceleration law is the exact
+inverse of the tilt law, to 1e-14.
+
+**The defect.** The rate PID's output is used as the MOMENT part of the wrench, in N·m. In ArduPilot
+the same gains have units of s/rad and produce a NORMALISED mixer command:
+`AC_AttitudeControl_Multi` passes `update_all(…)` to `_motors.set_roll()`, and
+`AP_MotorsMatrix::normalise_rpy_factors` scales roll factors to ±0.5. One unit of command is
+therefore about 0.5·f_max·Σ|y_i| N·m, and the module's loop is that factor softer than
+ArduPilot's:
+
+| airframe (quad X) | N·m per unit command | module softer by |
+|---|---|---|
+| 450-class, 0.225 m arm, 8 N motors | 2.55 | 2.5× |
+| 1 m class, 30 N motors | 21.2 | 21× |
+| 1.5 m heavy lift, 120 N motors | 127 | 127× |
+
+The module says it answers "the SHAPE of a response — does the aircraft hold attitude … how fast
+does it settle". That is the quantity this changes. Its "the controller is a published one" does
+not hold in effect.
+
+**The angle limiter.** ArduPilot's `sqrt_controller` is linear up to a/P² and then follows
+√(2a(|e| − a/2P²)). The module takes min(P·e, √(2a|e|)), linear up to 2a/P². With the published
+P = 11 and 700 deg/s², the module asks up to 1.154× ArduPilot's rate demand at 0.20 rad, and
+1.026× at 1 rad.
+
+**MEDIUM.** The defect is localized to the drone flight simulation and changes the response
+character it exists to show.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

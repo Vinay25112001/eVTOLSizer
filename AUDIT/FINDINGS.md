@@ -3925,6 +3925,33 @@ the journal version (J. Aircraft 59(1), 2022).
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-96 — the flying-qualities levels match MIL-F-8785C exactly, but an aperiodically divergent phugoid can be graded Level 3 when it is worse, an unstable phugoid with no frequency is reported as the worst mode, and the "binding" label names one of several failing minima — LOW — VERIFIED
+
+`src/engine/flyingqualities.js`, STAB-156, 158, 159 and 160. **The tables hold, measured against the
+vendored standard.** The phugoid limits (3.2.1.2: ζ ≥ 0.04 / ζ ≥ 0 / T₂ ≥ 55 s), the Category B
+Dutch-roll row of Table VI and the |φ/β| increments in its note were each read from MIL-F-8785C.
+The module agrees with an oracle written from the standard's own words on 4,000 phugoid cases and
+152,477 Dutch-roll grid points, with 0 disagreements.
+
+**Defects.**
+
+| item | measured |
+|---|---|
+| aperiodic phugoid | T₂ = ln 2 / (−ζω_n) is the envelope of an OSCILLATORY mode. For ζ < −1 the faster real root doubles sooner, and where that straddles 55 s the level flips the unsafe way: ζ −1.2 at 0.01 rad/s is graded **Level 3** (T₂ 57.8 s) and doubles in 37.2 s, worse than Level 3. Likewise ζ −1.05 at 0.0115 rad/s and ζ −2 at 0.006 rad/s |
+| unstable phugoid, no ω_n | returns level null with no reason. `flyingQualities` then reports it as the worst mode, `worseThanLevel3: true`, where the truth is unknown |
+| binding label | names the first failing minimum in a fixed order. 515 of 3,147 non-Level-1 grid points fail more than one |
+| infinite ω | a Dutch roll at ω = Infinity is graded Level 1 |
+
+**Not applied, and stated by the module.** The |φ/β| increment to the ζω minimum, so a mode where
+ω²|φ/β| > 20 can be graded above its level. **Not applied, and not stated:** the 0.7 cap on
+required ζ for Class III, which is conservative.
+
+**Not examined here:** whether `wingmodes.js` can produce ζ < −1. That belongs to AERO.
+
+**LOW.** Only validation harnesses call the module.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

@@ -1494,6 +1494,19 @@ file. It was instead verified **without a source**, by recomputing the invariant
 (0 inversions) and by proving the two search paths it guards agree over 2,044 cases. `UNVERIFIED`
 is the CORRECT record there, not a pessimistic one. **The tally is 57 checked, 57 passed, 0 found
 genuinely unsourced.** Q10 was left alone on both rows.
+
+**AMENDED 2026-10-01, after the `trainer/performance.js` block: +1, the tally is now 58 of 944.**
+**FORMULA-AERO-055** carries `source = UNVERIFIED` in the register while its coefficient is
+printed verbatim in the vendored primary: NASA RP-1060 p.343 gives
+`(cL3/2/cD) max = 1.345 (A&) 3/4 / (cD,o) ll4`, and the module uses 1.345 identically. **The other
+twelve relations in that file do not add.** Six already read `DIRECTLY STATED` and the record is
+correct — AERO-057, MISSION-005, MISSION-006, MISC-032, MISC-034, MISC-036 and MISC-037, whose
+33 000, 19, 375 and density-ratio forms were all confirmed this block. The remaining
+`UNVERIFIED` rows carry **no coefficient of their own**: AERO-054 and AERO-056 are closed forms
+*derived* from the primary's prose rather than printed by it, STRUCT-154 and MISC-031 are standard
+definitions, and MISC-028 is a digitisation of a figure, whose breakpoints are a reading of a chart
+and not a published constant. **The tally is 58 checked, 58 passed, 0 found genuinely unsourced.**
+Q10 was left alone on all thirteen rows.
 ---
 
 ## F-56 — three unguarded degenerate paths in the stowage chain, each latent against the shipped tyre database — LOW — VERIFIED
@@ -3165,6 +3178,87 @@ single-input and covers one class.
 magnitude under 2 %. Recorded because a documented, deliberate exclusion is being contradicted one
 file away, and a reader of `ground-loads.js` would reasonably believe the 90/10 rule appears
 nowhere in the tool.
+
+**Not repaired.** PASS A modifies no production code.
+
+---
+
+## F-81 — the trainer performance header mis-numbers the Loftin equation it implements and mis-states its own check value, while the constant itself is right — LOW — VERIFIED
+
+`performance.js`'s header cites the climb parameter as:
+
+> `(6.20) p.343  (CL^1.5/CD)max = 1.345 (A e)^0.75 / CD0^0.25, which is the maximum of the
+> parabolic polar (checked by differentiation: (3π)^0.75/4 = 1.346)`
+
+**Two things in that line are wrong, and the important one is not.**
+
+**The constant is correct.** NASA RP-1060 p.343, read verbatim from the vendored page text, prints
+`(cL3/2/cD) max = 1.345 (A&) 3/4 / (cD,o) ll4`. The module's **1.345 is the primary's own printed
+value**, not an approximation the module chose.
+
+**The equation number is off by one.** The primary prints that relation as **(6.21)** — the
+surrounding text reads *"Equations (6.20) and (6.21) have been used to construct the chart presented
+in figures 6.13"* — where the header cites **(6.20)**. The page, 343, is right.
+
+**The parenthetical check value is wrong.** The exact closed form is
+**(3π)^(3/4)/4 = 1.34475558**, not 1.346. The header's figure is out by **9.25e-4** relative, five
+times the rounding the primary itself carries. The module's own constant is nearer the exact value
+than the number the header offers as its verification of that constant.
+
+**Consequence of the rounding, measured.** Because the module inherits the primary's 1.345, its
+`climbParamMax` differs from a numerical maximisation of CL^1.5/CD over its *own* polar by
+**1.818e-4 and by nothing else** — confirmed over 64 polars spanning CD0 0.018–0.040, AR 5–14 and
+e 0.6–0.9. That is the primary's rounding, faithfully carried, and it is not a defect.
+
+**What this finding is:** a provenance defect in a comment — a wrong equation number and a wrong
+check value — in a module whose implementation is correct. Recorded because the parenthetical
+presents itself as the *verification* of the constant, and it does not verify it.
+
+**Separately, a header claim that CHECKS OUT and is recorded as such.** The same header says the
+digitised Loftin figure 6.28 *"agrees with the widely used 1.132σ − 0.132 at every point"* with a
+reading precision of *"about ±0.01"*. Measured across the figure's range, the worst absolute
+difference is **0.00777** at 8,000 ft — inside the stated precision. The claim holds.
+
+**Not repaired.** PASS A modifies no production code.
+
+---
+
+## F-82 — nothing in the trainer performance module guards anything, and several relations return Infinity, NaN or a physically impossible answer without refusing — LOW — VERIFIED
+
+All thirteen registered relations in `performance.js` were driven by execution. **No function in
+the file has a refusal protocol of any kind** — there is no `resolved` flag, no `why`, and no
+input test anywhere. Measured:
+
+| call | returns |
+|---|---|
+| `polar({CD0: 0, …})` | `LDmax` and `climbParamMax` both **Infinity** |
+| `polar({CD0: −0.01, …})` | `LDmax` **NaN** |
+| `polar({AR: 0, …})` / `({e: 0, …})` | `LDmax` **0** |
+| `dynamicPressure(−100, 0)` | **33.86 lb/ft²** — a positive pressure from a negative speed |
+| `stallSpeedKt({clMax: 0})` | **Infinity** |
+| `stallWingLoading({vsKt: 0})` | **0** |
+| `breguetFuel` at an arbitrarily long range | **2400.000 lb** of fuel from a 2400 lb aeroplane |
+| `breguetRangeNm` with fuel = weight | **Infinity** |
+| `breguetRangeNm` with fuel > weight | **NaN** |
+| `rateOfClimb({weightLb: 0})` | **Infinity** |
+| `levelFlight({vKt: 0})` | every returned quantity **Infinity or NaN** |
+| `pistonPowerRatio(NaN)` | **NaN** |
+
+**Two of these deserve naming separately.** `dynamicPressure` squares the airspeed, so a negative
+speed yields a perfectly plausible positive dynamic pressure — the F-58 shape, a clean answer from
+an impossible input. And `breguetFuel` will happily report that the aircraft burns its own entire
+weight in fuel, because the exponential asymptotes to zero end weight and nothing bounds it.
+
+**Against that, one boundary IS handled well, and deliberately.** `pistonPowerRatio` returns
+**NaN above 24,000 ft** rather than extrapolating Loftin's figure 6.28 past its last breakpoint —
+measured, 23,999 ft gives 0.400018 and 24,000 ft gives NaN — and the module says so in a comment,
+*"outside the figure"*. That is a refusal, and it is the reason Q8 is recorded PASS on that
+relation: an empirical curve that declines to be extrapolated.
+
+**LATENT, and LOW on that basis.** This is a pure-formula library whose callers supply inputs from
+the trainer class's validated sliders; nothing in the shipped input surface reaches any of the
+degenerate values above. Recorded because the module is exported and reusable, and because a reader
+would not guess from its interface that none of it refuses anything.
 
 **Not repaired.** PASS A modifies no production code.
 

@@ -3766,6 +3766,42 @@ reaches nothing. Item 4 does reach MTOW and is left for its owning domain.
 
 **Not repaired.** PASS A modifies no production code.
 
+
+## F-91 — the drone pack audit is right on every published pack, and accepts a negative cell count, a negative current limit and a non-finite energy without refusing — LOW — VERIFIED
+
+`src/classes/drone/battery.js`, all seven registered relations. **The module's central claim
+holds, measured.** Its voltage-field audit was recomputed longhand from the published fields of
+all 17 packs in the two data sets, 7 in the vehicle truth set and 10 in the component catalogue,
+with **0 disagreements**. The header's DJI survey reproduces exactly. Four of the five DJI packs
+agree with their published energy to under 0.05 Wh. The TB60 is 5.935 Ah × 52.8 V = 313.37 Wh
+against a published 274 Wh, +14.37 %. 52.8 V across 12 cells is 4.40 V per cell, a charge limit,
+and the published energy implies 46.17 V = 3.847 V per cell. The discharge limit uses the stated
+current or the published C rating and never the catalogue's computed one. The data in `src/data`
+agrees with the research-corpus survey it was generated from.
+
+**What it does not refuse, measured on synthetic records.** No record in either data set
+reaches any of these.
+
+| input | returned |
+|---|---|
+| series cells −6 | −3.700 V per cell, reported without comment |
+| series cells 6.5 | 3.415 V per cell |
+| published energy 0, negative or NaN | treated as *not published*, and the energy is then DERIVED from the printed voltage without saying the published figure was invalid |
+| published energy Infinity | used as published: pack energy Infinity |
+| stated continuous current −100 A | a margin of **+110 %** |
+| stated continuous current 0 A | a margin of −Infinity |
+| demanded current −20 A | *within* the limit at a 120 % margin |
+| capacity as the string "5000" | audited as if numeric |
+
+**Checked and NOT a defect.** The 2 % consistency tolerance flags two catalogue cells whose
+printed voltage is a genuine nominal (Molicel P42A −2.45 %, LG M50LT −2.68 %). The only consumer,
+`risk.js:299-312`, deliberately grades a few per cent as a coarse nominal rather than a charge
+limit, so no answer changes.
+
+**LOW.** Latent: reached only by records outside the shipped data.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

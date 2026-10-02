@@ -23,13 +23,13 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 197 | 0 | 7 | 1084 |
-| 2 | variable definition correct (P02-088) | 117 | 21 | 2 | 1148 |
+| 1 | mathematical expression correct (P02-087) | 200 | 0 | 7 | 1081 |
+| 2 | variable definition correct (P02-088) | 120 | 21 | 2 | 1145 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
-| 4 | sign convention correct (P02-090) | 106 | 1 | 0 | 1181 |
+| 4 | sign convention correct (P02-090) | 109 | 1 | 0 | 1178 |
 | 5 | reference conditions correct (P02-091) | 29 | 27 | 3 | 1229 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 6 | 0 | 0 | 1282 |
-| 7 | applied within its validity range (P02-093) | 23 | 48 | 0 | 1217 |
+| 7 | applied within its validity range (P02-093) | 24 | 49 | 0 | 1215 |
 | 8 | empirical relation being extrapolated (P02-094) | 4 | 18 | 0 | 1266 |
 | 9 | duplicated elsewhere (P02-095) | 1268 | 20 | 0 | 0 |
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
@@ -39,12 +39,12 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 14 | payload included correctly (P02-100) **— untouched** | 0 | 0 | 0 | 1288 |
 | 15 | empty mass defined consistently (P02-101) **— untouched** | 0 | 0 | 0 | 1288 |
 | 16 | MTOW solved consistently (P02-102) **— untouched** | 0 | 0 | 0 | 1288 |
-| 17 | formula circular (P02-103) | 124 | 6 | 0 | 1158 |
+| 17 | formula circular (P02-103) | 127 | 6 | 0 | 1155 |
 | 18 | iteration mathematically stable (P02-104) | 7 | 0 | 0 | 1281 |
-| 19 | sensitive to variable scaling (P02-105) | 99 | 4 | 0 | 1185 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 325 | 0 | 963 |
+| 19 | sensitive to variable scaling (P02-105) | 102 | 4 | 0 | 1182 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 328 | 0 | 960 |
 
-**Determined 3,225 of 25,760 (12.5 %). Four of the twenty questions are untouched for every relation.**
+**Determined 3,245 of 25,760 (12.6 %). Four of the twenty questions are untouched for every relation.**
 
 ## 2. What the sixteen answered questions rest on
 
@@ -999,9 +999,9 @@ calculation is exactly what has not been done.
 | FORMULA-STAB-097 | `src/classes/drone/dynamics.js:1174` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-STAB-099 | `src/classes/drone/dynamics.js:1192` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-STAB-100 | `src/classes/drone/dynamics.js:1229` | U | U | U | U | U | U | U | U | W | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape appears 2x in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-STAB-101 | `src/engine/autorotation.js:76` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-STAB-105 | `src/engine/autorotation.js:99` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-STAB-109 | `src/engine/autorotation.js:105` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
+| FORMULA-STAB-101 | `src/engine/autorotation.js:76` | P | P | U | P | U | U | P | U | P | U | U | U | U | U | U | U | P | U | P | W | 1: the polar moment of a uniform rod hinged at the axis, m R^2 / 3, exact against longhand; it is the approximation the primary itself makes (ERF 2019: the blade flap inertia 'can be approximated with that of a thin rod', I_R = Nb m_b R^2 / 3). With one constant anchored - blade mass per unit chord times radius, 87.02 kg/m^2, from the table's AI 5 row - the module reproduces all 32 rows of Scaramuzzino et al. (ERF 2019) Table 1, Bo-105 variants in chord, radius, rotor speed and weight at AI 5 to 40, within 0.60 % (worst row; the table prints 3-4 figures); 2: I is the polar inertia of ALL the blades of one rotor about the shaft, since the input is the total blade mass of one rotor; the hub is omitted, which makes I a lower bound as stated; 4: a non-positive mass or radius is refused, returning null, measured; 7: applied at the preliminary-design level at which the primary applies the same approximation; 9: equation shape is unique in the retained set; 17: a pure function of blade mass and radius; 19: linear in mass and quadratic in radius, measured; 20: WARNING, hand-verified by execution: zero, negative, NaN or infinite mass or radius return null and the index refuses; a numeric string is coerced; a radius of 1e-6 m gives I 0 and an index of 0 reported as 'BELOW every helicopter in the published population' |
+| FORMULA-STAB-105 | `src/engine/autorotation.js:99` | P | P | P | P | U | U | W | U | P | U | U | U | U | U | U | U | P | U | P | W | 1: the total disc area of n rotors, recomputed. Forming DL on it makes the system index equal to the index of one rotor carrying W/n, since I and A both scale with n - measured: three rotors give exactly nine times the one-rotor index at the same weight. With one constant anchored - blade mass per unit chord times radius, 87.02 kg/m^2, from the table's AI 5 row - the module reproduces all 32 rows of Scaramuzzino et al. (ERF 2019) Table 1, Bo-105 variants in chord, radius, rotor speed and weight at AI 5 to 40, within 0.60 % (worst row; the table prints 3-4 figures); 2: the area doing the arresting, which is the quantity the index's DL stands for; 3: units resolved and dimensionally consistent; 4: positive by construction; n is floored at 1 and R is refused if non-positive; 7: WARNING, F-95. The 5-40 ft^3/lb population and its 15 and 30 lines are single-main-rotor helicopters (Scaramuzzino et al. 2022, Fig. 2), and the module grades multirotor layouts of 2 to 12 rotors against them with the same verdict words. The module says the index orders designs and certifies none, which stands; a multirotor's place relative to the helicopter lines is not what the source describes; 9: equation shape is unique in the retained set; 17: a pure function of n and R; 19: linear in n and quadratic in R, measured; 20: WARNING, hand-verified by execution: nRotors 0, negative or NaN becomes 1 silently through Math.max(1, round(n OR 1)); 2.6 becomes 3, giving 196.79 against 21.87; 1e6 rotors are accepted (AI 2.2e13) |
+| FORMULA-STAB-109 | `src/engine/autorotation.js:105` | P | P | U | P | U | U | U | U | P | U | U | U | U | U | U | U | P | U | P | W | 1: N/m^2 to lb/ft^2 through kgf, exact: the whole index was recomputed by an independent all-imperial route (slug, ft, lbf) on 576 cases and agrees with the module to its printed precision on every one; 5.949 lb/ft^2 for the Bo-105 at 2200 kg; 2: the disk loading in the index's own units, lb/ft^2, as the population figure is drawn; 4: positive for positive weight and area; 9: equation shape is unique in the retained set; 17: a pure function of DL; 19: linear in DL, measured; 20: WARNING, hand-verified by execution. MTOW <= 0, NaN or infinite returns null. A tip speed of 0 returns a real index of 0 graded 'BELOW every helicopter'; a NEGATIVE tip speed is accepted and returns the positive index of the positive speed, since omega is squared; an MTOW of 1e-6 kg returns 1.1e20, 'above the single-engine band' |
 | FORMULA-STAB-111 | `src/engine/constraints.js:51` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-STAB-112 | `src/engine/constraints.js:62` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
 | FORMULA-STAB-113 | `src/engine/constraints.js:63` | U | U | U | U | U | U | U | U | W | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape appears 4x in the retained set; 10: source DIRECTLY STATED |

@@ -3900,6 +3900,31 @@ and in the same direction on the damping.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-95 — the autorotative index is right against its primary, but grades multirotors against a single-rotor helicopter population, accepts a negative tip speed and a non-integer rotor count, and the harness narrative miscounts its own table — LOW — VERIFIED
+
+`src/engine/autorotation.js`, STAB-101, 105 and 109. **The index holds, measured against the
+primary.** Scaramuzzino et al. (ERF 2019) use the same thin-rod inertia, I_R = N_b m_b R²/3, and
+tabulate 32 Bo-105 variants at AI 5 to 40, varying chord, radius, rotor speed and weight one at a
+time. With a single constant anchored (blade mass per unit chord-radius) the module reproduces
+**all 32 rows within 0.60 %**. An independent all-imperial recomputation (slug, ft, lbf) agrees
+with the module's SI route on 576 of 576 cases. The quoted population sentences are verbatim in
+the journal version (J. Aircraft 59(1), 2022).
+
+**Defects.**
+
+| item | measured |
+|---|---|
+| population applied out of class | the 5–40 ft³/lb band and its 15 and 30 lines are single-main-rotor helicopters; layouts of 2 to 12 rotors are graded against them with the same verdict words |
+| negative tip speed | accepted; returns the index of the positive speed, because ω is squared |
+| zero tip speed | returns a real index of 0, graded "BELOW every helicopter in the published population" |
+| rotor count | 0, negative or NaN becomes 1 silently; 2.6 becomes 3 (index 196.79 against 21.87) |
+| harness narrative | `validation/autorotation.mjs` prints, and `VALIDATION.md` publishes, "Three layouts sit below EVERY helicopter in the published population". The table directly above it shows one: tiltrotor 4.38. Hybrid 7.23 and hybridPusher 8.97 are inside the 5–40 band |
+| harness Bo-105 | uses 2,400 kg where the paper's baseline is 2,200 kgf. It still lands inside the 15–30 lines it tests (18.37) |
+
+**LOW.** The module is called only by its validation harness; no production path reaches it.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

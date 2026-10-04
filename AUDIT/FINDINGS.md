@@ -4375,6 +4375,38 @@ direction. The sizing loop is unaffected.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-110 — the high-lift module evaluates the flap effectiveness at a different chord ratio from the equation it cites and from its own research validation, and returns the sum DATCOM says cannot be added as the wing's maximum lift — LOW — VERIFIED
+
+`src/classes/transport/high-lift.js`, AERO-125 to 147, shown in the aircraft studio's high-lift
+tab and, as the module says, not wired into sizing.
+
+**What holds.**
+
+- The thin-aerofoil flap effectiveness matches a numerical Glauert integral to 1e-12.
+- DATCOM's K_Λ and slat equation reproduce DATCOM's own sample problems (0.7315 against 0.730,
+  0.2522 against 0.252).
+- The flapped-area ratio matches numerical integration.
+- Olson's Eqs. (6), (7), (10) and (16) are transcribed in form.
+- The DATCOM sentences the module quotes are in the vendored text.
+
+The module also documents most of its own weaknesses, per call.
+
+**Defects not already stated by the module.**
+
+| item | evidence |
+|---|---|
+| α′_δ is not the cited one | Olson: α′_δ is found "by replacing the original flap chord with the extended flap chord, c′_f ≡ c_f + Δ_f c". The research's validation script uses (c_f + Δc)/c′. The module uses c_f/c′: 0.571 against 0.814 at its default, and a zero-lift increment of 2.414 against 3.389 |
+| the validation claim belongs to another formula | the header says the research "validated it against measured two-dimensional data … with nothing tuned". That validation used the literal definition with the flaps' own chord extensions (0.27, 0.33). The module's tables give 0.392 and 0.834 for the same flaps. As shipped it is −1.0 % and +6.0 % from the measured 4.85 and 5.50. The literal definition on the same tables would be +14.9 % and +41.6 %. The agreement is real, but it is not the validation described |
+| the bound is returned as the answer | `dCLmaxWing` and `clMaxWing` carry the leading-edge plus trailing-edge sum, which DATCOM says "cannot, in general, be added" |
+| inputs | k_s = 1.5 gives a section maximum of −2.3; a slat span ratio of 2 is accepted; a sweep beyond 90° gives NaN; an outer flap station inboard of the inner gives a negative increment |
+
+**Not verified here.** The digitised η_δ and chord-extension tables (Olson Figs. 3 and 4), and
+DATCOM Section 2.2.2's to-centreline construction of the flapped area (0.865 against 0.695).
+
+**LOW.** An advisory comparison; no sizing quantity reads it.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

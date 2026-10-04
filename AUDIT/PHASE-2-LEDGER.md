@@ -23,11 +23,11 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 480 | 4 | 10 | 794 |
-| 2 | variable definition correct (P02-088) | 329 | 94 | 5 | 860 |
+| 1 | mathematical expression correct (P02-087) | 489 | 4 | 10 | 785 |
+| 2 | variable definition correct (P02-088) | 333 | 99 | 5 | 851 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
-| 4 | sign convention correct (P02-090) | 275 | 1 | 0 | 1012 |
-| 5 | reference conditions correct (P02-091) | 33 | 45 | 4 | 1206 |
+| 4 | sign convention correct (P02-090) | 276 | 1 | 0 | 1011 |
+| 5 | reference conditions correct (P02-091) | 33 | 46 | 4 | 1205 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 12 | 0 | 0 | 1276 |
 | 7 | applied within its validity range (P02-093) | 32 | 79 | 0 | 1177 |
 | 8 | empirical relation being extrapolated (P02-094) | 6 | 22 | 0 | 1260 |
@@ -36,17 +36,17 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 11 | hidden double-counting (P02-097) | 46 | 6 | 2 | 1234 |
 | 12 | counted both as mass and energy (P02-098) | 4 | 0 | 0 | 1284 |
 | 13 | reserve applied twice (P02-099) **— untouched** | 0 | 0 | 0 | 1288 |
-| 14 | payload included correctly (P02-100) | 1 | 0 | 0 | 1287 |
-| 15 | empty mass defined consistently (P02-101) **— untouched** | 0 | 0 | 0 | 1288 |
+| 14 | payload included correctly (P02-100) | 1 | 1 | 0 | 1286 |
+| 15 | empty mass defined consistently (P02-101) | 1 | 0 | 0 | 1287 |
 | 16 | MTOW solved consistently (P02-102) | 0 | 1 | 0 | 1287 |
-| 17 | formula circular (P02-103) | 410 | 10 | 0 | 868 |
+| 17 | formula circular (P02-103) | 419 | 10 | 0 | 859 |
 | 18 | iteration mathematically stable (P02-104) | 12 | 0 | 0 | 1276 |
 | 19 | sensitive to variable scaling (P02-105) | 155 | 6 | 0 | 1127 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 578 | 0 | 710 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 585 | 0 | 703 |
 
-**Determined 4,657 of 25,760 (18.1 %). Two of the twenty questions are untouched for every relation.**
+**Determined 4,695 of 25,760 (18.2 %). One of the twenty questions are untouched for every relation.**
 
-## 2. What the eighteen answered questions rest on
+## 2. What the nineteen answered questions rest on
 
 - **Q3 units (P02-089)** — PASS where the register resolved the units and dimensional
   propagation found them consistent (DECLARED or DERIVED). **FAIL on the 6 rows carrying a
@@ -774,15 +774,15 @@ calculation is exactly what has not been done.
 | FORMULA-WEIGHT-222 | `src/classes/transport/flops-weights.js:159` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-WEIGHT-223 | `src/classes/transport/flops-weights.js:160` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-WEIGHT-226 | `src/classes/transport/flops-weights.js:169` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-WEIGHT-231 | `src/engine/cg.js:93` | U | U | U | U | U | U | U | U | P | W | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: declared an engineering assumption, not sourced; 20: a zero, negative or NaN guard IS present in code inside the window - refusal-compound at l.91, covering zero and negative across several inputs - so the previous "no guard" assertion was FALSE and is withdrawn. The guard constrains quantities this relation consumes, but full coverage is not demonstrated, which is what UNVERIFIED records. Corrected by the Q20 integrity block; see F-67 |
-| FORMULA-WEIGHT-233 | `src/engine/cg.js:139` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-234 | `src/engine/cg.js:141` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-236 | `src/engine/cg.js:147` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-WEIGHT-237 | `src/engine/cg.js:148` | U | U | U | U | U | U | U | U | P | W | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: declared an engineering assumption, not sourced |
-| FORMULA-WEIGHT-238 | `src/engine/cg.js:149` | U | U | U | U | U | U | U | U | P | W | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: declared an engineering assumption, not sourced |
-| FORMULA-WEIGHT-239 | `src/engine/cg.js:209` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-242 | `src/engine/cg.js:246` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-WEIGHT-244 | `src/engine/cg.js:249` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
+| FORMULA-WEIGHT-231 | `src/engine/cg.js:93` | P | P | U | U | W | U | U | U | P | W | U | U | U | U | U | U | P | U | U | W | 1: x_aft = 0.806 fL - R: the aft disc's trailing edge at the tail leading edge; 2: aft rotor station from the tail and the rotor radius; 5: WARNING: opt-in (p.rotorStationsDerived); not what any shipped default runs; 9: equation shape is unique in the retained set; 10: declared an engineering assumption, not sourced; 17: a pure function; 20: WARNING, hand-verified by execution: a 6 m rotor on a 7 m body returns a forward station of -3.66 m with no refusal; fL or D of 0 returns null |
+| FORMULA-WEIGHT-233 | `src/engine/cg.js:139` | P | W | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: input fraction x fL, else the derived station, else 0.10 fL; 2: WARNING, F-116, measured: with no explicit station and the derivation off by default, the array is the fallback 10 % and 80 % of fuselage length on EVERY layout - 0.86 and 6.89 m on the tiltrotor, whose rotors are on a wing at 3.56 m, and on the multicopter and side-by-side; 9: equation shape is unique in the retained set; 17: a pure selection; 20: WARNING, hand-verified by execution: giving only the forward fraction mixes an input with a fallback (0.3 and 0.8 fL) and is reported as 'input' |
+| FORMULA-WEIGHT-234 | `src/engine/cg.js:141` | P | W | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: input fraction x fL, else the derived station, else 0.80 fL; 2: WARNING, F-116, measured: with no explicit station and the derivation off by default, the array is the fallback 10 % and 80 % of fuselage length on EVERY layout - 0.86 and 6.89 m on the tiltrotor, whose rotors are on a wing at 3.56 m, and on the multicopter and side-by-side; 9: equation shape is unique in the retained set; 17: a pure selection; 20: WARNING, hand-verified by execution: an aft station ahead of the forward one is accepted; the span guard then returns a 0.5 share and 'outside the array' |
+| FORMULA-WEIGHT-236 | `src/engine/cg.js:147` | P | P | U | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | W | 1: x_wing = fL x wingLEfrac + 0.40 MAC; 2: wing structural CG at 40 % MAC; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function; 20: WARNING, source-inspected: no guard |
+| FORMULA-WEIGHT-237 | `src/engine/cg.js:148` | P | W | U | U | U | U | U | U | P | W | U | U | U | U | U | U | P | U | U | W | 1: 0.38 fL unless p.batStationFrac is given; 2: WARNING: one [LAY] station for the whole pack; the engine passes battery plus fuel as one mass at this station (engine.js l.1793); 9: equation shape is unique in the retained set; 10: declared an engineering assumption, not sourced; 17: a pure function; 20: WARNING, source-inspected: no bound on the fraction |
+| FORMULA-WEIGHT-238 | `src/engine/cg.js:149` | P | P | U | U | U | U | U | U | P | W | U | U | U | W | U | U | P | U | U | W | 1: 0.40 fL unless p.payStationFrac is given; 2: payload station, co-located with the furnishings; 9: equation shape is unique in the retained set; 10: declared an engineering assumption, not sourced; 14: WARNING: payload enters the CG exactly once, at this single [LAY] station, and the independent mass-weighted CG equals the module's within 0.6 mm on six layouts. There is ONE loading: no forward or aft case and no empty-cabin case, so no CG range exists; 17: a pure function; 20: WARNING, hand-verified by execution: an undefined payload returns NaN for the CG and for both hover quantities |
+| FORMULA-WEIGHT-239 | `src/engine/cg.js:209` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | P | U | P | U | U | W | 1: x_CG,empty = sum(m x) / sum(m); recomputed from the group masses and stations on six layouts and equal within 1 mm; 2: centroid of the empty mass from the weight build-up groups; 9: equation shape is unique in the retained set; 15: the empty mass this centroid is taken over is the same one the sizing loop uses: the seventeen build-up groups sum to Wempty within 0.1 kg on all six layouts, pack systems sit inside it and the cells outside it, and Wempty + battery + payload equals MTOW within 0.01 kg; 17: a pure function; 20: WARNING, hand-verified by execution: a group with no station is listed as unplaced and left out of the centroid; the total CG then weights the centroid by the full Wempty. A zero total falls back to 0.45 fL |
+| FORMULA-WEIGHT-242 | `src/engine/cg.js:246` | P | W | U | P | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: T_fwd / T = (x_aft - x_CG) / (x_aft - x_fwd); the moment balance about the CG closes to 4e-16 on six layouts; 2: WARNING, F-116, measured: with no explicit station and the derivation off by default, the array is the fallback 10 % and 80 % of fuselage length on EVERY layout - 0.86 and 6.89 m on the tiltrotor, whose rotors are on a wing at 3.56 m, and on the multicopter and side-by-side; 4: between 0 and 1 while the CG is inside the array; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, hand-verified by execution: coincident stations return 0.5 by the span guard; an MTOW of 0 returns -Infinity |
+| FORMULA-WEIGHT-244 | `src/engine/cg.js:249` | P | W | P | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: 2 x the larger share: 1.055 to 1.143 on the six layouts, equal to the independent balance; 2: WARNING, F-116: this is the quantity the engine tests against T/W (l.2837). That item is not marked advisory, yet it rests on the same fallback stations the module itself calls 'not a measurement'; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, source-inspected: inherits WEIGHT-242 |
 | FORMULA-WEIGHT-249 | `src/engine/weights.js:246` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-250 | `src/engine/weights.js:247` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-251 | `src/engine/weights.js:248` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |

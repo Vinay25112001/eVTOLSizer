@@ -4602,6 +4602,45 @@ is reachable from a shipped screen. It is reachable from the exported function.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-116 — the eVTOL CG closes and is computed correctly, but the hover thrust-split check rests on rotor stations that are the same two fuselage fractions on every layout — LOW — VERIFIED
+
+`src/engine/cg.js`, WEIGHT-231 to 244.
+
+**What holds, on six layouts through the UI default path.**
+
+- The seventeen build-up groups sum to Wempty within 0.1 kg, and Wempty + battery + payload
+  equals MTOW within 0.01 kg.
+- An independent Σ(m·x) / Σm from the group masses and stations equals the module's empty and
+  total CG within 1 mm.
+- The hover moment balance closes to 4e-16.
+
+**Defect.** The lift-rotor stations default to 10 % and 80 % of fuselage length for every
+configuration. The module says so and marks "CG inside rotor array" advisory: over 48 designs
+(payload and battery stations 0.2–0.8 fL, payload 100–800 kg) the CG runs 0.348–0.620 fL and
+never leaves the array. But the same stations feed a second item that is NOT marked advisory:
+
+| layout | rotor centroid used | where the rotors are | "loaded pair" ratio tested against T/W |
+|---|---|---|---|
+| lift+cruise | 4.01 m | on booms | 1.055 |
+| tiltrotor | 3.88 m | on the wing, 3.56 m | 1.112 |
+| multicopter | 3.88 m | around the body | 1.119 |
+| side-by-side | 3.88 m | abreast, one station | 1.143 |
+
+The motor, inverter, rotor, boom, nacelle and drive masses are placed at that same centroid.
+
+**Smaller items.**
+
+- One loading only: payload at a single station, so no forward or aft CG case exists.
+- The total CG divides by MTOW, not by the masses summed, so it moves if the two ever differ
+  (2.477 against 2.973 m when they differ by 20 %). They do not differ on shipped designs.
+- An undefined payload returns NaN; a 6 m rotor on a 7 m body returns a station of −3.66 m.
+- The header's "RAVEN's measured 0.0744 fL exactly" is 0.0741 at the stated 0.4293 fL.
+
+**LOW.** The CG itself is right; the consequence is a displayed feasibility item whose input
+the module already describes as a placeholder.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

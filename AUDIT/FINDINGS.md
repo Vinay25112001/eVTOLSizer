@@ -4686,6 +4686,42 @@ equation, and the structure technology factor was calibrated with the defect in 
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-118 — the trainer weight groups reproduce independently and land within 6.5 % of three published empty weights; two equations knowingly depart from the printed report, a third "misprint" the header claims is not on the page, and the equipment relations go negative below their range — LOW — VERIFIED
+
+`src/classes/trainer/weights.js`, WEIGHT-113 to 156.
+
+**What holds.** Every group was written out independently from the rendered pages of NASA
+CR-152303 Vol V and from the vendored Aviary GASP code, and evaluated on four aircraft. All
+thirteen groups equal the module's to 0.1 lb, the groups sum to the empty weight, and on the
+sized default empty + payload + fuel equals gross to 1e-4 lb.
+
+| aircraft | published empty | module | error |
+|---|---|---|---|
+| Cessna 172S | 1,663 lb | 1,567.3 | −5.8 % |
+| Cessna Skyhawk (1976) | 1,350 | 1,415.5 | +4.8 % |
+| Piper Cherokee 180 | 1,386 | 1,475.9 | +6.5 % |
+
+**Provenance, read from the page.**
+
+| equation | printed in the report | module | effect on the C172S |
+|---|---|---|---|
+| V.1.69, wing material factor | 1 − 2.5/√(B/cos Λ) | 1 **+** 2.5/√(B/cos Λ), following Aviary | wing 308.2 lb against 142.5 |
+| V.1.63, tail load | no fuselage length | includes it, following Aviary | tail 48.5 lb against 8.2 |
+| V.1.74, fuselage | (ΔP+1)^0.2 U_LF^0.3 on a continuation line, no fraction bar | a factor | — |
+
+The first two departures are stated in the header and are supported by Aviary. The third is
+the reverse: the header says the report "puts them in the denominator", and the page read here
+does not. Module, page and Aviary agree; the header's statement is unsupported.
+
+**Domain.** Electrical is negative below 622 lb and furnishings below 908 lb; the FLOPS wetted
+area is negative below a fineness of 1.7; a span of 0, a dive speed below 1 kt, a wing loading
+of 0 and an oversized trend factor return NaN or null with no refusal. Gear hydraulics are
+zero for every aircraft because the caller passes a zero coefficient.
+
+**LOW.** Nothing inside the validated envelope (2,300–2,550 lb, four seats) is affected.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

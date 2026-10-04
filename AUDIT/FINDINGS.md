@@ -4641,6 +4641,51 @@ the module already describes as a placeholder.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-117 — the eVTOL fuselage weight uses a body wetted area with the fineness correction applied twice, so the fuselage is 4.7–4.9 % light and MTOW 1.3–1.8 % light on every layout — MEDIUM — VERIFIED
+
+`src/engine/weights.js`, WEIGHT-249 to 284. Inside the MTOW loop (`engine.js` l.1262).
+
+**What holds.** The AFDD93 wing and AFDD84 body equations were read from rendered pages of
+NDARC Theory (§29-1.2 and §29-4; the text layer loses the bases) and written out independently.
+Coefficients, factors and every exponent match. The independent wing reproduces the module on
+the four winged layouts to the leading-edge sweep term (1.19 %), and the independent body
+reproduces the fuselage group to 0.1 kg on six layouts *when given the module's own area*.
+
+**Defect.** `fuselageWettedArea()` returns Raymer's fineness-corrected area above fineness 2.5.
+Line 275 multiplies it by the same correction again.
+
+| layout | body | area once | area as used | fuselage as shipped | with the area once | MTOW effect |
+|---|---|---|---|---|---|---|
+| lift+cruise | 8.91 × 1.65 m | 35.07 m² | 26.64 m² | 305.5 kg | 320.0 kg | +52.6 kg (1.80 %) |
+| hybrid | 8.61 × 1.65 | 33.54 | 25.20 | 268.3 | 281.5 | +40.7 (1.65 %) |
+| hybrid pusher | 8.61 × 1.65 | 33.54 | 25.20 | 263.5 | 276.5 | +39.3 (1.63 %) |
+| tiltrotor | 8.61 × 1.65 | 33.54 | 25.20 | 263.5 | 276.5 | +41.7 (1.73 %) |
+| multicopter | 8.61 × 1.65 | 33.54 | 25.20 | 310.3 | 325.6 | +53.7 (1.49 %) |
+| side-by-side | 8.61 × 1.65 | 33.54 | 25.20 | 202.0 | 211.9 | +26.1 (1.34 %) |
+
+The MTOW column restores the shortfall through the production input `fuselageIncrementKg` and
+re-sizes. On a stubby pod (3.9 × 1.6 m, the VoloCity body the area function was written for)
+the area used is 6.08 against 16.36 m² and the fuselage is 15.3 % light.
+
+The comment above the line says the change was made so that the weight and drag models "now
+disagree on nothing". They disagree by this factor.
+
+**Also recorded.**
+
+- The legacy GA fuselage (opt-in): the coefficient and three exponents match NASA
+  TM-2017-219627 Eq. 60; the tail-arm and fineness exponents are not in that equation and their
+  source is not held — UNVERIFIED.
+- AFDD84's two weights (maximum take-off, structural design) are both MTOW.
+- The cruise propeller is priced by the 2.0 kg/m² constant the module measured 249 % out and
+  replaced for the lift rotors.
+- n_z is floored at 1 in the wing and not in the body; NaN and negative MTOW are not refused.
+
+**MEDIUM.** A localized arithmetic defect that moves every shipped design's MTOW by 1.3–1.8 %,
+in the light direction. Not HIGH: the size is within the 6.5 % scatter NDARC states for the
+equation, and the structure technology factor was calibrated with the defect in place.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

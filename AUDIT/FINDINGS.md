@@ -4453,6 +4453,36 @@ sizing quantity is taken from it.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-112 — the eVTOL wing-box check "margin of safety ≥ 0" cannot fail, the skin torque is one cell's instead of the accumulated torque, and the inertia relief the header describes is not applied — LOW — VERIFIED
+
+`src/engine/wingbox.js`, AERO-203 to 250. The result is reported, not used for mass, and two
+feasibility checks read it (`engine.js` l.3030 and l.3038).
+
+**What holds, recomputed independently on the four winged layouts.**
+
+- Root shear is within 0.02 % of a 200,000-station Schrenk integration.
+- Every root quantity recomputes: the four sandwich instability modes, the skin's usable
+  fraction, the cap area, stress and strain, and the seven mass terms.
+- The wing-group composition is NDARC's (§29-1).
+
+**Defects.**
+
+| item | measured |
+|---|---|
+| a check that cannot fail | the caps are sized so the root stress equals the allowable. The stress margin is therefore 0 by construction, and the strain margin a fixed +73.6 % (σ_allow / E = 0.00259 against 0.0045). Over 216 designs spanning MTOW 0.8–12 t, AR 5–14, W/S 600–3,000, n_z 2.5–6, the lowest margin is −3.3e-16 and **0 fail** "Structural margin of safety ≥ 0" |
+| skin torque | the torque used at each station is that station's own cell, not the sum outboard: 1,132 against 26,339 N·m at the lift+cruise root, a factor of 23.3. The accumulated torque needs 0.30–0.33 mm of skin and the 0.8 mm minimum gauge governs, so no shipped number changes |
+| inertia relief | the header and the `WoutboardKg` parameter describe relief from the wing's own mass and from boom rotors. None is applied, and `WoutboardKg` is read nowhere. Conservative |
+| root moment | 2.96 % above the fine integration on all four layouts, from the staggered rectangle rule. Conservative |
+| inputs | a NaN or negative MTOW returns a margin of 3.5e14; a wing area of 0 is floored to 0.5 m² and returns a 1,120 kg box |
+
+The module says its mass is about 30 % below the AFDD93 wing group. Measured: −30.3 to −35.9 %.
+
+**LOW.** The design output does not feed mass or MTOW, and the two loading errors are either
+conservative or below the gauge floor. The consequence is a displayed check that reads "pass"
+whatever the design.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

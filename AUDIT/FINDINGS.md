@@ -4407,6 +4407,52 @@ DATCOM Section 2.2.2's to-centreline construction of the flapped area (0.865 aga
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-111 — the wing-box analysis cites the TASOPT box and leaves out TASOPT's sweep relations, so on a swept wing the bending moment is low by cos Λ and the cover thickness by cos² Λ — 10 % and 22 % on the default transport — MEDIUM — VERIFIED
+
+`src/classes/aircraft/wing-structure.js`, AERO-010 to 052, shown in the aircraft studio's Structure
+tab. Nothing else reads its results.
+
+**What holds, recomputed independently.**
+
+- Root shear matches a 20,001-station integration of the Schrenk loading.
+- Root moment is within 0.12 % of it (the 41-station discretisation).
+- The cap, web, buckling, stress and box-mass arithmetic recompute at the root on all three types
+  that carry a load factor.
+- 14 CFR 25.343(a) and the +2.25 of (b)(1) are quoted correctly.
+
+**The defect.** The header sources the box to "the TASOPT idealisation (TASOPT 2.00 theory,
+A.190–A.202)". TASOPT (vendored) defines that box in the plane normal to the swept spar:
+y⊥ = y/cos Λ (A.162), c⊥ = c cos Λ (A.163), S⊥ = S (A.188), **M⊥ = M/cos Λ** (A.189). The module
+uses the sweep only to lengthen the mass integration. The moment that sizes the covers is the
+unswept M, and the box width is half the streamwise chord.
+
+| type | sweep | moment low by | cover thickness low by | box mass low by |
+|---|---|---|---|---|
+| transport | 25.03° | 10.4 % | 21.8 % | 10.4 % |
+| business jet | 16° | 4.0 % | 8.2 % | 4.0 % |
+| turboprop | 0° | 0 | 0 | 0 |
+
+The direction is non-conservative. The module's caveat mentions only the missing bending-torsion
+coupling.
+
+**Also recorded.**
+
+- The elastic plate-buckling formula is entered at 403.5 MPa for 2024-T3, above that alloy's
+  269 MPa compression yield, with no plasticity correction.
+- The stress couple arm is the full depth: 1.1 to 2.0 % low.
+- The header says webs are checked at limit and ultimate; `allowWebL` is `fsu * 0.577 / 0.577`
+  and is never read. It would not govern for any listed material.
+- `lerp` is defined and never called.
+- An MZFW above MTOW produces a governing "zero-fuel" case above MTOW.
+- A zero thickness ratio returns NaN throughout; a 90° sweep returns a 4e19 kg box.
+- The module itself reports the 35 to 48 % shortfall against the FLOPS wing group, and that the
+  minimum gauge and three of four spar layouts are unsourced.
+
+**MEDIUM.** A production tab reports a swept wing's structural sizing 10 to 22 % light. No mass or
+sizing quantity is taken from it.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

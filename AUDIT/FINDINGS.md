@@ -4249,6 +4249,31 @@ drag build-up or MTOW.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-106 — the aero-propulsive module's thrust-speed derivative is evaluated with hover thrust at cruise speed, about 8 to 11 times too large as its only caller uses it, and its constant-power form is not the momentum-theory one — LOW — VERIFIED
+
+`src/engine/aeropropulsive.js`, AERO-150 to 158. The module is reached only by
+`validation/wing-modes.mjs`, and `phugoidWithThrust` has no caller at all. It says of itself that
+it is "NOT a model of aero-propulsive coupling".
+
+**What holds.** The slipstream dynamic-pressure ratio is the exact far-wake actuator-disc value
+(to 9e-16). The phugoid correction reproduces the textbook constant-power damping
+3 / (2√2 · L/D) exactly.
+
+**Defects.**
+
+| item | measured |
+|---|---|
+| cruise derivative from hover thrust | `aeroPropulsive` forms dT/dV = −T/(V + v_i) with `thrustTotal` ("total installed hover thrust") and `viHover`. Its caller passes the weight. The result is 7.98 to 10.73 times the cruise value: −357 N·s/m against −39 on a 25 kN, L/D 10, 60 m/s case |
+| the constant-power form | momentum theory at constant ideal shaft power gives dT/dV = −T/(V + 3v), derived and confirmed numerically. The coded −T/(V + v_i) is 2.4 to 21 % larger in magnitude with the cruise induced velocity |
+| slipstream is the far-wake value | a wing just behind a tractor propeller sees between the disc and far-wake values (1.053 against 1.108) in a contracted jet. The lift factor on top of it is an upper bound, which the module labels [LAY] |
+| thrust loss on winged layouts | the 11 % rotor-airframe loss, measured on a small quadrotor in hover, is applied to every layout, wing-borne ones included |
+| inputs | a negative density reports a lift "augmentation" of 0.951; a speed of 1e-6 m/s gives 1.6e14; a NaN thrust returns the classical damping labelled "with thrust" |
+
+**LOW.** No production path reaches the module. The production phugoid correction lives in
+`wingmodes.js` and is audited in its own block.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

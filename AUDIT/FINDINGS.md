@@ -4226,6 +4226,29 @@ On these four layouts it rises monotonically across the whole range (about −1.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-105 — the airfoil library's "design lift coefficient" is 0.15 to 0.43 too high on 15 of 16 checkable sections, which changes the section the sizing selects on two of four winged layouts, and its Reynolds interpolation ignores the library's own test Reynolds numbers — LOW — VERIFIED
+
+`src/engine/airfoils.js`, AERO-160 to 164, reached by the sizing loop (`engine.js` l.1701). The
+interpolation and the scoring arithmetic recompute exactly (168 cases; 24 scores to 1e-16).
+
+**The reference data the relations read**, checked against the vendored corpus
+(`datasets/airfoils`: NACA TR-586 Table I, NACA TR-824 charts, NASA TN D-7428, TM X-72697):
+
+| item | measured |
+|---|---|
+| `CLd`, "the centre of the laminar bucket" | 0.15 to 0.43 above the primary design or optimum c_l on 15 of 16 sections, mean +0.26. The 6-series designation fixes it: 63-215 is 0.2 and the library has 0.60; the −415 sections are 0.4 and the library has 0.58 to 0.62. TR-586 gives 0.14 / 0.32 / 0.22 for the 2412 / 4412 / 4415, where the library has 0.55 / 0.70 / 0.65 |
+| effect on selection | with the primary values substituted in memory, the selected section changes on 2 of 4 winged layouts: lift+cruise 65(2)-415 → 65-415, tiltrotor 64A-212 → 65-415. Stall speed moves +0.40 and −1.02 m/s. **MTOW does not move** |
+| `CLmax` | 0.02 to 0.36 below the primary on the ten sections checked, e.g. NACA 0012 1.30 against 1.66. The Reynolds bases differ, and the direction is conservative for stall |
+| `CDmin_hi` | equal to the low-turbulence-tunnel reading on one section and 7 to 14 % below it on three |
+| `CDmin_lo`, "Re ≈ 1e6" | sourced to Abbott & von Doenhoff, whose data span 3 to 9 million. No primary found: UNVERIFIED |
+| Reynolds anchor | the "hi" value is placed at 7e6 for every section; the library's own `ReM` field puts it at 2.5 to 9 million. The FX 71-L-150 at its own test Reynolds number comes out 31.4 % above its tabulated value |
+| invalid inputs | a NaN Reynolds number drops the drag criterion silently; a missing wing t/c makes every score NaN and returns the first section in the table |
+
+**LOW.** The selection reaches stall speed, pitching moment and the displayed polar, and not the
+drag build-up or MTOW.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

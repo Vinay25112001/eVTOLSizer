@@ -4310,6 +4310,31 @@ verdict level (conventional / supercritical / beyond) does not change on any def
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-108 — the Oswald-efficiency fit is transcribed exactly, but its domain flag passes a 90° sweep and a negative engine count, the wing-area function returns 2.5e10 m² as a sized wing, and the tiltrotor's wing nacelles are not counted — LOW — VERIFIED
+
+`src/engine/wing.js`, AERO-185 to 192, reached by the sizing loop.
+
+**What holds.** Howe's Eq. 6.14a was read from the rendered page of Scholz Eq. 13.26 (vendored).
+The module reproduces it on 2,880 cases with a difference of 0. The engine's e = 0.8278 on all
+four winged layouts equals the independent value. The two wing-area constraints and the derived
+cruise lift coefficient recompute on every layout, and the comment's Joby and Archer wing-loading
+anchors reproduce (1,524 and 1,370 N/m²).
+
+**Defects.**
+
+| item | measured |
+|---|---|
+| domain flag | sweep 90° returns e = 1.9e-32 with `inDomain: true`. An engine count of −1 or −5 returns 0.855 or 0.985, also in domain. Outside A > 5 or M < 0.95 a number is still returned (0.844 at A = 4), flagged false |
+| wing area on a degenerate input | zero dynamic pressure, or a zero or negative wing loading, is floored at 1e-6 and returns **2.5e10 m²** with an ordinary driver label. A NaN dynamic pressure returns NaN labelled "design wing loading". A zero legacy design CL returns Infinity |
+| engines on the wing | N_e = 0 on every layout, the tiltrotor's wing-mounted nacelles included. At N_e = 2 the fit gives 0.778 against 0.828 (−6.0 %). The module's argument, that booms are not pods, does not address nacelles, and no held source settles it |
+| applicability | Howe's fit is for conventional aeroplanes. It is applied to wings carrying booms and stopped rotors |
+| the cruise-CL ceiling | 0.90, [LAY], governs on none of the four shipped layouts |
+
+**LOW.** No shipped path reaches the degenerate inputs. The engine-count question is an
+unresolved applicability note, not a demonstrated error.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

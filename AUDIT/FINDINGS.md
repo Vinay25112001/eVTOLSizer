@@ -4483,6 +4483,51 @@ whatever the design.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-113 — the wing-borne modes read a tail arm the sizing result does not carry, so the tail volume and pitch damping are zero and the published short-period damping is 28–31 % low — LOW — VERIFIED
+
+`src/engine/wingmodes.js`, AERO-257 to 294. No production caller: `handlingcompare.js` imports
+`wingModes` and never calls it. The module is reached by three validation harnesses, and what
+they print is published in `VALIDATION.md`.
+
+**What holds.**
+
+- The short-period formula, fed the Boeing 747 derivatives of NASA CR-2144 Table IX-4 (p. 230)
+  read here from the page image, gives 1.031 / 0.445 and 1.353 / 0.571 (ω_n / ζ) against the
+  1.04 / 0.446 and 1.37 / 0.575 of Table IX-5 (p. 231).
+- Every derivative rebuilds from the sized result on the four winged layouts.
+- With the tail arm supplied, the 2-DOF short period is within 1.2 % of the exact 4-state
+  eigenvalue.
+
+**Defect.** `wingModes` reads `SR.lh`. The sizing result has no `lh`; the only arm it returns
+is `lv`. `Number(undefined) || 0` makes the arm 0 silently.
+
+| layout | V_H as called | with the arm | ζ_sp as called | with the arm | published level | with the arm |
+|---|---|---|---|---|---|---|
+| lift+cruise | 0 | 0.450 | 0.326 | 0.424 | 1 | 1 |
+| hybrid | 0 | 0.450 | 0.278 | 0.404 | **2** | 1 |
+| hybrid pusher | 0 | 0.450 | 0.270 | 0.392 | **2** | 1 |
+| tiltrotor | 0 | 0.450 | 0.277 | 0.391 | **2** | 1 |
+
+"With the arm" uses `lv` as the stand-in, the one arm the result carries. `VALIDATION.md`
+prints "worst shortPeriodDamping L2" for the hybrid and the tiltrotor and lists three layouts
+as below 0.3; none of that is a property of the aircraft, by the module's own formula.
+
+Two further reads miss in the same way and happen to be harmless: `SR.Tcruise` (the fallback
+m·g / (L/D) runs) and `SR.viHover` (0 is used; a hover induced velocity would have been the
+wrong quantity in cruise, and 0 is within 2 % of the momentum-theory result).
+
+**Also measured.** The Lanchester phugoid damping is 1.2 to 3.1 times the exact 4-state
+value; the module says "order of magnitude only", and the thrust-lapse increment is added on
+top and drives the "stable" flag.
+
+**LOW.** No design output and no UI path. The error is in a published validation figure and
+is in the pessimistic direction.
+
+**Traceability.** Classical static stability spans STAB and AERO; AERO-272, 273, 274 and 282
+are audited here, where the Register places them.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

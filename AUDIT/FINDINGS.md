@@ -4754,6 +4754,60 @@ file and ran it through the production function, applying the case's per-item ma
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-120 — the maximum zero-fuel mass is the sized take-off mass times an input ratio, so the default business jet fails the tool's own zero-fuel criterion by 351.6 kg and every short-range design does the same — MEDIUM — VERIFIED
+
+Adjudication of the WEIGHT-owned lead "default bizjet OEW + payload > MZFW". The relation is
+`mzfwKg = grossLb × mzfwRatio` (`classes/aircraft/engine.js` l.212); the masses it is compared
+with are the FLOPS build-up audited in blocks 55 and 56.
+
+**The figure, recomputed from the result masses at shipped defaults.**
+
+| class | MTOW | OEW | payload | ZFW | MZFW (ratio) | MZFW − (OEW + payload) | compliance row W-1a |
+|---|---|---|---|---|---|---|---|
+| bizjet | 12,548.1 kg | 8,718.4 | 362.9 | 9,081.2 | 8,729.7 (0.6957) | **−351.6 kg** | FAIL |
+| transport | 78,800.1 | 43,582.5 | 16,545.7 | 60,128.2 | 62,559.4 (0.7939) | +2,431.1 | PASS |
+| turboprop, trainer | — | — | — | — | no MZFW input | — | no row |
+
+OEW + payload equals the reported ZFW to 0.001 kg in every class: one definition throughout.
+Fuel and reserves are in neither side.
+
+**What MZFW is here.** Not a structural limit and not a constraint. It is the *sized* MTOW
+multiplied by a ratio taken from a real aircraft (Latitude 9,720 / 13,971; 737-800 138,300 /
+174,200 lb). Sizing does not read it; MTOW converges identically whatever the ratio. It reaches
+two outputs: compliance row W-1a and the corner of the payload-range diagram.
+
+**Why the default fails.** The ratio is the real Latitude's. The sized aircraft is not the
+Latitude: MTOW is 10.2 % below 13,971 kg while OEW is 3.0 % above the published 8,462 kg, so
+OEW / MTOW is 0.695 against the real 0.606 — as large as the MZFW ratio itself. With the real
+MTOW and MZFW the same sized OEW would leave +638.8 kg.
+
+**Reach.** OEW + payload falls more slowly than MTOW as range shortens, so a fixed ratio is
+violated by every short-range design.
+
+| population | designs | failing | worst |
+|---|---|---|---|
+| bizjet: passengers carried 1–9 × range 500–5,000 nm × three fuel methods | 72 | 44 | −1,926 kg |
+| transport: economy seats 50–200 × range 300–6,000 nm × three fuel methods | 84 | 35 | −9,708 kg |
+
+Bizjet, one input at a time: range 2,000 nm −832 kg, 1,000 nm −1,408 kg; range 3,500 nm +299 kg;
+ratio 0.75 +330 kg. Transport at 1,500 nm: −3,292 kg.
+
+**What the tool says.** Row W-1a reports FAIL with the margin. The payload-range diagram detects
+the case, falls back to the design payload and states that it is "a disagreement between the
+sized take-off mass and the entered ratio, not a real limit". The warnings list says nothing.
+
+**MEDIUM.** A shipped default class fails a criterion of the tool's own compliance matrix, and
+the criterion's verdict is decided by an input ratio rather than by the structure. Not HIGH:
+MTOW, OEW and every sized quantity are unaffected, and the tool discloses the cause on the
+payload-range screen.
+
+**Leads this exposes, not adjudicated here (MISSION / SIZING).** The default bizjet carries
+3,467 kg of mission fuel where the real aircraft's quoted mission needs about 5,146 kg (MTOW −
+OEW − payload); the "regulatory" fuel method sizes it to 14,334 kg. A bizjet with zero
+passengers carried does not converge (gross weight ran away) and is reported as not converged, with that reason.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

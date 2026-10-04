@@ -23,11 +23,11 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 475 | 4 | 10 | 799 |
-| 2 | variable definition correct (P02-088) | 324 | 94 | 5 | 865 |
+| 1 | mathematical expression correct (P02-087) | 480 | 4 | 10 | 794 |
+| 2 | variable definition correct (P02-088) | 329 | 94 | 5 | 860 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
-| 4 | sign convention correct (P02-090) | 273 | 1 | 0 | 1014 |
-| 5 | reference conditions correct (P02-091) | 33 | 44 | 4 | 1207 |
+| 4 | sign convention correct (P02-090) | 275 | 1 | 0 | 1012 |
+| 5 | reference conditions correct (P02-091) | 33 | 45 | 4 | 1206 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 12 | 0 | 0 | 1276 |
 | 7 | applied within its validity range (P02-093) | 32 | 79 | 0 | 1177 |
 | 8 | empirical relation being extrapolated (P02-094) | 6 | 22 | 0 | 1260 |
@@ -36,17 +36,17 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 11 | hidden double-counting (P02-097) | 46 | 6 | 2 | 1234 |
 | 12 | counted both as mass and energy (P02-098) | 4 | 0 | 0 | 1284 |
 | 13 | reserve applied twice (P02-099) **— untouched** | 0 | 0 | 0 | 1288 |
-| 14 | payload included correctly (P02-100) **— untouched** | 0 | 0 | 0 | 1288 |
+| 14 | payload included correctly (P02-100) | 1 | 0 | 0 | 1287 |
 | 15 | empty mass defined consistently (P02-101) **— untouched** | 0 | 0 | 0 | 1288 |
-| 16 | MTOW solved consistently (P02-102) **— untouched** | 0 | 0 | 0 | 1288 |
-| 17 | formula circular (P02-103) | 405 | 10 | 0 | 873 |
+| 16 | MTOW solved consistently (P02-102) | 0 | 1 | 0 | 1287 |
+| 17 | formula circular (P02-103) | 410 | 10 | 0 | 868 |
 | 18 | iteration mathematically stable (P02-104) | 12 | 0 | 0 | 1276 |
-| 19 | sensitive to variable scaling (P02-105) | 154 | 6 | 0 | 1128 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 573 | 0 | 715 |
+| 19 | sensitive to variable scaling (P02-105) | 155 | 6 | 0 | 1127 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 578 | 0 | 710 |
 
-**Determined 4,631 of 25,760 (18.0 %). Four of the twenty questions are untouched for every relation.**
+**Determined 4,657 of 25,760 (18.1 %). Two of the twenty questions are untouched for every relation.**
 
-## 2. What the sixteen answered questions rest on
+## 2. What the eighteen answered questions rest on
 
 - **Q3 units (P02-089)** — PASS where the register resolved the units and dimensional
   propagation found them consistent (DECLARED or DERIVED). **FAIL on the 6 rows carrying a
@@ -676,11 +676,11 @@ calculation is exactly what has not been done.
 | FORMULA-WEIGHT-095 | `src/classes/aircraft/vertical-cg.js:214` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-097 | `src/classes/aircraft/vertical-cg.js:217` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-WEIGHT-098 | `src/classes/aircraft/vertical-cg.js:286` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-102 | `src/classes/drone/sizing.js:222` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-105 | `src/classes/drone/sizing.js:281` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-106 | `src/classes/drone/sizing.js:286` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-107 | `src/classes/drone/sizing.js:288` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-108 | `src/classes/drone/sizing.js:320` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
+| FORMULA-WEIGHT-102 | `src/classes/drone/sizing.js:222` | P | P | U | P | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: bus power = N x ESC bus power + avionics power; recomputed 4 x 128.57 + 8 = 522.30 W, equal; 2: electrical power drawn from the pack in hover; 4: positive; a negative avionics power is refused, measured; 9: equation shape is unique in the retained set; 17: a pure sum; 20: WARNING, hand-verified by execution: a non-integer rotor count (3.5) is accepted and sized |
+| FORMULA-WEIGHT-105 | `src/classes/drone/sizing.js:281` | P | P | P | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: grams / 1000; 2: pack mass in kg; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 17: a pure conversion; 20: WARNING, hand-verified by execution: a pack mass of 0 g is accepted and returns a converged 3.274 kg aircraft with a massless battery; only null is refused |
+| FORMULA-WEIGHT-106 | `src/classes/drone/sizing.js:286` | P | P | P | P | U | U | U | U | P | U | U | U | U | P | U | U | P | U | U | W | 1: fixed mass = payload + structure + avionics + N x unit mass; recomputed from the published masses (motor 230 g, ESC 73 g, propeller 28 g declared): 0.5 + 1.2 + 0.25 + 4 x 0.331 = 3.274 kg, and with one 1.449 kg pack 4.723000 kg against the module's 4.723000; 2: everything that does not depend on the energy required; 3: units resolved and dimensionally consistent; 4: payload below zero and NaN are refused, measured; 9: equation shape is unique in the retained set; 14: payload enters the closure exactly once, here: raising it by 0.1 kg at constant pack count raises the mass by 0.1000 kg, and the breakdown (payload, structure, avionics, propulsion, battery) sums to the reported mass to 1e-6 kg; 17: a pure sum; 20: WARNING, source-inspected: wiring, connectors and mounts have no term of their own; the declared structure mass is defined to contain them |
+| FORMULA-WEIGHT-107 | `src/classes/drone/sizing.js:288` | P | P | P | U | U | U | U | U | P | U | U | U | U | U | U | W | P | U | U | W | 1: default tolerance 1e-4 kg; 2: convergence tolerance on successive masses; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 16: WARNING, F-115, measured. With the default solver options the returned mass is a fixed point of its own map on all 147 converged designs of a 192-design sweep (payload 0 to 4 kg, endurance 5 to 60 min, damping 0.2, 0.5, 1). When the iteration budget ends first the status is 'diverged', the returned mass is the last damped iterate - 3.274 kg with no battery in it at damping 0, 3.9985 kg at one iteration - the breakdown no longer sums to it, and meetsMission is still true. The UI accepts only 'converged' statuses and passes no solver options; 17: a constant; 20: WARNING, hand-verified by execution: a tolerance of 0 never converges and returns 'diverged' at the correct mass; a tolerance of 10 kg converges at the first iterate |
+| FORMULA-WEIGHT-108 | `src/classes/drone/sizing.js:320` | P | P | P | U | W | U | U | U | P | U | U | U | U | U | U | U | P | U | P | W | 1: energy = bus power x hours / usable fraction; recomputed 522.30 x 0.25 / 0.85 = 153.62 Wh, one 279 Wh pack; the reported endurance 27.24 min equals usable 237.15 Wh over the bus power; 2: pack energy the hover mission needs; 3: units resolved and dimensionally consistent; 5: WARNING: hover only, at the converged all-up mass; no climb, cruise or reserve term - stated by the module; 9: equation shape is unique in the retained set; 17: a pure function; 19: linear in endurance and inverse in usable fraction; 20: WARNING, source-inspected: usable fraction is validated in (0, 1] and endurance as positive before this line |
 | FORMULA-WEIGHT-113 | `src/classes/trainer/weights.js:23` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-WEIGHT-115 | `src/classes/trainer/weights.js:44` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-116 | `src/classes/trainer/weights.js:51` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |

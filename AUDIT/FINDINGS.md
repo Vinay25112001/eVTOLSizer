@@ -4571,6 +4571,37 @@ the one discontinuity is labelled.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-115 — the drone mass closure closes, but a run that exhausts its iterations is labelled "diverged" and returns a mass that is not a solution with the mission marked met — LOW — VERIFIED
+
+`src/classes/drone/sizing.js`, WEIGHT-102, 105, 106, 107, 108.
+
+**What holds.** The closure was summed independently from the published component masses:
+0.5 + 1.2 + 0.25 + 4 × (230 + 28 + 73) g + 1 × 1.449 kg = 4.723000 kg, the module's value. The
+breakdown sums to the reported mass, payload enters once, and on 147 converged designs of a
+192-design sweep the returned mass is a fixed point of its own map.
+
+**Defect.** The loop has three exits and the last is mislabelled. If the iteration budget ends
+before successive masses agree, the status is "diverged" — which the header defines as "mass
+growing without bound" — and the last damped iterate is returned:
+
+| options | status | mass | packs | breakdown sum | meetsMission |
+|---|---|---|---|---|---|
+| default | converged | 4.7230 | 1 | 4.7230 | true |
+| damping 0 | diverged | 3.2740 | 1 | 4.7230 | true |
+| maxIterations 1 | diverged | 3.9985 | 1 | 4.7230 | true |
+| tolerance 0 | diverged | 4.7230 | 1 | 4.7230 | true |
+
+At damping 0 the reported mass contains no battery, and the endurance and thrust-to-weight
+checks are evaluated at that mass.
+
+Also accepted without a report: a pack mass of 0 g (only null is refused) and a non-integer
+rotor count.
+
+**LOW.** The UI passes no solver options and accepts only "converged" statuses, so none of this
+is reachable from a shipped screen. It is reachable from the exported function.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

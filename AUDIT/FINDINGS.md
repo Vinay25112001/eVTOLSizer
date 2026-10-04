@@ -4722,6 +4722,38 @@ zero for every aircraft because the caller passes a zero coefficient.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-119 — the FLOPS weight port reproduces a second, independent FLOPS case to 0.03 %; it has only the simple wing, validates no input, and carries one dimensional oddity from its source — LOW — VERIFIED
+
+`src/classes/transport/flops-weights.js`, WEIGHT-157 to 226 (blocks 55 and 56).
+
+**What holds.** The production harness checks the port against Aviary's large_single_aisle_2.
+This audit transcribed the *other* vendored FLOPS case, large_single_aisle_1, from Aviary's data
+file and ran it through the production function, applying the case's per-item mass scalers.
+
+- 26 of 27 comparable items agree within 0.03 %: both tails, fuselage, both gear legs, paint,
+  the wing shear and miscellaneous terms, engines, controls and starter, fuel system, all nine
+  systems items but one, crew, unusable fuel, oil, passenger service, containers and payload.
+- The 27th, air conditioning, is 1.3 % low because FLOPS adds 7.5 % of the *scaled* avionics
+  mass and the module has no scalers; with the scaler restored it is 1,601.9 against 1,602.
+- The port's own wetted areas equal the FLOPS values (total 8,275.87 against 8,275.86 ft²).
+- The LSA2 wing computed by hand: bending factor 8.8291 (FLOPS 8.8294), wing 15,287.9 lb
+  (15,288).
+- Structure + propulsion + systems + margin = empty, empty + operating items = OEW,
+  OEW + payload = ZFW and gross − ZFW = fuel, to 0.1 lb on the transport, bizjet and turboprop.
+
+**Limits.**
+
+| item | measured |
+|---|---|
+| simple wing only | on LSA1, which FLOPS ran with its detailed wing, the bending factor is 10.08 against 11.59 and the bending mass 15 % low |
+| no input validation | span 0, no engines or a negative gross weight return NaN; gross 0 returns a 1,597 lb wing; an 89° sweep a 168,915 lb wing; a composite fraction of 3 a 1,080 lb wing; an empty margin of −1 an empty weight of 0 |
+| tail root chord | the horizontal-tail chord entering the fuselage cut-out is root chord **plus** a dimensionless factor, where the wing's is root chord **times** it. Aviary's source does the same. 9.4 ft² of 4,159 |
+| containers | cargo + baggage of 1 lb needs no container (floor(x/950 + 0.99)); 10 lb needs one |
+
+**LOW.** A faithful port; the limits are of scope and of guards.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

@@ -4335,6 +4335,46 @@ unresolved applicability note, not a demonstrated error.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-109 — the mission editor never applies its off-design cruise polar at default settings, so a leg flown faster than design is charged 14 to 49 % too little energy, and the engine's own design mission can be reported infeasible by rounding — MEDIUM — VERIFIED
+
+`src/engine/profile.js`, AERO-173 to 184, as called by the mission editor (`src/App.jsx` l.685-701).
+
+**The module's arithmetic holds.** The polar reproduces the loop's cruise power at the design
+speed within 0.01 % on four layouts, when it is given the result's span efficiency. Every segment
+energy, the headwind treatment and the run-dry point recompute. The default profile reproduces the
+loop's total energy.
+
+**Defect 1 — the polar is fed a field that no longer exists.** `App.jsx` passes
+`eOsw: params.eOsw`. Since span efficiency became a computed result, `DEFAULT_PARAMS.eOsw` is
+undefined, so `cruisePowerAt` returns null and the leg keeps the design cruise power, applied for
+the time the new speed implies. The row's basis text says "SPEED IGNORED, no polar data supplied".
+The validation harness passes its own `eOsw` and so does not see this. A 50 km leg, application
+call against the polar with the result's e:
+
+| layout | 0.7 V | 0.8 V | 0.9 V | 1.1 V | 1.2 V | 1.3 V |
+|---|---|---|---|---|---|---|
+| lift+cruise | +28.5 % | +23.8 % | +13.4 % | −13.9 % | −27.0 % | −38.5 % |
+| hybrid | +55.0 % | +39.4 % | +19.7 % | −17.6 % | −32.4 % | −44.4 % |
+| hybrid pusher | +48.6 % | +35.8 % | +18.3 % | −16.9 % | −31.3 % | −43.3 % |
+| tiltrotor | +93.4 % | +58.6 % | +26.5 % | −20.8 % | −36.9 % | −49.2 % |
+
+Above the design speed the error is non-conservative.
+
+**Defect 2 — no tolerance on feasibility.** The design mission uses exactly the usable pack. Flown
+through `evaluateProfile` on the default lift+cruise it exceeds the pack by 2.8e-14 kWh. It is
+reported infeasible, "running dry" in the reserve at fraction 0.9999999999999997.
+
+**Defect 3 — no stall check.** At 0.6 of the stall speed (C_L 4.0 to 4.3 against a maximum of about
+1.5) the polar returns 137 to 170 kW as a cruise power.
+
+**Also recorded.** Ground segments use 10 % of HOVER power; NASA/TM-20210017971 Table 1 says 10 % of
+MAXIMUM power. A timed leg with a headwind above the airspeed reports a negative ground speed.
+
+**MEDIUM.** A production feature returns segment energies wrong by tens of per cent in either
+direction. The sizing loop is unaffected.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

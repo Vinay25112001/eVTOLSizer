@@ -23,14 +23,14 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 296 | 2 | 9 | 981 |
-| 2 | variable definition correct (P02-088) | 201 | 37 | 3 | 1047 |
+| 1 | mathematical expression correct (P02-087) | 298 | 2 | 9 | 979 |
+| 2 | variable definition correct (P02-088) | 203 | 37 | 3 | 1045 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
-| 4 | sign convention correct (P02-090) | 209 | 1 | 0 | 1078 |
+| 4 | sign convention correct (P02-090) | 211 | 1 | 0 | 1076 |
 | 5 | reference conditions correct (P02-091) | 29 | 31 | 3 | 1225 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 11 | 0 | 0 | 1277 |
-| 7 | applied within its validity range (P02-093) | 31 | 56 | 0 | 1201 |
-| 8 | empirical relation being extrapolated (P02-094) | 4 | 19 | 0 | 1265 |
+| 7 | applied within its validity range (P02-093) | 31 | 58 | 0 | 1199 |
+| 8 | empirical relation being extrapolated (P02-094) | 4 | 20 | 0 | 1264 |
 | 9 | duplicated elsewhere (P02-095) | 1268 | 20 | 0 | 0 |
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
 | 11 | hidden double-counting (P02-097) | 46 | 5 | 2 | 1235 |
@@ -39,12 +39,12 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 14 | payload included correctly (P02-100) **— untouched** | 0 | 0 | 0 | 1288 |
 | 15 | empty mass defined consistently (P02-101) **— untouched** | 0 | 0 | 0 | 1288 |
 | 16 | MTOW solved consistently (P02-102) **— untouched** | 0 | 0 | 0 | 1288 |
-| 17 | formula circular (P02-103) | 226 | 7 | 0 | 1055 |
+| 17 | formula circular (P02-103) | 228 | 7 | 0 | 1053 |
 | 18 | iteration mathematically stable (P02-104) | 10 | 0 | 0 | 1278 |
-| 19 | sensitive to variable scaling (P02-105) | 137 | 4 | 0 | 1147 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 422 | 0 | 866 |
+| 19 | sensitive to variable scaling (P02-105) | 139 | 4 | 0 | 1145 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 424 | 0 | 864 |
 
-**Determined 3,800 of 25,760 (14.8 %). Four of the twenty questions are untouched for every relation.**
+**Determined 3,815 of 25,760 (14.8 %). Four of the twenty questions are untouched for every relation.**
 
 ## 2. What the sixteen answered questions rest on
 
@@ -547,8 +547,8 @@ calculation is exactly what has not been done.
 | FORMULA-AERO-162 | `src/engine/airfoils.js:60` | U | U | P | U | U | U | U | U | P | W | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: declared an engineering assumption, not sourced |
 | FORMULA-AERO-163 | `src/engine/airfoils.js:92` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-AERO-164 | `src/engine/airfoils.js:113` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-AERO-168 | `src/engine/drag.js:49` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source MEASURED FROM SOURCE |
-| FORMULA-AERO-170 | `src/engine/drag.js:99` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 20: a zero, negative or NaN guard IS present in code inside the window - finite-check at l.100, covering NaN and Infinity - so the previous "no guard" assertion was FALSE and is withdrawn. The guard governs other quantities rather than this relation's own inputs, which is exactly the case UNVERIFIED is defined for. Corrected by the Q20 integrity block; see F-67 |
+| FORMULA-AERO-168 | `src/engine/drag.js:49` | P | P | U | P | U | U | W | W | P | P | U | U | U | U | U | U | P | U | P | W | 1: disc area of one rotor, pi (D/2)^2; the hub drag area nHubsExposed x A x CD_hub built on it was recomputed independently on the six shipped layouts and agrees to 5 decimals; 2: the rotor disc area, which NDARC names as the reference area of a hub drag coefficient ('a drag coefficient CD based on the rotor disk area A'); 4: positive; the diameter is squared; 7: WARNING, F-103, from the primaries. One coefficient, 0.004 on this area, serves every layout. NDARC's own text gives 0.004 as its historical 'typical hub', 0.0024 low-drag and 0.0015 faired. NASA's reference vehicles (TM-20210017971 Table 12, 'Rotor hubs cruise drag') back out to 0.0050 for the lift+cruise and tiltwing and 0.0015 for the quadrotors, side-by-sides and single main rotor: the code's lift+cruise hub drag is 0.80 of NASA's class value and its multicopter and side-by-side hub drag 2.7 times NASA's, where it is 86.8 % and 77.6 % of the reported parasite drag area; 8: WARNING, measured. A helicopter-population coefficient on disc area is carried to disc loadings of 12 to 13 lb/ft^2. NDARC's alternative weight-based typical-hub scaling, 1.4 ((W/N)/1000)^(2/3) ft^2, equals the disc-area value only near 3.45 lb/ft^2 and is 3.79, 5.66 and 4.24 times it on the lift+cruise, hybrid and hybrid-pusher; re-sized at those values MTOW rises 69.5, 38.8 and 48.5 %, and at NDARC's low-drag weight scaling 19.7, 15.8 and 16.5 %. NASA's 0.0050 for this class supports the disc-area value here (+3.4 % MTOW on the lift+cruise), so this is recorded as leverage, not as an error; 9: equation shape is unique in the retained set; 10: source MEASURED FROM SOURCE; 17: a pure function of the diameter; 19: quadratic in the diameter, measured; 20: WARNING, hand-verified by execution: a NaN diameter makes every area and the total NaN with no refusal; a NEGATIVE diameter is accepted, since it is squared; nPropHover 0 is silently one rotor |
+| FORMULA-AERO-170 | `src/engine/drag.js:99` | P | P | U | P | U | U | W | U | P | P | U | U | U | U | U | U | P | U | P | W | 1: nStopped x sigma x A x CD_blade, which is NDARC's stated form ('the stopped blade drag is obtained from the coefficient CDblade, based on the geometric blade area Ablade = sigma A'); recomputed independently on the six shipped layouts to 5 decimals, and zero on the three layouts whose rotors do not stop; 2: the drag area of the stopped lift-rotor blades in cruise, m^2; 4: positive for positive solidity; 7: WARNING. The coefficient 0.009 has no source, which the module states ([CAL], 'coefficient not published'). It equals turbulent flat-plate friction on both faces, 2 Cf = 0.0113, 0.0089 and 0.0073 at Reynolds numbers of 3e5, 1e6 and 3e6, i.e. a clean blade aligned with the flow; a stopped blade at incidence, in a wake or not aligned would exceed it; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function of the stopped-rotor count, solidity and disc area; 19: linear in each factor, measured; 20: WARNING, hand-verified by execution: a NEGATIVE solidity gives a negative drag area and lowers the total (0.0274 against 0.0334); a NaN solidity makes the total NaN; an absent solidity is 0.10 |
 | FORMULA-AERO-173 | `src/engine/profile.js:77` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-AERO-175 | `src/engine/profile.js:83` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-AERO-176 | `src/engine/profile.js:84` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |

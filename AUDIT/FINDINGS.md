@@ -4170,6 +4170,34 @@ character it exists to show.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-103 — the rotor hub-drag coefficient is NDARC's own "typical hub" value, not the calibration its comment describes, one value serves every layout where NASA's reference vehicles use two, and the term has large leverage on MTOW — LOW — VERIFIED
+
+`src/engine/drag.js`, AERO-168 and AERO-170, reached by the sizing loop (`engine.js` l.903 and
+l.1758). **The arithmetic and the forms hold.** Hub and stopped-blade drag areas recompute on all
+six shipped layouts. Both forms are NDARC's as stated: hub drag on rotor disc area, and stopped-blade
+drag on the geometric blade area σA (NDARC Theory TP-20250010468, vendored).
+
+**What does not hold.**
+
+| item | evidence |
+|---|---|
+| provenance of CD_hub = 0.004 | the comment says NDARC "leaves CD_hub as a user input" and that 0.004 was "calibrated to a published share", 25–30 % of parasite drag. NDARC states it: "CD = 0.004 for typical hubs, CD = 0.0024 for current low-drag hubs, and CD = 0.0015 for faired hubs". The measured hub share is 10.7 to 18.4 % on the three winged layouts with exposed hubs, 0 on the tiltrotor, and 77.6 and 86.8 % on the wingless ones. No shipped layout shows the stated share |
+| one value for every layout | NASA/TM-20210017971 Table 12 prints "Rotor hubs cruise drag" for eight reference vehicles. On disc area they back out to **0.0050** (lift+cruise, tiltwing) and **0.0015** (quadrotors, side-by-sides, single main rotor). The code's lift+cruise hub drag is 0.80 of NASA's class value. Its multicopter and side-by-side hub drag is **2.7 times** NASA's |
+| leverage | NDARC's weight-based typical-hub scaling equals the disc-area one only near 3.45 lb/ft². At the 12–13 lb/ft² of the lift+cruise, hybrid and hybrid-pusher it is 3.8 to 5.7 times larger, and re-sizing at it raises MTOW by 38.8 to 69.5 % (15.8 to 19.7 % at the low-drag scaling). At NASA's 0.0050 the lift+cruise grows 3.4 % |
+| stopped-blade coefficient | 0.009 has no source, as the module says. It equals flat-plate friction on a clean aligned blade (0.0073 to 0.0113) |
+| inputs | a negative solidity gives a negative drag area; a negative diameter is accepted; a NaN diameter gives a NaN total |
+
+**Lead for SIZING, not adjudicated here.** On the multicopter and side-by-side, cutting hub drag
+from 0.004 to 0.0015 changes the reported drag area from 0.914 to 0.418 m² and from 0.538 to
+0.277 m², and changes MTOW and L/D by exactly zero. On wingless layouts the drag build-up does not
+reach cruise performance.
+
+**LOW.** For the lift+cruise class, the layouts where the term reaches MTOW, NASA's reference
+models support the value used, within 20 %. The defects are the stated provenance, the missing
+class distinction, and input handling.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

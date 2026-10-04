@@ -4274,6 +4274,42 @@ it is "NOT a model of aero-propulsive coupling".
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-107 — the drag-divergence check applies the Korn equation with the quarter-chord sweep where both of its sources use the half-chord sweep, which overstates the Mach margin by about 0.01 — LOW — VERIFIED
+
+`src/classes/aircraft/airfoils.js`, AERO-001 to 009, shown in the aircraft studio's airfoil tab.
+
+**The equation is right.** Mason's Eq. (7-4) was read from the rendered page, because the text
+extraction loses the exponents: M_dd = κ_A/cos Λ − (t/c)/cos² Λ − c_l/(10 cos³ Λ). The module
+reproduces it on 240 cases to 1e-16, and its inverse to 2e-16. The technology factors (0.87, 0.95)
+and the two aircraft calibrations (0.89, 0.955) are Mason's.
+
+**The sweep is not the sources' sweep.** The header says "with L the quarter-chord sweep". Mason
+(printed p. 7-19) and Grasmeyer (sec. 3.3.3) both write that "the local t/c, c_l, and
+**half-chord** sweep angle are specified for a number of spanwise strips". Measured on the
+shipped defaults:
+
+| type | sweep c/4 → c/2 | M_dd as computed → half-chord | margin in hand |
+|---|---|---|---|
+| transport | 25.03° → 21.89° | 0.7993 → 0.7877 | 0.0143 → **0.0027** |
+| business jet | 16° → 13.00° | 0.7688 → 0.7615 | −0.0112 → −0.0185 |
+| turboprop | 0° → −1.51° | 0.6729 → 0.6730 | not relevant at Mach 0.41 |
+
+The difference, 0.007 to 0.012 Mach, is about half the 0.025 margin the module asks for. The
+verdict level (conventional / supercritical / beyond) does not change on any default.
+
+**Also recorded.**
+
+- The candidate sections are ranked for fit on the streamwise thickness and lift, where the same
+  sweep theory refers both to the normal section: 0.145 and 0.70 against 0.1317 and 0.575 on the
+  transport.
+- The 0.025 margin rests on one aircraft, as the module states.
+- The linear map from the FLOPS technology scalar to A is the module's own.
+- A sweep of 90° returns −2e47.
+
+**LOW.** An advisory tab; no sizing quantity reads it.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

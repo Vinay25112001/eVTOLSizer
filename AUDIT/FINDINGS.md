@@ -4528,6 +4528,49 @@ are audited here, where the Register places them.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-114 — the FLOPS drag build-up is a faithful port; its input conventions and polynomial domains are unguarded, and the two selectable drag methods disagree by 7 % and 24 % in cruise L/D — LOW — VERIFIED
+
+`src/classes/transport/flops-aero.js`, AERO-058 to 121. Reached from `classes/transport/size.js`
+only when the drag method is "flops" (the default is "equivalent-cf"); offered on the transport
+and the bizjet.
+
+**What holds.** The file was read against NASA Aviary's Python, vendored in the corpus, and the
+EXPECTED values of Aviary's own unit tests were transcribed into the probe and fed to the
+production functions.
+
+| Aviary test | points | worst relative difference |
+|---|---|---|
+| skin-friction coefficient | 36 | 4.2e-7 |
+| Reynolds number, wall temperature | 9, 9 | 2.5e-10, 1e-11 |
+| design Mach and CL | 4 | equal to six decimals |
+| compressibility drag, M 0.2–1.1 | 20 | 1.5e-5 |
+| pressure drag, edge and inner | 12 | 2.9e-7 |
+| skin-friction drag with laminar flow | 2 | 1.9e-7 |
+
+An independent bisection solve of the wall-temperature and Kármán–Schoenherr pair gives the
+module's coefficient to eight decimals, and the result is 1.7–2.2 % below Raymer's flat-plate
+relation at flight Reynolds numbers.
+
+**Defects, all of domain and convention.**
+
+| item | measured |
+|---|---|
+| span-efficiency input | FLOPS adds E to 1 at 0.3 or less and multiplies above. On the UI's continuous 0–2 control, 0.30 → e 1.30 and 0.31 → e 0.31: cruise L/D 16.80 and 10.76. E = 0 and E = 1 are the same aircraft |
+| form factors | the surface sextic turns over outside the UI range (1.84 at t/c 0.30, −56.0 at 0.50); a body of fineness exactly 0.5 lands there; the zero-diameter nacelle fallback returns 3.36; a negative fineness returns −25,880 |
+| guards | Mach 0, a zero length or a zero pressure returns NaN; AR 0 NaN; wing area 0 Infinity |
+| two methods | cruise L/D 16.92 (FLOPS) against 18.17 (equivalent c_f) on the transport, 12.42 against 16.30 on the bizjet. The FLOPS polar is validated on three transports; the bizjet runs it on an assumed airfoil technology |
+
+**Provenance (Q10, recorded separately).** The header names Aviary's Python as the reference.
+For forward sweep the module does NOT follow it: `induced_drag.py` divides degrees by
+`scipy.constants.degree`, its expected test values reproduce only with that slip, and the module
+converts to radians. The module is right and the harness records it; the header does not.
+Forward sweep is not reachable from the UI.
+
+**LOW.** Opt-in method, values within the UI ranges are finite and match the reference, and
+the one discontinuity is labelled.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

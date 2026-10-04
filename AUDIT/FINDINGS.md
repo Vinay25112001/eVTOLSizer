@@ -4808,6 +4808,36 @@ passengers carried does not converge (gross weight ran away) and is reported as 
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-121 — the seat-by-seat loading diagram is arithmetically right, but its seats overflow the default transport cabin by 2.15 m and sit 1.40 m aft of the cabin centroid the balance module loads the payload at — LOW — VERIFIED
+
+`src/classes/aircraft/loading-diagram.js`, WEIGHT-055 to 066; consumed by `balance.js`.
+
+**What holds.**
+
+- The wing-box tank centroids equal a 200,000-step quadrature to six decimals.
+- 162 of 162 seats are placed, and the payload the diagram builds from its seats, baggage and
+  cargo equals the sized payload on all four classes.
+- Seats abreast matches the ATR 72 (4), A320 and 737-800 (6) and A330 (8).
+
+**Defect.** The seat block is centred on the cabin centroid by length, premium rows forward.
+
+| class | seated length / cabin | seat centroid − cabin centroid | take-off CG (payload at the cabin centroid) | analytic aft CG | seat-by-seat aft CG |
+|---|---|---|---|---|---|
+| transport | 24.97 / 22.81 m (+2.15) | +1.399 m (33.4 % MAC) | 28.80 % MAC | 47.87 % | 54.70 % |
+| bizjet | 7.75 / 10.59 | −0.344 m (−15.1 %) | 25.41 | 26.00 | 30.11 |
+| turboprop | 14.63 / 16.30 | −0.197 m (−8.0 %) | 31.21 | 56.65 | 49.75 |
+| trainer | 1.63 / 5.47 | 0 | 19.41 | 40.09 | 28.41 |
+
+So one result carries two payload stations. The take-off CG and the static margin of
+`balance.js` use the cabin centroid and the analytic sweep; the diagram uses the seats. On the
+transport the seat-by-seat aft limit is 6.8 % MAC behind the one the static margin is quoted
+against. The module says where the two disagree "the disagreement is the finding"; it does not
+quote the margin against the more aft of them.
+
+**LOW.** A reporting inconsistency inside a module that feeds nothing back into sizing.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

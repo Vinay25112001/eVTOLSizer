@@ -23,28 +23,28 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 599 | 6 | 11 | 672 |
-| 2 | variable definition correct (P02-088) | 429 | 117 | 6 | 736 |
+| 1 | mathematical expression correct (P02-087) | 606 | 6 | 11 | 665 |
+| 2 | variable definition correct (P02-088) | 434 | 119 | 6 | 729 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
 | 4 | sign convention correct (P02-090) | 276 | 1 | 0 | 1011 |
-| 5 | reference conditions correct (P02-091) | 34 | 47 | 4 | 1203 |
+| 5 | reference conditions correct (P02-091) | 34 | 48 | 4 | 1202 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 12 | 0 | 0 | 1276 |
-| 7 | applied within its validity range (P02-093) | 32 | 86 | 0 | 1170 |
+| 7 | applied within its validity range (P02-093) | 32 | 87 | 0 | 1169 |
 | 8 | empirical relation being extrapolated (P02-094) | 6 | 22 | 0 | 1260 |
 | 9 | duplicated elsewhere (P02-095) | 1268 | 20 | 0 | 0 |
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
 | 11 | hidden double-counting (P02-097) | 46 | 6 | 2 | 1234 |
 | 12 | counted both as mass and energy (P02-098) | 4 | 0 | 0 | 1284 |
 | 13 | reserve applied twice (P02-099) **— untouched** | 0 | 0 | 0 | 1288 |
-| 14 | payload included correctly (P02-100) | 2 | 2 | 0 | 1284 |
+| 14 | payload included correctly (P02-100) | 3 | 2 | 0 | 1283 |
 | 15 | empty mass defined consistently (P02-101) | 1 | 1 | 0 | 1286 |
 | 16 | MTOW solved consistently (P02-102) | 0 | 1 | 0 | 1287 |
-| 17 | formula circular (P02-103) | 533 | 11 | 0 | 744 |
+| 17 | formula circular (P02-103) | 540 | 11 | 0 | 737 |
 | 18 | iteration mathematically stable (P02-104) | 12 | 0 | 0 | 1276 |
 | 19 | sensitive to variable scaling (P02-105) | 157 | 7 | 0 | 1124 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 649 | 0 | 639 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 656 | 0 | 632 |
 
-**Determined 5,117 of 25,760 (19.9 %). One of the twenty questions are untouched for every relation.**
+**Determined 5,148 of 25,760 (20.0 %). One of the twenty questions are untouched for every relation.**
 
 ## 2. What the nineteen answered questions rest on
 
@@ -663,13 +663,13 @@ calculation is exactly what has not been done.
 | FORMULA-WEIGHT-051 | `src/classes/aircraft/balance.js:392` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-053 | `src/classes/aircraft/balance.js:394` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-054 | `src/classes/aircraft/balance.js:431` | U | U | P | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | W | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-WEIGHT-055 | `src/classes/aircraft/loading-diagram.js:143` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-WEIGHT-057 | `src/classes/aircraft/loading-diagram.js:268` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-059 | `src/classes/aircraft/loading-diagram.js:304` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-WEIGHT-061 | `src/classes/aircraft/loading-diagram.js:321` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-062 | `src/classes/aircraft/loading-diagram.js:322` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-065 | `src/classes/aircraft/loading-diagram.js:328` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-WEIGHT-066 | `src/classes/aircraft/loading-diagram.js:330` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
+| FORMULA-WEIGHT-055 | `src/classes/aircraft/loading-diagram.js:143` | P | P | U | U | U | U | W | U | P | P | U | U | U | U | U | U | P | U | U | W | 1: n_SA = round(0.45 sqrt(n)), not below 2; 2: seats abreast, the correlation the module attributes to Scholz Ch. 6 Eq. 6.1; 7: WARNING, measured against real cabins: 70 seats -> 4 (ATR 72: 4), 150 and 189 -> 6 (A320, 737-800: 6), 300 -> 8 (A330: 8), 550 -> 11. Below 20 seats the correlation returns under 2 and the floor decides: 1 to 19 seats all give 2; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function; 20: WARNING, hand-verified by execution: 0 and NaN return 0 |
+| FORMULA-WEIGHT-057 | `src/classes/aircraft/loading-diagram.js:268` | P | W | U | U | U | U | U | U | P | U | U | U | U | P | U | U | P | U | U | W | 1: rows = ceil(seats / abreast), length = rows x pitch: 12 first-class seats 4 abreast are 3 rows of 1.5494 m, 150 economy seats 6 abreast are 25 rows of 0.8128 m, 24.968 m in all; 162 of 162 seats placed; 2: WARNING, F-121, measured: on the default transport the seated length is 24.97 m in a 22.81 m cabin, a 2.15 m overflow. The module reports it as a finding of its own and keeps the sourced pitch; 9: equation shape is unique in the retained set; 14: the payload the diagram loads is built from its own seats and holds - passengers carried x passenger mass, their baggage, and cargo - and equals the sized payload on all four classes (closes: true; 16,545.69 kg on the transport); 17: a pure function; 20: WARNING, source-inspected: no guard on a zero abreast count; seatsAbreast floors it at 2 |
+| FORMULA-WEIGHT-059 | `src/classes/aircraft/loading-diagram.js:304` | P | W | U | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | W | 1: the same radical as WEIGHT-055, repeated to word the note; 2: WARNING: a relation duplicated inside a display string; the two cannot be seen to agree except by reading both; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function; 20: WARNING, source-inspected: text only |
+| FORMULA-WEIGHT-061 | `src/classes/aircraft/loading-diagram.js:321` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: c(y) = c_root + (c_tip - c_root) y / s; the three tank centroids of a 34.3 m, 27.6 degree wing equal a 200,000-step quadrature to six decimals (16.927763, 18.648295, 21.586291 m); 2: chord of a straight-tapered wing; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, source-inspected: no guard on a zero semi-span |
+| FORMULA-WEIGHT-062 | `src/classes/aircraft/loading-diagram.js:322` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: x_LE(y) = x_root + y tan(sweep_LE); 2: leading-edge station; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, source-inspected: no guard |
+| FORMULA-WEIGHT-065 | `src/classes/aircraft/loading-diagram.js:328` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: Simpson's rule on one interval; the integrand is a cubic in y, for which the rule is exact, and the quadrature agrees to six decimals; 2: integral over a tank's span; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, source-inspected: no guard |
+| FORMULA-WEIGHT-066 | `src/classes/aircraft/loading-diagram.js:330` | P | P | U | U | W | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: x = integral of (x_LE + mid c) c^2 over integral of c^2; the three tank centroids of a 34.3 m, 27.6 degree wing equal a 200,000-step quadrature to six decimals (16.927763, 18.648295, 21.586291 m); 2: longitudinal centroid of a tank whose section area goes as chord squared; 5: WARNING, measured: the whole-tank station (18.770934 m) is taken from the CENTRELINE to the tip; from the body side to the tip it is 19.335945 m. The centre section is counted as tank, which is the module's stated full-span convention; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, source-inspected: a zero denominator falls back to the mid-span box centre |
 | FORMULA-WEIGHT-090 | `src/classes/aircraft/vertical-cg.js:171` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-092 | `src/classes/aircraft/vertical-cg.js:190` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-WEIGHT-093 | `src/classes/aircraft/vertical-cg.js:191` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |

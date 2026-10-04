@@ -4198,6 +4198,34 @@ class distinction, and input handling.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-104 — the wing-position solver is sound on every case tried, but when its evaluation budget runs out it says the target margin is unattainable, and the design it falls back to is statically unstable — LOW — VERIFIED
+
+`src/engine/wingPosition.js`, AERO-196 and AERO-197. This is the production default path:
+`DEFAULT_PARAMS` ships `autoPositionWing: true`, target 0.15.
+
+**The solver holds, measured against an independent root find.** On the UI default path, four
+winged layouts and five target margins from 0.05 to 0.30, it converged on all 20 runs in 3 to 5
+full sizings. Each run reached the single root located independently by scanning the un-wrapped
+sizing at 119 stations and bisecting, within the 1e-3 tolerance every time. The secant form is
+the textbook one, and its guards are in place: equal values, non-finite step, cycling, and two
+independent ceilings.
+
+**Defects, both latent at the default budget of 45 sizings.**
+
+| item | measured |
+|---|---|
+| exhausted budget reported as physics | with `wingPosMaxEval: 1` the result says "target SM 15.0% exceeds the maximum attainable 14.…%". The "maximum" is the best of the two or three stations evaluated; the target is reached at station 0.343. The reason text cannot tell "ran out of evaluations" from "no such station" |
+| the fallback design | when the solve does not converge the function returns the design at the base station 0.2589, "the design the caller actually asked for". On the default aircraft that design has a static margin of **−0.2667**. It is flagged `wingPosUnreachable`, but it is returned as a sized aircraft |
+| quantised function | the sizing returns SM to 4 decimals, so the solver's tolerance cannot be tightened below about 5e-5 |
+| inputs | a NaN target costs 16 sizings and returns the base design; a negative target is accepted |
+
+**Observation, not a defect.** The header says static margin "peaks, then falls" with station.
+On these four layouts it rises monotonically across the whole range (about −1.2 to +1.5).
+
+**LOW.** No default-path run reaches either defect.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

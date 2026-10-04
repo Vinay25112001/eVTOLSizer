@@ -23,10 +23,10 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 298 | 2 | 9 | 979 |
-| 2 | variable definition correct (P02-088) | 203 | 37 | 3 | 1045 |
+| 1 | mathematical expression correct (P02-087) | 300 | 2 | 9 | 977 |
+| 2 | variable definition correct (P02-088) | 205 | 37 | 3 | 1043 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
-| 4 | sign convention correct (P02-090) | 211 | 1 | 0 | 1076 |
+| 4 | sign convention correct (P02-090) | 213 | 1 | 0 | 1074 |
 | 5 | reference conditions correct (P02-091) | 29 | 31 | 3 | 1225 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 11 | 0 | 0 | 1277 |
 | 7 | applied within its validity range (P02-093) | 31 | 58 | 0 | 1199 |
@@ -39,12 +39,12 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 14 | payload included correctly (P02-100) **— untouched** | 0 | 0 | 0 | 1288 |
 | 15 | empty mass defined consistently (P02-101) **— untouched** | 0 | 0 | 0 | 1288 |
 | 16 | MTOW solved consistently (P02-102) **— untouched** | 0 | 0 | 0 | 1288 |
-| 17 | formula circular (P02-103) | 228 | 7 | 0 | 1053 |
-| 18 | iteration mathematically stable (P02-104) | 10 | 0 | 0 | 1278 |
-| 19 | sensitive to variable scaling (P02-105) | 139 | 4 | 0 | 1145 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 424 | 0 | 864 |
+| 17 | formula circular (P02-103) | 230 | 7 | 0 | 1051 |
+| 18 | iteration mathematically stable (P02-104) | 12 | 0 | 0 | 1276 |
+| 19 | sensitive to variable scaling (P02-105) | 139 | 5 | 0 | 1144 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 426 | 0 | 862 |
 
-**Determined 3,815 of 25,760 (14.8 %). Four of the twenty questions are untouched for every relation.**
+**Determined 3,828 of 25,760 (14.9 %). Four of the twenty questions are untouched for every relation.**
 
 ## 2. What the sixteen answered questions rest on
 
@@ -565,8 +565,8 @@ calculation is exactly what has not been done.
 | FORMULA-AERO-190 | `src/engine/wing.js:154` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-AERO-191 | `src/engine/wing.js:161` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-AERO-192 | `src/engine/wing.js:162` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-AERO-196 | `src/engine/wingPosition.js:122` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-AERO-197 | `src/engine/wingPosition.js:130` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
+| FORMULA-AERO-196 | `src/engine/wingPosition.js:122` | P | P | U | P | U | U | U | U | P | U | U | U | U | U | U | U | P | P | U | W | 1: the second secant point: the in-sizing scan's suggestion when there is one, else the base station plus 0.02, clamped to the 0.06 to 0.65 station range. On the UI default path, four winged layouts and five targets (0.05 to 0.30), the solver converged on all 20 runs in 3 to 5 full sizings, each to the single root found independently from a 119-station scan of the un-wrapped sizing with bisection, and within its 1e-3 tolerance on every run; 2: a wing leading-edge station as a fraction of fuselage length, the second of the two points a secant needs; 4: the clamp keeps it inside the physical station range; 9: equation shape is unique in the retained set; 17: not circular: each evaluation is a complete sizing at a FIXED station, and the outer loop reads only its static margin; 18: stable, measured: On the UI default path, four winged layouts and five targets (0.05 to 0.30), the solver converged on all 20 runs in 3 to 5 full sizings, each to the single root found independently from a 119-station scan of the un-wrapped sizing with bisection, and within its 1e-3 tolerance on every run. Static margin rose monotonically with station on all four (from about -1.2 to 1.4-1.6 across the range), so the root is unique there; 20: WARNING, hand-verified by execution: with no scan suggestion the offset is a fixed 0.02; a base station outside the range (wingLEfrac 2) is evaluated as given and only this second point is clamped, and the solve still converged; a NaN target makes every comparison false, the solver sweeps 16 sizings and returns the base-station design flagged unreachable |
+| FORMULA-AERO-197 | `src/engine/wingPosition.js:130` | P | P | U | P | U | U | U | U | P | U | U | U | U | U | U | U | P | P | W | W | 1: the textbook secant update x2 = x1 - g1 (x1 - x0) / (g1 - g0), clamped to the station range; the same form converges on a test cubic to a residual of 4.8e-16. On the UI default path, four winged layouts and five targets (0.05 to 0.30), the solver converged on all 20 runs in 3 to 5 full sizings, each to the single root found independently from a 119-station scan of the un-wrapped sizing with bisection, and within its 1e-3 tolerance on every run; 2: the next station at which the full sizing is evaluated; 4: sign-correct: the update moves toward the root on all 20 runs; 9: equation shape is unique in the retained set; 17: not circular, as AERO-196: a root find on a function of one variable; 18: guarded against its failure modes by source inspection - equal function values break before the division, a non-finite or sub-1e-6 step breaks, a revisited station hands over to a bracketed bisection, and two independent ceilings (45 sizings, 60 iterations) bound it - and measured stable on all 20 runs; 19: WARNING, measured: the function the secant sees is QUANTISED - the sizing returns the static margin to 4 decimals - so differences below 1e-4 vanish and a tolerance of 0 is met only when rounded values coincide, which they did on the default design (converged at a tolerance of 0 in 4 sizings); 20: WARNING, hand-verified by execution, F-104. When the evaluation budget is exhausted (wingPosMaxEval 1) the solver reports 'target SM 15.0% exceeds the maximum attainable' - a statement about the aircraft built from the two or three stations it evaluated, when the target is in fact reached at station 0.343; the base-station design it then returns has a static margin of -0.2667. A negative target is accepted and solved (-0.5) |
 | FORMULA-AERO-203 | `src/engine/wingbox.js:168` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-AERO-204 | `src/engine/wingbox.js:172` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-AERO-205 | `src/engine/wingbox.js:175` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |

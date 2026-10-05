@@ -5011,6 +5011,45 @@ other domains. The validation gap itself is large and is carried as leads to SIZ
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-125 — the landing air distance leaves out idle thrust and calls that conservative; it is the reverse, and omitting it shortens the air distance by 17 % to 24 % and the field length by 6 % to 10 % — LOW — VERIFIED
+
+`src/classes/transport/landing.js`, MISSION-022 (block 65). The transport's default landing method,
+and the line that sets its wing loading.
+
+**The statement.** The module computes the air distance from the 50 ft screen to touchdown by work and
+energy, s_air = [h50 + (V_REF² − V_TD²)/2g] / (D/W), and says: "Idle thrust is taken as zero, which is
+conservative — it lengthens the air distance — and is stated rather than tuned."
+
+**The direction is wrong.** Thrust acts forward; the retarding force is D − T, so
+
+    s_air = [h50 + (V_REF² − V_TD²)/2g] / ((D − T)/W)
+
+and setting T = 0 makes the denominator *larger* and the distance *shorter*. Measured with an independent
+solver (mi_probe9), which first reproduces the module exactly and then adds the deck's idle thrust:
+
+| aircraft, at MLW | air distance, T = 0 | with idle thrust | landing distance | field length (÷ 0.6) |
+|---|---|---|---|---|
+| 737-800 (66,360 kg, 124.58 m²) | 365.6 m | 427.9 m (+17.0 %) | 1,031.4 → 1,093.6 m | 1,719.0 → 1,822.7 m (+6.0 %) |
+| Latitude (12,508 kg, 50.4 m²) | 269.0 m | 332.1 m (+23.5 %) | 630.2 → 693.4 m | 1,050.4 → 1,155.7 m (+10.0 %) |
+
+**Why it does not show in the result.** The landing braking coefficient, 0.50, is fitted to the
+168-aircraft validation record, and its documentation lists what it absorbs: "reverse thrust, the real
+spoiler drag, and any braking the 2 s free roll over-charges". Each of those makes the model *longer* than
+reality. This omission makes it *shorter*, so the fitted 0.50 absorbs a further, undocumented share, and
+the split between air distance and ground roll is wrong even where the total is right. A user who sets a
+physical dry braking coefficient, or reads the comment as a conservative bound, gets an optimistic field
+length.
+
+**Also recorded (block 65).** The flap drag increment is keyed to the instantaneous CL, so the deployed
+flaps carry no drag on the ground roll; and the bisection for the landing wing loading returns the bracket
+end, 50 or 1,200 kg/m², without a flag when the required field is out of reach.
+
+**LOW.** A wrong statement of direction on an omitted force. The shipped numbers are calibrated
+end-to-end, so default sizing does not move; the physics inside the calibration and the advice in the
+comment are wrong.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

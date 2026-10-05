@@ -5050,6 +5050,48 @@ comment are wrong.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-126 — the eVTOL gear sizes its reserve-drop stroke by scaling the limit stroke with drop height, which its own energy balance does not allow, so at the defaults the fitted stroke is 5 % short of what the reserve drop needs and the bottoming check, built on the same scaling, cannot fail — LOW — VERIFIED
+
+`src/engine/landinggear.js`, MISSION-154 and 155 (block 66). Registered under MISSION; the gear mass
+feeds the eVTOL empty mass (`weights.js` l.370).
+
+**The rule.** MOC-4 SC-VTOL VTOL.2235 (Issue 2, 11 July 2025), as the module quotes it, accepts CS 27.727 for
+the reserve energy absorption drop — "a drop height of 1.5 times that specified in Sec. 27.725(a)" — and adds
+that "shock absorbing devices, such as oleos, should not 'bottom' during the reserve energy drop test".
+
+**The module's own balance.** ½ m v² + (1 − L) m g (s_s + s_t) = n m g (η_s s_s + η_t s_t), giving
+s_s = [h − s_t (n η_t − (1 − L))] / (n η_s − (1 − L)). That is *affine* in the drop height h: the tyre term
+does not scale. The module nevertheless takes the reserve stroke as the limit stroke × h_reserve / h_limit
+("required stroke scales with v²"), then fits 1.05 × that.
+
+**Measured** (mi_probe10, the balance solved independently at both heights and the same load factor):
+
+| configuration, MTOW 2,772 kg | limit stroke | reserve, scaled | reserve, solved | fitted (× 1.05) |
+|---|---|---|---|---|
+| default: oleo, rotor lift 2/3 | 68.6 mm | 102.9 mm | **113.7 mm** | **108.0 mm — short** |
+| oleo, no rotor lift | 117.2 | 175.9 | 181.8 | 184.7 |
+| spring, no rotor lift | 363.4 | 545.2 | 563.4 | 572.4 |
+
+At the defaults the scaled reserve stroke is 7.0 %, 9.5 % and 11.0 % short at 1,150, 2,772 and 4,481 kg, and
+the fitted stroke falls short in all three. With rotor lift the tyre's share of the energy is largest, which is
+why the default is the worst case.
+
+**The check that cannot fail.** `bottomsOut = strokeFitted < strokeReserve` compares the fitted stroke with
+the same scaled figure it was made from, so it is false for any margin ≥ 1 (0.99 trips it; 1.0 does not). The
+result reports "does not bottom" where its own physics says it does.
+
+**Also recorded (block 66).** The strut energy is the kinetic term only, 15 % below the module's own balance at
+the defaults and up to 67 % for a spring gear; the strut-mass coefficient is calibrated on it.
+
+**What is not claimed.** In a real reserve drop the load factor may rise above the limit value, which absorbs
+more energy in less stroke; the finding is that the module's stated method (same load factor, stroke scaled)
+is inconsistent with its stated balance, and that its pass/fail flag cannot detect it.
+
+**LOW.** The mass effect is small (strut mass is proportional to the fitted stroke: about +5 % of the strut),
+but a compliance flag reports a pass that the module's own model contradicts.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

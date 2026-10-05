@@ -23,28 +23,28 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 722 | 6 | 12 | 548 |
-| 2 | variable definition correct (P02-088) | 537 | 133 | 6 | 612 |
+| 1 | mathematical expression correct (P02-087) | 731 | 6 | 13 | 538 |
+| 2 | variable definition correct (P02-088) | 543 | 137 | 6 | 602 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
-| 4 | sign convention correct (P02-090) | 303 | 1 | 0 | 984 |
+| 4 | sign convention correct (P02-090) | 304 | 1 | 0 | 983 |
 | 5 | reference conditions correct (P02-091) | 44 | 57 | 4 | 1183 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 12 | 0 | 0 | 1276 |
 | 7 | applied within its validity range (P02-093) | 35 | 99 | 0 | 1154 |
-| 8 | empirical relation being extrapolated (P02-094) | 6 | 24 | 0 | 1258 |
+| 8 | empirical relation being extrapolated (P02-094) | 6 | 25 | 0 | 1257 |
 | 9 | duplicated elsewhere (P02-095) | 1268 | 20 | 0 | 0 |
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
 | 11 | hidden double-counting (P02-097) | 55 | 6 | 2 | 1225 |
 | 12 | counted both as mass and energy (P02-098) | 4 | 0 | 0 | 1284 |
-| 13 | reserve applied twice (P02-099) | 6 | 0 | 0 | 1282 |
+| 13 | reserve applied twice (P02-099) | 9 | 0 | 0 | 1279 |
 | 14 | payload included correctly (P02-100) | 5 | 3 | 0 | 1280 |
 | 15 | empty mass defined consistently (P02-101) | 3 | 1 | 0 | 1284 |
 | 16 | MTOW solved consistently (P02-102) | 0 | 1 | 0 | 1287 |
-| 17 | formula circular (P02-103) | 654 | 14 | 0 | 620 |
+| 17 | formula circular (P02-103) | 664 | 14 | 0 | 610 |
 | 18 | iteration mathematically stable (P02-104) | 19 | 0 | 0 | 1269 |
 | 19 | sensitive to variable scaling (P02-105) | 160 | 9 | 1 | 1118 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 758 | 0 | 530 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 767 | 0 | 521 |
 
-**Determined 5,697 of 25,760 (22.1 %). Zero of the twenty questions are untouched for every relation.**
+**Determined 5,741 of 25,760 (22.3 %). Zero of the twenty questions are untouched for every relation.**
 
 ## 2. What the twenty answered questions rest on
 
@@ -1234,16 +1234,16 @@ calculation is exactly what has not been done.
 | FORMULA-MISSION-137 | `src/engine/certification-climb.js:186` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-MISSION-138 | `src/engine/certification-climb.js:201` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-MISSION-140 | `src/engine/certification-climb.js:208` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISSION-141 | `src/engine/landinggear.js:145` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 10: source MEASURED FROM SOURCE; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-MISSION-145 | `src/engine/landinggear.js:182` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISSION-146 | `src/engine/landinggear.js:183` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISSION-148 | `src/engine/landinggear.js:190` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISSION-152 | `src/engine/landinggear.js:201` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISSION-154 | `src/engine/landinggear.js:206` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISSION-155 | `src/engine/landinggear.js:207` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISSION-156 | `src/engine/landinggear.js:211` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISSION-157 | `src/engine/landinggear.js:219` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source MEASURED FROM SOURCE |
-| FORMULA-MISSION-158 | `src/engine/landinggear.js:220` | U | U | P | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source MEASURED FROM SOURCE |
+| FORMULA-MISSION-141 | `src/engine/landinggear.js:145` | P | W | U | U | U | U | U | W | P | P | U | U | U | U | U | U | P | U | U | W | 1: m = 0.0021 OD^2.5 ply^0.4 as coded; a 22 in 10-ply tyre gives 11.98 kg against the comment's 'near 11 kg'; 2: WARNING: a calibrated form with no weight table behind it - the module calls it 'the weakest number in this module' because the Goodyear databook has no weight column; 8: WARNING: a single-point calibration (22 in, 10 ply) applied across 13 to 22 in and 4 to 12 ply; 9: equation shape is unique in the retained set; 10: source MEASURED FROM SOURCE; 17: a pure function; 20: WARNING, source-inspected: no guard at the site |
+| FORMULA-MISSION-145 | `src/engine/landinggear.js:182` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: v = sqrt(2 g h) at the limit drop height; 1.981 m/s at the 0.20 m floor, equal to an independent sqrt(2gh); 2: limit drop contact velocity, MOC-4 VTOL.2235(b); 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, source-inspected: no guard at the site |
+| FORMULA-MISSION-146 | `src/engine/landinggear.js:183` | P | P | U | U | U | U | U | U | P | U | U | U | P | U | U | U | P | U | U | W | 1: v = sqrt(2 g x 1.5 h): 2.426 m/s, the velocity ratio sqrt(1.5) = 1.22 the module states; 2: reserve-energy drop contact velocity, CS 27.727; 9: equation shape is unique in the retained set; 13: the 1.5 reserve factor is applied once, to the drop HEIGHT (energy x 1.5), not also to the velocity - the double application the module itself warns would over-size the gear by about 50 % in energy; 17: a pure function; 20: WARNING, source-inspected: no guard at the site |
+| FORMULA-MISSION-148 | `src/engine/landinggear.js:190` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: static main-wheel load W (1 - nose share) / main wheels; 12,233 N at 2,772 kg, equal to an independent product; 2: static load per main wheel, used to select the tyre; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, hand-verified by execution: MTOW 0 returns a gear of 10.9 kg and MTOW -100 one of 9.2 kg (the smallest catalogue tyres), NaN a NaN mass with a numeric stroke |
+| FORMULA-MISSION-152 | `src/engine/landinggear.js:201` | P | P | U | P | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: numerator v^2/2g - s_t (n eta_t - (1 - L)) of s_s = [h - s_t (n eta_t - (1 - L))] / (n eta_s - (1 - L)), which follows from (1/2) m v^2 + (1 - L) m g (s_s + s_t) = n m g (eta_s s_s + eta_t s_t); the limit stroke equals the independent solution to 0.1 mm in all 12 cases; 2: energy height left for the strut after the tyre; 4: rotor lift reduces the gravity work, as 27.473(a) allows; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, source-inspected: no guard at the site |
+| FORMULA-MISSION-154 | `src/engine/landinggear.js:206` | F | P | U | U | U | U | U | U | P | U | U | U | P | U | U | U | P | U | U | W | 1: FAIL, measured: reserve stroke = limit stroke x (h_reserve / h_limit) assumes 'required stroke scales with v^2', but the module's own balance is AFFINE in h (the tyre term does not scale). Solved at the reserve height and the same load factor it needs 113.7 mm at 2,772 kg where the scaling gives 102.9 mm (-9.5 %); -7.0 % to -11.0 % at the defaults, -2.5 % to -4.3 % in the other configurations - F-126; 2: strut stroke the reserve-energy drop needs; 9: equation shape is unique in the retained set; 13: the 1.5 reserve factor enters once, through the height ratio; 17: a pure function; 20: WARNING, source-inspected: no guard at the site |
+| FORMULA-MISSION-155 | `src/engine/landinggear.js:207` | P | W | U | U | U | U | U | U | P | U | U | U | P | U | U | U | P | U | U | W | 1: fitted stroke = reserve stroke x margin (1.05); 2: WARNING, measured: at the defaults the fitted 108.0 mm is SHORTER than the 113.7 mm the reserve drop needs by the module's own balance; the bottoming flag compares the fitted stroke with the scaled one, so it can only trip when the margin is set below 1 (0.99 trips it, 1.0 does not) and never sees this - F-126; 9: equation shape is unique in the retained set; 13: the margin is a separate design allowance on the reserve stroke, not a second reserve; 17: a pure function; 20: WARNING, source-inspected: no guard at the site |
+| FORMULA-MISSION-156 | `src/engine/landinggear.js:211` | P | W | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: E = (1/2) m_main v_reserve^2, kinetic energy only, as coded; 2: WARNING, measured: the strut absorbs the kinetic energy PLUS the work of the un-offloaded weight over the stroke - the module's own balance - and the kinetic term alone is 15.0 % low at the defaults, 43 % with no rotor lift and 67 % for a spring gear; the strut-mass coefficient is calibrated on this energy, so the error moves with configuration rather than cancelling; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, source-inspected: no guard at the site |
+| FORMULA-MISSION-157 | `src/engine/landinggear.js:219` | P | W | U | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | W | 1: strut mass = coefficient x energy x fitted stroke x 1000, as coded; 2: WARNING: the coefficient is tagged [CAL], set to recover Roskam's 4-6 % of MTOW for a conventional light-aircraft gear; mass in proportion to energy x stroke is the module's own scaling argument, not a source's; 9: equation shape is unique in the retained set; 10: source MEASURED FROM SOURCE; 17: a pure function; 20: WARNING, source-inspected: no guard at the site |
+| FORMULA-MISSION-158 | `src/engine/landinggear.js:220` | P | P | P | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | W | 1: total strut mass = main struts + 0.45 x a main strut per nose wheel; 2: strut mass of the gear set; the 0.45 nose share is a layout figure; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source MEASURED FROM SOURCE; 17: a pure function; 20: WARNING, source-inspected: no guard at the site |
 | FORMULA-MISSION-162 | `src/engine/mission-path.js:68` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-MISSION-166 | `src/engine/mission-path.js:149` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-MISC-002 | `src/classes/bizjet/warnings.js:26` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |

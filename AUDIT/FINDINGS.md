@@ -4838,6 +4838,55 @@ quote the margin against the more aft of them.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-122 — the balance module's lift-curve slope has the compressibility term inverted, which halves the slope at cruise Mach and doubles the fuselage's destabilising shift of the neutral point — MEDIUM — VERIFIED
+
+`src/classes/aircraft/balance.js`, WEIGHT-018 to 036: the classical neutral-point and
+static-margin relations, registered under WEIGHT and audited here.
+
+**What holds.** The tail lift-slope ratio is TASOPT's Eq. (299), read in the vendored text;
+formed independently it equals the module to five decimals on four classes, and the tail-only
+neutral point to 1e-4 m. The fuselage term is TASOPT's (A.288), C_MVf1 = 2 V_f / C_Lα.
+
+**Defect.** The C_Lα that divides it (l.331) is
+
+    2πA / (2 + √(4 + A²(1 + tan²Λ) / β²))
+
+where the compressible form is
+
+    2πA / (2 + √(4 + A²(β² + tan²Λ)))
+
+— the form `trainer/weights.js` carries from Aviary, and the β-dependence of TASOPT's own
+Eq. (321). They agree at Mach 0 and nowhere else; the module's slope *falls* with Mach.
+
+| class | Mach | C_Lα module | standard | ratio | fuselage shift, module | standard | SM with fuselage, module | standard |
+|---|---|---|---|---|---|---|---|---|
+| trainer | 0.19 | 4.756 | 4.892 | 0.972 | −13.7 % MAC | −13.3 % | −17.6 % | −17.2 % |
+| turboprop | 0.41 | 4.926 | 5.744 | 0.857 | −33.8 | −29.0 | −29.6 | −24.8 |
+| bizjet | 0.78 | 3.337 | 6.782 | 0.492 | −35.3 | −17.4 | −16.5 | **+1.5** |
+| transport | 0.785 | 3.133 | 6.186 | 0.506 | −41.5 | −21.0 | −22.8 | **−2.3** |
+
+The module reports its C_MVf1 as 3.36 times the one calibrated value in the literature (Drela's
+737 deck) and attributes the excess to slender-body theory. With the standard slope it is 1.70
+times: half the excess is this line.
+
+**Also recorded.**
+
+- The downwash gradient 0.60 is the 737 deck's, applied to every class.
+- The static margin is quoted against the analytic sweep's aft CG; the seat-by-seat diagram's
+  is 6.8 % MAC further aft on the transport (F-121).
+- At shipped defaults the trainer (−3.9 %) and the turboprop (+4.2 %) fail the 5 % minimum even
+  on the optimistic, tail-only bound.
+
+**MEDIUM.** A wrong formula that moves a displayed stability bound by 20 % MAC on the jets.
+Not HIGH: the module presents the figure as the pessimistic end of a bracket, issues no single
+margin, and feeds nothing back into sizing. The verdict text does not change, because both
+values sit under the minimum.
+
+**Traceability.** Classical static stability spans AERO, WEIGHT and SIZING; the Register is
+unchanged.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

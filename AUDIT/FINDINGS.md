@@ -4806,6 +4806,14 @@ payload-range screen.
 OEW − payload); the "regulatory" fuel method sizes it to 14,334 kg. A bizjet with zero
 passengers carried does not converge (gross weight ran away) and is reported as not converged, with that reason.
 
+**Amended 2026-10-05 (MISSION block 63) — the fuel lead, adjudicated in F-124.** The 5,146 kg above
+is MTOW − BOW − payload, not the real aircraft's mission fuel: the 4-passenger mission is
+tank-limited and the compatible figure is 5,168.2 kg of ramp fuel (fraction 0.369 against the
+tool's 0.276). The tool's 3,466.8 kg is integrated correctly (independent −0.24 %). Causation for
+the DEFAULT design is proven by counterfactual: with fuel burn matching the real airframe the
+default sizes to 13,935.8 kg and passes W-1a by +132.5 kg. The defect recorded here and its
+severity are unchanged; the cause of the fuel-burn optimism lies outside MISSION.
+
 **Not repaired.** PASS A modifies no production code.
 
 ## F-121 — the seat-by-seat loading diagram is arithmetically right, but its seats overflow the default transport cabin by 2.15 m and sit 1.40 m aft of the cabin centroid the balance module loads the payload at — LOW — VERIFIED
@@ -4884,6 +4892,122 @@ values sit under the minimum.
 
 **Traceability.** Classical static stability spans AERO, WEIGHT and SIZING; the Register is
 unchanged.
+
+**Not repaired.** PASS A modifies no production code.
+
+## F-123 — the alternate leg climbs to its cruise height and back whatever the alternate distance, so an alternate of 0 nm still costs 143.6 kg (bizjet) and 1,041.5 kg (transport), about 2.7 % of MTOW; and the reserve and trip definitions each leave out one segment their sources include — LOW — VERIFIED
+
+`src/classes/transport/mission.js`, MISSION-071 to 089 (block 63). Reserve accounting, traced
+end to end with probes mi_probe5 and mi_probe6.
+
+**What holds (Q13).** Every reserve component of every policy is applied exactly once. On both
+jets and all four policies the segments sum to the returned total to 0.0 kg, the trip is identical
+under every policy (2,981.6 kg bizjet, 15,788.3 kg transport), each reserve input moves only its
+own segment (reserveMin 0 → final 0.0 kg, 600 → 2,052.6 kg, trip and alternate unchanged), the
+easa contingency is 5 % of trip less taxi to six decimals, and the us-flag contingency appears only
+under us-flag. The consumer (`transport/size.js`, mission method) adds no reserve of its own: fuel
+required is the mission total. Independent re-flight: total within −0.24 % (bizjet) and −0.15 %
+(transport).
+
+**1. A zero alternate is not zero.** `alternateLeg` clamps the cruise to
+max(0, alternateNm − climb − descent) but always flies the climb to `alternateAltFt` and the
+descent. The schema allows alternateNm = 0 (no alternate required, e.g. 14 CFR 91.167(b)).
+
+| class | alternate fuel at 200 nm | at 0 nm | MTOW carried by the 0 nm remainder |
+|---|---|---|---|
+| bizjet | 306.1 kg | 143.6 kg | ≈ 329 kg (2.70 %) |
+| transport | 1,330.3 kg | 1,041.5 kg | ≈ 2,092 kg (2.67 %) |
+
+MTOW carried = remainder × the closure growth factor measured from a +10 min reserve step
+(2.29 bizjet, 2.01 transport). The ATA reserve rules Loftin prints (RP-1060 p.153) cap the
+alternate cruise height "where cruise distance equals climb plus descent distance".
+
+**2. One segment missing from each definition.**
+- *Alternate fuel without a missed approach* (policies us-domestic, us-flag, easa). EASA AMC/GM
+  Part-CAT Iss.2 Amdt 20 (4)(i)(A) puts "fuel for a missed approach … at the destination" into
+  alternate fuel; the ATA rules (Loftin p.152) open both reserve sequences with "exercise a missed
+  approach and climbout". 14 CFR 121.639/645 do not require it. Upper bound: the nbaa policy's
+  missed approach, 63.7 kg (bizjet) and 392.7 kg (transport).
+- *Trip fuel without an approach and landing.* EASA (2)(iv) includes "fuel for approach and
+  landing at the destination aerodrome"; the mission ends at the foot of an idle descent. A
+  5 min sea-level approach at the minimum-drag speed is 19.9 kg (0.67 % of trip) and 120.1 kg
+  (0.76 %).
+
+**Not a defect.** The EASA contingency's alternative floor, 5 min holding at 1,500 ft
+((3)(ii)), is not coded but cannot bind in this model: it is 19.8 / 120.1 kg, and even a 0 nm
+stage flies a full climb and descent whose 5 % exceeds it.
+
+**LOW.** Item 1 moves MTOW by about 2.7 % but only off the default (alternate 200 nm); item 2 is
+under 1 % of mission fuel. No reserve is double-counted.
+
+**Not repaired.** PASS A modifies no production code.
+
+## F-124 — the default business jet's 3,467 kg of mission fuel is integrated correctly; the 5,146 kg it was compared with is not the real Citation Latitude's mission fuel, and on definition-compatible terms the tool's fuel burn is 11 % to 27 % optimistic for reasons upstream of the mission — UNVERIFIED as to cause (outside MISSION; carried as leads)
+
+Adjudication of the lead F-120 handed to MISSION. Probes mi_probe1 to mi_probe4.
+
+**The production figure survives.** Default bizjet, shipped inputs: closure mass 12,548.1 kg, fuel
+3,466.8 kg = trip 2,981.6 (taxi 30.5, take-off 47.4, climb 455.7, cruise 2,391.5, descent 56.4) +
+NBAA reserve 485.3 (missed approach 63.7, 200 nm alternate 306.1, 30 min hold at 5,000 ft 115.4).
+Method: segment mission, TASOPT 2.00 (A.413)/(A.414) energy march for climb and descent, Breguet
+cruise at the mean-weight L/D (16.5, CL 0.368, FL430, M 0.78), endurance Breguet holds, TSFC 0.70
+scaled by the Aviary FLOPS deck. Taxi, climb, descent and reserve are all included. An independent
+re-flight (own ISA, 10 ft predictor-corrector march with the exact flight-path angle, RK4 cruise and
+holds) gives 3,475.3 kg (−0.24 %). The NBAA profile is the Textron/Cessna FPG definition.
+
+**The reference figure is not definition-compatible.** 5,146 kg is MTOW − BOW − 4 passengers
+(13,971 − 8,462 − 362.9): fuel at brake release *if* the aircraft were loaded to MTOW. The
+Latitude's own documents (Textron S&D 2015-10 Rev B: ramp 14,084, MTOW 13,971, BOW 8,462 *with*
+2 crew at 200 lb, usable fuel 5,168 kg; product card 2025: full-fuel payload 454 kg = ramp − BOW −
+fuel exactly) show the 4-passenger mission is **tank-limited**: 362.9 kg < 454 kg, so the tanks
+are full at a ramp mass of 13,993.1 kg. The compatible quantity is **5,168.2 kg of ramp fuel**
+(taxi + trip + reserves), a ramp fuel fraction of 0.369 against production's 0.276. The two
+numbers differ by 22 kg; the definitions do not.
+
+Comparison conditions: Citation Latitude (Model 680A); 4 passengers at 200 lb; 2,700 nm; high-speed
+cruise (446 ktas, M 0.78 at FL430 as the defaults derive it); NBAA IFR reserves — alternate not
+stated on the card, 200 nm in the S&D's own NBAA range; standard day, zero wind. Sources: Textron
+marketing and specification documents via third-party hosts (classes/business-jet/MANIFEST.csv);
+the S&D range carries ± 4 %.
+
+**On compatible terms, the real airframe.** The tool's analysis mode on the published wing
+(50.4 m²) and thrust (5,907 lbf), at the real ramp mass with the real fuel:
+
+| fuel method | range, nm | vs 2,700 | fuel the tool needs for 2,700 nm |
+|---|---|---|---|
+| mission | 3,282 | +21.5 % | 4,430 kg (−14.3 %) |
+| mission, thrust raised to 6,500 lbf so it reaches FL430 | 3,857 | +42.9 % | — |
+| loftin | 4,216 | +56.2 % | 3,758 kg (−27.3 %) |
+| regulatory | 3,335 | +23.5 % | 4,603 kg (−10.9 %) |
+
+In the first row the real airframe cannot climb past 36,000 ft in the tool and cruises there,
+unreported; the real aircraft reaches FL430 in 26 min (card).
+
+**Separating the gap.**
+- *Model error inside MISSION:* ≤ 0.3 % (integration), plus the approach the trip omits (F-123,
+  0.67 % of trip). Small.
+- *Definition difference:* 5,146 vs 5,168 kg; and the tool's closure mass is the RAMP mass (mission.js
+  burns taxi from it) while it is reported and compared as MTOW (30.5 kg here) — a SIZING lead.
+- *Aircraft mismatch:* the sized aircraft is not the Latitude (wing 41.8 vs 50.4 m², thrust 6,899
+  vs 5,907 lbf, OEW 8,718 vs BOW 8,462 kg).
+- *Assumptions upstream of the mission (the bulk):* TSFC 0.70 is the PW306A's at M 0.80 / 40,000 ft
+  from secondary sources (the D1 is not listed); cruise L/D 16.5 comes from an equivalent skin
+  friction of 0.003, an airliner value; the thrust lapse is a large single-aisle turbofan's deck
+  shape. Sensitivity, not tuning: a TSFC 1.186 times the input makes the tool fly the real airframe
+  exactly 2,700 nm. These belong to SIZING, AERO and PROP and are not adjudicated here.
+- *Source uncertainty:* alternate distance unstated on the card; ± 4 % on the S&D range.
+
+**Effect, and F-120.** Mission fuel 3,466.8 kg against a compatible 5,168.2 kg; fuel fraction 0.276
+against 0.369; closure mass 10.2 % below MTOW (10.3 % below the mission's actual ramp mass). The
+counterfactual with that 1.186 TSFC sizes the default bizjet to 13,935.8 kg (−0.25 % from MTOW),
+fuel 4,373.2 kg, and MZFW − ZFW = **+132.5 kg**: W-1a would pass. So the fuel-burn optimism is
+what puts the *default* design on the failing side of F-120; F-120's own defect (MZFW defined as
+sized MTOW × an input ratio, failing every short-range design) is unchanged. Reserve margin: the
+tool's NBAA reserve is 485.3 kg (3.9 % of MTOW); no definition-compatible real figure is held, so
+it is UNVERIFIED.
+
+**Severity.** Not graded in MISSION: the mission arithmetic is right, and the cause lies in three
+other domains. The validation gap itself is large and is carried as leads to SIZING, AERO and PROP.
 
 **Not repaired.** PASS A modifies no production code.
 

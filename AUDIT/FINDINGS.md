@@ -5092,6 +5092,32 @@ but a compliance flag reports a pass that the module's own model contradicts.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-127 — the eVTOL mission path and the ground track the mission gate reads count one climb and one descent whatever the number of hops, so at two hops the track is 23 % short of what is flown and no longer closes on the range — LOW — VERIFIED
+
+`src/engine/mission-path.js`, MISSION-166 (block 67).
+
+`missionHops` is an input (src/lib/provenance.js: "Number of takeoff-cruise-landing hops the sizing mission flies on
+ONE charge", default 1). The sizing honours it: the cruise distance is range − hops × (climb + descent) − reserve
+(`engine.js` l.554) and every per-hop time is multiplied (l.1201-1206). `groundTrackM` returns climb + cruise +
+descent once, and the path legs carry one climb and one descent.
+
+Measured on the default layout (mi_probe11):
+
+| missionHops | groundTrackM | flown: hops × (climb + descent) + cruise | track + reserve vs range |
+|---|---|---|---|
+| 1 | 100.00 km | 100.00 km | 161.10 = 161.10 km |
+| 2 | 76.89 km | 100.00 km (−23.1 %) | 137.99 vs 161.10 km |
+
+The module's header says the closure "range = ground track + reserve" is gated; `validation/mission-path.mjs` tests
+it at one hop only, so the gate cannot see this.
+
+**What holds.** At one hop the reserve is charged once against the range and never flown or drawn: track + reserve
+equals the range to within 0.04 km on all six layouts.
+
+**LOW.** A drawing and a display quantity; sizing reads the correct budget. Off the default (one hop).
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

@@ -23,11 +23,11 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 872 | 7 | 14 | 395 |
-| 2 | variable definition correct (P02-088) | 661 | 159 | 9 | 459 |
+| 1 | mathematical expression correct (P02-087) | 887 | 7 | 14 | 380 |
+| 2 | variable definition correct (P02-088) | 676 | 159 | 9 | 444 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
 | 4 | sign convention correct (P02-090) | 317 | 1 | 0 | 970 |
-| 5 | reference conditions correct (P02-091) | 49 | 61 | 4 | 1174 |
+| 5 | reference conditions correct (P02-091) | 49 | 62 | 4 | 1173 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 20 | 2 | 0 | 1266 |
 | 7 | applied within its validity range (P02-093) | 37 | 102 | 0 | 1149 |
 | 8 | empirical relation being extrapolated (P02-094) | 6 | 25 | 0 | 1257 |
@@ -35,16 +35,16 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
 | 11 | hidden double-counting (P02-097) | 56 | 7 | 3 | 1222 |
 | 12 | counted both as mass and energy (P02-098) | 6 | 0 | 0 | 1282 |
-| 13 | reserve applied twice (P02-099) | 20 | 0 | 0 | 1268 |
-| 14 | payload included correctly (P02-100) | 7 | 3 | 0 | 1278 |
+| 13 | reserve applied twice (P02-099) | 22 | 0 | 0 | 1266 |
+| 14 | payload included correctly (P02-100) | 8 | 3 | 0 | 1277 |
 | 15 | empty mass defined consistently (P02-101) | 5 | 3 | 0 | 1280 |
-| 16 | MTOW solved consistently (P02-102) | 5 | 4 | 0 | 1279 |
-| 17 | formula circular (P02-103) | 806 | 14 | 0 | 468 |
-| 18 | iteration mathematically stable (P02-104) | 24 | 0 | 0 | 1264 |
+| 16 | MTOW solved consistently (P02-102) | 6 | 4 | 0 | 1278 |
+| 17 | formula circular (P02-103) | 821 | 14 | 0 | 453 |
+| 18 | iteration mathematically stable (P02-104) | 25 | 0 | 0 | 1263 |
 | 19 | sensitive to variable scaling (P02-105) | 160 | 9 | 1 | 1118 |
 | 20 | zero/negative/NaN handled (P02-106) | 0 | 773 | 0 | 515 |
 
-**Determined 6,247 of 25,760 (24.3 %). Zero of the twenty questions are untouched for every relation.**
+**Determined 6,298 of 25,760 (24.4 %). Zero of the twenty questions are untouched for every relation.**
 
 ## 2. What the twenty answered questions rest on
 
@@ -146,21 +146,21 @@ calculation is exactly what has not been done.
 | FORMULA-SIZING-043 | `src/classes/aircraft/engine.js:489` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-SIZING-045 | `src/classes/aircraft/engine.js:492` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-SIZING-046 | `src/classes/aircraft/engine.js:493` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-SIZING-047 | `src/classes/trainer/size.js:37` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-SIZING-048 | `src/classes/trainer/size.js:38` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-SIZING-049 | `src/classes/trainer/size.js:43` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-SIZING-050 | `src/classes/trainer/size.js:44` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-SIZING-053 | `src/classes/trainer/size.js:48` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-SIZING-054 | `src/classes/trainer/size.js:49` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-SIZING-055 | `src/classes/trainer/size.js:51` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-SIZING-058 | `src/classes/trainer/size.js:78` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-SIZING-061 | `src/classes/trainer/size.js:113` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-SIZING-062 | `src/classes/trainer/size.js:114` | U | U | P | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-SIZING-065 | `src/classes/trainer/size.js:121` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-SIZING-066 | `src/classes/trainer/size.js:122` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-SIZING-068 | `src/classes/trainer/size.js:210` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-SIZING-069 | `src/classes/trainer/size.js:211` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-SIZING-074 | `src/classes/trainer/size.js:237` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
+| FORMULA-SIZING-047 | `src/classes/trainer/size.js:37` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | U | 1: root chord = 2 S / (b (1 + lambda)) for a trapezoid, 5.80349 ft by hand; 2: wing root chord; 9: equation shape is unique in the retained set; 17: a pure function |
+| FORMULA-SIZING-048 | `src/classes/trainer/size.js:38` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | U | 1: MAC = (2/3) c_r (1 + lambda + lambda^2) / (1 + lambda), 4.93389 ft by hand; 2: mean aerodynamic chord; 9: equation shape is unique in the retained set; 17: a pure function |
+| FORMULA-SIZING-049 | `src/classes/trainer/size.js:43` | P | P | U | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: V_H = 0.85 L w^2 / (S c) + 0.43, GASP Vol II Eq II.1.24-30 as the comment quotes, 0.79048 by hand; 2: horizontal tail volume coefficient; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function |
+| FORMULA-SIZING-050 | `src/classes/trainer/size.js:44` | P | P | U | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: V_V = 0.336 L h^2 / (S b) + 0.07, 0.09852 by hand; 2: vertical tail volume coefficient; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function |
+| FORMULA-SIZING-053 | `src/classes/trainer/size.js:48` | P | P | U | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: S_H = min(V_H S C_H2, S / 2), arm = MAC / C_H2: 38.080 ft^2 and 18.206 ft by hand; 2: horizontal tail area and arm; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function |
+| FORMULA-SIZING-054 | `src/classes/trainer/size.js:49` | P | P | U | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: S_V = V_V S C_V2, arm = b / C_V2; 2: vertical tail area and arm, 19.584 ft; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function |
+| FORMULA-SIZING-055 | `src/classes/trainer/size.js:51` | P | P | U | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: AR = b^2 / S, 7.48000 equal to the input; 2: the returned geometry; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function |
+| FORMULA-SIZING-058 | `src/classes/trainer/size.js:78` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: the GASP propeller weight called with diameter in ft, blades, activity factor, rpm, installed shaft horsepower and cruise Mach, the units the WEIGHT-audited form takes; 2: propeller weight at the installed power; 9: equation shape is unique in the retained set; 17: inside the damped gross-weight fixed point, which closes: gross 2,605.420 lb = empty + payload + fuel to 0.001 lb, 18 iterations; 20: no zero/negative/NaN guard within +/-25 lines of the site |
+| FORMULA-SIZING-061 | `src/classes/trainer/size.js:113` | P | P | U | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: climb time = cruise altitude / rate of climb at mid altitude, infinite for no climb; 2: climb minutes, 14.603 on the default; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: inside the damped gross-weight fixed point, which closes: gross 2,605.420 lb = empty + payload + fuel to 0.001 lb, 18 iterations |
+| FORMULA-SIZING-062 | `src/classes/trainer/size.js:114` | P | P | P | U | W | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: fuel = sfc x hp x minutes / 60 lb; 2: climb fuel at rated power lapsed to mid altitude, 14.319 lb; 3: units resolved and dimensionally consistent; 5: WARNING, source-inspected: the cruise sfc is used for the climb at rated power, which the comment states (Loftin Table 6.III gives cruise values only); 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: inside the damped gross-weight fixed point, which closes: gross 2,605.420 lb = empty + payload + fuel to 0.001 lb, 18 iterations |
+| FORMULA-SIZING-065 | `src/classes/trainer/size.js:121` | P | P | P | U | U | U | U | U | P | U | U | U | P | U | U | U | P | U | U | U | 1: fuel = sfc x cruise shaft hp x reserve minutes / 60, 38.235 lb by hand; 2: reserve fuel at cruise power for 45 min; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 13: charged once, in the usable sum; 17: inside the damped gross-weight fixed point, which closes: gross 2,605.420 lb = empty + payload + fuel to 0.001 lb, 18 iterations |
+| FORMULA-SIZING-066 | `src/classes/trainer/size.js:122` | P | P | P | U | U | U | U | U | P | U | U | U | P | U | U | U | P | U | U | U | 1: usable = allowance + climb + cruise + reserve, 265.374 lb by hand; 2: usable fuel; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 13: the reserve appears once in the sum; 17: inside the damped gross-weight fixed point, which closes: gross 2,605.420 lb = empty + payload + fuel to 0.001 lb, 18 iterations |
+| FORMULA-SIZING-068 | `src/classes/trainer/size.js:210` | P | P | P | U | U | U | U | U | P | U | U | U | U | P | U | U | P | U | U | U | 1: (pax + 1) x occupant mass, the pilot counted as payload; 2: payload 800 lb; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 14: payload enters the closure once: gross = empty + payload + fuel to 0.001 lb; 17: a pure function |
+| FORMULA-SIZING-069 | `src/classes/trainer/size.js:211` | P | P | P | U | U | U | U | U | P | U | U | U | U | U | U | P | P | U | U | U | 1: seed gross = 2 payload + 1,000 lb; 2: the starting guess; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 16: measured: gross 2,605.420 lb = empty + payload + usable fuel to 0.001 lb, converged true in 18 iterations. Non-convergence is returned with a stopReason and raised as an error-level warning by trainer/warnings.js; 17: inside the damped gross-weight fixed point, which closes: gross 2,605.420 lb = empty + payload + fuel to 0.001 lb, 18 iterations |
+| FORMULA-SIZING-074 | `src/classes/trainer/size.js:237` | P | P | P | U | U | U | U | U | P | U | U | U | U | U | U | U | P | P | U | U | 1: x + 0.7 (G - x), damped successive substitution; 2: the gross-weight update; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 17: inside the damped gross-weight fixed point, which closes: gross 2,605.420 lb = empty + payload + fuel to 0.001 lb, 18 iterations; 18: measured: converges in 18 iterations to 0.01 lb on the default |
 | FORMULA-SIZING-077 | `src/classes/transport/size.js:120` | P | P | U | U | P | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: sigma = (P / (T + dT)) / (P0 / T0), density ratio from the ideal gas law with R cancelling; 2: field density ratio: an ISA written here gives 1.000000, 0.861670, 0.817594, 0.815983 at 0 ft, 5,000 ft, 5,000 ft +15 K, 8,000 ft -10 K, equal to the code to 1e-6; 5: pressure altitude with an ISA temperature offset, the way field lengths are published; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function |
 | FORMULA-SIZING-078 | `src/classes/transport/size.js:131` | P | P | P | U | U | U | P | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: 1.5 x clamp(2.1 + 24,000 / (W + 10,000), 2.5, 3.8), 14 CFR 25.337(b) limit and the 25.303 factor of safety: 4.7864, 4.0324, 3.75, 3.75 at 12,000, 30,800, 50,000, 175,000 lb by hand; 2: ultimate manoeuvre load factor; 3: units resolved and dimensionally consistent; 7: the regulation's own bounds are applied; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function |
 | FORMULA-SIZING-083 | `src/classes/transport/size.js:171` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: CD = cf_e Swet/S + aft-nacelle increment + CL^2 / (pi AR e); 2: the drag coefficient at the required initial cruise altitude when no FLOPS polar is given; 9: equation shape is unique in the retained set; 17: a pure function; 20: no zero/negative/NaN guard within +/-25 lines of the site |

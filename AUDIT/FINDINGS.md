@@ -5118,6 +5118,48 @@ equals the range to within 0.04 km on all six layouts.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-128 — under sedBasis "packUsable", the documented way to enter NASA's installed usable pack specific energy, the eVTOL closure adds the tool's own pack-systems mass on top, so the installation is counted twice and MTOW is 3.9–5.5 % heavy on every layout — MEDIUM — VERIFIED
+
+`src/engine.js`, SIZING-262 and SIZING-270 (block 68). The pack-systems group itself is built in `src/engine/weights.js` l.656 (WEIGHT) and sized by `batteryThermal` (BATTERY), read only.
+
+**The convention.** `sedBasis:"packUsable"` exists so that a published *net* pack figure can be entered without the
+cell-level deratings (l.1305-1318: NASA state theirs as "an installed, usable battery specific energy of 400 Wh/kg
+(pack)", Johnson & Silva 2022 sec. 4.1). NASA's own NDARC lift+cruise deck shows what "installed" contains:
+
+> eWtank=1.87, ! MJ/kg (650 Wh/kg uninstalled, 80% useable energy = 520 Wh/kg) · fBMS=0.3, ! installation (installed 400 Wh/kg)
+
+520 / 1.3 = 400: the installation (BMS and the rest of what it takes to install the pack) is **inside** the 400 Wh/kg.
+S3270 describes the same packaging overhead as "a multiplier on the weight, typically between 1.2 and 1.3 ... from cell
+weight to pack weight, including the battery management system and safety components".
+
+**What the code does.** Under packUsable the battery mass is W_E = E / sedCell, i.e. an installed-pack mass, and the
+closure (l.1485) still adds the pack-systems group (BTMS + BMS + tray + containment, 11.5 % of the pack on the default)
+to the empty mass. On the default *cell* basis the same group is the correct single count of the cell-to-pack overhead.
+
+**Measured** (sz_probe4; the third column zeroes only the pack-systems group, through a scratchpad copy of engine.js
+proven bit-identical to production on all six layouts):
+
+| layout | packUsable 400: MTOW / installed usable Wh/kg delivered | without the second count | MTOW excess |
+|---|---|---|---|
+| liftcruise | 2130.1 kg / 349.7 | 2030.2 kg / 400.0 | +99.9 kg (4.92 %) |
+| hybrid | 1873.2 / 348.6 | 1775.6 / 400.0 | +97.6 (5.49 %) |
+| hybridPusher | 1850.0 / 343.1 | 1753.2 / 400.0 | +96.9 (5.53 %) |
+| tiltrotor | 1771.2 / 343.5 | 1681.8 / 400.0 | +89.4 (5.32 %) |
+| multicopter | 2285.9 / 368.3 | 2184.3 / 400.0 | +101.6 (4.65 %) |
+| sideBySide | 1439.5 / 361.0 | 1385.8 / 400.0 | +53.8 (3.88 %) |
+
+The NASA-equivalent cell entry the code itself documents (cRateDerate 0, socMin 0, etaBat 1, sedCell 400) gives the
+identical result to 0.000 kg, so it carries the same second count.
+
+**What holds.** On the default cell basis every kilogram is counted once: the battery mass equals the energy requirement
+written here from its definition (to 0.1 kg on six layouts), the empty mass equals the sum of its groups (to 0.005 kg),
+and the closure sum equals MTOW to the reported rounding.
+
+**MEDIUM.** Reachable from a documented input on the shipped surface, conservative in direction, several per cent of
+MTOW, and it is the route the code tells a user to take for NASA's published figure.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

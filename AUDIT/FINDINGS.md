@@ -5366,6 +5366,34 @@ reported only, not added to CD0tot.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-136 — the eVTOL single-rotor-failure check reads the ACAI result's `limiting` field, which does not exist; the module returns `limitingAxis`, so the check can never say which axis is lost — LOW — VERIFIED
+
+`src/engine.js` l.2716 (`lim_ = r_.limiting || null`) against `src/engine/controlauthority.js` l.122 and l.187
+(`@returns { acai, controllable, rank, limitingAxis }`); SIZING-444 (block 77). Lead C.
+
+`acaiOut` is not exported on the result; its only consumer is the "Controllable after a single rotor failure" check,
+whose failing message appends `", limited in " + acaiOut.limitingAxis` only when that is truthy. It is always null.
+
+**Measured** — the engine's ACAI loop replicated with the module's own functions (ring radius, torque-to-thrust ratio,
+default alternating spins, T/W 1.3):
+
+| layout | survivable | worst ACAI | `limitingAxis` (module) | `r_.limiting` (engine) |
+|---|---|---|---|---|
+| liftcruise | 0 of 4 | −6,362.5 | yaw | undefined |
+| hybrid | 12 of 12 | 261.5 | yaw | undefined |
+| hybridPusher | 0 of 6 | −1,479.8 | yaw | undefined |
+| tiltrotor | 0 of 6 | −1,478.4 | yaw | undefined |
+| multicopter | 0 of 4 | −9,754.3 | yaw | undefined |
+
+On the four failing layouts the message therefore omits "limited in yaw".
+
+**What holds.** The survivable count and the worst ACAI use the correct fields (`controllable`, `acai`), so the
+check's verdict and every sizing number are unaffected.
+
+**LOW.** An API-contract defect that removes one diagnostic word from a failing message.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

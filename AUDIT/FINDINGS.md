@@ -5160,6 +5160,42 @@ MTOW, and it is the route the code tells a user to take for NASA's published fig
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-129 — the Convergence tab's tolerance sweep and T/W trade sweep run a simplified surrogate, not the solver they describe, and the T/W sweep never uses T/W: its "Round 2" is the same mass at every T/W and 21–32 % away from the sized MTOW — MEDIUM — VERIFIED
+
+`src/engine.js` l.2445-2507, SIZING-416 to 439 (block 69); displayed by `src/tabs/ConvergenceTab.jsx` l.126-210.
+
+**The tolerance sweep** says it "uses the same weight-scaled criterion as the solver it is describing; testing an
+absolute threshold here would plot a different solver". Its criterion is the solver's, and its Round 1 is the solver's
+(50 iterations at 1e-6 on the hybrid, equal to itersR1). Its Round 2 is not: empty mass by the fixed fraction ewf 0.5
+(the buildup implies 0.5956), cruise at the target L/D 8.5 (the solver flies the computed 11.86), descent at the climb
+rate, hover time hvtol / 0.5 per hover with no hops, no download or rotor-interference factor, C-rate derate 0 on the
+energy side (batteryConvention is called without Phov) and 0.08 on the power side.
+
+**The T/W trade sweep** loops over T/W 1.0 to 1.5 and never reads the loop variable: the disk loading is W / (A n),
+commented "T/W=1.0". The tab's caption says "Round 2 scales as T/W^1.5 — higher thrust margin → higher hover power →
+heavier battery → higher MTOW", and the table's "Phov at R2" column is recomputed in the browser WITH T/W, so the power
+column moves while the mass column does not.
+
+**Measured on the shipped defaults:**
+
+| | hybrid (default) | multicopter |
+|---|---|---|
+| sized MTOW, solver iterations at 1e-6 | 2,469.91 kg, 40 | 3,598.02 kg, 26 |
+| tolerance sweep at 1e-6: "MTOW", R2 iterations | 1,964.75 kg (−20.5 %), 61 | 4,843.37 kg (+34.6 %), 166 |
+| T/W sweep "R2" at every T/W 1.0…1.5 | 1,949.7 kg (−21.1 %) | 4,764 kg (+32.4 %) |
+
+The tolerance table's "ΔM vs 1e-10" column, printed in grams, is therefore a convergence study of a different aircraft,
+and the iteration counts are not the ones the solver needs.
+
+**What holds** (the solver itself, measured in this block): converged designs close to the reported rounding; Round-1
+seeds 200 to 4,000 kg reach the same MTOW; pure fixed point, relaxation 0.5 and the default hybrid reach the same root;
+the map contracts at 0.63–0.74 per iteration, so the true error at exit is under 1e-4 kg; non-closure is flagged.
+
+**MEDIUM** — the F-85 pattern: reachable at the defaults, shown on a shipped tab with explanatory text that the numbers
+contradict, consumed by nothing else.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

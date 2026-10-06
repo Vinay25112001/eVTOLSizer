@@ -5309,6 +5309,29 @@ reader would have to compare with the input by hand. No warning, no check, no ke
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-134 — on the wingless eVTOL layouts cruise performance is a calibrated L/De that the drag build-up cannot move, while the drag areas and the NDARC drag class are still reported for them and nothing on the result says they are inert — LOW — VERIFIED
+
+`src/engine.js` l.301-302 and l.935, SIZING-212 and SIZING-480 (block 75). Lead D, carried from AERO (hub-drag finding).
+
+The wingless cruise is deliberately not a drag calculation. The source says so at l.276-300: rotor forward-flight power
+needs NDARC's F_P function, which was not recoverable from the extracted manual, so the cruise efficiency is "CALIBRATED
+to published vehicles, NOT predicted. It will not respond to rotor design, because nothing in it models rotor design.
+Surfaced as a check". The calibration itself is sound and sourced: NASA TM-20210017971 Table 12, L/De 5.80 for the
+quadrotor and 7.20 for the side-by-side.
+
+**What is wrong is the disclosure.**
+
+| claim | measured |
+|---|---|
+| "Surfaced as a check" | no check label or value on any layout mentions L/De, rotor-borne cruise or calibration |
+| `LDact` in `src/lib/provenance.js` l.171 | status "validated" on every layout; on a wingless layout it is the calibrated input echoed back |
+| drag areas and kNDARC on a wingless result | reported and reach no number. Measured here with the hub-drag constant set in memory from 0.004 to NDARC's 0.0015: D/q 1.166 → 0.552 m² (multicopter) and 0.578 → 0.294 m² (side-by-side) with cruise power and MTOW unchanged to the last digit (3,598.02 and 1,940.53 kg); the same change moves the winged hybrid 2,469.91 → 2,353.75 kg |
+| the solver itself | responds to the L/De: −10 % moves the multicopter 3,598.02 → 4,307.15 kg and the side-by-side 1,940.53 → 2,128.02 kg |
+
+**LOW.** A disclosure and provenance defect; the numbers that size the aircraft are the sourced ones.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

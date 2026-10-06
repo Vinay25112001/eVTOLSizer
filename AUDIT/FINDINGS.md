@@ -5196,6 +5196,34 @@ contradict, consumed by nothing else.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-130 — on the wingless eVTOL layouts climb and descent power divide NASA's effective L/De, which already contains the propulsive efficiency, by the full-chain etaSys, the double count the code removed for cruise; MTOW 0.5–0.8 % heavy — LOW — VERIFIED
+
+`src/engine.js` l.1119 and l.1143, SIZING-225 and SIZING-227 (block 70).
+
+On a wingless layout the cruise L/D is NASA's effective L/De = W V / P (TM-20210017971 Table 12), which "ALREADY
+contains the propulsive term — so dividing by a full-chain efficiency counts propulsive efficiency TWICE" (the code's
+own note at l.316). Cruise and reserve were changed to the battery-to-shaft efficiency (0.845). Climb (l.1119) and descent
+(l.1143) still divide by `p.etaSys` (0.80), and on a wingless layout the polar returns the same effective L/De, so the
+double count survives in those two segments.
+
+**Measured** (the climb power reproduced by hand at etaSys to 0.03 kW; the correction applied only on wingless layouts
+through an inert hook in a scratchpad copy of engine.js proven bit-identical to production):
+
+| layout | climb power | at the cruise convention | MTOW | at the cruise convention |
+|---|---|---|---|---|
+| multicopter | 667.29 kW | 627.00 kW | 3,598.02 kg | 3,570.93 kg (+27.1 kg, 0.76 %) |
+| sideBySide | 313.41 kW | 295.25 kW | 1,940.53 kg | 1,930.89 kg (+9.6 kg, 0.50 %) |
+
+The four winged layouts are unchanged to the last digit.
+
+**What holds.** Every segment of the eVTOL mission was rebuilt independently (ISA written here, momentum-theory hover,
+the polar, the segment geometry and times, the reserve rule) and reproduces the reported mission energy to 0.004 % on
+all six layouts.
+
+**LOW.** Conservative, under 1 % of MTOW, wingless layouts only.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

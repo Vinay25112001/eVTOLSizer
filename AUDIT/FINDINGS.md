@@ -5009,6 +5009,18 @@ it is UNVERIFIED.
 **Severity.** Not graded in MISSION: the mission arithmetic is right, and the cause lies in three
 other domains. The validation gap itself is large and is carried as leads to SIZING, AERO and PROP.
 
+**SIZING cross-reference (block 71, 2026-10-06) — evidence, not a grade.** The SIZING path was traced and nothing in
+it integrates fuel wrongly: the regulatory and Loftin fractions are reproduced to 1e-6 and the closure is exact. Two
+SIZING-carried inputs sit at the optimistic end of their sources, and either alone spans the gap. (1) `cfEquivalent`
+0.003 is the floor of the "jets 0.003 … 0.004" band of Scholz Table 13.1 (after Roskam I); the class default says "no
+business-jet figure in the fetched sources". On the analysed Latitude, 0.003 / 0.0035 / 0.004 give 2,967 / 2,460 /
+1,895 nm, so the published 2,700 nm falls inside the band, near 0.0033. (2) `tsfcCruise` 0.70 is a secondary
+figure for the PW306A, not the D1: 0.75 / 0.83 give 2,741 / 2,436 nm. Sized at cf 0.0035 or TSFC 0.83 the default
+bizjet comes out at 13,892.7 / 13,934.3 kg against the published 13,970.6 kg MTOW. The two cannot be separated with the
+sources held, so the cause is not established and this stays ungraded. F-132 adds a further ~1 % of range optimism on
+this class. The analysed Latitude tops out at 36,000 ft whatever cruise altitude is requested (Lead E, reported at the
+adapter). The model was not tuned.
+
 **Not repaired.** PASS A modifies no production code.
 
 ## F-125 — the landing air distance leaves out idle thrust and calls that conservative; it is the reverse, and omitting it shortens the air distance by 17 % to 24 % and the field length by 6 % to 10 % — LOW — VERIFIED
@@ -5221,6 +5233,79 @@ the polar, the segment geometry and times, the reserve rule) and reproduces the 
 all six layouts.
 
 **LOW.** Conservative, under 1 % of MTOW, wingless layouts only.
+
+**Not repaired.** PASS A modifies no production code.
+
+## F-131 — the conventional (transport and business-jet) closure solves the RAMP mass, by FLOPS's convention, and the tool returns and uses it as MTOW: the taxi fuel (30.5 kg bizjet, 123.6 kg transport) sits inside every MTOW-based quantity — LOW — VERIFIED
+
+`src/classes/transport/size.js` l.400-451 and `src/classes/transport/mission.js` l.210-224 (MISSION, read only); SIZING-139 (block 71). Consumers: `src/classes/aircraft/engine.js` normalize and payloadRange (SIZING, block 74 of the plan).
+
+`mission.js` l.210: "grossN is the ramp weight (N), as FLOPS's gross weight is (TM-2017-219627 p.8); taxi fuel is burned
+from it before brake release." The FLOPS-based studies in the corpus report the sized quantity as "Maximum ramp weight"
+(S0052). The closure is therefore right on its own terms: gross = ZFW + mission fuel, and mission fuel includes taxi.
+
+What follows from it is not handled anywhere: the closure mass is returned as `grossLb`, normalized to `mtowKg`, and
+the MTOW-based ratios are applied to it.
+
+| class | closure mass ("MTOW") | taxi fuel | brake-release mass | MZFW = ratio × closure mass |
+|---|---|---|---|---|
+| bizjet | 12,548.1 kg | 30.5 kg | 12,517.5 kg | 8,729.7 kg |
+| transport | 78,800.1 kg | 123.6 kg | 78,676.5 kg | 62,559.4 kg |
+
+The wing is sized at the take-off line's wing loading against the same closure mass, and the payload-range diagram is
+drawn from it. Against the published Citation Latitude (MTOW 30,800 lb, maximum ramp 31,050 lb) the like-for-like
+comparison is ramp against ramp: 12,548.1 against 14,084.0 kg (−10.9 %), not 12,548.1 against 13,970.6 (−10.2 %).
+
+**LOW.** 0.16–0.24 % of the mass, a definition and labelling defect with no effect on the closure itself.
+
+**Not repaired.** PASS A modifies no production code.
+
+## F-132 — when a cruise-family line (initial cruise altitude) governs the transport-class thrust, the closure flies the cruise on a drag built for the smaller take-off-family nacelles, so the default business jet as sized cannot fly its own design range: 2,667.5 of 2,700 nm — LOW — VERIFIED
+
+`src/classes/transport/size.js` l.413-419, SIZING-142 (block 71).
+
+Each iteration builds a `probe` aircraft at T/W = max(take-off, second segment, missed approach), takes the wetted-area
+ratio from it, computes the cruise and initial-cruise-altitude thrust lines, and then sizes the real aircraft at
+T/W = max of all five. The nacelles scale with √thrust (FLOPS Eq 70-71), so when the cruise or ICA line governs, the
+aircraft that is built has more wetted area than the one whose drag sized the fuel.
+
+**Measured** — the sized aircraft re-analysed by the tool itself, at its own gross, wing area, thrust and tank capacity:
+
+| class, fuel method | thrust governed by | Swet/S sized → built | cruise L/D sized → built | range: design → re-analysed |
+|---|---|---|---|---|
+| bizjet, mission (default) | initial cruise altitude | 5.127 → 5.202 | 16.299 → 16.138 | 2,700 → 2,667.5 nm (−1.2 %) |
+| bizjet, regulatory | initial cruise altitude | 4.902 → 4.964 | 16.477 → 16.337 | 2,700 → 2,673.4 nm |
+| transport, both | take-off | identical | identical | 2,960 → 2,960.0 nm |
+
+The direction is optimistic and it adds to the fuel-burn optimism of F-124.
+
+**LOW.** About 1 % of range on the default business jet; nothing on the take-off-governed transport.
+
+**Not repaired.** PASS A modifies no production code.
+
+## F-133 — an analysed jet that cannot reach the requested cruise altitude is flown lower and its range returned with no indication: flyMission sets ceilingLimited and nothing reads it — LOW — VERIFIED
+
+`src/classes/transport/mission.js` l.103 and l.280 (MISSION, read only) set it; `src/classes/aircraft/engine.js` normalize
+(l.223) forwards `topOfClimbFt` and not the flag; `src/classes/transport/warnings.js` and `bizjet/warnings.js` have no
+ceiling case. SIZING-149 (block 71). This is the MISSION block-62 lead on the dropped flag.
+
+**Sizing mode cannot reach it.** The cruise-thrust and initial-cruise-altitude lines make every sized jet able to climb to
+its requested altitude: bizjet and transport sized at 35,000 to 51,000 ft all report the requested top of climb and
+ceilingLimited false. (Above 43,000 ft that rests on the engine deck's frozen lapse, the carried PROP lead.)
+
+**Analysis mode does reach it.** The real Citation Latitude (gross 30,800 lb, 50.4 m², 5,907 lbf, 11,394 lb of fuel):
+
+| requested cruise altitude | top of climb flown | ceilingLimited | range returned |
+|---|---|---|---|
+| 43,000 ft (default) | 36,000 ft | true | 2,967.1 nm |
+| 41,000 ft | 36,000 ft | true | 2,967.1 nm |
+| 37,000 ft | 36,000 ft | true | 2,967.1 nm |
+
+The fuel is integrated at the altitude actually flown, so the range is the physics of the lower cruise, not a false
+one; the defect is that the result says nothing. The only trace is the "Top of climb" note on the class tab, which a
+reader would have to compare with the input by hand. No warning, no check, no key in the normalized result.
+
+**LOW.** A reporting gap on the analysis path; numerically consistent.
 
 **Not repaired.** PASS A modifies no production code.
 

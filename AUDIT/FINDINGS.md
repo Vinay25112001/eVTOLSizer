@@ -5332,6 +5332,40 @@ quadrotor and 7.20 for the side-by-side.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-135 — the eVTOL V-tail is built and drawn at the minimum-area dihedral, but the input dihedral survives in the sizing loop's tail weight (MTOW 0.5–0.7 % heavy) and in the trim deflections, and the reported V-tail drag counts one panel — LOW — VERIFIED
+
+`src/engine.js` l.1232, l.1252, l.2092, l.2143, l.2173, l.3338; SIZING-247, 255, 350, 359, 360, 364, 459 (block 76). Lead A (vtGamma).
+
+The code says (l.1935): "SIZE THE TAIL AT THE ANGLE WE DRAW IT. This optimum was computed, reported, and used ONLY by the
+geometry module to draw the tail - the sizing kept the user's 45 deg. So the tool sized one V-tail and drew a different
+one". The post-loop tail now uses the optimum (`gammaUsed`). Three other places still read `p.vtGamma`:
+
+**1. The tail weight the closure converges on** (l.1232-1252). Measured on the three V-tail defaults:
+
+| layout | tail in the weight table | tail built (Wvt_total) | MTOW | MTOW with vtGamma = the optimum |
+|---|---|---|---|---|
+| liftcruise | 27.64 kg | 22.2 kg | 2,916.54 kg | 2,897.20 kg (+0.67 %) |
+| hybridPusher | 21.00 | 16.9 | 2,407.02 | 2,394.68 (+0.51 %) |
+| tiltrotor | 19.16 | 15.4 | 2,407.04 | 2,394.88 (+0.51 %) |
+
+So the one input that should be inert on these layouts (the built tail does not depend on it) moves MTOW: +22.7 kg at
+30° and +108.7 kg at 60° on the liftcruise, while the built panel area barely changes (2.938 → 2.980 / 3.143 m²). On the
+hybrid, which builds a conventional tail, vtGamma is correctly inert. This is why F-86 found vtGamma inert on the
+uncertainty screen's default layout.
+
+**2. The trim deflections** (l.2143, l.2173) divide the pitch and yaw tail coefficients, which are computed on the
+built tail's effective areas, by cos and sin of the INPUT angle. Pitch 6.02 / 5.51 / 3.51° reported against 5.40 / 4.95 /
+3.15° at the built angle; yaw 3.77 / 4.09 / 4.26° against 4.35 / 4.72 / 4.92° (understated 13-15 %). The fuselage-length
+advice (l.3338) uses the input angle too.
+
+**3. The careful V-tail drag** (l.2092) takes the wetted area of ONE panel, 2 S_panel. Two panels wetted on both sides
+are 4 S_panel. Doubled, it agrees with the tail term the drag total actually uses to within 5 % on all three layouts. It is
+reported only, not added to CD0tot.
+
+**LOW.** Conservative on MTOW and under 1 %; the yaw understatement is a reported deflection, not a check.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

@@ -5509,6 +5509,37 @@ flag is wrong.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-141 — the [CAL] disk-area rotor model reads its area as ONE rotor's, but neither caller passes that: the engine under-weighs split hybrids and the validation harness prints the legacy model five times worse than it is — LOW — VERIFIED
+
+`src/engine/rotorgroup.js` l.410 and l.432 (`mass = tf * nRotor * calKgPerM2 * diskArea_m2`); PROP-169, PROP-172
+(block 81). Callers: `src/engine/weights.js` l.374/533/551 and `validation/components.mjs` l.135-139.
+
+The model multiplies by the rotor count, so `diskArea_m2` must be ONE rotor's disk area. That is the legacy formula
+the comment records, "rotors = nRotors * 2.0 kg/m^2 * diskArea". The JSDoc does not say which area it wants.
+
+- **`weights.js`** holds `diskArea = π R²` (one rotor, l.374). It treats that as the total
+  (`perRotorArea = diskArea / nRotTotal`, l.533) and passes `perRotorArea * n` for each group. With one rotor group
+  the two errors cancel. With a stopped and a free group they do not. Measured through the engine with
+  `rotorMassModel: "diskArea"` (`SP/prop/pa_b81b.mjs`):
+  - hybrid (6 + 6): 52.94 kg against 2.0 kg/m² × 52.94 m² = 105.88 kg, × 0.50
+  - hybridPusher: 45.68 kg against 82.23 kg, × 0.56
+  - liftcruise, tiltrotor, multicopter, sideBySide: exactly 1.00
+- **`validation/components.mjs`** passes the TOTAL area `nRotors * π R²`, so the [CAL] row of the rotor-model
+  comparison is n-fold heavy. It prints MAE 249.1 % (Quad-TS +436.2 %, L+C-E +117.2 %). Divided by each vehicle's
+  rotor count the errors are +38.0 / +34.1 / +40.7 / +44.8 / +65.7 / −72.9 / −69.7 / −40.6 %, MAE 50.8 %.
+  AFDD82 (24.4 % at 3 blades, ν 1.03) still wins, so the default choice stands. The printed comparison overstates the
+  legacy model's error about five-fold.
+
+**Reach.** `rotorMassModel` defaults to `afdd82` and is not offered in the UI. The engine reaches the disk-area
+model only by an explicit parameter, and never through the no-chord fallback. The harness row is printed evidence,
+not a gate.
+
+**LOW.** Off the default path. The production effect needs a non-default model, and the harness error does not
+change the conclusion it supports.
+
+**Not repaired.** PASS A modifies no production or validation code. The `weights.js` consumer is WEIGHT's (closed).
+This finding records the PROP-side contract and cross-references it.
+
 ---
 
 # Geometry and chart findings

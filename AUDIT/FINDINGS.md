@@ -5540,6 +5540,51 @@ change the conclusion it supports.
 **Not repaired.** PASS A modifies no production or validation code. The `weights.js` consumer is WEIGHT's (closed).
 This finding records the PROP-side contract and cross-references it.
 
+## F-142 — past its 546 N·m fit the default motor-mass model adds mass by POWER, so the slow-rotor layouts come out at 74–78 N·m/kg, 1.5–1.6× the best-in-class torque density the tool itself cites — MEDIUM — VERIFIED
+
+`src/engine/motormass.js` l.57-76 (`emraxTorque`, the default): `kg = fitAt(546) + max(0, P − P_at_tauMax) / 5.0`;
+PROP-146, PROP-147 (block 82). Consumer: `src/engine/weights.js` l.448-449 (`motors = nRotors × motorOne(...)`).
+
+The default motor model is a torque regression, because the header argues that motor mass follows torque:
+"structurally unable to tell a big slow lift rotor from a small fast cruise prop" is its criticism of the old
+5.0 kW/kg constant. Above the fit's largest point, 546 N·m, the code continues with exactly that constant.
+
+- **Speed-dependent marginal mass.** The marginal mass per N·m beyond 546 is ω/5000 kg, a quantity that depends on
+  speed for a torque-limited machine: 0.0076 kg/N·m at 38 rad/s, 0.020 at 100 and 0.060 at 300. The fit's own slope
+  at 546 is 0.0333.
+- **Most default layouts are past the fit.** Measured on the six default designs (`SP/prop/pa_b82b.mjs`):
+
+| layout | ω rad/s | torque N·m | per motor kg | overall N·m/kg | at 49 N·m/kg: MTOW |
+|---|---|---|---|---|---|
+| liftcruise | 93.2 | 2,450 | 64.5 | 38.0 | −9.1 % |
+| hybrid | 141.5 | 438 (inside) | 25.3 | 17.3 | −24.1 % |
+| hybridPusher | 113.5 | 1,193 | 43.7 | 27.3 | −16.1 % |
+| tiltrotor | 116.1 | 1,350 | 47.7 | 28.3 | −17.3 % |
+| multicopter | 37.9 | 4,783 | 61.2 | **78.2** | **+22.9 %** |
+| sideBySide | 39.4 | 4,437 | 59.7 | **74.3** | **+13.1 %** |
+
+On the two slow-rotor layouts about 51 of the 61 kg per motor comes from the 5 kW/kg term. Their implied torque
+density exceeds the 49 N·m/kg "best-in-class" Joby figure the tool carries as its own torque-density model.
+Re-sized at that figure (`motorMassModel: "torqueDensity"`) the multicopter closes at 4,422 kg instead of 3,598,
+and the side-by-side at 2,194 kg instead of 1,941. The NASA model at the same torque would be heavier still
+(277 / 260 kg per motor).
+
+**Provenance discrepancy, recorded and not adjudicated** (Q10 is register-bound). The fit is described as "fitted to
+the four EMRAX axial-flux entries in src/Components.jsx", which carry no torque. The torque derivable from them is
+continuous kW / max-rpm ω, which reproduces the code's own 546 N·m ceiling. It refits to 1.142 τ^0.5168, and the
+code's curve then under-predicts the 188/228/268 by 23/20/12 %. The stated residuals imply a torque set
+(about 76/179/286/546 N·m) that is not in the repository.
+
+**Disclosed, but not its consequence.** `motorModelExtrapolated` is returned and the provenance note describes the
+hand-off. No check reports it, and nothing says that the two rotor-borne layouts are carried past the best published
+torque density.
+
+**MEDIUM, not HIGH.** The defect is demonstrated, but its magnitude rests on a one-aircraft bound (49 N·m/kg). It
+makes two of the six layouts optimistic by 13-23 % MTOW against that bound. Inside the fit the same model runs
+heavy (hybrid 17 N·m/kg).
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

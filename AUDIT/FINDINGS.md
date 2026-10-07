@@ -5448,6 +5448,67 @@ is in the module's own contract: it says the motor is modellable and then cannot
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-139 — the exported rotor blade's collective mixes two blade-element results, so the ideal-twist blade written to OpenVSP makes about 12 % more thrust than the design point — LOW — VERIFIED
+
+`src/engine/blade.js` l.47-56 (`beta34Deg`), with the twist written through it at l.124-140; PROP-109 (block 80).
+
+For a rectangular blade in hover with uniform inflow, dC_T = (σa/2)(θ r² − λ r) dr. Two closed forms follow:
+- **Linear twist:** the twist term integrates to zero about 0.75 R, so θ₀.₇₅ = 6 C_T/(σa) + (3/2) λ.
+- **Ideal twist** (θ = θ_tip / r): C_T = (σa/4)(θ_tip − λ), so θ₀.₇₅ = (16/3) C_T/(σa) + (4/3) λ.
+
+The code takes the lift term of the first, 6 C_T/(σa), and the inflow term of the second, atan(λ/0.75) ≈ (4/3) λ.
+`twistCurve` then writes an IDEAL twist through that collective.
+
+**Measured** (`SP/prop/pa_b80.mjs`, design points from `runSizing`):
+
+| layout | C_T/σ | σ | Beta34 code | ideal-twist θ₀.₇₅ | difference | exported-blade C_T vs design |
+|---|---|---|---|---|---|---|
+| liftcruise | 0.0603 | 0.2654 | 10.101° | 9.766° | +0.335° | +11.4 % |
+| hybrid | 0.0788 | 0.1823 | 10.759° | 10.307° | +0.452° | +11.8 % |
+| hybridPusher | 0.0788 | 0.2288 | 11.526° | 11.086° | +0.440° | +11.5 % |
+| tiltrotor | 0.0973 | 0.2106 | 13.010° | 12.465° | +0.545° | +11.5 % |
+| multicopter | 0.0759 | 0.0551 | 7.642° | 7.185° | +0.457° | +12.4 % |
+| sideBySide | 0.0839 | 0.0581 | 8.357° | 7.852° | +0.505° | +12.4 % |
+
+The exported-blade thrust comes from the ideal-twist integral and a numerical strip integral, which agree.
+
+**Reach.** Only the OpenVSP export: the blade pitch and twist fields. No sizing, mass, power or check reads them.
+
+**LOW.** The defect is confined to an exported geometry field.
+
+**Not repaired.** PASS A modifies no production code.
+
+## F-140 — the rotor-diameter solve can only shrink the rotor when it has no feasible point yet, so a low seed fails on a design that closes; the App's layout switch reaches it and writes a sub-metre rotor under "does not close" — MEDIUM — VERIFIED
+
+`src/engine/configuration.js` l.929-1007 (`solveRotorDiameter`, the retreat at l.973:
+`D = lastGood != null ? lastGood + 0.5 * (D - lastGood) : D * 0.9`); PROP-123, PROP-124 (block 80). Caller:
+`src/App.jsx` l.1649-1679, the configuration selector, seeded with `(SR && SR.MTOW) || q.payload * 8`.
+
+The retreat exists for a seed that is too LARGE: the header's example is a multicopter whose payload seed gives a
+17.7 m rotor. It handles that case by shrinking. On the winged layouts the failing case is the opposite one. A seed
+that is too SMALL gives a rotor whose disk loading the inner sizing loop cannot close, and shrinking it moves further
+from the feasible region. The solve exhausts its 12 retreats and returns `inner-diverged`.
+
+**Measured** (`SP/prop/pa_b80b.mjs`, `pa_b80c.mjs`):
+- **Tiltrotor at the default payload:** every seed from 300 to 2,000 kg fails, while 3,000 kg converges to 2,378 kg.
+  A seed only 16 % below the answer already fails.
+- **liftcruise / hybrid / hybridPusher:** a seed of 2,000 kg or more is needed.
+- **App path:** all 30 layout switches were emulated, each seeded with the previous layout's MTOW. Switching from
+  sideBySide (1,941 kg) to liftcruise, hybrid, hybridPusher or tiltrotor returns `inner-diverged`. The App then
+  writes the last-tried diameter, 0.88 / 0.52 / 0.75 / 0.74 m, into the design. It shows "This design does not
+  close … Reduce payload or range before reading them". Solved correctly, the same designs close at
+  2,940 / 2,480 / 2,409 / 2,378 kg.
+- **Engine's own seed:** payload × 6 fails the tiltrotor at payload 100 kg, where payload × 8 converges.
+
+**What holds.** From a seed at or above the answer every layout converges in 7–13 iterations. The re-flown result
+holds the target disk loading within 0.03 %.
+
+**MEDIUM.** A numerical defect in a solver that the main design flow calls. On an ordinary user action it produces a
+false "does not close" verdict and a meaningless rotor diameter in the design. It is flagged, so not silent, but the
+flag is wrong.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

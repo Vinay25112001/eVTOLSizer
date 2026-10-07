@@ -5585,6 +5585,49 @@ heavy (hybrid 17 N·m/kg).
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-143 — the aft-fuselage nacelle drag increment is almost entirely nacelle skin friction, which the transport-class wetted area already carries: the default business jet counts its nacelle friction twice — MEDIUM — VERIFIED
+
+`src/classes/transport/layout.js` l.57-62 (`aftNacelleDeltaCd`), added at `src/classes/transport/size.js` l.170,
+l.226, l.258, l.261, l.306 and l.533; PROP-038 (block 84). Wetted area: `src/classes/transport/flops-weights.js`
+l.52-53 (`nacWet = 2.8 * nacelleDiameter * nacelleLength`, summed into `totalWetted`).
+
+The increment is TN D-3781's measurement on a twin-turbojet model (Putnam & Trescot 1967, NASA-19670003847, held in
+the corpus): about 0.0021 below M 0.76, falling to about 0.0007 at M 0.82. The same report says what the 0.0021 is:
+"Almost all of this drag-coefficient increment is due to the skin-friction drag of the nacelles and pylons. The
+nacelle and pylon skin-friction drag coefficient as calculated by the Sommer and Short T′ method is 0.0019". At the
+higher Mach numbers the measured increment falls below that friction. The report calls this favourable interference.
+
+The tool builds CD0 as `cfEquivalent × S_wet / S` (or the FLOPS component polar) with the nacelles already in
+S_wet. It then adds the whole measured increment on every aft-fuselage layout. The nacelle friction is therefore
+counted twice. Only the interference residue, and the pylons that S_wet does not carry, belong in the increment.
+
+**Measured** on the default business jet (aft-fuselage engines, equivalent-cf, cf_e 0.003). The tool's own nacelle
+term is cf_e S_nac / S = 0.00157, and 0.00163 is added on top at M 0.78. A scratch copy of src removed exactly that
+0.00157 (`SP/prop/pa_b84b.mjs`):
+
+| | production | without the double count | change |
+|---|---|---|---|
+| sized MTOW | 12,548.1 kg | 11,837.5 kg | −5.7 % |
+| mission fuel | 3,466.8 kg | 3,113.8 kg | −10.2 % |
+| cruise L/D | 16.299 | 17.338 | +6.4 % |
+| real Latitude, analysis, 36,000 ft | 2,967.1 nm | 3,283.8 nm | +10.7 % |
+| real Latitude, analysis, 43,000 ft asked | 2,967.1 nm, ceiling-limited at 36,000 ft | 3,815.6 nm at 43,000 ft | |
+| transport with aft-fuselage engines, MTOW | 82,921.8 kg | 80,430.8 kg | −3.0 % |
+
+Removing TN D-3781's full 0.0019 instead gives 11,699.6 kg and 3,357.9 nm. That bounds the pylon share the wetted
+area does not carry.
+
+**Bearing on F-124 (cross-reference only; F-124 is not amended).** The double count is pessimistic. It has been
+offsetting part of the business-jet range optimism F-124 records. Without it the analysed Latitude flies 3,284 nm at
+36,000 ft against the published 2,700 nm, not 2,967 nm. In production it is also a cause of the 36,000 ft ceiling
+cap that F-133 hides. The optimism left to explain is therefore larger than the gap F-124 measured.
+
+**MEDIUM.** A definite double count with a measured consequence of about 6 % MTOW and 10 % fuel on the default
+business jet. That is consistent with F-128 at a similar MTOW scale. It is pessimistic, and it is confined to
+aft-engined transport-class layouts.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

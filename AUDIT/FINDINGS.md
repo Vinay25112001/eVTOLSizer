@@ -5427,6 +5427,27 @@ gate at 1,000 m and passes it in the worst decile from 2,000 m.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-138 — a drone motor with a published Kt and no Kv is declared modellable, then produces an infinite back-EMF, voltage and electrical power without an error — LOW — VERIFIED
+
+`src/classes/drone/motor.js` l.99-100 (`modellability`: "neither Kt nor Kv published" is the only constant check),
+l.124-126 (`motorConstants`: `kv = entry.kv > 0 ? entry.kv : null`) and l.185 (`motorPoint`:
+`backEmfV = omega / (c.kv * RPM_TO_RADS)`); PROP-012 (block 79).
+
+`modellability` accepts a motor that publishes either constant, and `motorConstants` derives Kt from Kv when Kt is
+absent. The reverse is not done. A Kt-only motor keeps `kv = null`, and `motorPoint` computes the back-EMF from Kv
+alone.
+
+**Executed** (`SP/prop/pa_b79.mjs`): a synthetic Kt-only entry (Kt 0.02 N m/A, R 50 mΩ, I0 0.5 A at 10 V) at
+0.2 N m and 4,000 rpm returns back-EMF Infinity, voltage Infinity, electrical power Infinity and eta 0. No guard
+fires. The physical back-EMF is Kt ω = 8.378 V.
+
+**Reach.** None today. The sizing panel offers only `MODELLABLE_MOTORS`, and all 3 of those publish Kv. The defect
+is in the module's own contract: it says the motor is modellable and then cannot model it.
+
+**LOW.** Latent, with no current consumer.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

@@ -5394,6 +5394,39 @@ check's verdict and every sizing number are unaffected.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-137 — the drone rotor looks up its measured coefficients by RPM alone, so at altitude it under-predicts hover power: the Reynolds lapse it was built on is not carried to the lower density — LOW — VERIFIED
+
+`src/classes/drone/rotor.js` l.67-98 (`staticCoefficients`, `staticThrustN`, `staticShaftPowerW`); PROP-028, PROP-030,
+PROP-032 (block 78). Consumer: `src/classes/drone/sizing.js` `evaluateAtMass` with `rho = isaDensity(altitudeM)`.
+
+The module's own header explains why it interpolates measured C_T rather than using a constant: C_T "RISES with RPM on
+99 % of them. That is the Reynolds lapse". The Reynolds number of a propeller section goes as rho n D / mu. The code
+indexes the measured curve by RPM and then multiplies by the requested density, so at altitude it reads the
+coefficient of a sea-level Reynolds number the propeller is not running at.
+
+**Measured** (`SP/prop/pa_b78b.mjs`): the same hover thrust solved with the code's lookup and with a
+Reynolds-matched lookup (RPM scaled by the ISA rho/mu ratio, Sutherland viscosity), shaft power from the measured
+C_P in both; all 262 propellers.
+
+| altitude | Re ratio | shaft power, code vs Re-matched: median | worst decile |
+|---|---|---|---|
+| 1,000 m | 0.924 | −1.53 % | −3.36 % |
+| 2,000 m | 0.852 | −3.17 % | −6.22 % |
+| 3,000 m | 0.784 | −4.66 % | −9.31 % |
+| 4,000 m | 0.720 | −6.81 % | −12.58 % |
+
+The code is optimistic in every case. Nothing in the module or the sizing output says the coefficients are
+sea-level-Reynolds values.
+
+**Reach.** The drone sizing altitude is a design input (`design-state.js` `altitudeM`, default 0), so the
+default design is unaffected. A design sized for a high-elevation site carries the bias straight into the bus power
+and the endurance.
+
+**LOW.** The error is a few per cent and only off the default case. It sits inside the module's own 5 % accuracy
+gate at 1,000 m and passes it in the worst decile from 2,000 m.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

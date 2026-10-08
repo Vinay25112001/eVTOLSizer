@@ -5628,6 +5628,93 @@ aft-engined transport-class layouts.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-144 — the turbofan deck holds its 43,000 ft row for every altitude above it, so a business jet sized for a higher cruise gets a smaller engine and a lighter aircraft the higher it is asked to fly, and nothing says the deck has ended — HIGH — VERIFIED
+
+`src/classes/transport/engine-deck.js` l.66-72 (`lookup`, MISC-044: altitude clamp l.67) and l.54-64 (`alongMach`,
+MISC-042: Mach row-end holds l.56-58); block 88. Consumers: `src/classes/transport/size.js` l.174 (initial cruise
+altitude thrust) and l.289 (cruise lapse), `src/classes/transport/mission.js` l.99, l.117, l.153, l.162, l.223,
+`src/classes/transport/takeoff.js` l.134-135. The business jet is sized through the same code.
+
+**The source.** NASA Aviary `turbofan_28k.csv`, commit e12742d, downloaded again for this block (md5 4ca3c3b8…).
+All 101 (Mach, altitude) points were rebuilt from the CSV: maximum thrust at throttle 50, idle at 21, net thrust =
+gross − ram drag, normalised by the SLS net thrust 28,928.1 lbf and by the TSFC 0.55847 lb/lbf/h at M 0.8 / 35,000 ft.
+They match the code to 5×10⁻⁵ (four-decimal rounding). No point is missing or extra. **Inside** the source points the
+interpolation is correct: an independent refusing bilinear interpolator agrees to 5×10⁻⁵ on 17,108 samples.
+
+**The boundary.** The highest source row is 43,000 ft and holds only M 0.70, 0.75 and 0.80. `lookup` clamps the
+altitude to [0, 43,000] ft, so every column above 43,000 ft is the 43,000 ft value. This is a SILENT HOLD, not an
+interpolation or an extrapolation. The file header discloses the Mach clamp ("points outside it are clamped to the
+nearest covered Mach") but not the altitude clamp. No warning in transport/warnings.js or bizjet/warnings.js reports
+it.
+
+**What the source itself says above it.** In the stratosphere the deck follows the pressure ratio almost exactly:
+F(43k)/F(37k) is 0.7501–0.7502 at M 0.70, 0.75 and 0.80, against δ ratio 0.7495, i.e. F ∝ δ^0.997. The table below
+gives three continuations. They are ENGINEERING ESTIMATES, not source truth. A (δ ratio) is also what a high-bypass
+lapse such as Mattingly's reduces to at fixed Mach in the isothermal stratosphere. B is a log-linear fit of the deck's
+own 37–43k points. C (σ^0.7) is deliberately lenient.
+
+| altitude | held thrust / A − 1 | / B − 1 | / C − 1 |
+|---|---|---|---|
+| 45,000 ft | +10.1 % | +10.0 % | +6.9 % |
+| 47,000 ft | +21.2 % | +21.1 % | +14.4 % |
+| 49,000 ft | +33.4 % | +33.3 % | +22.3 % |
+| 51,000 ft | +46.8 % | +46.7 % | +30.8 % |
+
+The held TSFC is close to the deck's own trend (+0.23 % per 2,000 ft), so the error is in thrust.
+
+**Consequence, measured.** Scratch copies of src differ ONLY in the deck above 43,000 ft. Each design is sized by
+`sizeTransport`, and both versions converge with the fuel fitting the tanks:
+
+| cruise altitude | bizjet MTOW, production | with A | production vs A | thrust / engine, production vs A | with C |
+|---|---|---|---|---|---|
+| 43,000 ft (default) | 12,548.1 kg | identical | 0 | 0 | identical |
+| 45,000 ft | 12,188.5 kg | 12,650.7 kg | −3.65 % | −11.8 % | −2.52 % |
+| 47,000 ft | 11,935.4 kg | 12,881.7 kg | −7.35 % | −22.5 % | −4.90 % |
+| 49,000 ft | 11,776.6 kg | 13,279.9 kg | −11.32 % | −32.2 % | −7.31 % |
+| 51,000 ft | 11,691.4 kg | 13,913.5 kg | −15.97 % | −41.3 % | −10.00 % |
+
+- **Unphysical trend.** Production MTOW FALLS monotonically above 43,000 ft (−2.9, −2.1, −1.3, −0.7 % per 2,000 ft),
+  and so does the installed thrust (6,899 → 5,987 lbf per engine). Every continuation makes both rise. The initial
+  cruise altitude requirement governs every case above 39,000 ft. With the thrust frozen, asking for a higher cruise
+  only lowers the cruise drag the frozen thrust has to meet.
+- **False feasibility.** The design production returns for 51,000 ft meets its initial cruise altitude requirement
+  only on the held lapse 0.1265. On the δ continuation the same engine has 0.0861/0.1265 = 68 % of the thrust it
+  needs there (91 % at 45k, 83 % at 47k, 75 % at 49k), and it is reported as converged with no warning.
+- **Fuel** moves through the airframe size: 3,295.6 vs 3,393.4 kg at 45k, 3,064.6 vs 3,509.2 kg at 51k.
+- **Transport.** Its schema declares 41,000 ft as the maximum but refuses only negatives (CHG-007), so higher
+  altitudes are sized unflagged: −6.0 / −14.3 / −26.7 / −54.5 % MTOW at 45/47/49/51,000 ft against A. The A-side
+  51,000 ft design (195,464 lbf per engine) is not a realistic aircraft. Its use here is only that production says
+  the requirement closes at 106,524 kg.
+- **Defaults are not affected.** The bizjet cruises at 43,000 ft, the boundary itself, and the transport at
+  35,000 ft. In ANALYSIS mode the real Latitude, Longitude and PC-24 are ceiling-limited below 43,000 ft (F-133), so
+  the clamp is never reached there.
+
+**The Mach row ends, the same boundary policy.** Each row's Mach range is held at its ends: M 0.35 at sea level,
+0.40 at 2,000 ft, 0.45 at 5,000 ft, 0.55 at 10,000 ft, 0.80 at 41,000 ft, and 0.70–0.80 at 43,000 ft. An instrumented
+copy shows that default bizjet and transport climbs and descents leave the rows below 15,000 ft on every run
+(M 0.38–0.57). Against a continuation that borrows the nearest covering row's Mach shape, this moves the defaults by
+−0.01 % MTOW and −0.03 % fuel. Inside the declared input ranges it moves fuel by −2.6 % (bizjet M 0.85 at 43,000 ft),
+−2.9 % (transport M 0.86 at 41,000 ft) and +7.5 % (bizjet M 0.6 at 43,000 ft, conservative). TSFC at M 0.85 /
+41,000 ft is 0.9999 against 1.0346 on the 39,000 ft row's shape (−3.35 %). This is the same defect, a row end held
+silently, and it is recorded here rather than as a separate finding. It is small beside the altitude case.
+
+**Non-finite input.** A Mach of NaN returns the deck's highest-Mach point, and an altitude of NaN throws a TypeError
+rather than a refusal. The inputs are refused upstream by resolve(), so this needs an internally computed value.
+
+**Bearing on F-124 (cross-reference only; F-124 is not amended).** The deck gives no causal evidence for the range
+optimism. The analysed Latitude flies 2,967.86 nm in production, 2,967.86 with the altitude continuation and 2,967.34
+with the Mach continuation.
+
+**HIGH.** The error is non-conservative and silent, and it sits inside the business jet's declared input range
+(cruiseAltFt to 51,000 ft). It understates installed thrust by 12–41 % and MTOW by 3.7–16 %. It also reverses the
+physical altitude trend and reports as feasible an initial cruise altitude the returned engine cannot reach. This is
+worse than F-142 (MEDIUM, a conservative excess past a fit range): F-144 points the other way and falsely accepts a
+requirement. It is not CRITICAL: the defaults and the analysed reference aircraft are unaffected, and the reach is one
+class above 43,000 ft. The PROP session's provisional suggestion (MEDIUM, before the false-feasibility and
+trend-reversal measurements) is superseded.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

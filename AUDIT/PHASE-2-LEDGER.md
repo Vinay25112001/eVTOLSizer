@@ -23,28 +23,28 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 1166 | 8 | 15 | 99 |
-| 2 | variable definition correct (P02-088) | 928 | 188 | 9 | 163 |
+| 1 | mathematical expression correct (P02-087) | 1172 | 8 | 16 | 92 |
+| 2 | variable definition correct (P02-088) | 935 | 188 | 9 | 156 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
-| 4 | sign convention correct (P02-090) | 347 | 1 | 0 | 940 |
+| 4 | sign convention correct (P02-090) | 348 | 1 | 0 | 939 |
 | 5 | reference conditions correct (P02-091) | 70 | 71 | 4 | 1143 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 31 | 2 | 0 | 1255 |
-| 7 | applied within its validity range (P02-093) | 41 | 113 | 1 | 1133 |
+| 7 | applied within its validity range (P02-093) | 41 | 114 | 1 | 1132 |
 | 8 | empirical relation being extrapolated (P02-094) | 12 | 28 | 1 | 1247 |
 | 9 | duplicated elsewhere (P02-095) | 1268 | 20 | 0 | 0 |
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
-| 11 | hidden double-counting (P02-097) | 65 | 7 | 4 | 1212 |
+| 11 | hidden double-counting (P02-097) | 67 | 7 | 4 | 1210 |
 | 12 | counted both as mass and energy (P02-098) | 6 | 0 | 0 | 1282 |
 | 13 | reserve applied twice (P02-099) | 26 | 0 | 0 | 1262 |
 | 14 | payload included correctly (P02-100) | 11 | 3 | 0 | 1274 |
 | 15 | empty mass defined consistently (P02-101) | 5 | 4 | 0 | 1279 |
 | 16 | MTOW solved consistently (P02-102) | 6 | 5 | 0 | 1277 |
-| 17 | formula circular (P02-103) | 1102 | 14 | 0 | 172 |
+| 17 | formula circular (P02-103) | 1109 | 14 | 0 | 165 |
 | 18 | iteration mathematically stable (P02-104) | 28 | 2 | 0 | 1258 |
-| 19 | sensitive to variable scaling (P02-105) | 160 | 9 | 2 | 1117 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 777 | 0 | 511 |
+| 19 | sensitive to variable scaling (P02-105) | 162 | 9 | 2 | 1115 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 781 | 0 | 507 |
 
-**Determined 7,267 of 25,760 (28.2 %). Zero of the twenty questions are untouched for every relation.**
+**Determined 7,298 of 25,760 (28.3 %). Zero of the twenty questions are untouched for every relation.**
 
 ## 2. What the twenty answered questions rest on
 
@@ -1253,13 +1253,13 @@ calculation is exactly what has not been done.
 | FORMULA-MISC-008 | `src/classes/drone/autopilot.js:223` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-MISC-009 | `src/classes/drone/autopilot.js:234` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-MISC-010 | `src/classes/drone/autopilot.js:343` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-011 | `src/classes/drone/radio.js:66` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-012 | `src/classes/drone/radio.js:68` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-013 | `src/classes/drone/radio.js:69` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-014 | `src/classes/drone/radio.js:74` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-MISC-015 | `src/classes/drone/radio.js:99` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-MISC-017 | `src/classes/drone/radio.js:179` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 20: a zero, negative or NaN guard IS present in code inside the window - refusal-positivity at l.193, covering zero and negative - so the previous "no guard" assertion was FALSE and is withdrawn. The guard governs other quantities rather than this relation's own inputs, which is exactly the case UNVERIFIED is defined for. Corrected by the Q20 integrity block; see F-67. note: the relation is a regular-expression test on a string, not a numeric quantity |
-| FORMULA-MISC-018 | `src/classes/drone/radio.js:203` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 20: a zero, negative or NaN guard IS present in code inside the window - refusal-positivity at l.193, covering zero and negative - so the previous "no guard" assertion was FALSE and is withdrawn. The guard constrains quantities this relation consumes, but full coverage is not demonstrated, which is what UNVERIFIED records. Corrected by the Q20 integrity block; see F-67 |
+| FORMULA-MISC-011 | `src/classes/drone/radio.js:66` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | P | U | 1: 20 log10(4 pi / c) + 120 with c = 299,792.458 km/s = 32.447783 dB, equal to 20 log10(4 pi 1e9 / c) in SI to 1e-14 (ITU-R P.525 quotes 32.4 for km and MHz); 2: the free-space-loss constant for distance in km and frequency in MHz; the +120 dB is 20 log10(1e6) for MHz against Hz; 9: equation shape is unique in the retained set; 17: a module constant; 19: measured: the km/MHz scaling is exact - fsplDb equals first-principles SI free-space loss to 2.8e-14 dB over d 1 m-300 km and f 27-5,800 MHz |
+| FORMULA-MISC-012 | `src/classes/drone/radio.js:68` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: 10 log10(mW), null for mW not > 0; 1 / 100 / 1,000 mW give 0 / 20 / 30 dBm by hand; 2: power in milliwatts to dBm; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, execution-verified: 0, negative and NaN return null (a refusal the callers test); Infinity returns Infinity and the string '100' is coerced to 20 without complaint |
+| FORMULA-MISC-013 | `src/classes/drone/radio.js:69` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: 10^(dBm/10); 0 / 20 / 30 / -10 dBm give 1 / 100 / 1,000 / 0.1 mW; the dBm round trip is exact to 8.9e-16 over -30..40 dBm; 2: dBm to milliwatts; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, execution-verified: NaN returns NaN without complaint (no refusal) |
+| FORMULA-MISC-014 | `src/classes/drone/radio.js:74` | P | P | P | U | U | U | U | U | P | U | P | U | U | U | U | U | P | U | P | W | 1: 20 log10(d km) + 20 log10(f MHz) + 32.4478; 1 km at 2,440 MHz = 100.196 dB, equal to 20 log10(4 pi d f / c) in SI; 2: free-space path loss between isotropic antennas, dB; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 11: antenna gains are not inside the loss: rangeKm adds the EIRP and the receive gain once each, and rangeKm inverts first-principles loss to 4.4e-16; 17: a pure function; 19: measured: exact across six decades of distance and 27-5,800 MHz (2.8e-14 dB), doubling distance adds 6.02 dB; 20: WARNING, execution-verified: zero, negative and NaN distance or frequency throw 'distance and frequency must be positive'; Infinity is accepted and returns Infinity |
+| FORMULA-MISC-015 | `src/classes/drone/radio.js:99` | P | P | P | U | U | U | W | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: a label containing 'GHz' scales its numbers below 100 by 1,000 (2.4 -> 2,400, 5.8 -> 5,800); on the 15 shipped radios all 28 variants parse to 433-2,440 MHz as their labels state; 2: flag: the band label states gigahertz; 3: units resolved and dimensionally consistent; 7: WARNING, measured (latent): every number 100-100,000 after scaling is taken as a frequency, so '2.4 GHz, 25 dBm' adds a 25,000 MHz variant, 'ISM 2.4 GHz band, 1 W' a 1,000 MHz one, and '2,400 MHz' parses to 400 MHz; none of the shipped labels does this; 9: equation shape is unique in the retained set; 17: a pure function; 20: no zero/negative/NaN guard within +/-25 lines of the site |
+| FORMULA-MISC-017 | `src/classes/drone/radio.js:179` | F | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | U | 1: FAIL, F-145, measured: the regex e.?i.?r.?p OR e.?r.?p (case-insensitive) flags ANY mention of EIRP or ERP, so the two ExpressLRS entries whose text says 'It does not say conducted or EIRP' and 'conducted vs EIRP not specified' get the hint 'the archive notes the figure coincides with a regulatory limit expressed in radiated power', which their records do not say; 4 radios are hinted where the module header says two (Herelink, RFD868x), and the substring 'erp' also matches words such as 'superpower'; 2: s = the archive's verbatim tx_power_conducted_or_eirp text; hint = advisory string or null; 9: equation shape is unique in the retained set; 17: a pure function; 20: a zero, negative or NaN guard IS present in code inside the window - refusal-positivity at l.193, covering zero and negative - so the previous "no guard" assertion was FALSE and is withdrawn. The guard governs other quantities rather than this relation's own inputs, which is exactly the case UNVERIFIED is defined for. Corrected by the Q20 integrity block; see F-67. note: the relation is a regular-expression test on a string, not a numeric quantity |
+| FORMULA-MISC-018 | `src/classes/drone/radio.js:203` | P | P | U | P | U | U | U | U | P | U | P | U | U | U | U | U | P | U | U | W | 1: EIRP = conducted dBm - cable loss + transmit antenna gain; 100 mW, 1 dB, 2 dBi gives 21 dBm by hand = code; a figure stated as EIRP is returned as is; unstated gives null with the reason; 2: effective isotropic radiated power, dBm; 4: the cable loss is subtracted and the gain added; 9: equation shape is unique in the retained set; 11: the transmit gain is added only on the conducted path, never to a figure already stated as EIRP, and rangeKm adds only the receive gain; 17: a pure function; 20: WARNING, hand-verified by execution. The l.193 positivity refusal recorded by the Q20 integrity block (F-67) governs the transmit power, not this relation's gain and cable loss, as recorded. Those have no guard: a NaN gain or cable loss returns dBm NaN with no reason, a negative cable loss is accepted as a gain, and a string gain '2' concatenates (20 - 0 + '2' = '202'); the AvionicsPanel passes no transmit gain, so the UI does not reach it |
 | FORMULA-MISC-019 | `src/classes/drone/sizing.js:87` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-MISC-021 | `src/classes/drone/sizing.js:89` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-MISC-022 | `src/classes/drone/sizing.js:369` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |

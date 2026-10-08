@@ -5715,6 +5715,33 @@ trend-reversal measurements) is superseded.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-145 — the radio module's "EIRP hint" fires on any mention of EIRP, so the two ExpressLRS links are told the archive ties their power to a radiated-power limit when their records say the opposite, and the survey counts four hinted radios where the module says two — LOW — VERIFIED
+
+`src/classes/drone/radio.js` l.179 (`powerConvention`, MISC-017). The hint is pushed into the link assessment at
+l.271 and counted by `conventionSurvey` at l.312. Block 89.
+
+The module header (l.38-43) says: "Two are close enough to a regulatory limit that the limit's own units hint at the
+answer". The hint text says so too: "the archive notes the figure coincides with a regulatory limit expressed in
+radiated power, which HINTS at EIRP". The test that sets it, `/e\.?i\.?r\.?p|e\.?r\.?p/i`, matches any mention of
+the word. Run on the 15 shipped RADIO_LINKS entries (`SP/misc/md_radio.mjs`), it flags four:
+
+| radio | text that matched | regulatory coincidence recorded? |
+|---|---|---|
+| ExpressLRS 2.4 GHz | "… It does not say conducted or EIRP." | no |
+| ExpressLRS 900 MHz | "… conducted vs EIRP not specified" | no |
+| Herelink 1.1 | "… ETSI EN 300 328 limit of 20 dBm e.i.r.p., which suggests EIRP …" | yes |
+| RFD868x | "… (EN 300 220-2) are expressed in e.r.p. …" | yes |
+
+The assessment of either ExpressLRS link therefore carries a warning attributing to the archive a statement it does
+not make. `conventionSurvey` returns `hintedOnly: 4`, and the harness prints this into VALIDATION.md as "4 products
+whose figure coincides with a limit expressed in radiated power". The substring "erp" also matches ordinary words
+("superpower", "interpret").
+
+No range figure changes. The hint only adds text, and an unstated convention is still bracketed, not converted.
+**LOW**: advisory text and a survey count, on the drone avionics panel.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

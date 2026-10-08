@@ -23,14 +23,14 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 1192 | 8 | 16 | 72 |
-| 2 | variable definition correct (P02-088) | 955 | 188 | 9 | 136 |
+| 1 | mathematical expression correct (P02-087) | 1200 | 8 | 16 | 64 |
+| 2 | variable definition correct (P02-088) | 963 | 188 | 9 | 128 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
 | 4 | sign convention correct (P02-090) | 349 | 1 | 0 | 938 |
 | 5 | reference conditions correct (P02-091) | 74 | 71 | 4 | 1139 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 31 | 2 | 0 | 1255 |
-| 7 | applied within its validity range (P02-093) | 43 | 118 | 1 | 1126 |
-| 8 | empirical relation being extrapolated (P02-094) | 13 | 28 | 1 | 1246 |
+| 7 | applied within its validity range (P02-093) | 43 | 120 | 1 | 1124 |
+| 8 | empirical relation being extrapolated (P02-094) | 13 | 29 | 1 | 1245 |
 | 9 | duplicated elsewhere (P02-095) | 1268 | 20 | 0 | 0 |
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
 | 11 | hidden double-counting (P02-097) | 67 | 7 | 4 | 1210 |
@@ -39,12 +39,12 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 14 | payload included correctly (P02-100) | 11 | 3 | 0 | 1274 |
 | 15 | empty mass defined consistently (P02-101) | 5 | 4 | 0 | 1279 |
 | 16 | MTOW solved consistently (P02-102) | 6 | 5 | 0 | 1277 |
-| 17 | formula circular (P02-103) | 1129 | 14 | 0 | 145 |
+| 17 | formula circular (P02-103) | 1137 | 14 | 0 | 137 |
 | 18 | iteration mathematically stable (P02-104) | 28 | 2 | 0 | 1258 |
 | 19 | sensitive to variable scaling (P02-105) | 163 | 9 | 2 | 1114 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 788 | 0 | 500 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 790 | 0 | 498 |
 
-**Determined 7,378 of 25,760 (28.6 %). Zero of the twenty questions are untouched for every relation.**
+**Determined 7,407 of 25,760 (28.8 %). Zero of the twenty questions are untouched for every relation.**
 
 ## 2. What the twenty answered questions rest on
 
@@ -1281,14 +1281,14 @@ calculation is exactly what has not been done.
 | FORMULA-MISC-049 | `src/classes/transport/validation-cases.js:31` | P | P | P | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | W | 1: AR = b^2 / S = 33.91^2 / 122.4 = 9.394511 by hand = code; 2: A320-200 wing aspect ratio from Jenkinson Table 1 span 33.91 m and area 122.4 m2; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a module constant; 20: no zero/negative/NaN guard within +/-25 lines of the site |
 | FORMULA-MISC-050 | `src/classes/transport/warnings.js:17` | P | P | U | P | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | U | 1: errPct = (predicted / actual - 1) x 100; A320 OEW 41,488.5 vs 41,310 kg = +0.432 %, A320 range 2,688.56 vs 2,700 nm = -0.424 %, B737-800 OEW +4.035 %, all by hand = code; 2: signed percentage error of a recomputed (never quoted) validation case; 4: positive = the tool over-predicts; 9: equation shape is unique in the retained set; 17: computed once per process over fixed cases and memoised |
 | FORMULA-MISC-052 | `src/classes/transport/warnings.js:39` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | U | 1: first + business + economy seats, each defaulting to 0; 2: installed passenger seats compared with the validated passenger range; 9: equation shape is unique in the retained set; 17: a pure expression |
-| FORMULA-MISC-056 | `src/engine/configuration.js:163` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-MISC-057 | `src/engine/configuration.js:179` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-MISC-058 | `src/engine/configuration.js:264` | U | U | P | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-MISC-060 | `src/engine/configuration.js:267` | U | U | P | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-MISC-061 | `src/engine/configuration.js:268` | U | U | P | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-MISC-062 | `src/engine/configuration.js:269` | U | U | P | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-MISC-063 | `src/engine/configuration.js:790` | U | U | P | U | U | U | U | U | W | P | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape appears 2x in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-MISC-064 | `src/engine/configuration.js:800` | U | U | P | U | U | U | U | U | W | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape appears 2x in the retained set |
+| FORMULA-MISC-056 | `src/engine/configuration.js:163` | P | P | U | U | U | U | W | U | P | P | U | U | U | U | U | U | P | U | U | W | 1: minFixed = floor(N/2) when the layout has boom stations and stops rotors; enumerated over six layouts x N 0-16 x six stopped requests: no layout ends with fewer than floor(N/2) stopped except hybrid N = 2; 2: minimum fixed (hingeless aft-station) rotor count; 7: WARNING, measured: at hybrid N = 2 the aft-station floor (1) and the tilting-pair ceiling (0) conflict and the ceiling wins - 0 stopped, 2 tilting, recorded as stoppedClampedByLayout - a flyable answer but an aircraft with no aft station; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure expression inside resolveConfiguration; 20: WARNING, execution-verified: nRotors -2 is floored to 0; NaN propagates to nRotors, nStopped and nTilting NaN with 0 booms and no refusal; a fractional 2.5 is accepted (0.5 stopped) |
+| FORMULA-MISC-057 | `src/engine/configuration.js:179` | P | P | P | U | U | U | W | U | P | U | U | U | U | U | U | U | P | U | U | U | 1: maxStopped = max(0, N - 2) when no pusher exists, else N; enumerated over six layouts x N 0-16 x six stopped requests: every no-pusher layout with N >= 2 keeps at least 2 tilting rotors; 2: most rotors that may stop while cruise thrust remains; 3: units resolved and dimensionally consistent; 7: WARNING, measured: with a pusher the paired-tilt guard is not applied, and stoppedFrac 2/3 makes hybridPusher N = 4 and N = 8 resolve to 1 and 3 tilting rotors - an unpaired tilting rotor, which the module's own comment calls asymmetric in thrust (N = 6 and 12 give 2 and 4); 9: equation shape is unique in the retained set; 17: a pure expression inside resolveConfiguration |
+| FORMULA-MISC-058 | `src/engine/configuration.js:264` | P | P | P | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: coaxial: max(1, round(base/2)) booms; multicopter N 8 gives 8 coplanar, 4 coaxial; sideBySide stays 2; 2: boom count of a coaxial arrangement (N/2 stations); 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure expression inside resolveConfiguration |
+| FORMULA-MISC-060 | `src/engine/configuration.js:267` | P | P | P | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: a wingtip pair (2) only when at least two rotors tilt and at most four others remain; reproduces RAVEN (6: 3 stopped, 3 tilting, 2 booms) and ALIA-250 (4 lift rotors, 2 booms); 2: tilting rotors carried at the wingtips rather than on booms; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure expression inside resolveConfiguration |
+| FORMULA-MISC-061 | `src/engine/configuration.js:268` | P | P | P | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: onBooms = nStopped + max(0, nTilt - nTip); 2: rotors carried on booms; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure expression inside resolveConfiguration |
+| FORMULA-MISC-062 | `src/engine/configuration.js:269` | P | P | P | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: booms = max(2, 2 ceil(onBooms/4)) for onBooms > 0, else 0 - two stations per boom, mirrored pairs; Archer Midnight 12 -> 6 booms, RAVEN 6 -> 2, ALIA-250 4 -> 2; enumerated over six layouts x N 0-16 x six stopped requests: always even; 2: lift-boom count; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure expression inside resolveConfiguration |
+| FORMULA-MISC-063 | `src/engine/configuration.js:790` | P | P | P | U | U | U | U | W | W | P | U | U | U | U | U | U | P | U | U | W | 1: k = 0.1469 x clamp(nTilting/nRotors, 0, 1) rounded to 4 places; hybrid 6/12 = 0.0735 by hand = code; tiltrotor fixed 0.1469; 2: hover download as a fraction of thrust; 3: units resolved and dimensionally consistent; 8: WARNING, source-inspected: XV-15's measured 14.69 % is scaled by the tilting fraction on the code's own '[LAY geometric argument]', not a source; lift+cruise and multicopter use 0, marked [GAP] and optimistic in the code; 9: equation shape appears 2x in the retained set; 10: source DIRECTLY STATED; 17: a pure function; 20: WARNING, execution-verified: NaN nTilting returns NaN; nTilting above nRotors is clamped to the full 0.1469; 0 rotors and an unknown layout key return 0 without complaint |
+| FORMULA-MISC-064 | `src/engine/configuration.js:800` | P | P | P | U | U | U | U | U | W | U | U | U | U | U | U | U | P | U | U | U | 1: the same clamp(nTilting/nRotors, 0, 1) as MISC-063, used only to word the basis ('6/12 = 50 %'); 2: the tilting fraction shown with the download basis; 3: units resolved and dimensionally consistent; 9: equation shape appears 2x in the retained set; 17: a pure function |
 | FORMULA-MISC-065 | `src/engine/configuration.js:977` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-MISC-068 | `src/engine/configuration.js:1065` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
 | FORMULA-MISC-069 | `src/engine/configuration.js:1152` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |

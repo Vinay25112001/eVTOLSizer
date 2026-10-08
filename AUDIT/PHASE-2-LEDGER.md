@@ -23,14 +23,14 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 1172 | 8 | 16 | 92 |
-| 2 | variable definition correct (P02-088) | 935 | 188 | 9 | 156 |
+| 1 | mathematical expression correct (P02-087) | 1178 | 8 | 16 | 86 |
+| 2 | variable definition correct (P02-088) | 941 | 188 | 9 | 150 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
 | 4 | sign convention correct (P02-090) | 348 | 1 | 0 | 939 |
-| 5 | reference conditions correct (P02-091) | 70 | 71 | 4 | 1143 |
+| 5 | reference conditions correct (P02-091) | 71 | 71 | 4 | 1142 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 31 | 2 | 0 | 1255 |
-| 7 | applied within its validity range (P02-093) | 41 | 114 | 1 | 1132 |
-| 8 | empirical relation being extrapolated (P02-094) | 12 | 28 | 1 | 1247 |
+| 7 | applied within its validity range (P02-093) | 43 | 114 | 1 | 1130 |
+| 8 | empirical relation being extrapolated (P02-094) | 13 | 28 | 1 | 1246 |
 | 9 | duplicated elsewhere (P02-095) | 1268 | 20 | 0 | 0 |
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
 | 11 | hidden double-counting (P02-097) | 67 | 7 | 4 | 1210 |
@@ -39,12 +39,12 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 14 | payload included correctly (P02-100) | 11 | 3 | 0 | 1274 |
 | 15 | empty mass defined consistently (P02-101) | 5 | 4 | 0 | 1279 |
 | 16 | MTOW solved consistently (P02-102) | 6 | 5 | 0 | 1277 |
-| 17 | formula circular (P02-103) | 1109 | 14 | 0 | 165 |
+| 17 | formula circular (P02-103) | 1115 | 14 | 0 | 159 |
 | 18 | iteration mathematically stable (P02-104) | 28 | 2 | 0 | 1258 |
 | 19 | sensitive to variable scaling (P02-105) | 162 | 9 | 2 | 1115 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 781 | 0 | 507 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 784 | 0 | 504 |
 
-**Determined 7,298 of 25,760 (28.3 %). Zero of the twenty questions are untouched for every relation.**
+**Determined 7,323 of 25,760 (28.4 %). Zero of the twenty questions are untouched for every relation.**
 
 ## 2. What the twenty answered questions rest on
 
@@ -1247,12 +1247,12 @@ calculation is exactly what has not been done.
 | FORMULA-MISSION-162 | `src/engine/mission-path.js:68` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: cruise height above ground = hover height + climb height; 2: height of the drawn cruise leg; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, source-inspected: Number(x) or-zero turns a missing or NaN height into 0, so the path is drawn at ground level with no flag |
 | FORMULA-MISSION-166 | `src/engine/mission-path.js:149` | P | W | U | U | U | U | U | U | P | U | P | U | P | U | U | U | P | U | U | W | 1: climb run + cruise run + descent run, as coded; 2: WARNING, measured: one climb and one descent whatever missionHops - the sizing charges missionHops x (climb + descent) (engine.js l.554). At missionHops 2 the ground track is 76.89 km against the 100.00 km flown (-23.1 %), and track + reserve no longer equals the range; the mission-path gate tests one hop only - F-127; 9: equation shape is unique in the retained set; 11: no run is counted twice at one hop; 13: the reserve distance is charged once against the range and never flown or drawn: track + reserve = range to within 0.04 km on all six layouts at one hop (e.g. 100.00 + 61.1 = 161.10 km); 17: a pure function; 20: WARNING, source-inspected: Number(x) or-zero turns a missing or NaN run into 0 without a flag |
 | FORMULA-MISC-002 | `src/classes/bizjet/warnings.js:26` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-005 | `src/classes/drone/autopilot.js:193` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-006 | `src/classes/drone/autopilot.js:205` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-007 | `src/classes/drone/autopilot.js:209` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-008 | `src/classes/drone/autopilot.js:223` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-MISC-009 | `src/classes/drone/autopilot.js:234` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-MISC-010 | `src/classes/drone/autopilot.js:343` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
+| FORMULA-MISC-005 | `src/classes/drone/autopilot.js:193` | P | P | U | U | U | U | P | P | P | U | U | U | U | U | U | U | P | U | U | W | 1: y0 + t (y1 - y0), t = (x - x0)/(x1 - x0) between bracketing knots; equal to an independent interpolator at 3,001 points 0-30 in (difference 0); 2: value of a published propeller-size table at diameter x (in); 7: outside the knots the end value is returned with mode 'clamped', and the exported parameter file carries the note 'held rather than extended'; the tables are ArduPilot setting-up-for-tuning (read 2026-10-08) as printed (INS_GYRO_FILTER 80/40/20 Hz at 5/10/20 in, ATC_ACC_R/P_MAX 1100/500/200 and ATC_ACC_Y_MAX 200/100/90 at 10/20/30 in, MOT_THST_EXPO 0.55/0.65/0.75); 8: never extrapolated: held and labelled; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, execution-verified: x NaN or undefined returns the LAST knot labelled 'published' (not 'clamped'); +/-Infinity clamp with the right label; unsorted knots return a wrong clamp (all four shipped tables are sorted) |
+| FORMULA-MISC-006 | `src/classes/drone/autopilot.js:205` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: Math.round(100 x)/100; 2: two-decimal rounding of exported parameter values and pack voltages; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, execution-verified: binary half-way cases round down (1.005 -> 1), negative half-way rounds toward +infinity (-0.125 -> -0.12), NaN passes through |
+| FORMULA-MISC-007 | `src/classes/drone/autopilot.js:209` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: case-insensitive match of lipo OR lithium polymer on the cell chemistry; the catalogue's six chemistry strings classify correctly (two LiPo, four Li-ion NMC 21700); 2: true when the cell is the chemistry the ArduPilot/PX4 voltage guidance was written for; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, execution-verified: 'Li-Po', 'lithium-polymer' and 'LiHV' are not recognised (a cell without endpoints is then refused, conservatively); 'LiPo HV' is recognised, so an HV cell without endpoints would get the 4.2 V standard-LiPo rule; null or a number returns false |
+| FORMULA-MISC-008 | `src/classes/drone/autopilot.js:223` | P | P | U | U | P | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: vMax = max_charge_voltage_v x series, vMin = min_discharge_voltage_v x series; 4.2/2.5 V x 6 = 25.2/15 V by hand = code; 2: pack voltage endpoints from the cell's own datasheet limits; 5: the datasheet limits are preferred over the LiPo rule whenever both are published, and a non-LiPo cell is named as departing from the guidance; 9: equation shape is unique in the retained set; 17: a pure function; 20: no zero/negative/NaN guard within +/-25 lines of the site |
+| FORMULA-MISC-009 | `src/classes/drone/autopilot.js:234` | P | P | U | U | U | U | P | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: vMax = 4.2 x series, vMin = 3.3 x series = ArduPilot setting-up-for-tuning (read 2026-10-08): MOT_BAT_VOLT_MAX '4.2v x No. Cells for standard LiPos', MOT_BAT_VOLT_MIN '3.3v x No. Cells for standard LiPos'; 4S 16.8/13.2 V; 2: pack voltage endpoints by ArduPilot's standard-LiPo rule; 7: used only for a cell recognised as LiPo that publishes no endpoints, the page's stated scope; a non-LiPo cell without endpoints is refused; 9: equation shape is unique in the retained set; 17: a pure function; 20: no zero/negative/NaN guard within +/-25 lines of the site |
+| FORMULA-MISC-010 | `src/classes/drone/autopilot.js:343` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | U | 1: round(INS_GYRO_FILTER)/2 for ATC_RAT_RLL/PIT_FLTD/FLTT and ATC_RAT_YAW_FLTT = ArduPilot setting-up-for-tuning (read 2026-10-08) 'INS_GYRO_FILTER / 2'; ATC_RAT_YAW_FLTE 2 as published; 2: rate-controller filter frequency, Hz; 9: equation shape is unique in the retained set; 17: a pure function |
 | FORMULA-MISC-011 | `src/classes/drone/radio.js:66` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | P | U | 1: 20 log10(4 pi / c) + 120 with c = 299,792.458 km/s = 32.447783 dB, equal to 20 log10(4 pi 1e9 / c) in SI to 1e-14 (ITU-R P.525 quotes 32.4 for km and MHz); 2: the free-space-loss constant for distance in km and frequency in MHz; the +120 dB is 20 log10(1e6) for MHz against Hz; 9: equation shape is unique in the retained set; 17: a module constant; 19: measured: the km/MHz scaling is exact - fsplDb equals first-principles SI free-space loss to 2.8e-14 dB over d 1 m-300 km and f 27-5,800 MHz |
 | FORMULA-MISC-012 | `src/classes/drone/radio.js:68` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: 10 log10(mW), null for mW not > 0; 1 / 100 / 1,000 mW give 0 / 20 / 30 dBm by hand; 2: power in milliwatts to dBm; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, execution-verified: 0, negative and NaN return null (a refusal the callers test); Infinity returns Infinity and the string '100' is coerced to 20 without complaint |
 | FORMULA-MISC-013 | `src/classes/drone/radio.js:69` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: 10^(dBm/10); 0 / 20 / 30 / -10 dBm give 1 / 100 / 1,000 / 0.1 mW; the dBm round trip is exact to 8.9e-16 over -30..40 dBm; 2: dBm to milliwatts; 9: equation shape is unique in the retained set; 17: a pure function; 20: WARNING, execution-verified: NaN returns NaN without complaint (no refusal) |

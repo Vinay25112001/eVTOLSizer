@@ -5742,6 +5742,35 @@ No range figure changes. The hint only adds text, and an unstated convention is 
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-146 — the inertia tensor puts a slender member's own inertia on axes chosen from its plan view only, so vertical members load the wrong axes and V-tails lose their height — LOW — VERIFIED
+
+`src/engine/inertia.js` l.128-133 (boom axis choice, MISC-082) and l.116-122 (V-tail span and height, MISC-079/080),
+through `addSlender` l.83-88. Consumer: `src/engine/hoverqualities.js` l.59 (hover dynamics). Block 96.
+
+A thin rod with direction components (dx, dy, dz) and length L has own inertia (m/12)(dy² + dz²) about x,
+(m/12)(dx² + dz²) about y and (m/12)(dx² + dy²) about z. The code adds m L²/12 to two axes, chosen by
+`|dx| >= |dy| ? "x" : "y"`. The z component never enters the choice. Measured on synthetic bodies
+(`SP/misc/md_inertia.mjs`):
+
+| member, 100 kg, about its centre | code Ixx / Iyy / Izz | exact |
+|---|---|---|
+| 2 m along x | 0 / 33.3 / 33.3 | 0 / 33.3 / 33.3 |
+| 2 m vertical | 0 / 33.3 / 33.3 | 33.3 / 33.3 / 0 |
+| (2, 0, 1) m inclined | 0 / 41.7 / 41.7 | 8.3 / 41.7 / 33.3 |
+| V-tail, 2 m panels at 45° | 66.7 / 0 / 66.7 | 83.3 / 16.7 / 66.7 |
+
+The V-tail is placed at its panels' mid-height. Its own term is then taken from the projected span 2 s cos Γ alone,
+so the vertical extent s sin Γ adds nothing to Ixx or Iyy. A dihedral of 0 also becomes 45° through `|| 45`.
+
+Every default aircraft carries three mostly vertical boom bodies (pylons and nacelle members). Summed over every boom
+and V-tail body of the six default layouts, the exact-minus-code difference is at most 0.76 % of any axis
+(hybridPusher Iyy). Most layouts are under 0.4 %.
+
+**LOW.** The rule is wrong for any member that is not horizontal. Its effect on the hover-dynamics inertia that
+consumes it is under 1 %.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

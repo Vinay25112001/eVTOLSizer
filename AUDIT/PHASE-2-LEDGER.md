@@ -23,13 +23,13 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 1205 | 8 | 16 | 59 |
-| 2 | variable definition correct (P02-088) | 968 | 188 | 9 | 123 |
+| 1 | mathematical expression correct (P02-087) | 1210 | 8 | 18 | 52 |
+| 2 | variable definition correct (P02-088) | 975 | 188 | 9 | 116 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
 | 4 | sign convention correct (P02-090) | 349 | 1 | 0 | 938 |
 | 5 | reference conditions correct (P02-091) | 74 | 71 | 4 | 1139 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 31 | 2 | 0 | 1255 |
-| 7 | applied within its validity range (P02-093) | 44 | 120 | 1 | 1123 |
+| 7 | applied within its validity range (P02-093) | 45 | 120 | 1 | 1122 |
 | 8 | empirical relation being extrapolated (P02-094) | 13 | 29 | 1 | 1245 |
 | 9 | duplicated elsewhere (P02-095) | 1268 | 20 | 0 | 0 |
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
@@ -39,12 +39,12 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 14 | payload included correctly (P02-100) | 11 | 3 | 0 | 1274 |
 | 15 | empty mass defined consistently (P02-101) | 5 | 4 | 0 | 1279 |
 | 16 | MTOW solved consistently (P02-102) | 6 | 5 | 0 | 1277 |
-| 17 | formula circular (P02-103) | 1142 | 14 | 0 | 132 |
+| 17 | formula circular (P02-103) | 1149 | 14 | 0 | 125 |
 | 18 | iteration mathematically stable (P02-104) | 29 | 3 | 0 | 1256 |
 | 19 | sensitive to variable scaling (P02-105) | 163 | 9 | 2 | 1114 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 792 | 0 | 496 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 796 | 0 | 492 |
 
-**Determined 7,427 of 25,760 (28.8 %). Zero of the twenty questions are untouched for every relation.**
+**Determined 7,453 of 25,760 (28.9 %). Zero of the twenty questions are untouched for every relation.**
 
 ## 2. What the twenty answered questions rest on
 
@@ -1294,13 +1294,13 @@ calculation is exactly what has not been done.
 | FORMULA-MISC-069 | `src/engine/configuration.js:1152` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | P | U | U | 1: defaults maxIter 6 and tol 5e-3 on the controllable T/W; 2: iteration limit and absolute T/W tolerance of solveControllableTW; 9: equation shape is unique in the retained set; 17: an iteration between thrust margin and sized geometry that returns a converged flag; 18: measured: the three attainable layouts (hybrid 12, hybridPusher 6, tiltrotor 6) converge in 2 sizing calls; maxIter 30 with tol 1e-6 gives the same controllability T/W (1.201, 1.501, 1.501) |
 | FORMULA-MISC-070 | `src/engine/configuration.js:1162` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: R = Drotor / 2, 0 when Drotor is missing or not numeric; 2: rotor radius, m, from the diameter the engine exports; 9: equation shape is unique in the retained set; 17: a pure expression; 20: WARNING, source-inspected: a missing or zero Drotor ends the loop on its first pass, after which the floor T/W is returned attainable with converged false (no reason given) |
 | FORMULA-MISC-072 | `src/engine/configuration.js:1167` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | U | 1: thrustPerRotorN = W / N with W = MTOW x 9.80665: hover thrust shared equally by N rotors; 2: per-rotor hover thrust fed to the torque-to-thrust ratio; 9: equation shape is unique in the retained set; 17: a pure expression |
-| FORMULA-MISC-073 | `src/engine/explore.js:228` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-074 | `src/engine/explore.js:241` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
-| FORMULA-MISC-076 | `src/engine/inertia.js:69` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |
-| FORMULA-MISC-078 | `src/engine/inertia.js:84` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-079 | `src/engine/inertia.js:118` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-080 | `src/engine/inertia.js:121` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-082 | `src/engine/inertia.js:131` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
+| FORMULA-MISC-073 | `src/engine/explore.js:228` | P | P | U | U | U | U | P | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: next window = [max(min, at - span/4), min(max, at + span/4)] around the incumbent; (x - 3.3)^2 on [0, 10], 9 steps, refine 2 gives 3.4375 after 27 evaluations, exactly the windows traced by hand ([1.25, 6.25], [1.875, 4.375]); 2: search window of one design variable for the next refinement pass; 7: the window never leaves the user's bounds (clamped each pass); 9: equation shape is unique in the retained set; 17: a pure expression; 20: WARNING, execution-verified: a reversed range (min 5, max 0) is accepted and returns x 1.25 for an optimum at 1 with no boundary flag and no complaint |
+| FORMULA-MISC-074 | `src/engine/explore.js:241` | P | P | P | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: a variable is on the boundary when abs(at - bound) / span < 1e-6; a monotone objective on [2, 5] returns 2 flagged ['x'], the 2-D optimum (1, -2) with y at its lower bound is flagged ['y'], an interior optimum is not flagged; 2: flag that the optimum is an artefact of the search box; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 17: a pure expression; 20: WARNING, execution-verified: a zero span uses 1, so a degenerate range (min = max) is always reported on the boundary |
+| FORMULA-MISC-076 | `src/engine/inertia.js:69` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: x * x; 2: square, used for squared distances and lengths; 9: equation shape is unique in the retained set; 17: a pure function; 20: no zero/negative/NaN guard within +/-25 lines of the site |
+| FORMULA-MISC-078 | `src/engine/inertia.js:84` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | U | 1: own = m L^2 / 12, the thin rod about its centre; 100 kg, 2 m gives 33.333 by hand = code 33.3 (output rounded to 0.1); with the parallel-axis term a rod about its end gives 133.3 = m L^2 / 3; 2: own moment of inertia of a slender member about an axis perpendicular to it through its centre; 9: equation shape is unique in the retained set; 17: a pure expression |
+| FORMULA-MISC-079 | `src/engine/inertia.js:118` | F | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: FAIL, F-146, measured: a V-tail is treated as a horizontal rod of its projected span 2 s cos(G), so its own Ixx and Izz match the spanwise extent but the vertical extent s sin(G) is dropped - 100 kg, 2 m panels at 45 deg: Ixx 66.7 / Iyy 0 against exact 83.3 / 16.7; on the six default aircraft this and MISC-082 together move no axis by more than 0.76 %; 2: horizontal extent of a V-tail across both panels; 9: equation shape is unique in the retained set; 17: a pure expression; 20: WARNING, execution-verified: dihedralDeg 0 (or missing) is replaced by 45 through a logical-OR default of 45, so a zero-dihedral panel is placed and sized as a 45 deg V |
+| FORMULA-MISC-080 | `src/engine/inertia.js:121` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: zc = z + 0.5 s sin(G), the height of a panel's mid-span; 2: vertical position of the V-tail mass; 9: equation shape is unique in the retained set; 17: a pure expression; 20: WARNING, execution-verified: dihedralDeg 0 (or missing) is replaced by 45 through a logical-OR default of 45, so a zero-dihedral panel is placed and sized as a 45 deg V |
+| FORMULA-MISC-082 | `src/engine/inertia.js:131` | F | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | U | 1: FAIL, F-146, measured: the member's direction is taken from abs(dx) >= abs(dy) only, so the own term m L^2/12 always goes on Iyy+Izz or Ixx+Izz; a vertical 100 kg, 2 m member gives Ixx 0 / Iyy 33.3 / Izz 33.3 against exact 33.3 / 33.3 / 0, and an inclined (2, 0, 1) member 0 / 41.7 / 41.7 against 8.3 / 41.7 / 33.3; every default aircraft has 3 mostly vertical boom bodies; 2: axis choice for a slender member's own inertia; 9: equation shape is unique in the retained set; 17: a pure expression |
 | FORMULA-MISC-085 | `src/engine/sizing-conditions.js:159` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-MISC-086 | `src/engine/sizing-conditions.js:200` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-MISC-087 | `src/engine/sizing-conditions.js:213` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |

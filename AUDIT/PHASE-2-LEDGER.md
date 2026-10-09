@@ -23,13 +23,13 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 
 | # | question | PASS | WARNING | FAIL | UNVERIFIED |
 |---|---|---|---|---|---|
-| 1 | mathematical expression correct (P02-087) | 1200 | 8 | 16 | 64 |
-| 2 | variable definition correct (P02-088) | 963 | 188 | 9 | 128 |
+| 1 | mathematical expression correct (P02-087) | 1205 | 8 | 16 | 59 |
+| 2 | variable definition correct (P02-088) | 968 | 188 | 9 | 123 |
 | 3 | units correct (P02-089) | 363 | 0 | 0 | 925 |
 | 4 | sign convention correct (P02-090) | 349 | 1 | 0 | 938 |
 | 5 | reference conditions correct (P02-091) | 74 | 71 | 4 | 1139 |
 | 6 | efficiencies applied in the correct direction (P02-092) | 31 | 2 | 0 | 1255 |
-| 7 | applied within its validity range (P02-093) | 43 | 120 | 1 | 1124 |
+| 7 | applied within its validity range (P02-093) | 44 | 120 | 1 | 1123 |
 | 8 | empirical relation being extrapolated (P02-094) | 13 | 29 | 1 | 1245 |
 | 9 | duplicated elsewhere (P02-095) | 1268 | 20 | 0 | 0 |
 | 10 | coefficients sourced (P02-096) | 319 | 25 | 0 | 944 |
@@ -39,12 +39,12 @@ split reproduces the register's independently recorded 165/198/135/6/784 exactly
 | 14 | payload included correctly (P02-100) | 11 | 3 | 0 | 1274 |
 | 15 | empty mass defined consistently (P02-101) | 5 | 4 | 0 | 1279 |
 | 16 | MTOW solved consistently (P02-102) | 6 | 5 | 0 | 1277 |
-| 17 | formula circular (P02-103) | 1137 | 14 | 0 | 137 |
-| 18 | iteration mathematically stable (P02-104) | 28 | 2 | 0 | 1258 |
+| 17 | formula circular (P02-103) | 1142 | 14 | 0 | 132 |
+| 18 | iteration mathematically stable (P02-104) | 29 | 3 | 0 | 1256 |
 | 19 | sensitive to variable scaling (P02-105) | 163 | 9 | 2 | 1114 |
-| 20 | zero/negative/NaN handled (P02-106) | 0 | 790 | 0 | 498 |
+| 20 | zero/negative/NaN handled (P02-106) | 0 | 792 | 0 | 496 |
 
-**Determined 7,407 of 25,760 (28.8 %). Zero of the twenty questions are untouched for every relation.**
+**Determined 7,427 of 25,760 (28.8 %). Zero of the twenty questions are untouched for every relation.**
 
 ## 2. What the twenty answered questions rest on
 
@@ -1289,11 +1289,11 @@ calculation is exactly what has not been done.
 | FORMULA-MISC-062 | `src/engine/configuration.js:269` | P | P | P | U | U | U | U | U | P | P | U | U | U | U | U | U | P | U | U | U | 1: booms = max(2, 2 ceil(onBooms/4)) for onBooms > 0, else 0 - two stations per boom, mirrored pairs; Archer Midnight 12 -> 6 booms, RAVEN 6 -> 2, ALIA-250 4 -> 2; enumerated over six layouts x N 0-16 x six stopped requests: always even; 2: lift-boom count; 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure expression inside resolveConfiguration |
 | FORMULA-MISC-063 | `src/engine/configuration.js:790` | P | P | P | U | U | U | U | W | W | P | U | U | U | U | U | U | P | U | U | W | 1: k = 0.1469 x clamp(nTilting/nRotors, 0, 1) rounded to 4 places; hybrid 6/12 = 0.0735 by hand = code; tiltrotor fixed 0.1469; 2: hover download as a fraction of thrust; 3: units resolved and dimensionally consistent; 8: WARNING, source-inspected: XV-15's measured 14.69 % is scaled by the tilting fraction on the code's own '[LAY geometric argument]', not a source; lift+cruise and multicopter use 0, marked [GAP] and optimistic in the code; 9: equation shape appears 2x in the retained set; 10: source DIRECTLY STATED; 17: a pure function; 20: WARNING, execution-verified: NaN nTilting returns NaN; nTilting above nRotors is clamped to the full 0.1469; 0 rotors and an unknown layout key return 0 without complaint |
 | FORMULA-MISC-064 | `src/engine/configuration.js:800` | P | P | P | U | U | U | U | U | W | U | U | U | U | U | U | U | P | U | U | U | 1: the same clamp(nTilting/nRotors, 0, 1) as MISC-063, used only to word the basis ('6/12 = 50 %'); 2: the tilting fraction shown with the download basis; 3: units resolved and dimensionally consistent; 9: equation shape appears 2x in the retained set; 17: a pure function |
-| FORMULA-MISC-065 | `src/engine/configuration.js:977` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-068 | `src/engine/configuration.js:1065` | U | U | U | U | U | U | U | U | P | P | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED |
-| FORMULA-MISC-069 | `src/engine/configuration.js:1152` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-070 | `src/engine/configuration.js:1162` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
-| FORMULA-MISC-072 | `src/engine/configuration.js:1167` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
+| FORMULA-MISC-065 | `src/engine/configuration.js:977` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | W | U | U | 1: D = lastGood + 0.5 (D - lastGood) when a good point exists, else 0.9 D: retreat halfway towards the last feasible diameter, or shrink the seed; 2: rotor diameter after an inner sizing that diverged or failed; 9: equation shape is unique in the retained set; 17: a bounded retreat inside the diameter fixed point, with the final status reported; 18: WARNING, measured (F-140, cross-reference): with no good point the retreat can only shrink, so tiltrotor and hybrid seeded at 300 / 800 kg end 'inner-diverged' at D 0.29 / 0.47 m and 0.20 / 0.33 m after 13 retreats, while seeds 1,500-3,000 kg and the default converge to 3.050 m (2,654 kg) and 2.045 m (2,386 kg); the multicopter recovers from every seed |
+| FORMULA-MISC-068 | `src/engine/configuration.js:1065` | P | P | U | U | U | U | P | U | P | P | U | U | U | U | U | U | P | U | U | W | 1: (N/(N - 1))^1.5 - momentum-theory power of the remaining rotors when each carries N/(N - 1) of its thrust - clamped to [1.3, 1.8] and rounded to 3 places; N 4 / 6 / 12 give 1.54 / 1.315 / 1.3 against hand 1.5396 / 1.3145 / 1.1394 (floored); 2: one-engine-inoperative hover power factor; 7: the clamp is declared in the code and every value is returned inside it; an interconnected drive takes the floor; 9: equation shape is unique in the retained set; 10: source DIRECTLY STATED; 17: a pure function; 20: WARNING, execution-verified: N = 2 and 3 give 2.83 and 1.84, both capped at 1.8; N 0, 1 and negative give the 1.3 floor; NaN returns NaN without complaint |
+| FORMULA-MISC-069 | `src/engine/configuration.js:1152` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | P | U | U | 1: defaults maxIter 6 and tol 5e-3 on the controllable T/W; 2: iteration limit and absolute T/W tolerance of solveControllableTW; 9: equation shape is unique in the retained set; 17: an iteration between thrust margin and sized geometry that returns a converged flag; 18: measured: the three attainable layouts (hybrid 12, hybridPusher 6, tiltrotor 6) converge in 2 sizing calls; maxIter 30 with tol 1e-6 gives the same controllability T/W (1.201, 1.501, 1.501) |
+| FORMULA-MISC-070 | `src/engine/configuration.js:1162` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | W | 1: R = Drotor / 2, 0 when Drotor is missing or not numeric; 2: rotor radius, m, from the diameter the engine exports; 9: equation shape is unique in the retained set; 17: a pure expression; 20: WARNING, source-inspected: a missing or zero Drotor ends the loop on its first pass, after which the floor T/W is returned attainable with converged false (no reason given) |
+| FORMULA-MISC-072 | `src/engine/configuration.js:1167` | P | P | U | U | U | U | U | U | P | U | U | U | U | U | U | U | P | U | U | U | 1: thrustPerRotorN = W / N with W = MTOW x 9.80665: hover thrust shared equally by N rotors; 2: per-rotor hover thrust fed to the torque-to-thrust ratio; 9: equation shape is unique in the retained set; 17: a pure expression |
 | FORMULA-MISC-073 | `src/engine/explore.js:228` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 9: equation shape is unique in the retained set |
 | FORMULA-MISC-074 | `src/engine/explore.js:241` | U | U | P | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | U | 3: units resolved and dimensionally consistent; 9: equation shape is unique in the retained set |
 | FORMULA-MISC-076 | `src/engine/inertia.js:69` | U | U | U | U | U | U | U | U | P | U | U | U | U | U | U | U | U | U | U | W | 9: equation shape is unique in the retained set; 20: no zero/negative/NaN guard within +/-25 lines of the site |

@@ -5800,6 +5800,34 @@ the take-off/landing split and its measured consequence.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-148 — below a fineness of 1 the fuselage wetted area treats a short, wide body as a long, thin one, so the area is 19–38 % low; the engine reaches it at the UI corners of the two wingless layouts, MTOW 0.6 % light — LOW — VERIFIED
+
+`src/engine/constants.js` l.137-140 (`fuselageWettedArea`, ATM-014). Consumers: `src/engine.js` l.855 and l.1712 (drag) and
+`src/engine/weights.js` l.274 (fuselage weight). Block 99.
+
+Below fineness 2.5 the function uses the exact spheroid. It sets `a = max(len, dia)/2` and `b = min(len, dia)/2` and
+evaluates the PROLATE surface `2 pi b^2 (1 + (a/(b e)) asin e)`. That holds while the length is the long axis. When the
+diameter exceeds the length, the body of revolution about the length axis is OBLATE. The code then computes a spheroid
+elongated along the diameter, which is a different body. Measured against a surface-of-revolution integral and the
+oblate closed form (`SP/atm/md_wetted.mjs`):
+
+| L x D (m) | lf | code (m²) | exact (m²) | error |
+|---|---|---|---|---|
+| 3.9 x 1.6 | 2.44 | 16.3605 | 16.3605 | 0.0000 % |
+| 1.814 x 2.5 | 0.726 | 13.0251 | 16.1600 | -19.4 % |
+| 1.5 x 2.5 | 0.600 | 10.3621 | 14.6710 | -29.4 % |
+| 1 x 2 | 0.500 | 5.3696 | 8.6719 | -38.1 % |
+
+The header claims exactness "at every lf >= 1" and nothing stops a smaller fineness. The engine reaches it through the
+payload scaling of the fuselage length, `fusLen cbrt(payload/453)`. At the UI corner (payload 100 kg, fusLen 3.0 m,
+fusDiam 2.5 m) the multicopter and sideBySide layouts run at lf 0.725. Against a scratch copy of `src/` using the
+oblate form below lf 1, production MTOW is 633.52 against 637.55 kg (-0.63 %) and 517.95 against 521.29 kg (-0.64 %).
+The winged layouts stay above lf 2 at the same corner and are unchanged.
+
+**LOW.** The input combination is an unusual corner, and the consequence is under 1 % of MTOW.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

@@ -5771,6 +5771,35 @@ consumes it is under 1 %.
 
 **Not repaired.** PASS A modifies no production code.
 
+## F-147 — the atmosphere clamps every altitude below sea level to sea level, so a transport sized for a field below sea level takes off in sea-level air and lands in the right air, and comes out up to 0.8 % heavier with take-off falsely governing — LOW — VERIFIED
+
+`src/classes/transport/atmosphere.js` l.24 (`makeJetISA`, around ATM-001/003) and `src/engine/atmosphere.js` l.21
+(`makeISA`): `const h = Math.max(0, hMetres || 0)`. Consumers: `src/classes/transport/size.js` l.118 `fieldSigma` and
+`src/classes/transport/takeoff.js` l.236. `src/classes/transport/landing.js` l.90-98 carries its own `isa()` with no
+clamp. Block 98.
+
+The ISA is defined from -2 km (NDARC Theory TP-2015-218751, Table 4-5, ISO 2533). The transport class publishes
+`fieldElevationFt` from -1,000 to 14,000 ft (`src/classes/transport/defaults.js` l.63). Below 0 the clamp returns
+sea-level air, with no warning. Measured against the independent oracle (`SP/atm/atm_oracle.mjs`) and against a scratch
+copy of `src/` with only the two clamps removed (`SP/atm/md_belowsl2.mjs`):
+
+| field | sigma, oracle | fieldSigma / take-off | landing.js | default sizing: MTOW, T/W, governing | clamp removed |
+|---|---|---|---|---|---|
+| 0 ft | 1.00000 | 1.00000 | 1.00000 | 78,800.1 kg, 0.32131, take-off | identical |
+| -500 ft | 1.01471 | 1.00000 | 1.01471 | 78,995.8 kg, 0.32604, take-off | 78,663.9 kg, 0.32149, initial cruise altitude |
+| -1,000 ft | 1.02959 | 1.00000 | 1.02959 | 79,205.1 kg, 0.33082, take-off | 78,579.2 kg, 0.32231, initial cruise altitude |
+
+So one sizing carries two atmospheres. The landing line sees the denser field and raises the wing loading by 3.0 %. The
+take-off line prices thrust at sea-level density. T/W therefore rises as the field gets denser, which is the wrong
+direction. At -1,000 ft the result is 2.64 % high on T/W and 0.80 % high on MTOW. It also reports take-off as the
+governing constraint when the initial-cruise-altitude line governs. With `takeoffMethod: "far25"` the effect is 0.03 %.
+
+**LOW.** The error is conservative and below 1 % of MTOW. It is reached only through the published negative part of
+one input range. The Phase-1 atmosphere audit noted the clamp (`AUDIT/ATMOSPHERE-AUDIT.md`, F-A05). This entry adds
+the take-off/landing split and its measured consequence.
+
+**Not repaired.** PASS A modifies no production code.
+
 ---
 
 # Geometry and chart findings

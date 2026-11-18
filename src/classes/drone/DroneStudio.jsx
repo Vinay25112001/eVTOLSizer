@@ -55,6 +55,8 @@ import RiskPanel from "./RiskPanel.jsx";
 import AvionicsPanel from "./AvionicsPanel.jsx";
 import AutopilotPanel from "./AutopilotPanel.jsx";
 import { useDroneDesign } from "./design-state.js";
+import BuildTab from "./build-fly/BuildTab.jsx";
+import FlyTab from "./build-fly/FlyTab.jsx";
 
 /* ── THE ACCURACY GATE ────────────────────────────────────────────────
    Every row is a target the tool will be held to, with the measured data
@@ -88,7 +90,12 @@ const PHASES = Object.freeze([
   ["Hybrid VTOL", "planned", "Fixed mass, battery as the residual, endurance as the output."],
 ]);
 
+/* Build and Fly lead: a guided build over the same design, then the
+   design flown live (build-fly/). The tabs after them are the studio's
+   detailed views of that one design. */
 const TABS = Object.freeze([
+  ["build", "Build · guided"],
+  ["fly", "Fly · 3D"],
   ["frame", "Frame"],
   ["components", "Components"],
   ["propulsion", "Propulsion"],
@@ -237,8 +244,10 @@ export default function DroneStudio() {
         </div>
       </header>
 
-      <nav aria-label="Sections" style={{ display: "flex", padding: "0 18px", borderBottom: `1px solid ${SC.border}`,
-                                          background: SC.panel, overflowX: "auto" }}>
+      {/* The bar WRAPS: 15 tabs are wider than a 1280 px screen, and a
+          sideways-scrolling strip hides the last ones past the edge. */}
+      <nav aria-label="Sections" style={{ display: "flex", flexWrap: "wrap", padding: "0 18px", borderBottom: `1px solid ${SC.border}`,
+                                          background: SC.panel }}>
         {TABS.map(([k, label]) => {
           const on = k === tab;
           return (
@@ -254,6 +263,15 @@ export default function DroneStudio() {
       </nav>
 
       <main style={{ padding: `${S.lg}px ${S.xl}px`, maxWidth: 1680, boxSizing: "border-box" }}>
+        {tab === "build" && (
+          <BuildTab design={design} frame={frame} dark={dark} onFly={() => setTab("fly")}
+            pickFrame={(c, t) => { setFrameClass(c); setFrameType(t); }} />
+        )}
+
+        {tab === "fly" && (
+          <FlyTab design={design} frame={frame} dark={dark} onBuild={() => setTab("build")} />
+        )}
+
         {tab === "frame" && frame && (
           <div style={{ display: "flex", gap: S.xl, flexWrap: "wrap", alignItems: "flex-start" }}>
             <Card title={`${frame.frameClass} · ${frame.frameType} — ${frame.motorCount} motors`}>

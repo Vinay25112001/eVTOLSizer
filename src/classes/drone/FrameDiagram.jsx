@@ -79,7 +79,7 @@ function armsOf(frame) {
   return [...by.entries()].map(([angleDeg, motors]) => ({ angleDeg, motors }));
 }
 
-export default function FrameDiagram({ frame, size = 300, showTestOrder = false }) {
+export default function FrameDiagram({ frame, size = 300, showTestOrder = false, caption = true }) {
   const arms = useMemo(() => (frame ? armsOf(frame) : []), [frame]);
   if (!frame) return null;
   const cwColour = SC.caution;
@@ -151,7 +151,9 @@ export default function FrameDiagram({ frame, size = 300, showTestOrder = false 
           );
         })}
       </svg>
-      <figcaption style={{ fontSize: T.micro, color: SC.subtle, fontFamily: SANS,
+      {/* caption={false} is for a grid of small diagrams that carries ONE
+          shared caption beside it (the Build tab's frame step). */}
+      {caption && <figcaption style={{ fontSize: T.micro, color: SC.subtle, fontFamily: SANS,
                            lineHeight: 1.5, marginTop: 6, maxWidth: size + 40 }}>
         Motor numbers are ArduPilot output channels; rotation is the propeller
         seen from above. Both are read from <code style={{ fontFamily: MONO }}>AP_MotorsMatrix.cpp</code>.
@@ -166,7 +168,7 @@ export default function FrameDiagram({ frame, size = 300, showTestOrder = false 
         <b style={{ color: SC.muted }}>Not to scale.</b> Arm length and disc size are
         drawing constants — no arm or propeller has been sized yet, and no
         centre of gravity is shown because no component has been placed.
-      </figcaption>
+      </figcaption>}
     </figure>
   );
 }

@@ -9,6 +9,7 @@ import { aircraftGeometry } from "../engine/geometry.js";
 import { Aircraft3D } from "../panels/Aircraft3D.jsx";
 import { Aircraft3DView } from "../panels/Aircraft3DView.jsx";
 import { MissionAnimation } from "../panels/MissionAnimation.jsx";
+import { MissionFlight3D } from "../panels/mission-flight-3d/MissionFlight3D.jsx";
 
 /* Tab 15 — OpenVSP.
    Extracted from App.jsx. Receives the App context as a single `ctx`
@@ -43,6 +44,11 @@ export function OpenVSPTab(ctx) {
                     positioned by engine/mission-path.js rather than by any
                     motion invented here. */}
                 <MissionAnimation params={params} SR={SR}/>
+                {/* The same mission again, in 3D at true scale: the sized
+                    aircraft flying it, positioned by the same mission-path
+                    module. It stops at each hover/wing-borne step and says
+                    the transition is not modelled, rather than drawing one. */}
+                <MissionFlight3D params={params} SR={SR}/>
                 {/* The old orthographic four-up is kept: it is the view an
                     engineer checks proportions in, and it prints cleanly. */}
                 <Panel title="Orthographic four-up (Top / Front / Side / Iso)" onSave={false}>

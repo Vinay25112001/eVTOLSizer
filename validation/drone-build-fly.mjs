@@ -185,7 +185,10 @@ console.log("\n4. Source");
   const walk = (d) => { for (const n of readdirSync(d)) { const p = join(d, n); statSync(p).isDirectory() ? walk(p) : /\.(jsx?|mjs)$/.test(n) && files.push(p); } };
   walk(new URL("../src", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
   const threeUsers = files.filter((p) => /from\s+"three|import\("three/.test(readFileSync(p, "utf8"))).map((p) => p.replace(/\\/g, "/").split("/src/")[1]);
-  check("no other source file imports three.js", JSON.stringify(threeUsers) === JSON.stringify(["classes/drone/build-fly/drone-scene.js"]), threeUsers.join(", "));
+  /* three.js lives only in the lazily loaded scene files: this one and the
+     eVTOL mission flight's (panels/mission-flight-3d, gated by its own
+     validation/mission-flight-3d.mjs). */
+  check("no other source file imports three.js", JSON.stringify(threeUsers.sort()) === JSON.stringify(["classes/drone/build-fly/drone-scene.js", "panels/mission-flight-3d/flight-scene.js"]), threeUsers.join(", "));
   const sceneUsers = files.filter((p) => /drone-scene/.test(readFileSync(p, "utf8"))).map((p) => p.replace(/\\/g, "/").split("/src/")[1]).sort();
   const lazyOnce = ["BuildTab.jsx", "FlyTab.jsx"].every((f) => {
     const s = read(`src/classes/drone/build-fly/${f}`);

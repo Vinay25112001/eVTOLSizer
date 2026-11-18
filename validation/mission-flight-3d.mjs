@@ -290,9 +290,11 @@ console.log("\n3. Source");
   const rel = (f) => f.slice(srcDir.length + 1).replace(/\\/g, "/");
   const threeUsers = files.filter((f) => /from\s+"three(\/[^"]*)?"/.test(readFileSync(f, "utf8"))).map(rel).sort();
   /* The drone studio's scene draws its drone with drone-parts.js, which
-     validation/drone-build-fly.mjs holds to the same rule. */
+     validation/drone-build-fly.mjs holds to the same rule; the OpenVSP
+     tab's build lab draws its parts with evtol-parts.js in hangar-scene.js,
+     which validation/evtol-build-lab.mjs holds to it. */
   check("three.js is imported by the scene modules only",
-    JSON.stringify(threeUsers) === JSON.stringify(["classes/drone/build-fly/drone-parts.js", "classes/drone/build-fly/drone-scene.js", "panels/mission-flight-3d/flight-scene.js"]), threeUsers.join(", "));
+    JSON.stringify(threeUsers) === JSON.stringify(["classes/drone/build-fly/drone-parts.js", "classes/drone/build-fly/drone-scene.js", "panels/evtol-build/evtol-parts.js", "panels/evtol-build/hangar-scene.js", "panels/mission-flight-3d/flight-scene.js"]), threeUsers.join(", "));
   const scene = read("src/panels/mission-flight-3d/flight-scene.js");
   const sceneImports = [...scene.matchAll(/^import .* from "([^"]+)";/gm)].map((m) => m[1]);
   check("the flight scene imports three.js and its orbit control and nothing else, so it computes nothing",

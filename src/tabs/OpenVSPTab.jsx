@@ -10,6 +10,7 @@ import { Aircraft3D } from "../panels/Aircraft3D.jsx";
 import { Aircraft3DView } from "../panels/Aircraft3DView.jsx";
 import { MissionAnimation } from "../panels/MissionAnimation.jsx";
 import { MissionFlight3D } from "../panels/mission-flight-3d/MissionFlight3D.jsx";
+import { EvtolBuildLab } from "../panels/evtol-build/EvtolBuildLab.jsx";
 
 /* Tab 15 — OpenVSP.
    Extracted from App.jsx. Receives the App context as a single `ctx`
@@ -39,6 +40,11 @@ export function OpenVSPTab(ctx) {
                 <Panel title="Aircraft layout — interactive 3D" onSave={false}>
                   <Aircraft3DView params={params} SR={SR}/>
                 </Panel>
+                {/* The same sized aircraft put together step by step on a
+                    hangar floor ruled in metres: its parts at the sizing's
+                    own dimensions, the shapes nothing sizes marked as drawn.
+                    It hands over to the 3D flight below. */}
+                <EvtolBuildLab params={params} SR={SR}/>
                 {/* The layout above is the aircraft standing still. This is
                     the same aircraft flying the mission it was sized for,
                     positioned by engine/mission-path.js rather than by any

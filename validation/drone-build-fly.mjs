@@ -230,7 +230,7 @@ console.log("\n4. Source");
   /* three.js lives only in the lazily loaded scene files: this one and the
      eVTOL mission flight's (panels/mission-flight-3d, gated by its own
      validation/mission-flight-3d.mjs). */
-  check("no other source file imports three.js", JSON.stringify(threeUsers.sort()) === JSON.stringify(["classes/drone/build-fly/drone-parts.js", "classes/drone/build-fly/drone-scene.js", "panels/mission-flight-3d/flight-scene.js"]), threeUsers.join(", "));
+  check("no other source file imports three.js", JSON.stringify(threeUsers.sort()) === JSON.stringify(["classes/drone/build-fly/drone-parts.js", "classes/drone/build-fly/drone-scene.js", "panels/evtol-build/evtol-parts.js", "panels/evtol-build/hangar-scene.js", "panels/mission-flight-3d/flight-scene.js"]), threeUsers.join(", "));
   const partsUsers = files.filter((p) => /from\s+"\.\/drone-parts|import\("\.\/drone-parts/.test(readFileSync(p, "utf8"))).map((p) => p.replace(/\\/g, "/").split("/src/")[1]).sort();
   check("only the scene imports the parts, so they too load with the 3D only",
     JSON.stringify(partsUsers) === JSON.stringify(["classes/drone/build-fly/drone-scene.js"]), partsUsers.join(", "));

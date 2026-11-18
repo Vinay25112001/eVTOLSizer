@@ -289,8 +289,10 @@ console.log("\n3. Source");
   const files = walk(srcDir).filter((f) => /\.(m?js|jsx)$/.test(f));
   const rel = (f) => f.slice(srcDir.length + 1).replace(/\\/g, "/");
   const threeUsers = files.filter((f) => /from\s+"three(\/[^"]*)?"/.test(readFileSync(f, "utf8"))).map(rel).sort();
-  check("three.js is imported by the two scene modules only",
-    JSON.stringify(threeUsers) === JSON.stringify(["classes/drone/build-fly/drone-scene.js", "panels/mission-flight-3d/flight-scene.js"]), threeUsers.join(", "));
+  /* The drone studio's scene draws its drone with drone-parts.js, which
+     validation/drone-build-fly.mjs holds to the same rule. */
+  check("three.js is imported by the scene modules only",
+    JSON.stringify(threeUsers) === JSON.stringify(["classes/drone/build-fly/drone-parts.js", "classes/drone/build-fly/drone-scene.js", "panels/mission-flight-3d/flight-scene.js"]), threeUsers.join(", "));
   const scene = read("src/panels/mission-flight-3d/flight-scene.js");
   const sceneImports = [...scene.matchAll(/^import .* from "([^"]+)";/gm)].map((m) => m[1]);
   check("the flight scene imports three.js and its orbit control and nothing else, so it computes nothing",

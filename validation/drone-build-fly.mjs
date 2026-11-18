@@ -6,25 +6,32 @@
    live-flight.js, whose physics validation/drone-live-flight.mjs holds
    bit-identical to the Flight sim. This gate holds the two TABS to:
 
-     1. THE STEPS. Nine steps, frame to review; every field a step sets
-        is a field of the design; the rotor-count reconciliation and the
-        catalogue labels say what the catalogue and the sizing say.
+     1. THE STEPS. Ten steps, parts to review, the same list the
+        workbench poses; every field a step sets is a field of the design;
+        the rotor-count reconciliation and the catalogue labels say what
+        the catalogue and the sizing say.
      2. THE BUILD TAB, rendered (react-dom/server, the real components):
         every step renders with no "null", "undefined" or "NaN" on screen;
         the spec sheet's numbers are sizeDrone()'s, to the printed digit;
         a frame whose rotor count differs from the sizing's is named and
-        offered a one-click match; the frame diagrams share ONE caption.
+        offered a one-click match; the frame diagrams share ONE caption;
+        "You'll need" and "Do this" quote the design's own numbers.
      3. THE FLY TAB, rendered: a converged design whose rotor count
         matches its frame gets the arena; a mismatch or a design that
         does not converge is refused, saying why; the notices name what is
         not modelled and the audit findings on the flight sim (F-101,
         F-102), with F-101's figures as AUDIT/FINDINGS.md states them.
-     4. SOURCE. three.js is imported by drone-scene.js alone, which
-        imports nothing else and so holds no physics; the two tabs fetch
-        it by ONE dynamic import each, so the studio's bundle carries no
-        3D; the arena draws the same obstacles the flight is checked
-        against; the studio lists Build and Fly first and its tab bar
-        wraps.
+     4. SOURCE. three.js is imported by drone-scene.js and the parts it
+        draws with (drone-parts.js) alone, and neither imports any physics;
+        the two tabs fetch the scene by ONE dynamic import each, so the
+        studio's bundle carries no 3D; the arena draws the same obstacles
+        the flight is checked against; the studio lists Build and Fly
+        first and its tab bar wraps.
+     5. TRUE SCALE. The drone model, built in Node, is measured: a motor's
+        stator and shaft, a propeller's tip radius and twist, an ESC's
+        case, every cell, and the rotor positions are the catalogue's and
+        the airframe builder's numbers; a part with no published size is
+        named as drawn.
    ===================================================================== */
 import { readFileSync, readdirSync, statSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
@@ -37,6 +44,13 @@ import { DESIGN_DEFAULTS } from "../src/classes/drone/design-state.js";
 import { FRAMES } from "../src/data/drone-frames.js";
 import { ESCS } from "../src/data/drone-components.js";
 import { LOITER_WITHDRAWN } from "../src/classes/drone/dynamics.js";
+import { BENCH_STEPS } from "../src/classes/drone/build-fly/drone-scene.js";
+import { buildDrone } from "../src/classes/drone/build-fly/drone-parts.js";
+import { buildAirframe } from "../src/classes/drone/geometry3d.js";
+import { findPropeller } from "../src/data/drone-propellers.js";
+import { MODELLABLE_MOTORS, BATTERIES } from "../src/data/drone-components.js";
+import { assemblePack } from "../src/classes/drone/battery.js";
+import { billOfMaterials, partFacts } from "../src/classes/drone/build-fly/build-steps.js";
 
 let pass = 0, fail = 0;
 const check = (name, ok, detail = "") => {
@@ -55,8 +69,8 @@ console.log("=".repeat(78));
 console.log("\n1. The steps");
 {
   const keys = BUILD_STEPS.map((s) => s.key);
-  check("nine steps, frame first and review last",
-    keys.join(",") === "frame,motor,prop,esc,cell,pack,avionics,mission,review", keys.join(","));
+  check("ten steps, parts first and review last, and the workbench poses the same ten",
+    keys.join(",") === "parts,frame,motor,prop,esc,cell,pack,avionics,mission,review" && BENCH_STEPS.join(",") === keys.join(","), keys.join(","));
   const unknown = BUILD_STEPS.flatMap((s) => s.sets).filter((k) => !(k in DESIGN_DEFAULTS));
   const unset = Object.keys(DESIGN_DEFAULTS).filter((k) => k !== "escId" && !BUILD_STEPS.some((s) => s.sets.includes(k)));
   check("every field a step sets is a design field, and every design field but the ESC default has a step",
@@ -126,16 +140,39 @@ console.log("\n2. The Build tab, rendered");
   check("every step renders", broken.length === 0, broken.map((s) => `${s.key}: ${s.err}`).join(" | "));
   check("no step shows null, undefined or NaN", dirty.length === 0, dirty.join(" | "));
   const s0 = steps[0], r = s0.d.result;
-  check("the step rail lists the nine steps in order, and the hangar waits for its lazy 3D import",
-    BUILD_STEPS.every((s, i) => s0.txt.indexOf(s.title) >= 0 && (i === 0 || s0.txt.indexOf(s.title) > s0.txt.indexOf(BUILD_STEPS[i - 1].title)))
-    && /Loading the 3D hangar/.test(s0.txt));
+  const strip = s0.html.slice(s0.html.indexOf('aria-label="Build steps"'));
+  const at = (st) => strip.indexOf(`>${st.title.replace(/&/g, "&amp;")}<`);
+  check("the step strip lists the ten steps in order, and the workbench waits for its lazy 3D import",
+    BUILD_STEPS.every((s, i) => at(s) >= 0 && (i === 0 || at(s) > at(BUILD_STEPS[i - 1])))
+    && /Loading the 3D workbench/.test(s0.txt));
   const want = [r.massKg.toFixed(3), r.endurance.minutes.toFixed(1), r.thrustToWeight.available.toFixed(2),
                 r.hover.busPowerW.toFixed(0), r.hover.rpm.toFixed(0), (100 * r.thrustToWeight.hoverThrottleFraction).toFixed(0)];
   check("the spec sheet prints sizeDrone()'s numbers: mass, endurance, T/W, bus power, rpm, throttle",
     s0.d.ok && want.every((x) => s0.txt.includes(x)) && /converged/.test(s0.txt), want.join(" · "));
   check("a matched frame raises no mismatch", !/The sizing has \d+ rotors/.test(s0.txt));
-  const caps = (s0.html.match(/AP_MotorsMatrix\.cpp/g) || []).length;
+  const fr = steps.find((s) => s.key === "frame");
+  const caps = (fr.html.match(/AP_MotorsMatrix\.cpp/g) || []).length;
   check("the frame step's diagrams share one caption, not one each", caps === 1, `${caps} caption(s)`);
+  const af = buildAirframe({ frame: QUAD_X, propellerDiameterM: s0.d.built.propeller.diameterM, tipGapFraction: 0.10 });
+  const bom = billOfMaterials(s0.d, QUAD_X, af);
+  check("the parts step lists the whole bill of materials, every step's rows",
+    /Bill of materials/.test(s0.txt) && s0.txt.includes(`0 / ${bom.length}`) && bom.length >= 12
+    && bom.every((x) => s0.txt.includes(x.text)), `${bom.length} rows`);
+  check("the frame step's instructions quote the airframe builder's arm length and tip gap",
+    fr.txt.includes(`each motor centre is ${Math.round(af.armLengthM * 1000)} mm from the frame centre`)
+    && fr.txt.includes(`clear each other by ${Math.round(2 * af.tipGapFraction * af.propRadiusM * 1000)} mm`));
+  const mo = steps.find((s) => s.key === "motor"), m = s0.d.built.motor;
+  check("the motor step needs one motor per rotor, on its published hole pattern",
+    mo.txt.includes(`4× ${m.model}`) && mo.txt.includes(m.mounting_hole_pattern) && /You'll need/.test(mo.txt));
+  const pr = steps.find((s) => s.key === "prop");
+  const cwM = af.rotors.filter((r) => r.rotation === "CW").map((r) => r.motor).sort().join(", ");
+  check("the propeller step splits CW and CCW by the frame's own spin directions", pr.txt.includes(`go on motors ${cwM};`), cwM);
+  const pk = steps.find((s) => s.key === "pack"), P = s0.d.built.pack;
+  check("the pack step quotes the pack the sizing assembled",
+    pk.txt.includes(`${P.cellsSeries}S${P.cellsParallel}P, ${P.voltagePrintedV} V nominal, ${P.capacityMah} mAh`) && pk.txt.includes(`${P.cellsSeries * P.cellsParallel}× `));
+  const facts = partFacts("motors", s0.d, af);
+  check("a clicked motor shows its catalogue stator, shaft and mounting, and says what is drawn",
+    facts.rows.some(([k, x]) => k === "stator" && x === `${m.stator_diameter_mm} × ${m.stator_height_mm} mm`) && /Bell and base drawn/.test(facts.scale));
   const hx = render(MOD.BuildHarness, { frame: HEXA_X, step: 0 });
   check("a 6-rotor frame on a 4-rotor sizing is named and offered a one-click match",
     /The sizing has 4 rotors but the frame has 6/.test(hx.txt) && /Size it with 6 rotors/.test(hx.txt));
@@ -178,9 +215,14 @@ console.log("\n4. Source");
 {
   const scene = read("src/classes/drone/build-fly/drone-scene.js");
   const sceneImports = [...scene.matchAll(/^import[^;]*?from\s+"([^"]+)"/gm)].map((m) => m[1]).sort();
-  check("drone-scene.js imports three.js and nothing else, so it holds no physics",
-    JSON.stringify(sceneImports) === JSON.stringify(["three", "three/addons/controls/OrbitControls.js"]) && !/import\(/.test(scene),
+  check("drone-scene.js imports three.js, its addons and the parts, and nothing else, so it holds no physics",
+    JSON.stringify(sceneImports) === JSON.stringify(["./drone-parts.js", "three", "three/addons/controls/OrbitControls.js", "three/addons/environments/RoomEnvironment.js", "three/addons/renderers/CSS2DRenderer.js"]) && !/import\(/.test(scene),
     sceneImports.join(", "));
+  const partsSrc = read("src/classes/drone/build-fly/drone-parts.js");
+  const partsImports = [...partsSrc.matchAll(/^import[^;]*?from\s+"([^"]+)"/gm)].map((m) => m[1]).sort();
+  check("drone-parts.js imports three.js and the airframe's geometry only, so it holds no physics",
+    JSON.stringify(partsImports) === JSON.stringify(["../geometry3d.js", "three", "three/addons/geometries/RoundedBoxGeometry.js"]) && !/import\(/.test(partsSrc),
+    partsImports.join(", "));
   const files = [];
   const walk = (d) => { for (const n of readdirSync(d)) { const p = join(d, n); statSync(p).isDirectory() ? walk(p) : /\.(jsx?|mjs)$/.test(n) && files.push(p); } };
   walk(new URL("../src", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
@@ -188,7 +230,10 @@ console.log("\n4. Source");
   /* three.js lives only in the lazily loaded scene files: this one and the
      eVTOL mission flight's (panels/mission-flight-3d, gated by its own
      validation/mission-flight-3d.mjs). */
-  check("no other source file imports three.js", JSON.stringify(threeUsers.sort()) === JSON.stringify(["classes/drone/build-fly/drone-scene.js", "panels/mission-flight-3d/flight-scene.js"]), threeUsers.join(", "));
+  check("no other source file imports three.js", JSON.stringify(threeUsers.sort()) === JSON.stringify(["classes/drone/build-fly/drone-parts.js", "classes/drone/build-fly/drone-scene.js", "panels/mission-flight-3d/flight-scene.js"]), threeUsers.join(", "));
+  const partsUsers = files.filter((p) => /from\s+"\.\/drone-parts|import\("\.\/drone-parts/.test(readFileSync(p, "utf8"))).map((p) => p.replace(/\\/g, "/").split("/src/")[1]).sort();
+  check("only the scene imports the parts, so they too load with the 3D only",
+    JSON.stringify(partsUsers) === JSON.stringify(["classes/drone/build-fly/drone-scene.js"]), partsUsers.join(", "));
   const sceneUsers = files.filter((p) => /drone-scene/.test(readFileSync(p, "utf8"))).map((p) => p.replace(/\\/g, "/").split("/src/")[1]).sort();
   const lazyOnce = ["BuildTab.jsx", "FlyTab.jsx"].every((f) => {
     const s = read(`src/classes/drone/build-fly/${f}`);
@@ -215,6 +260,59 @@ console.log("\n4. Source");
   const pkg = JSON.parse(read("package.json"));
   check("three.js is a declared dependency at the version the scene was written for",
     /^\^?0\.160\.\d+$/.test(pkg.dependencies?.three ?? ""), pkg.dependencies?.three);
+}
+
+console.log("\n5. True scale");
+{
+  const prop = findPropeller(DESIGN_DEFAULTS.propellerId);
+  const motor = MODELLABLE_MOTORS.find((m) => m.model === DESIGN_DEFAULTS.motorModel);
+  const esc = ESCS.find((e) => e.id === "HW-XROTOR-PRO-40A");
+  const cell = BATTERIES.find((b) => b.id === DESIGN_DEFAULTS.cellId);
+  const pack = assemblePack(cell, { series: DESIGN_DEFAULTS.series, parallel: DESIGN_DEFAULTS.parallel, overheadFraction: DESIGN_DEFAULTS.packOverhead });
+  const af = buildAirframe({ frame: QUAD_X, propellerDiameterM: prop.diameterM, tipGapFraction: 0.10 });
+  const d = buildDrone(af, { motor, propeller: prop, esc, cell, pack, payloadKg: 0.5 });
+  const named = (root, name) => { const out = []; root.traverse((o) => { if (o.name === name) out.push(o); }); return out; };
+  const size = (o) => { o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; return [b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z]; };
+  const near = (a, b, tol = 1e-6) => Math.abs(a - b) <= tol;
+  const stator = named(d.group, "stator"), shaft = named(d.group, "shaft");
+  check("every motor's stator is the catalogue's diameter and height, its shaft the catalogue's diameter",
+    stator.length === 4 && stator.every((s) => near(s.geometry.parameters.radiusTop * 2, motor.stator_diameter_mm / 1000) && near(s.geometry.parameters.height, motor.stator_height_mm / 1000))
+    && shaft.length === 4 && shaft.every((s) => near(s.geometry.parameters.radiusTop * 2, motor.shaft_diameter_mm / 1000)),
+    `${motor.model}: ${motor.stator_diameter_mm} × ${motor.stator_height_mm} mm, shaft ${motor.shaft_diameter_mm} mm`);
+  const blades = named(d.group, "blade");
+  const tips = blades.map((b) => { b.geometry.computeBoundingBox(); return b.geometry.boundingBox.max.x; });
+  check("every blade reaches the propeller's published radius, no more and no less",
+    blades.length === 8 && tips.every((x) => near(x, prop.diameterM / 2, 1e-7)), `R = ${prop.diameterM / 2} m`);
+  /* The chord line (leading to trailing edge) of every section is at the
+     helix angle of the nominal pitch, atan(P / 2 pi r). */
+  const NC = 18, pos = blades[0].geometry.attributes.position;
+  let worst = 0;
+  for (let i = 0; i <= 32; i++) {
+    const le = i * NC, te = i * NC + NC / 2;
+    const r = pos.getX(le), dy = pos.getY(le) - pos.getY(te), dz = Math.abs(pos.getZ(le) - pos.getZ(te));
+    worst = Math.max(worst, Math.abs(Math.atan2(dy, dz) - Math.atan2(prop.pitchM, 2 * Math.PI * r)));
+  }
+  check("the blade twist is the helix angle of the nominal pitch at every section", worst < 1e-5, `worst ${worst.toExponential(1)} rad`);
+  const ed = esc.dimensions_mm.version_a.split("x").map((x) => parseFloat(x) / 1000);
+  const bodies = named(d.group, "esc-body").map(size);
+  check("every ESC case is the catalogue's length × width × height",
+    bodies.length === 4 && bodies.every(([x, y, z]) => near(x, ed[0], 1e-6) && near(z, ed[1], 1e-6) && near(y, ed[2], 1e-6)), esc.dimensions_mm.version_a);
+  const cells = named(d.group, "cell").filter((o) => o.isMesh);
+  check("the bench carries S × P cells, each at the catalogue's diameter and length",
+    cells.length === pack.cellsSeries * pack.cellsParallel
+    && cells.every((c) => near(c.geometry.parameters.radiusTop * 2, 0.02155) && near(c.geometry.parameters.height, 0.07015)), `${cells.length} cells, ${cell.dimensions_mm}`);
+  const box = BATTERIES.find((b) => b.id === "tattu-rline-v5-1400-6s");
+  const db = buildDrone(af, { motor, propeller: prop, esc, cell: box, pack: assemblePack(box, { series: 1, parallel: 2 }), payloadKg: 0 });
+  const boxes = named(db.group, "cell").map(size);
+  check("a finished pack is drawn as S × P boxes at its published size",
+    boxes.length === 2 && boxes.every(([x, y, z]) => near(x, 0.039) && near(y, 0.042) && near(z, 0.078)), box.dimensions_mm);
+  const hubs = d.rotors.map((r) => Math.hypot(r.hub.position.x, r.hub.position.z));
+  const spinOk = d.rotors.every((r) => r.spin === (af.rotors.find((x) => x.motor === r.motor).rotation === "CCW" ? 1 : -1));
+  check("every rotor sits at the airframe builder's arm length and turns its frame's way",
+    hubs.length === 4 && hubs.every((h) => near(h, af.armLengthM, 1e-9)) && spinOk, `${af.armLengthM.toFixed(4)} m`);
+  const flame = ESCS.find((e) => e.dimensions_mm == null);
+  const dn = buildDrone(af, { motor, propeller: prop, esc: flame, cell, pack, payloadKg: 0 });
+  check("a part with no published size is named as drawn", dn.notes.some((n) => /ESC: no published size, drawn/.test(n)) && d.notes.length === 0, dn.notes.join("; "));
 }
 
 console.log("\n" + "=".repeat(78));

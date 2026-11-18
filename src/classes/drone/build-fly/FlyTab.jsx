@@ -84,7 +84,7 @@ function drawMinimap(cv, { x, y, yawDeg }, trail, obstacles, failedCount) {
   ctx.fillText(`${2 * R} m`, 6, H - 6);
 }
 
-function Arena({ model, airframe, energy, sizing, dark, obstacles, maxTiltDeg, payload }) {
+function Arena({ model, airframe, energy, sizing, dark, obstacles, maxTiltDeg, payload, kit }) {
   const canvasRef = useRef(null), mapRef = useRef(null), stageRef = useRef(null), apiRef = useRef(null);
   const flightRef = useRef(null), spRef = useRef(null), keysRef = useRef(new Set()), padsRef = useRef({});
   const trailRef = useRef([]), pausedRef = useRef(true), tiltRef = useRef(maxTiltDeg);
@@ -110,14 +110,14 @@ function Arena({ model, airframe, energy, sizing, dark, obstacles, maxTiltDeg, p
     let cancelled = false;
     import("./drone-scene.js").then((mod) => {
       if (cancelled || !canvasRef.current) return;
-      try { apiRef.current = mod.mountArena({ canvas: canvasRef.current, airframe, obstacles, dark, payload }); apiRef.current.setCamera(camera); setSceneState("ready"); }
+      try { apiRef.current = mod.mountArena({ canvas: canvasRef.current, airframe, obstacles, dark, payload, kit }); apiRef.current.setCamera(camera); setSceneState("ready"); }
       catch (e) { setSceneState(`unavailable: ${e.message}`); }
     }).catch((e) => setSceneState(`unavailable: ${e.message}`));
     const ro = window.ResizeObserver ? new window.ResizeObserver(() => apiRef.current?.resize()) : null;
     if (ro && canvasRef.current) ro.observe(canvasRef.current);
     return () => { cancelled = true; ro?.disconnect(); apiRef.current?.dispose(); apiRef.current = null; };
   }, []);   // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { apiRef.current?.setAirframe(airframe, { payload }); }, [airframe, payload]);
+  useEffect(() => { apiRef.current?.setAirframe(airframe, { payload, kit }); }, [airframe, payload, kit]);
   useEffect(() => { apiRef.current?.setObstacles(obstacles); }, [obstacles]);
   useEffect(() => { apiRef.current?.setDark(dark); }, [dark]);
   useEffect(() => { apiRef.current?.setCamera(camera); }, [camera, sceneState]);
@@ -316,6 +316,9 @@ export default function FlyTab({ design, frame, dark, onBuild }) {
     try { return buildAirframe({ frame, propellerDiameterM: built.propeller.diameterM, tipGapFraction: 0.10 }); }
     catch { return null; }
   }, [ok, frame, built.propeller, mismatch]);
+  /* The parts the drone is drawn from (drone-parts.js): the same picks the sizing used. */
+  const kit = useMemo(() => ({ motor: built.motor, propeller: built.propeller, esc: built.esc, cell: built.cell, pack: built.pack, payloadKg: v.payloadKg }),
+    [built.motor, built.propeller, built.esc, built.cell, built.pack, v.payloadKg]);
   const modelBuild = useMemo(() => {
     if (!airframe) return null;
     try { return { ok: buildModel({ sizing: result, airframe, declared: { motorTimeConstantS: motorTau, bodyDragCoefficient: cd } }) }; }
@@ -347,7 +350,7 @@ export default function FlyTab({ design, frame, dark, onBuild }) {
           </div>
         </Card>
       ) : (
-        <Arena model={modelBuild.ok} airframe={airframe} energy={energy} sizing={result} dark={dark} obstacles={obstacles} maxTiltDeg={maxTilt} payload={v.payloadKg > 0} />
+        <Arena model={modelBuild.ok} airframe={airframe} energy={energy} sizing={result} dark={dark} obstacles={obstacles} maxTiltDeg={maxTilt} payload={v.payloadKg > 0} kit={kit} />
       )}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: S.md, marginTop: S.md, alignItems: "flex-start" }}>
@@ -379,7 +382,7 @@ export default function FlyTab({ design, frame, dark, onBuild }) {
               <li><b>Mode: Stabilize with altitude hold.</b> The sticks command an attitude; letting go levels the drone but does not stop it, because there is no position hold. Loiter is withdrawn: {LOITER_WITHDRAWN.reason}.</li>
               <li><b>Not modelled.</b> Wind and gusts; voltage sag (the pack holds its nominal voltage); ground effect; take-off and ground contact (touching down ends the flight); impacts (touching an obstacle ends the flight).</li>
               <li><b>Audit findings that bear on this flight.</b> F-101: drag is applied per body axis, not along the velocity, which makes forward-flight thrust and energy optimistic (thrust 0.89× and ideal power about 16 % low at 20 m/s on the audited airframe). F-102: the rate loop treats ArduPilot's normalised output as newton-metres, so the attitude response is softer than ArduPilot's.</li>
-              <li><b>Drawn, not computed.</b> The body, battery, ESC, flight-controller and payload blocks; the propeller spin rate; the shadow and the trail.</li>
+              <li><b>Drawn, not computed.</b> The drone is drawn from its parts: the propellers, the motors' stators, the ESC cases and the cells are at their published sizes, and the arms at the airframe builder's length; the frame plates, landing gear, wiring, flight controller and payload box are drawn. Also drawn: the propeller spin rate, the light, the shadows and the trail.</li>
             </ul>
           </Card>
         </div>

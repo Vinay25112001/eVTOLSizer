@@ -199,13 +199,13 @@ export function CFDChecklist({ params, SR, SC, U }) {
       {/* Score banner */}
       <div style={{background:SC.panel, border:`2px solid ${overallCol}`, borderRadius:8,
         padding:'14px 20px', display:'flex', alignItems:'center', gap:16}}>
-        <div style={{fontSize:36, fontWeight:800, color:overallCol, fontFamily:"'DM Mono',monospace",
+        <div style={{fontSize:36, fontWeight:800, color:overallCol, fontFamily:"'IBM Plex Mono',monospace",
           lineHeight:1}}>{pct}%</div>
         <div>
-          <div style={{fontSize:13, fontWeight:700, color:SC.text, fontFamily:"'DM Mono',monospace"}}>
+          <div style={{fontSize:13, fontWeight:700, color:SC.text, fontFamily:"'IBM Plex Mono',monospace"}}>
             CFD-Ready Score
           </div>
-          <div style={{fontSize:9, color:SC.muted, fontFamily:"'DM Mono',monospace", marginTop:2}}>
+          <div style={{fontSize:9, color:SC.muted, fontFamily:"'IBM Plex Mono',monospace", marginTop:2}}>
             {passed}/{total} checks passed · {pct===100?'Ready for VSPAERO export':pct>=80?'⚠ Minor issues — review amber items':'Fix red items before CFD run'}
           </div>
         </div>
@@ -219,7 +219,7 @@ export function CFDChecklist({ params, SR, SC, U }) {
       {/* Checks by category */}
       {cats.map(cat=>(
         <div key={cat} style={{background:SC.panel, border:`1px solid ${SC.border}`, borderRadius:8, padding:12}}>
-          <div style={{fontSize:9, color:SC.muted, fontFamily:"'DM Mono',monospace",
+          <div style={{fontSize:9, color:SC.muted, fontFamily:"'IBM Plex Mono',monospace",
             letterSpacing:'0.12em', marginBottom:8}}>{cat.toUpperCase()}</div>
           <div style={{display:'flex', flexDirection:'column', gap:5}}>
             {checks.filter(c=>c.cat===cat).map((c,i)=>(
@@ -227,8 +227,8 @@ export function CFDChecklist({ params, SR, SC, U }) {
                 borderRadius:5, background:c.ok?`${SC.green}0a`:`${SC.red}0a`,
                 border:`1px solid ${c.ok?SC.green+'33':SC.red+'33'}`}}>
                 <span style={{fontSize:12, flexShrink:0}}>{mark(c.ok)}</span>
-                <span style={{fontSize:10, color:SC.text, flex:1, fontFamily:"'DM Mono',monospace"}}>{c.label}</span>
-                <span style={{fontSize:8, color:SC.muted, fontFamily:"'DM Mono',monospace",
+                <span style={{fontSize:10, color:SC.text, flex:1, fontFamily:"'IBM Plex Mono',monospace"}}>{c.label}</span>
+                <span style={{fontSize:8, color:SC.muted, fontFamily:"'IBM Plex Mono',monospace",
                   whiteSpace:'nowrap'}}>{c.detail}</span>
               </div>
             ))}

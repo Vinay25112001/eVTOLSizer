@@ -26,9 +26,15 @@
    Axes. The geometry is +x aft, +y right, +z up. three.js is y up: a
    point maps to (-(x - cx), z - zGround, y), a proper rotation, so the
    nose points along +x, the right wing along +z, and the ground is y = 0.
+
+   Pose. Every rotor is drawn in the HOVER pose, the attitude the geometry
+   hands over. A tilting nacelle is the one body authored in the airplane
+   attitude, and it is stood up through engine/mesh.js's own posing
+   function, about its rotor's hub, exactly as the other 3D views do it.
    ===================================================================== */
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { tiltAngleRad, tiltPt } from "../../engine/mesh.js";
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const DEG = Math.PI / 180;
@@ -306,8 +312,16 @@ export function buildEvtol(plan) {
         const m = mesh(g, mat, "fuselage"); fuselageMeshes.push(m);
         return [m];
       }
-      case "sponson": case "nacelle":
-        return [mesh(ringsGeometry(loftRings(b, { around: 32, maxStep: 0.12 }).map((r) => r.pts), W), M.white, b.kind)];
+      case "sponson": case "nacelle": {
+        let rings = loftRings(b, { around: 32, maxStep: 0.12 }).map((r) => r.pts);
+        if (b.kind === "nacelle" && b.tilting) {
+          /* The same mate, pivot and angle as engine/mesh.js, at tilt 0. */
+          const mate = plan.geo.bodies.find((o) => o.kind === "rotor" && String(o.label ?? "") === String(b.label ?? "").replace(/ nacelle$/, ""));
+          const c = mate ? (mate.hinge || mate) : null, a = tiltAngleRad(b, 0);
+          if (c) rings = rings.map((pts) => pts.map(([x, y, z]) => tiltPt(x - c.x, y - c.y, z - c.z, c.x, c.y, c.z, a)));
+        }
+        return [mesh(ringsGeometry(rings, W), M.white, b.kind)];
+      }
       case "wing": case "htail": case "vtail": case "vfin":
         return surfaceSections(b).map((secs) => mesh(ringsGeometry(surfaceRings(secs), W), M.surface, b.kind));
       case "control": {
@@ -339,8 +353,10 @@ export function buildEvtol(plan) {
           const spin = latheBetween(W(b.x, b.y ?? 0, b.z), W(b.x + 3.2 * sr, b.y ?? 0, b.z),
             [[sr * 1.02, 0], [sr * 1.0, 0.25], [sr * 0.8, 0.6], [sr * 0.42, 0.88], [0.001, 1]], M.white, 32);
           out.push(spin);
-        } else if (!b.hasStack) {
-          out.push(latheBetween(W(b.x, b.y, b.z - hubR * 0.5), W(b.x, b.y, b.z + hubR * 0.5), [[hubR, 0], [hubR, 1]], M.gunmetal));
+        } else {
+          /* Parked: overlapping discs are parked out of each other's way. */
+          blades.rotation.y = plan.rotorPhase?.get(b.label) ?? 0;
+          if (!b.hasStack) out.push(latheBetween(W(b.x, b.y, b.z - hubR * 0.5), W(b.x, b.y, b.z + hubR * 0.5), [[hubR, 0], [hubR, 1]], M.gunmetal));
         }
         disc.position.copy(W(b.x, b.y ?? 0, b.z));
         rotors.push({ blades, kind: b.kind, label: b.label, radius: R, angle: 0 });
@@ -420,9 +436,8 @@ export function buildEvtol(plan) {
 
   return { group: root, items, groups: [...groups.values()], rotors, fuselageMeshes, stands, person, materials: M, toWorld: W };
 }
-const GROUP_LABEL = (plan, g) => ({ fuselage: "Fuselage", seats: "Seats (drawn)", battery: "Battery pack (drawn)", wing: "Wing", controls: "Flaps & ailerons",
-  tail: plan.items.some((i) => i.label === "V-tail") ? "V-tail" : "Tail", booms: "Booms", pylons: "Boom pylons", motors: "Lift motors", nacelles: "Nacelles",
-  rotors: "Lift rotors", pusher: "Cruise pusher", gear: "Landing gear" }[g] ?? g);
+/* The plan names the groups for its layout; the drawn ones say so. */
+const GROUP_LABEL = (plan, g) => `${plan.groupLabel(g)}${g === "seats" || g === "battery" ? " (drawn)" : ""}`;
 
 /* A seat (drawn): base, pan, reclined back and headrest, facing forward. */
 function seatMeshes(s, M, W) {

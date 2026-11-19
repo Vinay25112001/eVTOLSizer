@@ -9,8 +9,6 @@ import { aircraftGeometry } from "../engine/geometry.js";
 import { Aircraft3D } from "../panels/Aircraft3D.jsx";
 import { Aircraft3DView } from "../panels/Aircraft3DView.jsx";
 import { MissionAnimation } from "../panels/MissionAnimation.jsx";
-import { MissionFlight3D } from "../panels/mission-flight-3d/MissionFlight3D.jsx";
-import { EvtolBuildLab } from "../panels/evtol-build/EvtolBuildLab.jsx";
 
 /* Tab 15 — OpenVSP.
    Extracted from App.jsx. Receives the App context as a single `ctx`
@@ -40,21 +38,13 @@ export function OpenVSPTab(ctx) {
                 <Panel title="Aircraft layout — interactive 3D" onSave={false}>
                   <Aircraft3DView params={params} SR={SR}/>
                 </Panel>
-                {/* The same sized aircraft put together step by step on a
-                    hangar floor ruled in metres: its parts at the sizing's
-                    own dimensions, the shapes nothing sizes marked as drawn.
-                    It hands over to the 3D flight below. */}
-                <EvtolBuildLab params={params} SR={SR}/>
+                {/* The build lab and its 3D test flight moved to their own
+                    tab, Build eVTOL (tabs/BuildEvtolTab.jsx), 2026-11-18. */}
                 {/* The layout above is the aircraft standing still. This is
                     the same aircraft flying the mission it was sized for,
                     positioned by engine/mission-path.js rather than by any
                     motion invented here. */}
                 <MissionAnimation params={params} SR={SR}/>
-                {/* The same mission again, in 3D at true scale: the sized
-                    aircraft flying it, positioned by the same mission-path
-                    module. It stops at each hover/wing-borne step and says
-                    the transition is not modelled, rather than drawing one. */}
-                <MissionFlight3D params={params} SR={SR}/>
                 {/* The old orthographic four-up is kept: it is the view an
                     engineer checks proportions in, and it prints cleanly. */}
                 <Panel title="Orthographic four-up (Top / Front / Side / Iso)" onSave={false}>
@@ -65,9 +55,9 @@ export function OpenVSPTab(ctx) {
                   border:`1px solid ${SC.border}`,borderRadius:8,padding:"16px 20px",
                   display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
                   <div>
-                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.15em",marginBottom:4}}>GEOMETRY EXPORT</div>
+                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.15em",marginBottom:4}}>GEOMETRY EXPORT</div>
                     <div style={{fontSize:22,fontWeight:800,color:SC.amber,letterSpacing:"-0.03em"}}>OpenVSP Export</div>
-                    <div style={{fontSize:10,color:SC.muted,marginTop:2,fontFamily:"'DM Mono',monospace"}}>
+                    <div style={{fontSize:10,color:SC.muted,marginTop:2,fontFamily:"'IBM Plex Mono',monospace"}}>
                       Download the .vsp3 file and open directly in OpenVSP 3.28+
                     </div>
                   </div>
@@ -86,7 +76,7 @@ export function OpenVSPTab(ctx) {
                       }}
                       style={{padding:"10px 20px",background:`linear-gradient(135deg,#3b82f6,#6366f1)`,
                         border:"none",borderRadius:6,color:"#ffffff",fontSize:12,fontWeight:800,
-                        cursor:"pointer",letterSpacing:"0.04em",fontFamily:"'DM Mono',monospace",
+                        cursor:"pointer",letterSpacing:"0.04em",fontFamily:"'IBM Plex Mono',monospace",
                         boxShadow:"0 0 18px #3b82f644",display:"flex",alignItems:"center",gap:6}}>
                       {!user&&<span>⚿</span>}↓ .vsp3
                     </button>
@@ -105,9 +95,9 @@ export function OpenVSPTab(ctx) {
                   ].map(([title,type,detail,col])=>(
                     <div key={title} style={{background:SC.panel,border:`1px solid ${col}33`,
                       borderLeft:`3px solid ${col}`,borderRadius:6,padding:"10px 12px"}}>
-                      <div style={{fontSize:11,fontWeight:700,color:col,fontFamily:"'DM Mono',monospace",marginBottom:3}}>{title}</div>
-                      <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>{type}</div>
-                      <div style={{fontSize:9,color:SC.text,fontFamily:"'DM Mono',monospace"}}>{detail}</div>
+                      <div style={{fontSize:11,fontWeight:700,color:col,fontFamily:"'IBM Plex Mono',monospace",marginBottom:3}}>{title}</div>
+                      <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>{type}</div>
+                      <div style={{fontSize:9,color:SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>{detail}</div>
                     </div>
                   ))}
                 </div>
@@ -115,7 +105,7 @@ export function OpenVSPTab(ctx) {
                 {/* Two-column: geometry table + coordinate diagram */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                   <Panel title="Geometry Placement — OpenVSP Coordinates (X: nose→tail, Y: port→stbd, Z: up)">
-                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:10,fontFamily:"'DM Mono',monospace"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:10,fontFamily:"'IBM Plex Mono',monospace"}}>
                       <thead>
                         <tr style={{borderBottom:`1px solid ${SC.border}`}}>
                           {["Component",`x_LE (${U.lenU})`,`y (${U.lenU})`,`z (${U.lenU})`,"Dihedral"].map(hdr=>(
@@ -188,7 +178,7 @@ export function OpenVSPTab(ctx) {
 
                   <Panel title="Parent–Child Tree & Design Values">
                     {/* Tree view */}
-                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,lineHeight:1.8}}>
+                    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:10,lineHeight:1.8}}>
                       {[
                         {indent:0,icon:"",label:"Fuselage (FUSELAGE_GEOM)",detail:`L=${params.fusLen}m  Ø=${params.fusDiam}m`,col:"#94a3b8"},
                         {indent:1,icon:"",label:"Main Wing (WING_GEOM)",detail:`b=${SR.bWing}m  S=${SR.Swing}m²  AR=${params.AR}  λ=${params.taper}`,col:SC.blue},
@@ -259,8 +249,8 @@ export function OpenVSPTab(ctx) {
                       ].map(([k,v])=>(
                         <div key={k} style={{display:"flex",justifyContent:"space-between",
                           padding:"3px 6px",background:SC.bg,borderRadius:3}}>
-                          <span style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{k}</span>
-                          <span style={{fontSize:9,color:SC.amber,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{v}</span>
+                          <span style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{k}</span>
+                          <span style={{fontSize:9,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{v}</span>
                         </div>
                       ))}
                     </div>
@@ -280,9 +270,9 @@ export function OpenVSPTab(ctx) {
                       <div key={n} style={{display:"flex",gap:8,marginBottom:8}}>
                         <div style={{width:18,height:18,borderRadius:"50%",background:"#3b82f6",flexShrink:0,
                           display:"flex",alignItems:"center",justifyContent:"center",
-                          fontSize:8,fontWeight:800,color:"#ffffff",fontFamily:"'DM Mono',monospace"}}>{n}</div>
+                          fontSize:8,fontWeight:800,color:"#ffffff",fontFamily:"'IBM Plex Mono',monospace"}}>{n}</div>
                         <div>
-                          <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace"}}>{title}</div>
+                          <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>{title}</div>
                           <div style={{fontSize:9,color:SC.muted,marginTop:1,lineHeight:1.5}}>{text}</div>
                         </div>
                       </div>
@@ -316,7 +306,7 @@ export function OpenVSPTab(ctx) {
                     }}
                     style={{padding:"12px 36px",background:`linear-gradient(135deg,#3b82f6,#6366f1)`,
                       border:"none",borderRadius:6,color:"#ffffff",fontSize:13,fontWeight:800,
-                      cursor:"pointer",letterSpacing:"0.06em",fontFamily:"'DM Mono',monospace",
+                      cursor:"pointer",letterSpacing:"0.06em",fontFamily:"'IBM Plex Mono',monospace",
                       boxShadow:"0 0 28px #3b82f644",display:"flex",alignItems:"center",gap:8}}>
                     {!user&&<span>⚿</span>}↓  Download Trail1_eVTOL.vsp3
                   </button>

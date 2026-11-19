@@ -43,7 +43,7 @@ import * as CFG from "../src/engine/configuration.js";
 import { aircraftGeometry } from "../src/engine/geometry.js";
 import { buildMesh, PALETTE } from "../src/engine/mesh.js";
 import { missionPathAt, groundTrackM, NOT_MODELLED, PHASES } from "../src/engine/mission-path.js";
-import { TABS } from "../src/lib/tabs.js";
+import { TABS, TAB_GROUPS } from "../src/lib/tabs.js";
 import { engineInputs } from "../src/lib/designfile.js";
 import * as FV from "../src/panels/mission-flight-3d/flight-view.js";
 
@@ -313,12 +313,16 @@ console.log("\n3. Source");
   const FLAGGED = /\b(MTOW|PmotKW|Torque|MotMass|CrateHov|CrateCr|Rint|Pheat|Ncells|vi_ind|DLrotor|DL_installed)\b/;
   const hits = ["MissionFlight3D.jsx", "flight-view.js", "flight-scene.js"].filter((f) => FLAGGED.test(read(`src/panels/mission-flight-3d/${f}`)));
   check("no audit-flagged output and no mass is read by the view", hits.length === 0, hits.join(", "));
-  const vsp = read("src/tabs/OpenVSPTab.jsx");
-  const ia = vsp.indexOf("<MissionAnimation params={params} SR={SR}/>"), ib = vsp.indexOf("<MissionFlight3D params={params} SR={SR}/>");
-  const between = ia >= 0 && ib > ia ? vsp.slice(ia, ib) : "";
-  check("the OpenVSP tab mounts the 3D flight directly under the 2D animation",
-    ia >= 0 && ib > ia && !/<Panel\b/.test(between) && (vsp.match(/<MissionFlight3D /g) || []).length === 1);
-  check("no new tab: the tab list is still the 29 the validation record counts", TABS.length === 29 && TABS[15] === "OpenVSP", `${TABS.length} tabs`);
+  /* The flight moved to the Build eVTOL tab with the build lab (2026-11-18);
+     the 2D animation stays on the OpenVSP tab. */
+  const vsp = read("src/tabs/OpenVSPTab.jsx"), bt = read("src/tabs/BuildEvtolTab.jsx");
+  const ia = bt.indexOf("<EvtolBuildLab params={params} SR={SR}/>"), ib = bt.indexOf("<MissionFlight3D params={params} SR={SR}/>");
+  check("the Build eVTOL tab mounts the 3D flight once, after the build, and the OpenVSP tab keeps only the 2D animation",
+    ia >= 0 && ib > ia && (bt.match(/<MissionFlight3D /g) || []).length === 1
+    && !/MissionFlight3D/.test(vsp.replace(/\/\*[\s\S]*?\*\//g, "")) && vsp.includes("<MissionAnimation params={params} SR={SR}/>"));
+  const tools = TAB_GROUPS.find((g) => g.label === "Tools")?.tabs || [];
+  check("one new tab only: Build eVTOL appended at 29, beside OpenVSP in Tools", TABS.length === 30 && TABS[15] === "OpenVSP" && TABS[29] === "Build eVTOL"
+    && tools.indexOf(29) === tools.indexOf(15) + 1, `${TABS.length} tabs`);
   check("every scene gets a fresh canvas, removed with it, so a rebuilt scene never inherits a released WebGL context",
     /const canvas = document\.createElement\("canvas"\);/.test(panel) && /return \(\) => \{ s\.dispose\(\); sceneRef\.current = null; canvas\.remove\(\); \};/.test(panel)
     && !/<canvas/.test(panel) && /forceContextLoss/.test(scene));

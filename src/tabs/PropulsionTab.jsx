@@ -43,7 +43,7 @@ export function PropulsionTab(ctx) {
                     ].map(([k,v],i)=>(
                       <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:`1px solid #0f131a`}}>
                         <span style={{fontSize:10,color:SC.muted}}>{k}</span>
-                        <span style={{fontSize:10,color:SC.amber,fontFamily:"'DM Mono',monospace",fontWeight:600}}>{v}</span>
+                        <span style={{fontSize:10,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace",fontWeight:600}}>{v}</span>
                       </div>
                     ))}
                     </div>

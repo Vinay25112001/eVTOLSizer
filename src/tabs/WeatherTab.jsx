@@ -14,7 +14,7 @@ export function WeatherTab(ctx) {
                 {/* Header */}
                 <div style={{background:SC.panel,
                   border:`1px solid #3b82f644`,borderRadius:10,padding:"16px 20px"}}>
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>REAL-TIME ATMOSPHERIC CONDITIONS — OPEN-METEO API</div>
+                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>REAL-TIME ATMOSPHERIC CONDITIONS — OPEN-METEO API</div>
                   <div style={{fontSize:18,fontWeight:800,color:SC.text,marginBottom:6}}>
                     <span style={{color:SC.blue}}>Weather</span> & Atmosphere Integration
                   </div>
@@ -31,29 +31,29 @@ export function WeatherTab(ctx) {
                       onKeyDown={evt => evt.key==="Enter"&&searchCity()}
                       placeholder="Type any city, e.g. Denver, Dubai, Singapore..."
                       style={{flex:1,background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:6,
-                        color:SC.text,fontSize:12,padding:"9px 14px",fontFamily:"'DM Mono',monospace",outline:"none"}}
+                        color:SC.text,fontSize:12,padding:"9px 14px",fontFamily:"'IBM Plex Mono',monospace",outline:"none"}}
                       onFocus={evt => evt.target.style.borderColor=SC.blue}
                       onBlur={evt => evt.target.style.borderColor=SC.border}/>
                     <button onClick={searchCity} disabled={wxLoading} type="button"
                       style={{padding:"9px 20px",background:`linear-gradient(135deg,#1e3a5f,#1e40af)`,
                         border:`1px solid ${SC.blue}`,borderRadius:6,color:"#93c5fd",fontSize:12,
-                        fontWeight:700,cursor:wxLoading?"not-allowed":"pointer",fontFamily:"'DM Mono',monospace"}}>
+                        fontWeight:700,cursor:wxLoading?"not-allowed":"pointer",fontFamily:"'IBM Plex Mono',monospace"}}>
                       {wxLoading?"⟳ Fetching...":"Get Weather"}
                     </button>
                   </div>
                   {wxError&&(
                     <div style={{padding:"8px 12px",background:`${SC.red}15`,border:`1px solid ${SC.red}44`,
-                      borderRadius:6,color:SC.red,fontSize:11,fontFamily:"'DM Mono',monospace",marginBottom:8}}>
+                      borderRadius:6,color:SC.red,fontSize:11,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>
                       ✗ {wxError}
                     </div>
                   )}
                   {/* Quick presets */}
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6,letterSpacing:"0.1em"}}>QUICK ACCESS — REFERENCE CITIES</div>
+                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6,letterSpacing:"0.1em"}}>QUICK ACCESS — REFERENCE CITIES</div>
                   <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                     {WX_PRESETS.map(city=>(
                       <button key={city.name} onClick={()=>fetchWeather(city.lat,city.lon,city.name,city.alt)} type="button"
                         style={{padding:"5px 10px",background:SC.bg,border:`1px solid ${SC.border}`,
-                          borderRadius:5,cursor:"pointer",fontSize:10,fontFamily:"'DM Mono',monospace",
+                          borderRadius:5,cursor:"pointer",fontSize:10,fontFamily:"'IBM Plex Mono',monospace",
                           color:SC.text,display:"flex",alignItems:"center",gap:4}}
                         onMouseEnter={evt => evt.currentTarget.style.borderColor=SC.blue}
                         onMouseLeave={evt => evt.currentTarget.style.borderColor=SC.border}>
@@ -81,8 +81,8 @@ export function WeatherTab(ctx) {
                             ["ΔT from ISA",`${wxData.deltaT>0?"+":""}${wxData.deltaT.toFixed(1)}°C`,wxData.deltaT>10||wxData.deltaT<-10?SC.red:SC.amber],
                           ].map(([lbl,val,col])=>(
                             <div key={lbl} style={{background:SC.bg,borderRadius:6,padding:"8px 10px",border:`1px solid ${SC.border}`}}>
-                              <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:2}}>{lbl}</div>
-                              <div style={{fontSize:11,color:col,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{val}</div>
+                              <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:2}}>{lbl}</div>
+                              <div style={{fontSize:11,color:col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{val}</div>
                             </div>
                           ))}
                         </div>
@@ -96,21 +96,21 @@ export function WeatherTab(ctx) {
                           <div key={lbl} style={{display:"flex",alignItems:"center",justifyContent:"space-between",
                             padding:"10px 0",borderBottom:`1px solid ${SC.border}`}}>
                             <div>
-                              <div style={{fontSize:11,color:SC.text,fontFamily:"'DM Mono',monospace",fontWeight:600}}>{lbl}</div>
-                              <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{sub}</div>
+                              <div style={{fontSize:11,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",fontWeight:600}}>{lbl}</div>
+                              <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{sub}</div>
                             </div>
-                            <div style={{fontSize:14,fontWeight:800,color:col,fontFamily:"'DM Mono',monospace"}}>{val}</div>
+                            <div style={{fontSize:14,fontWeight:800,color:col,fontFamily:"'IBM Plex Mono',monospace"}}>{val}</div>
                           </div>
                         ))}
                         {/* Density ratio bar */}
                         <div style={{marginTop:10}}>
-                          <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>Density ratio σ = {wxData.sigma.toFixed(3)}</div>
+                          <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>Density ratio σ = {wxData.sigma.toFixed(3)}</div>
                           <div style={{height:8,background:SC.border,borderRadius:4,overflow:"hidden"}}>
                             <div style={{width:`${wxData.sigma*100}%`,height:"100%",
                               background:`linear-gradient(90deg,${SC.red},${SC.amber},${SC.green})`,
                               borderRadius:4,transition:"width 0.5s"}}/>
                           </div>
-                          <div style={{display:"flex",justifyContent:"space-between",fontSize:8,color:SC.subtle,marginTop:2,fontFamily:"'DM Mono',monospace"}}>
+                          <div style={{display:"flex",justifyContent:"space-between",fontSize:8,color:SC.subtle,marginTop:2,fontFamily:"'IBM Plex Mono',monospace"}}>
                             <span>0 (vacuum)</span><span>0.5</span><span>1.0 (ISA SL)</span>
                           </div>
                         </div>
@@ -120,7 +120,7 @@ export function WeatherTab(ctx) {
                     {/* Performance impacts */}
                     {wxResults&&(
                       <Panel title={` Performance Impact vs ISA Standard — at ${wxData.cityName}`}>
-                        <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:12,lineHeight:1.6}}>
+                        <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:12,lineHeight:1.6}}>
                           Showing how <span style={{color:SC.blue}}>actual atmospheric conditions</span> change your aircraft's performance
                           vs the ISA standard day (T=15°C, P=1013.25 hPa, ρ=1.225 kg/m³) used in the main physics engine.
                         </div>
@@ -141,23 +141,23 @@ export function WeatherTab(ctx) {
                           ].map(({label,isa,actual,delta,note})=>(
                             <div key={label} style={{background:SC.bg,border:`1px solid ${Math.abs(delta)>10?SC.amber:SC.border}`,
                               borderRadius:8,padding:"12px 14px",borderLeft:`3px solid ${delta>5?SC.red:delta<-2?SC.green:SC.amber}`}}>
-                              <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace",marginBottom:6}}>{label}</div>
+                              <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6}}>{label}</div>
                               <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                                <span style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>ISA: {isa}</span>
-                                <span style={{fontSize:10,color:SC.blue,fontFamily:"'DM Mono',monospace",fontWeight:700}}>→ {actual}</span>
+                                <span style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>ISA: {isa}</span>
+                                <span style={{fontSize:10,color:SC.blue,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>→ {actual}</span>
                               </div>
-                              <div style={{fontSize:13,fontWeight:800,fontFamily:"'DM Mono',monospace",
+                              <div style={{fontSize:13,fontWeight:800,fontFamily:"'IBM Plex Mono',monospace",
                                 color:delta>5?SC.red:delta>2?SC.amber:delta<-2?SC.green:SC.muted,marginBottom:4}}>
                                 {delta>0?"+":""}{delta.toFixed(1)}%
                               </div>
-                              <div style={{fontSize:9,color:SC.subtle,fontFamily:"'DM Mono',monospace",lineHeight:1.4}}>{note}</div>
+                              <div style={{fontSize:9,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.4}}>{note}</div>
                             </div>
                           ))}
                         </div>
 
                         {/* Summary insight */}
                         <div style={{padding:"10px 14px",background:`${SC.blue}11`,border:`1px solid ${SC.blue}33`,
-                          borderRadius:6,fontSize:11,color:SC.text,fontFamily:"'DM Mono',monospace",lineHeight:1.7}}>
+                          borderRadius:6,fontSize:11,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.7}}>
                           <strong style={{color:SC.blue}}> Summary for {wxData.cityName}:</strong>{" "}
                           Air density is <strong style={{color:wxResults.sigma>1?SC.green:wxResults.sigma<0.9?SC.red:SC.amber}}>
                             {wxResults.sigma>1?"higher":"lower"} than ISA</strong> (σ={wxResults.sigma}).
@@ -176,7 +176,7 @@ export function WeatherTab(ctx) {
                 )}
 
                 {!wxData&&!wxLoading&&(
-                  <div style={{textAlign:"center",padding:"48px 0",color:SC.muted,fontFamily:"'DM Mono',monospace"}}>
+                  <div style={{textAlign:"center",padding:"48px 0",color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>
                     
                     <div style={{fontSize:14,fontWeight:600,color:SC.text,marginBottom:8}}>No location selected</div>
                     <div style={{fontSize:12,color:SC.muted}}>Search a city or click a preset above</div>

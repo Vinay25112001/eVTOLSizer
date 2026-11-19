@@ -1,7 +1,30 @@
+/* ── GLASS COCKPIT ────────────────────────────────────────────────────
+   The frame is frosted glass over a faint aviation-chart backdrop (the
+   SysML course frame, 571ba30, is the reference). Four tokens carry it:
+     page    the backdrop colour under everything
+     panel   a card: translucent, so every card in every tab reads as glass
+             without a call site changing. 0xB8 = 72 % cover. Text contrast
+             is measured on the COMPOSITE over the page, which is darker in
+             the dark theme and lighter in the light one than the old opaque
+             panel, so every ratio documented below still holds or improves.
+     glass   the frosted tint of the frame's own glass (header, tab bar,
+             input rail, status bar), drawn by ui/glass.jsx on ::before
+     accent  interactive and selected state. It was borrowed from the
+             CAUTION hue; a selected tab is not a caution.
+   `panelSolid` is the opaque panel, used when the reader asks the system
+   for reduced transparency (applyTheme below). */
 export const DARK = {
   // ── Structure ──────────────────────────────────────────────────
+  page:    "#060A10",   // backdrop under the glass
   bg:      "#0A0E14",   // Cockpit display black  (was #0d1117 / GitHub bg)
-  panel:   "#0F1520",   // Dark navy instrument panel
+  panel:   "#101722B8", // glass card; composite over page ≈ #0C121B
+  panelSolid: "#0F1520",
+  glass:   "rgb(16 23 34 / 0.62)",
+  rim:     "rgb(200 216 232 / 0.10)",   // glass hairline
+  rimHi:   "rgb(255 255 255 / 0.07)",   // the lit top edge of a pane
+  shade:   "rgb(0 0 0 / 0.85)",         // drop shadow under a pane
+  accent:  "#4FD1E8",   // 10.4:1 on the composite panel
+  accentInk: "#04121A", // text on an accent fill, 10.6:1
   inset:   "#070B11",   // Recessed surface: table zebra rows, sunken boxes
   border:  "#1C2B3A",   // Steel-blue divider
   // ── Semantic alerting vocabulary (MIL-STD-1472 Table IV) ──────
@@ -36,8 +59,19 @@ export const LIGHT = {
   /* Near-white, not blue-grey. The reference interface is a white sheet
      with hairline rules; #EEF2F7 tinted every panel edge and made the
      whole screen read cooler and busier than it is. */
+  /* The page sits a step below white so white glass reads as a surface.
+     #EEF2F6 is as dark as it can go with text still clearing AA when drawn
+     straight on it: subtle 4.63:1, phase take-off #C2410C 4.60:1. */
+  page:    "#EEF2F6",
   bg:      "#F6F7F8",   // Near-white sheet
-  panel:   "#FFFFFF",
+  panel:   "#FFFFFFB8", // glass card; composite over page ≈ #FBFCFD
+  panelSolid: "#FFFFFF",
+  glass:   "rgb(255 255 255 / 0.62)",
+  rim:     "rgb(255 255 255 / 0.75)",
+  rimHi:   "rgb(255 255 255 / 0.9)",
+  shade:   "rgb(20 40 60 / 0.30)",
+  accent:  "#0B6E99",   // 5.67:1 on white
+  accentInk: "#FFFFFF", // 5.67:1 on the accent
   inset:   "#E2E9F1",   // Recessed surface — the LIGHT counterpart. Nine call
                         // sites hard-coded "#0a0d14" for this, which is a
                         // near-black: subtle zebra striping in dark mode and
@@ -108,8 +142,20 @@ const PHC_DARK  = ["#FF8A5C","#F0C24A","#2ED8A7","#4FA8DA","#A78BFA","#9AA7B4"];
 const PHC_LIGHT = ["#C2410C","#7F6400","#0F766E","#0E5C8A","#6D28D9","#4B5563"];
 export const PHC = [...PHC_DARK];
 
-export function applyTheme(isDark) {
+/* Reduced transparency is a system setting some readers need (low vision,
+   vestibular). It is honoured by making the cards opaque here; the frame's
+   blur is turned off by the same media query in ui/glass.jsx. */
+function reducedTransparency() {
+  try {
+    return typeof window !== "undefined" && typeof window.matchMedia === "function"
+      && !!window.matchMedia("(prefers-reduced-transparency: reduce)")?.matches;
+  } catch { return false; }
+}
+
+/* `solid` is the reader's "Solid panels" display setting (lib/display.js). */
+export function applyTheme(isDark, { solid = false } = {}) {
   Object.assign(SC, isDark ? DARK : LIGHT);
+  if (solid || reducedTransparency()) SC.panel = SC.panelSolid;
   PHC.splice(0, PHC.length, ...(isDark ? PHC_DARK : PHC_LIGHT));
 }
 

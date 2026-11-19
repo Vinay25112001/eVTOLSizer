@@ -201,7 +201,7 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
             rules since the invented Part 27 set was removed, and most
             thresholds here are this tool's own. The counts below are
             computed, so the prose cannot drift from the table again. */}
-        <div style={{ fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", letterSpacing: '0.18em', marginBottom: 4 }}>EASA SC-VTOL-02 ISSUE 2 · {basis.regulation} OF {basis.total} ROWS ARE REGULATION, {basis.tool} ARE THIS TOOL&apos;S OWN</div>
+        <div style={{ fontSize: 9, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace", letterSpacing: '0.18em', marginBottom: 4 }}>EASA SC-VTOL-02 ISSUE 2 · {basis.regulation} OF {basis.total} ROWS ARE REGULATION, {basis.tool} ARE THIS TOOL&apos;S OWN</div>
         <div style={{ fontSize: 18, fontWeight: 800, color: SC.text, marginBottom: 6 }}>
           <span style={{ color: SC.amber }}>Regulatory</span> Compliance Tracker
         </div>
@@ -218,14 +218,14 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
           aircraft VTOL.2215 does not govern. Scope is not compliance and
           is no longer rendered as though it were. */}
       <div style={{ background: SC.panel, border: `1px solid ${scope.easa.applies ? (scope.easa.fixable.length ? SC.amber : SC.green) : SC.red}66`, borderRadius: 8, padding: '14px 16px' }}>
-        <div style={{ fontSize: 10, fontWeight: 800, fontFamily: "'DM Mono',monospace", color: scope.easa.applies ? (scope.easa.fixable.length ? SC.amber : SC.green) : SC.red, marginBottom: 8, letterSpacing: '0.08em' }}>
+        <div style={{ fontSize: 10, fontWeight: 800, fontFamily: "'IBM Plex Mono',monospace", color: scope.easa.applies ? (scope.easa.fixable.length ? SC.amber : SC.green) : SC.red, marginBottom: 8, letterSpacing: '0.08em' }}>
           {scope.easa.applies
             ? (scope.easa.fixable.length > 0
                 ? "SC-VTOL-02 ISSUE 2 — APPLICABILITY INCOMPLETE"
                 : "SC-VTOL-02 ISSUE 2 APPLIES, ON THE STATED GATES")
             : "SC-VTOL-02 ISSUE 2 DOES NOT APPLY TO THIS DESIGN"}
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9, fontFamily: "'DM Mono',monospace" }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9, fontFamily: "'IBM Plex Mono',monospace" }}>
           <tbody>
             {scope.easa.gates.map((g) => (
               <tr key={g.para + g.name} style={{ borderBottom: `1px solid ${SC.border}22` }}>
@@ -240,7 +240,7 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
         </table>
 
         {!scope.easa.applies && (
-          <div style={{ marginTop: 10, padding: '10px 12px', background: `${SC.red}11`, border: `1px solid ${SC.red}44`, borderRadius: 6, fontSize: 10, color: SC.red, fontFamily: "'DM Mono',monospace", lineHeight: 1.7 }}>
+          <div style={{ marginTop: 10, padding: '10px 12px', background: `${SC.red}11`, border: `1px solid ${SC.red}44`, borderRadius: 6, fontSize: 10, color: SC.red, fontFamily: "'IBM Plex Mono',monospace", lineHeight: 1.7 }}>
             The {basis.total} rules below are <strong>withdrawn, not failed</strong>. A threshold from a document that does not govern this aircraft has no verdict to give, and a PASS badge on one would be worse than showing nothing. A certification basis for this design would be another specification entirely &mdash; CS-29, or a special condition written for it.
           </div>
         )}
@@ -253,7 +253,7 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
             is obtained in the first place. What remains permanently
             unchecked is narrower and is stated below: VH and VNE. */}
         {scope.easa.applies && scope.easa.fixable.length > 0 && (
-          <div style={{ marginTop: 10, padding: '10px 12px', background: `${SC.amber}11`, border: `1px solid ${SC.amber}44`, borderRadius: 6, fontSize: 10, color: SC.amber, fontFamily: "'DM Mono',monospace", lineHeight: 1.7 }}>
+          <div style={{ marginTop: 10, padding: '10px 12px', background: `${SC.amber}11`, border: `1px solid ${SC.amber}44`, borderRadius: 6, fontSize: 10, color: SC.amber, fontFamily: "'IBM Plex Mono',monospace", lineHeight: 1.7 }}>
             Nothing above puts this design <em>out</em> of scope, but {scope.easa.fixable.length === 1 ? "one gate is" : `${scope.easa.fixable.length} gates are`} undecided and <strong>you can close {scope.easa.fixable.length === 1 ? "it" : "them"}</strong>: {scope.easa.fixable.map((g) => g.para).join(", ")}. The rules below are shown on the assumption {scope.easa.fixable.length === 1 ? "it holds" : "they hold"}.
           </div>
         )}
@@ -261,12 +261,12 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
             VERDICT, so it is reported here rather than folded into a
             gate's badge. The paragraph limits VNO and nothing else. */}
         {scope.easa.gates.filter((g) => g.conflict).map((g) => (
-          <div key={`conflict-${g.para}`} style={{ marginTop: 10, padding: '10px 12px', background: `${SC.amber}11`, border: `1px solid ${SC.amber}44`, borderRadius: 6, fontSize: 10, color: SC.amber, fontFamily: "'DM Mono',monospace", lineHeight: 1.7 }}>
+          <div key={`conflict-${g.para}`} style={{ marginTop: 10, padding: '10px 12px', background: `${SC.amber}11`, border: `1px solid ${SC.amber}44`, borderRadius: 6, fontSize: 10, color: SC.amber, fontFamily: "'IBM Plex Mono',monospace", lineHeight: 1.7 }}>
             <strong>{g.para} &mdash; the declaration disagrees with the design.</strong> {g.conflict}
           </div>
         ))}
         {scope.easa.applies && scope.easa.undecided.length > scope.easa.fixable.length && (
-          <div style={{ marginTop: 10, padding: '10px 12px', background: `${SC.muted}11`, border: `1px solid ${SC.border}`, borderRadius: 6, fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", lineHeight: 1.7 }}>
+          <div style={{ marginTop: 10, padding: '10px 12px', background: `${SC.muted}11`, border: `1px solid ${SC.border}`, borderRadius: 6, fontSize: 9, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace", lineHeight: 1.7 }}>
             {scope.easa.undecided.filter((g) => !g.fixable).map((g) => g.para).join(", ")} cannot be decided by this tool at any setting.
           </div>
         )}
@@ -275,7 +275,7 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
             VNO is checked against the 250 KCAS limit ONLY. Stating the
             half that is not checked is the whole point of the panel. */}
         {scope.easa.applies && Number(params?.vno) > 0 && (
-          <div style={{ marginTop: 10, padding: '10px 12px', background: `${SC.muted}11`, border: `1px solid ${SC.border}`, borderRadius: 6, fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", lineHeight: 1.7 }}>
+          <div style={{ marginTop: 10, padding: '10px 12px', background: `${SC.muted}11`, border: `1px solid ${SC.border}`, borderRadius: 6, fontSize: 9, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace", lineHeight: 1.7 }}>
             V<sub>NO</sub> is checked against VTOL.2000(d)&apos;s {EASA_VNO_LIMIT_KT} KCAS and <em>nothing else</em>. MOC-1 (c) also requires V<sub>NO</sub> &le; V<sub>H</sub> and V<sub>NO</sub> &le; V<sub>NE</sub>; this engine computes no V<sub>H</sub>, V<sub>NE</sub> or V<sub>D</sub>, so those two bounds are unchecked here and remain the applicant&apos;s to show. The declared value is compared as stated in KCAS; the cruise figure beside it is EAS.
           </div>
         )}
@@ -285,10 +285,10 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
             5 700 kg and 12 500 lb differ by 30.1 kg, and the seat limits
             differ by three. See the header of lib/regdb.js. */}
         <details style={{ marginTop: 10 }}>
-          <summary style={{ fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", cursor: 'pointer' }}>
+          <summary style={{ fontSize: 9, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace", cursor: 'pointer' }}>
             FAA AC 21.17-4 appendix A applies differently &mdash; show its gate
           </summary>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9, fontFamily: "'DM Mono',monospace", marginTop: 6 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9, fontFamily: "'IBM Plex Mono',monospace", marginTop: 6 }}>
             <tbody>
               {scope.faa.map((g) => (
                 <tr key={g.para + g.name} style={{ borderBottom: `1px solid ${SC.border}22` }}>
@@ -301,7 +301,7 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
               ))}
             </tbody>
           </table>
-          <div style={{ fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", marginTop: 6, lineHeight: 1.7 }}>
+          <div style={{ fontSize: 9, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace", marginTop: 6, lineHeight: 1.7 }}>
             No rule in the table below is an FAA rule. This gate is shown for contrast only: the FAA splits on post-failure capability (&ldquo;essential&rdquo; vs &ldquo;increased&rdquo; performance, PL.2000(b)) where EASA splits on the intended operation, and AC 21.17-4 states no energy reserve at all.
           </div>
         </details>
@@ -314,21 +314,21 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
           this tool does NOT model is named rather than quietly dropped. */}
       {scope.easa.applies && (
         <div style={{ background: SC.panel, border: `1px solid ${SC.border}`, borderRadius: 8, padding: '14px 16px' }}>
-          <div style={{ fontSize: 10, fontWeight: 800, fontFamily: "'DM Mono',monospace", color: SC.amber, marginBottom: 8, letterSpacing: '0.08em' }}>
+          <div style={{ fontSize: 10, fontWeight: 800, fontFamily: "'IBM Plex Mono',monospace", color: SC.amber, marginBottom: 8, letterSpacing: '0.08em' }}>
             VTOL.2005(b) — CERTIFIED CATEGORY {category.toUpperCase()}
           </div>
-          <div style={{ fontSize: 10, color: SC.muted, fontFamily: "'DM Mono',monospace", lineHeight: 1.7, marginBottom: 10 }}>
+          <div style={{ fontSize: 10, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace", lineHeight: 1.7, marginBottom: 10 }}>
             Category Enhanced is <strong style={{ color: SC.amber }}>mandatory</strong> for operations over congested areas or for commercial air transport of passengers &mdash; the mission this tool sizes for. Basic requires only a controlled emergency landing, where Enhanced requires continued safe flight and landing. Set it on the design inputs; it is not a label.
           </div>
-          <div style={{ fontSize: 9, color: SC.text, fontFamily: "'DM Mono',monospace", fontWeight: 700, marginBottom: 4 }}>What this engine does with it</div>
+          <div style={{ fontSize: 9, color: SC.text, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700, marginBottom: 4 }}>What this engine does with it</div>
           {CATEGORY_EFFECTS.modelled.map((e) => (
-            <div key={e.para + e.what} style={{ fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", lineHeight: 1.7, paddingLeft: 10 }}>
+            <div key={e.para + e.what} style={{ fontSize: 9, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace", lineHeight: 1.7, paddingLeft: 10 }}>
               <span style={{ color: SC.amber }}>{e.para}</span> &nbsp;{e.what} &nbsp;<span style={{ opacity: 0.6 }}>[{e.where}]</span>
             </div>
           ))}
-          <div style={{ fontSize: 9, color: SC.text, fontFamily: "'DM Mono',monospace", fontWeight: 700, margin: '8px 0 4px' }}>Category-conditioned in the specification, NOT modelled here</div>
+          <div style={{ fontSize: 9, color: SC.text, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700, margin: '8px 0 4px' }}>Category-conditioned in the specification, NOT modelled here</div>
           {CATEGORY_EFFECTS.notModelled.map((e) => (
-            <div key={e.para + e.what} style={{ fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", lineHeight: 1.7, paddingLeft: 10, opacity: 0.8 }}>
+            <div key={e.para + e.what} style={{ fontSize: 9, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace", lineHeight: 1.7, paddingLeft: 10, opacity: 0.8 }}>
               <span style={{ color: SC.muted }}>{e.para}</span> &nbsp;{e.what}
             </div>
           ))}
@@ -342,21 +342,21 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
             onClick={() => toggleExpand(regName)}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', cursor: 'pointer', background: SC.bg, borderBottom: `1px solid ${SC.border}` }}>
             <div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: SC.text, fontFamily: "'DM Mono',monospace" }}>{regName}</span>
-              <span style={{ fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", marginLeft: 12 }} title={regInfo.source}>Thresholds read from the documents: {regInfo.lastChecked}</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: SC.text, fontFamily: "'IBM Plex Mono',monospace" }}>{regName}</span>
+              <span style={{ fontSize: 9, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace", marginLeft: 12 }} title={regInfo.source}>Thresholds read from the documents: {regInfo.lastChecked}</span>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {(() => {
                 const results = regInfo.rules.map(r => evaluate(r, params, SR));
                 const fails = results.filter(r => r.pass === false).length;
-                return <span style={{ fontSize: 10, fontWeight: 700, fontFamily: "'DM Mono',monospace", color: fails > 0 ? SC.red : SC.green }}>{fails > 0 ? `✗ ${fails} FAIL` : 'ALL PASS'}</span>;
+                return <span style={{ fontSize: 10, fontWeight: 700, fontFamily: "'IBM Plex Mono',monospace", color: fails > 0 ? SC.red : SC.green }}>{fails > 0 ? `✗ ${fails} FAIL` : 'ALL PASS'}</span>;
               })()}
               <span style={{ color: SC.muted, fontSize: 12 }}>{expanded[regName] ? '▲' : '▼'}</span>
             </div>
           </div>
           {expanded[regName] && (
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9, fontFamily: "'DM Mono',monospace" }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9, fontFamily: "'IBM Plex Mono',monospace" }}>
                 <thead>
                   <tr style={{ background: SC.bg }}>
                     {['Rule ID', 'Requirement', 'Threshold', 'Your Design', 'Status', 'Description'].map(h => (
@@ -418,16 +418,16 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
              currency it cannot have. The table above is the part that
              computes something. */}
       <div style={{ background: SC.panel, border: `1px solid ${SC.amber}33`, borderRadius: 8, padding: '14px 16px' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: SC.amber, fontFamily: "'DM Mono',monospace", marginBottom: 10 }}>Ask a language model what it recalls of these rules</div>
-        <div style={{ fontSize: 10, color: SC.muted, fontFamily: "'DM Mono',monospace", marginBottom: 12, lineHeight: 1.7 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: SC.amber, fontFamily: "'IBM Plex Mono',monospace", marginBottom: 10 }}>Ask a language model what it recalls of these rules</div>
+        <div style={{ fontSize: 10, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace", marginBottom: 12, lineHeight: 1.7 }}>
           Asks {GROQ_MODEL_LABEL[GROQ_MODEL_FAST]} to state, <em>without being shown the stored values</em>, what threshold it recalls for each of the {basis.regulation} rows whose basis is a real paragraph. The comparison is then made here in code. Tool rules are never sent: they have no published counterpart, so asking about one can only manufacture agreement.
           {' '}<strong style={{ color: SC.amber }}>This is not an update check.</strong> The model has no retrieval and cannot see any document. Its training data ends <strong style={{ color: SC.amber }}>{GROQ_MODEL_CUTOFF[GROQ_MODEL_FAST]}</strong> &mdash; stated here from the published model card, because the model confabulates its own cutoff when asked. Treat what it returns as a prompt to go and read the specification, never as the specification.
         </div>
         <button onClick={checkUpdates} disabled={checking} type="button"
-          style={{ padding: '9px 24px', background: checking ? 'transparent' : `linear-gradient(135deg,#1c1000,${SC.amber}88)`, border: `2px solid ${SC.amber}`, borderRadius: 7, color: checking ? SC.muted : SC.amber, fontSize: 11, fontWeight: 800, cursor: checking ? 'not-allowed' : 'pointer', fontFamily: "'DM Mono',monospace" }}>
+          style={{ padding: '9px 24px', background: checking ? 'transparent' : `linear-gradient(135deg,#1c1000,${SC.amber}88)`, border: `2px solid ${SC.amber}`, borderRadius: 7, color: checking ? SC.muted : SC.amber, fontSize: 11, fontWeight: 800, cursor: checking ? 'not-allowed' : 'pointer', fontFamily: "'IBM Plex Mono',monospace" }}>
           {checking ? '⟳ Asking the model…' : 'Ask the model'}
         </button>
-        {aiErr && <div style={{ marginTop: 10, padding: '8px 12px', background: `${SC.red}11`, border: `1px solid ${SC.red}44`, borderRadius: 6, fontSize: 10, color: SC.red, fontFamily: "'DM Mono',monospace" }}>{aiErr}</div>}
+        {aiErr && <div style={{ marginTop: 10, padding: '8px 12px', background: `${SC.red}11`, border: `1px solid ${SC.red}44`, borderRadius: 6, fontSize: 10, color: SC.red, fontFamily: "'IBM Plex Mono',monospace" }}>{aiErr}</div>}
         {aiReport && (
           <>
             {/* THE CAVEAT TRAVELS WITH THE ANSWER, not just with the
@@ -436,7 +436,7 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
                 control the reader already clicked does not follow it
                 there. Same reasoning as the assumptions printed beside
                 the flight's state of charge. */}
-            <div style={{ marginTop: 12, padding: '8px 12px', background: `${SC.amber}11`, border: `1px solid ${SC.amber}44`, borderRadius: 6, fontSize: 9, color: SC.amber, fontFamily: "'DM Mono',monospace", lineHeight: 1.6 }}>
+            <div style={{ marginTop: 12, padding: '8px 12px', background: `${SC.amber}11`, border: `1px solid ${SC.amber}44`, borderRadius: 6, fontSize: 9, color: SC.amber, fontFamily: "'IBM Plex Mono',monospace", lineHeight: 1.6 }}>
               Recalled by {GROQ_MODEL_LABEL[GROQ_MODEL_FAST]} from training data ending {GROQ_MODEL_CUTOFF[GROQ_MODEL_FAST]},
               not read from any document. It cannot tell you whether a threshold is current, and it cannot tell you
               its own cutoff either — the date above is from the published model card, not from the model.
@@ -448,7 +448,7 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
                 these are the only lines where its number and ours meet. */}
             {aiDiff && aiDiff.length > 0 && (
               <div style={{ marginTop: 8, overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9, fontFamily: "'DM Mono',monospace" }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9, fontFamily: "'IBM Plex Mono',monospace" }}>
                   <thead>
                     <tr style={{ background: SC.bg }}>
                       {['Rule', 'Requirement', 'Stored here', 'Model recalled', 'Verdict', 'Model’s own caveat'].map((h) => (
@@ -469,7 +469,7 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
                     ))}
                   </tbody>
                 </table>
-                <div style={{ fontSize: 9, color: SC.muted, fontFamily: "'DM Mono',monospace", marginTop: 6, lineHeight: 1.7 }}>
+                <div style={{ fontSize: 9, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace", marginTop: 6, lineHeight: 1.7 }}>
                   &ldquo;agrees&rdquo; means the model produced the same number while blind to ours. It is weak evidence that the
                   stored value is right and <strong>no evidence at all</strong> that it is current: SC-VTOL-02 Issue 2 is dated
                   10 June 2024, within three weeks of this model&apos;s cutoff. &ldquo;DIFFERS&rdquo; is the useful outcome &mdash;
@@ -477,7 +477,7 @@ Do not say a threshold is "current", "unchanged", or "as of" any date. Your trai
                 </div>
               </div>
             )}
-            <div style={{ marginTop: 8, padding: '14px 16px', background: SC.bg, border: `1px solid ${SC.border}`, borderRadius: 8, fontSize: 10, color: SC.text, fontFamily: "'DM Mono',monospace", lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
+            <div style={{ marginTop: 8, padding: '14px 16px', background: SC.bg, border: `1px solid ${SC.border}`, borderRadius: 8, fontSize: 10, color: SC.text, fontFamily: "'IBM Plex Mono',monospace", lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
               {aiReport}
             </div>
           </>

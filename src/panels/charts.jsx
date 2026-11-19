@@ -31,11 +31,11 @@ export function PhaseDurationPie({SR,SC,PHC,TTP}){
       </ResponsiveContainer>
       <div style={{position:"absolute",top:"38%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none"}}>
         {active?(
-          <><div style={{fontSize:13,fontWeight:800,color:PHC[activeIdx],fontFamily:"'DM Mono',monospace"}}>{active.v}s</div>
+          <><div style={{fontSize:13,fontWeight:800,color:PHC[activeIdx],fontFamily:"'IBM Plex Mono',monospace"}}>{active.v}s</div>
           <div style={{fontSize:8,color:SC.muted}}>{active.n}</div>
           <div style={{fontSize:8,color:PHC[activeIdx]}}>{(active.v/total*100).toFixed(1)}%</div></>
         ):(
-          <><div style={{fontSize:11,fontWeight:700,color:SC.amber,fontFamily:"'DM Mono',monospace"}}>{total}s</div>
+          <><div style={{fontSize:11,fontWeight:700,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace"}}>{total}s</div>
           <div style={{fontSize:8,color:SC.muted}}>total</div></>
         )}
       </div>
@@ -64,11 +64,11 @@ export function DragPie({SR,SC,TTP}){
       </ResponsiveContainer>
       <div style={{position:"absolute",top:"40%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none"}}>
         {active?(
-          <><div style={{fontSize:11,fontWeight:800,color:dragColors[activeIdx],fontFamily:"'DM Mono',monospace"}}>{active.val.toFixed(5)}</div>
+          <><div style={{fontSize:11,fontWeight:800,color:dragColors[activeIdx],fontFamily:"'IBM Plex Mono',monospace"}}>{active.val.toFixed(5)}</div>
           <div style={{fontSize:8,color:SC.muted,maxWidth:60}}>{active.name}</div>
           <div style={{fontSize:8,color:dragColors[activeIdx]}}>{(active.val/total*100).toFixed(1)}%</div></>
         ):(
-          <><div style={{fontSize:10,fontWeight:700,color:SC.amber,fontFamily:"'DM Mono',monospace"}}>{total.toFixed(4)}</div>
+          <><div style={{fontSize:10,fontWeight:700,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace"}}>{total.toFixed(4)}</div>
           <div style={{fontSize:7,color:SC.muted}}>CD₀ total</div></>
         )}
       </div>
@@ -98,11 +98,11 @@ export function MTOWPie({SR,params,SC,TTP,U}){
       </ResponsiveContainer>
       <div style={{position:"absolute",top:"38%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none"}}>
         {active?(
-          <><div style={{fontSize:13,fontWeight:800,color:wtColors[activeIdx],fontFamily:"'DM Mono',monospace"}}>{uc.mass(active.val)}</div>
+          <><div style={{fontSize:13,fontWeight:800,color:wtColors[activeIdx],fontFamily:"'IBM Plex Mono',monospace"}}>{uc.mass(active.val)}</div>
           <div style={{fontSize:7,color:SC.muted}}>{uc.massU}</div>
           <div style={{fontSize:9,color:wtColors[activeIdx]}}>{(active.val/SR.MTOW*100).toFixed(1)}%</div></>
         ):(
-          <><div style={{fontSize:13,fontWeight:700,color:SC.amber,fontFamily:"'DM Mono',monospace"}}>{uc.mass(SR.MTOW)}</div>
+          <><div style={{fontSize:13,fontWeight:700,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace"}}>{uc.mass(SR.MTOW)}</div>
           <div style={{fontSize:7,color:SC.muted}}>{uc.massU} MTOW</div></>
         )}
       </div>

@@ -23,7 +23,7 @@ import { SC } from "../../lib/theme.js";
 import { T, S, MONO } from "../../ui/tokens.js";
 import { HBarChart } from "./charts.jsx";
 
-const lbl = { fontSize: T.label, color: SC.subtle, fontFamily: MONO };
+const lbl = { fontSize: T.label, get color() { return SC.subtle; }, fontFamily: MONO }; // a getter: read at render, so it follows Day/Night
 
 /* Required rating per case, against the rating actually selected. */
 export function TyreMargins({ gear, height }) {

@@ -63,8 +63,10 @@ export const R = { sm: 2, md: 3, lg: 5 };
 /* Monospace for anything numeric, so columns align and a value that changes
    does not reflow the row beside it. `tabular-nums` matters more than the
    family choice. */
-export const MONO = "'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
-export const SANS = "system-ui, -apple-system, 'Segoe UI', sans-serif";
+export const MONO = "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+export const SANS = "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif";
+/* Condensed face for headings: the IBM Plex family the SysML course uses. */
+export const DISPLAY = "'IBM Plex Sans Condensed', 'IBM Plex Sans', system-ui, sans-serif";
 
 export const numeric = {
   fontFamily: MONO,

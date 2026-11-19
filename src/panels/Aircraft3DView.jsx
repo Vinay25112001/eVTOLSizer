@@ -222,7 +222,7 @@ export function Aircraft3DView({ params, SR, height = 460 }) {
   const btn = (on) => ({
     background: on ? SC.advisory + "22" : SC.panel, color: on ? SC.advisory : SC.muted,
     border: `1px solid ${on ? SC.advisory : SC.border}`, borderRadius: 5,
-    padding: "3px 9px", fontSize: 10.5, cursor: "pointer", fontFamily: "system-ui,sans-serif",
+    padding: "3px 9px", fontSize: 10.5, cursor: "pointer", fontFamily: "'IBM Plex Sans',system-ui,sans-serif",
   });
 
   if (!geo.extents) {
@@ -257,7 +257,7 @@ export function Aircraft3DView({ params, SR, height = 460 }) {
             onChange={(e) => { setPlaying(false); setTiltDeg(+e.target.value); }}
             style={{ flex: "1 1 180px", accentColor: SC.teal, cursor: "pointer" }}
             aria-label="nacelle tilt angle" />
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11,
+          <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11,
                          color: SC.text, minWidth: 116 }}>
             {Math.round(tiltDeg)}°{" "}
             <span style={{ color: SC.muted }}>

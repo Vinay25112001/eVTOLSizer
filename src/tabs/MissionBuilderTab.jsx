@@ -26,7 +26,7 @@ export function MissionBuilderTab(ctx) {
                 {/* Header */}
                 <div style={{background:SC.panel,
                   border:`1px solid #06d6a044`,borderRadius:10,padding:"16px 20px"}}>
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>CUSTOM MISSION PROFILE — DRAG & DROP PHASES</div>
+                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>CUSTOM MISSION PROFILE — DRAG & DROP PHASES</div>
                   <div style={{fontSize:18,fontWeight:800,color:SC.text,marginBottom:6}}>
                     <span style={{color:"#06d6a0"}}>Mission Builder</span>
                   </div>
@@ -48,7 +48,7 @@ export function MissionBuilderTab(ctx) {
                           border:`1px solid ${pt.col}55`,borderRadius:6,cursor:"pointer",
                           display:"flex",alignItems:"center",gap:6}}>
                         <span style={{fontSize:14}}>{pt.icon}</span>
-                        <span style={{fontSize:11,color:pt.col,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{pt.label}</span>
+                        <span style={{fontSize:11,color:pt.col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{pt.label}</span>
                         <span style={{fontSize:10,color:SC.muted}}>+</span>
                       </button>
                     ))}
@@ -92,7 +92,7 @@ export function MissionBuilderTab(ctx) {
                               setCustomPhases(prev=>prev.map((ph_item,j)=>j===i?{...ph_item,label:evt.target.value}:ph_item));
                             }}
                             style={{background:"transparent",border:"none",color:pt.col,fontSize:11,
-                              fontWeight:700,fontFamily:"'DM Mono',monospace",outline:"none",width:120}}/>
+                              fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",outline:"none",width:120}}/>
                           {/* Phase-specific fields */}
                           <div style={{display:"flex",gap:10,flex:1,flexWrap:"wrap"}}>
                             {pt.fields.map(field=>{
@@ -100,7 +100,7 @@ export function MissionBuilderTab(ctx) {
                                 angle:"Angle (°)",speed:"Speed (m/s)",windSpeed:"Wind (m/s)"};
                               return(
                                 <div key={field} style={{display:"flex",alignItems:"center",gap:4}}>
-                                  <span style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{fieldLabels[field]}:</span>
+                                  <span style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{fieldLabels[field]}:</span>
                                   <input type="number" value={ph[field]||0}
                                     onChange={evt=>{
                                       const v=parseFloat(evt.target.value)||0;
@@ -108,7 +108,7 @@ export function MissionBuilderTab(ctx) {
                                     }}
                                     style={{width:60,background:SC.panel,border:`1px solid ${SC.border}`,
                                       borderRadius:4,color:SC.text,fontSize:11,padding:"3px 6px",
-                                      fontFamily:"'DM Mono',monospace",outline:"none"}}
+                                      fontFamily:"'IBM Plex Mono',monospace",outline:"none"}}
                                     onFocus={evt => evt.target.style.borderColor=pt.col}
                                     onBlur={evt => evt.target.style.borderColor=SC.border}/>
                                 </div>
@@ -118,14 +118,14 @@ export function MissionBuilderTab(ctx) {
                           {/* Delete */}
                           <button onClick={()=>setCustomPhases(prev=>prev.filter((_,j)=>j!==i))} type="button"
                             style={{background:"transparent",border:`1px solid ${SC.red}44`,borderRadius:4,
-                              color:SC.red,fontSize:10,cursor:"pointer",padding:"3px 8px",fontFamily:"'DM Mono',monospace",flexShrink:0}}>
+                              color:SC.red,fontSize:10,cursor:"pointer",padding:"3px 8px",fontFamily:"'IBM Plex Mono',monospace",flexShrink:0}}>
                             ✕
                           </button>
                         </div>
                       );
                     })}
                     {customPhases.length===0&&(
-                      <div style={{textAlign:"center",padding:"32px",color:SC.muted,fontFamily:"'DM Mono',monospace",fontSize:12}}>
+                      <div style={{textAlign:"center",padding:"32px",color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",fontSize:12}}>
                         No phases. Click a phase type above to add one.
                       </div>
                     )}
@@ -134,7 +134,7 @@ export function MissionBuilderTab(ctx) {
                     <button onClick={computeCustomMission} type="button"
                       style={{padding:"10px 24px",background:`linear-gradient(135deg,#065f46,#047857)`,
                         border:`1px solid #06d6a0`,borderRadius:6,color:"#6ee7b7",fontSize:12,
-                        fontWeight:800,cursor:"pointer",fontFamily:"'DM Mono',monospace",
+                        fontWeight:800,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace",
                         boxShadow:"0 0 16px #06d6a044"}}>
                       ▶ Compute Mission
                     </button>
@@ -147,7 +147,7 @@ export function MissionBuilderTab(ctx) {
                         {id:uid2(),type:"reserve",distance:40,speed:47,   label:"Reserve"},
                       ]);setMbResults(null);}} type="button"
                       style={{padding:"10px 16px",background:"transparent",border:`1px solid ${SC.border}`,
-                        borderRadius:6,color:SC.muted,fontSize:11,cursor:"pointer",fontFamily:"'DM Mono',monospace"}}>
+                        borderRadius:6,color:SC.muted,fontSize:11,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace"}}>
                       ↺ Reset to Default
                     </button>
                   </div>
@@ -194,7 +194,7 @@ export function MissionBuilderTab(ctx) {
                     {/* Phase detail table */}
                     <Panel title="Phase-by-Phase Results">
                       <div style={{overflowX:"auto"}}>
-                        <table style={{width:"100%",borderCollapse:"collapse",fontSize:10,fontFamily:"'DM Mono',monospace"}}>
+                        <table style={{width:"100%",borderCollapse:"collapse",fontSize:10,fontFamily:"'IBM Plex Mono',monospace"}}>
                           <thead><tr style={{background:SC.panel}}>
                             {["Phase","Type",`Power (${U.powerU})`,`Energy (kWh)`,"Time (s)",`Distance (${U.distU})`,"% Total E"].map(hdr=>(
                               <th key={hdr} style={{padding:"5px 8px",color:SC.muted,fontSize:9,fontWeight:600,textAlign:"right"}}>{hdr}</th>

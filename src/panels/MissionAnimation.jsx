@@ -17,6 +17,7 @@
    ===================================================================== */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SC } from "../lib/theme.js";
+import { useDarkMode } from "../lib/display.js";
 import { Panel } from "../ui/primitives.jsx";
 import { aircraftGeometry } from "../engine/geometry.js";
 import { missionPathAt, NOT_MODELLED, PHASE_LABEL } from "../engine/mission-path.js";
@@ -98,9 +99,11 @@ export function MissionAnimation({ params, SR }) {
     return () => cancelAnimationFrame(raf);
   }, [playing, rate, Tend, phaseStart, phaseEnd]);
 
+  /* the scene carries its colours: built again for Day or Night */
+  const dark = useDarkMode();
   const scene = useMemo(
     () => buildMissionScene({ geo, r: SR, p: params, t, phaseFilter: phase, w: 900, h: 340 }),
-    [geo, SR, params, t, phase]);
+    [geo, SR, params, t, phase, dark]);
 
   if (!scene.meta.ok) {
     return <Panel title="Mission animation">

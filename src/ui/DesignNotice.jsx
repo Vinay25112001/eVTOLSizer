@@ -36,7 +36,7 @@ export function DesignNotice({ notice, onClose }) {
     <div role={notice.tone === "error" ? "alert" : "status"} data-design-notice={notice.tone}
       style={{padding:"10px 14px",marginBottom:10,borderRadius:6,background:SC.panel,
         border:`1px solid ${color}`,borderLeft:`4px solid ${color}`,
-        fontFamily:"system-ui,sans-serif",fontSize:11,color:SC.text}}>
+        fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontSize:11,color:SC.text}}>
       <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"flex-start"}}>
         <div style={{fontWeight:700,color}}>{notice.title}</div>
         <button type="button" onClick={onClose} aria-label="Dismiss"
@@ -47,11 +47,11 @@ export function DesignNotice({ notice, onClose }) {
         <div style={{marginTop:6}}>
           <button type="button" onClick={() => setOpen(o => !o)}
             style={{background:"none",border:"none",padding:0,color:SC.muted,cursor:"pointer",fontSize:10,
-              fontFamily:"'DM Mono',monospace"}}>
+              fontFamily:"'IBM Plex Mono',monospace"}}>
             {open ? "▾" : "▸"} {details.length} changed output{details.length !== 1 ? "s" : ""}
           </button>
           {open && (
-            <div style={{marginTop:4,maxHeight:180,overflowY:"auto",fontFamily:"'DM Mono',monospace",fontSize:10,color:SC.muted}}>
+            <div style={{marginTop:4,maxHeight:180,overflowY:"auto",fontFamily:"'IBM Plex Mono',monospace",fontSize:10,color:SC.muted}}>
               {details.map((d, i) => <div key={i}>{d}</div>)}
             </div>
           )}

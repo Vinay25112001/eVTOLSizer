@@ -20,7 +20,7 @@ import { buildAirframe } from "./geometry3d.js";
 import { acai, torqueToThrustRatio } from "../../engine/controlauthority.js";
 
 const num = (v, d = 1) => (v == null || !isFinite(v) ? "—" : v.toFixed(d));
-const axis = { stroke: SC.muted, fontSize: 11, fontFamily: MONO };
+const axis = { get stroke() { return SC.muted; }, fontSize: 11, fontFamily: MONO }; // a getter: read at render, so it follows Day/Night
 const SEV = { high: "#e0574a", medium: "#f2a33c", low: "#54c7a8" };
 
 export default function RiskPanel({ design, frame }) {

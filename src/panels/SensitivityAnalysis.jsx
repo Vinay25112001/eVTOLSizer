@@ -51,14 +51,14 @@ export function SensitivityAnalysis({params,SR,SC,TTP,U}){
     <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"14px 16px"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:8}}>
         <div>
-          <div style={{fontSize:12,fontWeight:700,color:SC.text,fontFamily:"system-ui,sans-serif"}}>Sensitivity Analysis — ±20% Parameter Sweep</div>
-          <div style={{fontSize:9,color:SC.muted,fontFamily:"system-ui,sans-serif",marginTop:2}}>How MTOW, battery mass and total energy respond to each parameter variation (MATLAB-style)</div>
+          <div style={{fontSize:12,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>Sensitivity Analysis — ±20% Parameter Sweep</div>
+          <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginTop:2}}>How MTOW, battery mass and total energy respond to each parameter variation (MATLAB-style)</div>
         </div>
         <button type="button" onClick={runSens} disabled={sensRunning}
           style={{padding:"7px 18px",background:sensRunning?"transparent":`linear-gradient(135deg,${SC.amber},#f97316)`,
             border:`1px solid ${sensRunning?SC.border:SC.amber}`,borderRadius:6,
             color:sensRunning?SC.muted:"#07090f",fontSize:11,fontWeight:800,
-            cursor:sensRunning?"not-allowed":"pointer",fontFamily:"system-ui,sans-serif"}}>
+            cursor:sensRunning?"not-allowed":"pointer",fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>
           {sensRunning?"⏳ Computing…":"▶ Run Sensitivity"}
         </button>
       </div>
@@ -68,7 +68,7 @@ export function SensitivityAnalysis({params,SR,SC,TTP,U}){
             {SENS_PARAMS.map(({k,l})=>(
               <button key={k} type="button" onClick={()=>setSensParam(k)}
                 style={{padding:"4px 12px",borderRadius:4,fontSize:9,fontWeight:600,cursor:"pointer",
-                  fontFamily:"'DM Mono',monospace",border:`1px solid ${sensParam===k?SC.amber:SC.border}`,
+                  fontFamily:"'IBM Plex Mono',monospace",border:`1px solid ${sensParam===k?SC.amber:SC.border}`,
                   background:sensParam===k?`${SC.amber}22`:"transparent",color:sensParam===k?SC.amber:SC.muted}}>
                 {l}
               </button>
@@ -77,7 +77,7 @@ export function SensitivityAnalysis({params,SR,SC,TTP,U}){
           {data&&(
             <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:16,alignItems:"start"}}>
               <div>
-                <div style={{fontSize:10,color:SC.muted,marginBottom:6,fontFamily:"system-ui,sans-serif"}}>
+                <div style={{fontSize:10,color:SC.muted,marginBottom:6,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>
                   {cur.l} — base: <b style={{color:SC.amber}}>{cur.base}</b>
                   {baseRow&&<> · base MTOW: <b style={{color:SC.amber}}>{uc.mass(baseRow.MTOW)} {uc.massU}</b></>}
                 </div>
@@ -97,7 +97,7 @@ export function SensitivityAnalysis({params,SR,SC,TTP,U}){
                 </ResponsiveContainer>
               </div>
               <div style={{minWidth:200}}>
-                <table style={{borderCollapse:"collapse",fontSize:9,fontFamily:"'DM Mono',monospace",width:"100%"}}>
+                <table style={{borderCollapse:"collapse",fontSize:9,fontFamily:"'IBM Plex Mono',monospace",width:"100%"}}>
                   <thead><tr style={{borderBottom:`1px solid ${SC.border}`}}>
                     {["Δ%",`MTOW`,`Wbat`,"E"].map(h=><th key={h} style={{padding:"4px 8px",color:SC.muted,fontWeight:600,textAlign:"right"}}>{h}</th>)}
                   </tr></thead>
@@ -120,7 +120,7 @@ export function SensitivityAnalysis({params,SR,SC,TTP,U}){
         </>
       )}
       {!sensData&&!sensRunning&&(
-        <div style={{textAlign:"center",padding:"28px 0",color:SC.subtle,fontSize:10,fontFamily:"system-ui,sans-serif"}}>
+        <div style={{textAlign:"center",padding:"28px 0",color:SC.subtle,fontSize:10,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>
           Click <b style={{color:SC.amber}}>▶ Run Sensitivity</b> to sweep 6 parameters ±20% and see how MTOW, battery mass and energy respond.
         </div>
       )}

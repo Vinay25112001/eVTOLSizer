@@ -69,14 +69,14 @@ export function PerformanceTab(ctx) {
                       ].map(({lbl,val,col,note})=>(
                         <div key={lbl} style={{background:SC.bg,borderRadius:6,padding:"8px 12px",border:`1px solid ${col}33`}}>
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                            <span style={{fontSize:9,color:SC.muted,fontFamily:"system-ui,sans-serif"}}>{lbl}</span>
-                            <span style={{fontSize:16,fontWeight:800,color:col,fontFamily:"'DM Mono',monospace"}}>{U.speed(val)} <span style={{fontSize:9,color:SC.subtle}}>{U.speedU}</span></span>
+                            <span style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>{lbl}</span>
+                            <span style={{fontSize:16,fontWeight:800,color:col,fontFamily:"'IBM Plex Mono',monospace"}}>{U.speed(val)} <span style={{fontSize:9,color:SC.subtle}}>{U.speedU}</span></span>
                           </div>
                           {/* Speed tape bar */}
                           <div style={{height:4,background:SC.border,borderRadius:2}}>
                             <div style={{height:"100%",width:`${Math.min(100,(val/SR.VD)*100)}%`,background:col,borderRadius:2,opacity:0.8}}/>
                           </div>
-                          <div style={{fontSize:8,color:SC.subtle,marginTop:3,fontFamily:"system-ui,sans-serif"}}>{note}</div>
+                          <div style={{fontSize:8,color:SC.subtle,marginTop:3,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>{note}</div>
                         </div>
                       ))}
                       {/* Load factor summary */}
@@ -89,7 +89,7 @@ export function PerformanceTab(ctx) {
                         ].map(({lbl,val,col})=>(
                           <div key={lbl} style={{background:SC.bg,borderRadius:5,padding:"6px 9px",border:`1px solid ${col}33`}}>
                             <div style={{fontSize:8,color:SC.muted}}>{lbl}</div>
-                            <div style={{fontSize:13,fontWeight:700,color:col,fontFamily:"'DM Mono',monospace"}}>{val}</div>
+                            <div style={{fontSize:13,fontWeight:700,color:col,fontFamily:"'IBM Plex Mono',monospace"}}>{val}</div>
                           </div>
                         ))}
                       </div>
@@ -103,10 +103,10 @@ export function PerformanceTab(ctx) {
                     marginBottom:12,flexWrap:"wrap",gap:8}}>
                     <div>
                       <div style={{fontSize:9,color:SC.muted,textTransform:"uppercase",
-                        letterSpacing:"0.1em",fontFamily:"system-ui,sans-serif",marginBottom:3}}>
+                        letterSpacing:"0.1em",fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:3}}>
                         Payload-Range Diagram
                       </div>
-                      <div style={{fontSize:11,color:SC.text,fontFamily:"system-ui,sans-serif",lineHeight:1.5}}>
+                      <div style={{fontSize:11,color:SC.text,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",lineHeight:1.5}}>
                         Operational envelope — how far this aircraft can fly at each payload.
                         Freed payload weight transfers directly to battery (fixed MTOW).
                       </div>
@@ -120,10 +120,10 @@ export function PerformanceTab(ctx) {
                       ].map(([lbl,val,col])=>(
                         <div key={lbl} style={{padding:"4px 10px",borderRadius:5,
                           background:`${col}18`,border:`1px solid ${col}44`}}>
-                          <div style={{fontSize:7,color:col,fontFamily:"system-ui,sans-serif",
+                          <div style={{fontSize:7,color:col,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",
                             textTransform:"uppercase",letterSpacing:"0.06em"}}>{lbl}</div>
                           <div style={{fontSize:11,fontWeight:700,color:col,
-                            fontFamily:"'DM Mono',monospace"}}>{val}</div>
+                            fontFamily:"'IBM Plex Mono',monospace"}}>{val}</div>
                         </div>
                       ))}
                     </div>
@@ -210,17 +210,17 @@ export function PerformanceTab(ctx) {
                     ].map(([label,range,payload,col])=>(
                       <div key={label} style={{background:SC.bg,border:`1px solid ${SC.border}`,
                         borderLeft:`3px solid ${col}`,borderRadius:5,padding:"7px 10px"}}>
-                        <div style={{fontSize:8,color:SC.muted,fontFamily:"system-ui,sans-serif",
+                        <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",
                           marginBottom:3,lineHeight:1.3}}>{label}</div>
                         <div style={{fontSize:13,fontWeight:700,color:col,
-                          fontFamily:"'DM Mono',monospace"}}>{range}</div>
-                        <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{payload}</div>
+                          fontFamily:"'IBM Plex Mono',monospace"}}>{range}</div>
+                        <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{payload}</div>
                       </div>
                     ))}
                   </div>
 
                   <div style={{marginTop:8,fontSize:9,color:SC.subtle,
-                    fontFamily:"system-ui,sans-serif",lineHeight:1.6}}>
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif",lineHeight:1.6}}>
                     Model: fixed-MTOW ({U.mass(SR.MTOW)} {U.massU}) — reduced payload → battery mass increases.
                     Blue reference: Joby S4 (2023 spec). Teal reference: Archer Midnight.
                     Ferry range assumes full battery, zero payload.

@@ -104,21 +104,28 @@ export default function Drone3D({ frame, propellerDiameterM, sizing, parts, tipG
   const [spin, setSpin] = useState(0);
   const [spinning, setSpinning] = useState(true);
   const drag = useRef(null);
+  const svgRef = useRef(null);
 
   /* Rotor spin, at a rate proportional to the sized hover RPM so the
      animation is a readout rather than decoration. Capped so it reads as
      motion rather than a blur. */
   useEffect(() => {
     if (!spinning) return;
-    let raf, last = performance.now();
+    let raf, last = performance.now(), shown = true;
+    /* Each step re-renders this picture, so off the screen (scrolled away,
+       or the drone studio hidden behind another engine) it is not stepped:
+       it ran on with nobody looking (Edge, 2026-11-18). */
+    const io = typeof window.IntersectionObserver === "function" && svgRef.current
+      ? new window.IntersectionObserver((es) => { shown = es.some((e) => e.isIntersecting); }) : null;
+    io?.observe(svgRef.current);
     const rpm = sizing?.hover?.rpm ?? 0;
     const tick = (t) => {
       const dt = (t - last) / 1000; last = t;
-      setSpin((s) => (s + Math.min(rpm, 600) * 6 * dt) % 360);
+      if (shown) setSpin((s) => (s + Math.min(rpm, 600) * 6 * dt) % 360);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); io?.disconnect(); };
   }, [spinning, sizing?.hover?.rpm]);
 
   const air = useMemo(() => {
@@ -206,7 +213,7 @@ export default function Drone3D({ frame, propellerDiameterM, sizing, parts, tipG
   return (
     <Card title={`Airframe — ${air.frameClass}/${air.frameType}, ${air.rotors.length} rotors`}>
       <div style={{ display: "flex", gap: S.md, flexWrap: "wrap" }}>
-        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}
+        <svg ref={svgRef} width={W} height={H} viewBox={`0 0 ${W} ${H}`}
           onMouseDown={onDown} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp}
           style={{ border: `1px solid ${SC.border}`, borderRadius: 6, cursor: "grab", touchAction: "none" }}>
 

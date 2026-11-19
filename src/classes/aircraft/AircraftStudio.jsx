@@ -8,8 +8,10 @@
    reads the engine's common result.
    ===================================================================== */
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { SC, applyTheme } from "../../lib/theme.js";
+import { SC } from "../../lib/theme.js";
 import { T, S, MONO, SANS } from "../../ui/tokens.js";
+import { DayNightKey } from "../../ui/glass.jsx";
+import { useDarkMode } from "../../lib/display.js";
 import { fmt, Card, StatusChip } from "../ui-kit.jsx";
 import InputPanel, { InputRow } from "./InputPanel.jsx";
 import { appVersionLabel } from "../../lib/designfile.js";
@@ -49,9 +51,9 @@ const analysisOf = (id) => Object.fromEntries(Object.entries(AIRCRAFT_TYPES[id].
 
 export default function AircraftStudio({ initialType = "transport", requestedType }) {
   const qs = new URLSearchParams(INITIAL_SEARCH);
-  const [dark, setDark] = useState(() => (qs.get("theme") === "light" ? false : qs.get("theme") === "dark" ? true
-    : (window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true)));
-  applyTheme(dark);   // the shared palette; applied on every render, as the eVTOL sizer does
+  /* The theme is the tool's, not this studio's (lib/display.js): one value
+     for the three engines, saved in this browser. */
+  const dark = useDarkMode();
 
   const { system: unitSystem } = useUnitSystem();
   const [type, setType] = useState(TYPE_IDS.includes(initialType) ? initialType : "transport");
@@ -92,10 +94,11 @@ export default function AircraftStudio({ initialType = "transport", requestedTyp
     background: on ? SC.inset : "transparent", color: on ? SC.text : SC.muted, border: `1px solid ${on ? SC.caution : SC.border}` });
 
   return (
-    <div style={{ background: SC.bg, color: SC.text, minHeight: "100vh", fontFamily: SANS }}>
+    /* The glass frame's backdrop (ui/glass.jsx), shared with the eVTOL sizer. */
+    <div className="gc-backdrop" style={{ color: SC.text, minHeight: "100vh", fontFamily: SANS }}>
       <style>{"body{margin:0} .ads-results b{font-weight:700}"}</style>
       {/* HEADER: identity, mode, type and job; then the results bar */}
-      <header style={{ background: SC.panel, borderBottom: `1px solid ${SC.border}` }}>
+      <header className="gc-glass" style={{ margin: "10px 10px 0", zIndex: 40 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 18px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
             <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: "-0.025em", lineHeight: 1, color: SC.primary }}>
@@ -121,9 +124,9 @@ export default function AircraftStudio({ initialType = "transport", requestedTyp
           <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
             <button type="button" style={chip(false)} onClick={() => setTab("export")}>⤓ Export</button>
             <UnitToggle style={chip(false)} />
-            <button type="button" style={chip(false)} onClick={() => setDark((d) => !d)}>{dark ? "DAY" : "NIGHT"}</button>
+            <DayNightKey />
             {/* The same session the eVTOL and drone studios show. */}
-            <SharedAuthBar dark={dark} />
+            <SharedAuthBar />
           </div>
         </div>
         {result && (
@@ -191,9 +194,9 @@ export default function AircraftStudio({ initialType = "transport", requestedTyp
       </nav>
 
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start" }}>
-        <aside aria-label="Inputs" style={{ width: 380, maxWidth: "100%", padding: `${S.md}px ${S.lg}px`, borderRight: `1px solid ${SC.border}`,
+        <aside aria-label="Inputs" style={{ width: 380, maxWidth: "100%", padding: `${S.md}px ${S.lg}px`, borderRight: `1px solid ${SC.rim}`,
                                              boxSizing: "border-box", position: "sticky", top: 0, maxHeight: "100vh", overflowY: "auto",
-                                             background: SC.bg }}>
+                                             background: SC.panel /* translucent glass tint over the chart backdrop */ }}>
           <p style={{ fontSize: T.label, color: SC.muted, margin: `0 0 ${S.xs}px`, lineHeight: 1.5 }}>{t.blurb}</p>
           <p style={{ fontSize: T.micro, color: SC.subtle, margin: `0 0 ${S.sm}px`, fontFamily: MONO }}>
             <StatusChip status="sourced" source="" />sourced&nbsp;&nbsp;<StatusChip status="derived" source="" />derived&nbsp;&nbsp;

@@ -215,3 +215,85 @@ export function boundsOf(parts) {
   for (const f of faces) for (const q of f.v) for (let i = 0; i < 3; i++) { lo[i] = Math.min(lo[i], q[i]); hi[i] = Math.max(hi[i], q[i]); }
   return { lo, hi, spanM: hi[1] - lo[1], lengthM: hi[0] - lo[0] };
 }
+
+/* ── The cockpit instruments ─────────────────────────────────────────
+   Five readouts at one instant, each a number the sizing produced:
+   airspeed, height and power are the frame's own (missionPathAt), and the
+   vertical speed is the sizing's rate for the leg being flown:
+   hoverClimbRateMS up and down the vertical legs, climbRateMS and
+   descentRateMS in the climb and the descent, nothing in the cruise. The
+   height the path draws changes at exactly those rates
+   (validation/mission-path.mjs holds them together), so the altimeter and
+   the vertical-speed needle cannot disagree. The reserve is not flown:
+   once landed the instruments read nothing rather than the reserve's
+   speed and power, which belong to energy held back, not to a flight. */
+const VS_OF = Object.freeze({
+  TO: (r) => Number(r.hoverClimbRateMS), Climb: (r) => Number(r.climbRateMS), Cruise: () => 0,
+  Desc: (r) => -Number(r.descentRateMS), Land: (r) => -Number(r.hoverClimbRateMS),
+});
+export function instrumentsAt(r, frame) {
+  if (!frame) return null;
+  const flying = frame.flown && frame.phase in VS_OF;
+  return {
+    phase: frame.phase, label: frame.label, flying,
+    airspeedMS: flying ? frame.speedMS : null,
+    altitudeM: frame.altitudeAglM,
+    verticalSpeedMS: flying ? (Number(VS_OF[frame.phase](r)) || 0) : null,
+    powerKW: flying ? frame.powerKW : null,
+    powerKind: powerKind(frame.phase),
+  };
+}
+
+/* The full scale of each dial: the largest value the mission reaches,
+   rounded up to a round number, so the needle never pins and the scale
+   is this aircraft's, not a fixed one. The steps are fine enough that the
+   needle uses most of the sweep (1-2-2.5-5 left a 52 m/s cruise on a
+   100 m/s dial); each one divides into round major ticks (Cockpit.jsx). */
+export const NICE_STEPS = Object.freeze([1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]);
+export function niceCeil(x) {
+  if (!(x > 0)) return 1;
+  const e = 10 ** Math.floor(Math.log10(x)), m = x / e;
+  return NICE_STEPS.find((k) => m <= k + 1e-9) * e;
+}
+export function instrumentScales(r, p) {
+  const tp = r?.tPhases;
+  if (!Array.isArray(tp) || tp.length < 7) return null;
+  const mids = PHASES.slice(0, 5).map((ph, j) => instrumentsAt(r, flightFrame(r, p, (tp[j] + tp[j + 1]) / 2)));
+  const top = (f) => Math.max(...mids.map((m) => Math.abs(Number(f(m)) || 0)));
+  return {
+    airspeedMS: niceCeil(1.1 * top((m) => m.airspeedMS)),
+    altitudeM: niceCeil(1.15 * Math.max(...missionPathSamplesFlown(r, p))),
+    verticalSpeedMS: niceCeil(1.2 * top((m) => m.verticalSpeedMS)),
+    powerKW: niceCeil(1.1 * top((m) => m.powerKW)),
+  };
+}
+function missionPathSamplesFlown(r, p) {
+  const tp = r.tPhases, out = [0];
+  for (let j = 0; j < 5; j++) out.push(missionPathAt(r, p, tp[j + 1] - 1e-6)?.altitudeAglM ?? 0);
+  return out;
+}
+
+/* ── Flagged phases ──────────────────────────────────────────────────
+   The test flight stops just inside each phase a failing design check
+   belongs to (panels/mission-flight-3d/flight-checks.js sorts them; this
+   module is handed the result and imports nothing new). Only a FAILED
+   design check stops the flight. Advisories (amber) and gaps in the model
+   (grey) are marked on the phase and listed, but the app does not score
+   them as failures (ui/StatusBar.jsx keeps them out of the tally), so the
+   flight does not stop for them either. A flag stop sits
+   1 ms inside its phase, so at a boundary the transition stop, 1 ms
+   before it, always comes first and the two never hide each other. */
+export const FLAG_OFFSET_S = 1e-3;
+export function flagStopsOf(r, flags) {
+  const tp = r?.tPhases;
+  if (!Array.isArray(tp) || tp.length < 7 || !flags) return [];
+  return PHASES.slice(0, 5)
+    .map((ph, j) => ({ kind: "flag", phase: ph, label: PHASE_LABEL[ph], t: tp[j] + FLAG_OFFSET_S, items: flags[ph] ?? [] }))
+    .filter((s) => s.items.some((x) => x.severity === "red"));
+}
+/* The first stop the clock crosses going from prev to next, or null. */
+export function firstStopBetween(stops, prev, next) {
+  let best = null;
+  for (const s of stops) if (prev < s.t && next >= s.t && (!best || s.t < best.t)) best = s;
+  return best;
+}

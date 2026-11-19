@@ -24,7 +24,7 @@ import { JOINT_RESIDUAL_TABLE, REJECTED_MODELS, ESC_UNDER_TEST, TABLE_PROVENANCE
 import { staticShaftPowerW, staticThrustN } from "./rotor.js";
 
 const num = (v, d = 1) => (v == null || !isFinite(v) ? "—" : v.toFixed(d));
-const axis = { stroke: SC.muted, fontSize: 11, fontFamily: MONO };
+const axis = { get stroke() { return SC.muted; }, fontSize: 11, fontFamily: MONO }; // a getter: read at render, so it follows Day/Night
 
 export default function PropulsionPanel({ built, result, ok, rho }) {
   const mc = useMemo(() => { try { return motorConstants(built.motor); } catch { return null; } }, [built.motor]);

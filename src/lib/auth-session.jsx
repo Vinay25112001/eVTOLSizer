@@ -20,13 +20,12 @@
    per studio, because two mounted studios would otherwise each render
    their own copy and the second would sit invisibly behind the first.
 
-   `setAuthTheme` is called with whichever studio is asking, since the
-   auth panels carry their own palette and each studio has its own
-   independent day/night state. A studio that never announces its theme
-   would show the auth modal in the other mode's colours. */
+   The auth panels read the one shared palette (lib/display.js writes it),
+   so there is no theme to announce: each studio used to call setAuthTheme
+   with its own day/night state, and the last one to do so won. */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
-  AuthModal, UserHeaderBar, getSession, saveSession, clearSession, setAuthTheme,
+  AuthModal, UserHeaderBar, getSession, saveSession, clearSession,
 } from "../AuthSystem";
 
 const AuthSessionContext = createContext(null);
@@ -51,7 +50,10 @@ export function AuthSessionProvider({ children }) {
   }, []);
   const handleSignOut = useCallback(() => { clearSession(); setUser(null); }, []);
   const handleUpdate = useCallback((session) => { saveSession(session); setUser(session); }, []);
-  const openAuth = useCallback(() => setShowAuthModal(true), []);
+  /* `flow` opens the dialog on registration rather than sign-in; anything
+     else (a click event, nothing) opens sign-in, as before. */
+  const [authFlow, setAuthFlow] = useState("login");
+  const openAuth = useCallback((flow) => { setAuthFlow(flow === "register" ? "register" : "login"); setShowAuthModal(true); }, []);
   const closeAuth = useCallback(() => setShowAuthModal(false), []);
 
   const value = useMemo(
@@ -61,7 +63,7 @@ export function AuthSessionProvider({ children }) {
   return (
     <AuthSessionContext.Provider value={value}>
       {children}
-      {showAuthModal && <AuthModal onClose={closeAuth} onAuth={handleAuth} />}
+      {showAuthModal && <AuthModal key={authFlow} defaultFlow={authFlow} onClose={closeAuth} onAuth={handleAuth} />}
     </AuthSessionContext.Provider>
   );
 }
@@ -73,18 +75,16 @@ export function useAuthSession() {
 }
 
 /* The control a studio drops into its own header. It renders the bar and
-   nothing else; the modal belongs to the provider. `dark` is the calling
-   studio's own theme, announced so the auth panels match the mode the
-   user is actually looking at. */
-export function SharedAuthBar({ dark = true }) {
+   nothing else; the modal belongs to the provider. */
+export function SharedAuthBar() {
   const s = useAuthSession();
-  useEffect(() => { setAuthTheme(!!dark); }, [dark]);
   if (!s) return null;
   return (
     <UserHeaderBar
       user={s.user}
       onSignOut={s.handleSignOut}
-      onSignIn={s.openAuth}
+      onSignIn={() => s.openAuth("login")}
+      onRegister={() => s.openAuth("register")}
       onUpdate={s.handleUpdate}
     />
   );

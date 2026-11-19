@@ -548,16 +548,16 @@ export function ShareDesignButton({ user, params, results, customAirfoil, C }) {
         style={{padding:"5px 14px",background:`${phase==="done"?C.green:C.purple}22`,
           border:`1px solid ${phase==="done"?C.green:C.purple}55`,borderRadius:4,
           color:phase==="done"?C.green:C.purple,fontSize:9,cursor:phase==="busy"?"wait":"pointer",
-          fontFamily:"'DM Mono',monospace",fontWeight:700}}>
+          fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>
         {!user&&"🔒 "}{phase==="busy"?"Sharing…":phase==="done"?"✓ Shared":"🔗 Share Design"}
       </button>
       {phase==="done" && (
         <div style={{position:"absolute",right:0,top:34,zIndex:999,background:C.panel,
           border:`1px solid ${C.green}44`,borderRadius:8,padding:"12px 14px",width:320,
           boxShadow:"0 8px 30px rgba(0,0,0,0.5)"}}>
-          <div style={{fontSize:10,color:C.green,fontFamily:"'DM Mono',monospace",fontWeight:700,marginBottom:8}}>✓ Published! Share this link:</div>
+          <div style={{fontSize:10,color:C.green,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,marginBottom:8}}>✓ Published! Share this link:</div>
           <div style={{display:"flex",gap:6,background:C.bg,border:`1px solid ${C.border}`,borderRadius:5,padding:"5px 8px",marginBottom:8}}>
-            <span style={{fontSize:9,color:C.muted,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"'DM Mono',monospace"}}>{url}</span>
+            <span style={{fontSize:9,color:C.muted,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"'IBM Plex Mono',monospace"}}>{url}</span>
             <button onClick={copy} type="button" style={{padding:"2px 8px",background:copied?`${C.green}22`:`${C.amber}22`,border:`1px solid ${copied?C.green:C.amber}55`,borderRadius:3,color:copied?C.green:C.amber,fontSize:9,cursor:"pointer"}}>
               {copied?"✓":"Copy"}
             </button>
@@ -565,7 +565,7 @@ export function ShareDesignButton({ user, params, results, customAirfoil, C }) {
           <button onClick={()=>setPhase("idle")} type="button" style={{background:"none",border:"none",color:C.muted,fontSize:9,cursor:"pointer"}}>Close</button>
         </div>
       )}
-      {err && <div style={{position:"absolute",right:0,top:34,zIndex:999,background:C.panel,border:`1px solid ${C.red}44`,borderRadius:6,padding:"8px 12px",fontSize:10,color:C.red,width:220,fontFamily:"'DM Mono',monospace"}}>
+      {err && <div style={{position:"absolute",right:0,top:34,zIndex:999,background:C.panel,border:`1px solid ${C.red}44`,borderRadius:6,padding:"8px 12px",fontSize:10,color:C.red,width:220,fontFamily:"'IBM Plex Mono',monospace"}}>
         {err} <button onClick={()=>setErr("")} type="button" style={{marginLeft:6,background:"none",border:"none",color:C.muted,cursor:"pointer"}}>✕</button>
       </div>}
     </div>
@@ -593,26 +593,26 @@ export function LeaderboardPanel({ C, onLoadDesign }) {
   return (
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div style={{background:`linear-gradient(135deg,${C.purple}18,${C.teal}18)`,border:`1px solid ${C.purple}33`,borderRadius:10,padding:"14px 18px"}}>
-        <div style={{fontSize:9,color:C.muted,letterSpacing:"0.18em",fontFamily:"'DM Mono',monospace",marginBottom:4}}>COMMUNITY LEADERBOARD</div>
+        <div style={{fontSize:9,color:C.muted,letterSpacing:"0.18em",fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>COMMUNITY LEADERBOARD</div>
         <div style={{fontSize:16,fontWeight:800,color:C.text}}><span style={{color:C.purple}}>eVTOL</span> Design Rankings</div>
-        <div style={{fontSize:10,color:C.muted,fontFamily:"'DM Mono',monospace",marginTop:4}}>{data.length} community designs</div>
+        <div style={{fontSize:10,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",marginTop:4}}>{data.length} community designs</div>
       </div>
       <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
         {tabs.map(t=>(
           <button key={t.k} onClick={()=>setActive(t.k)} type="button"
-            style={{padding:"6px 12px",borderRadius:6,fontSize:10,fontFamily:"'DM Mono',monospace",fontWeight:700,cursor:"pointer",
+            style={{padding:"6px 12px",borderRadius:6,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,cursor:"pointer",
               background:activeTab===t.k?`${t.col}22`:"transparent",border:`1px solid ${activeTab===t.k?t.col+"66":C.border}`,color:activeTab===t.k?t.col:C.muted}}>
             {t.icon} {t.label}
           </button>
         ))}
       </div>
       {loading
-        ? <div style={{textAlign:"center",padding:24,color:C.muted,fontFamily:"'DM Mono',monospace"}}>⏳ Loading…</div>
+        ? <div style={{textAlign:"center",padding:24,color:C.muted,fontFamily:"'IBM Plex Mono',monospace"}}>⏳ Loading…</div>
         : sorted.length===0
-          ? <div style={{textAlign:"center",padding:24,color:C.muted,background:C.panel,borderRadius:8,border:`1px solid ${C.border}`,fontFamily:"'DM Mono',monospace"}}>No designs yet — be the first! 🚁</div>
+          ? <div style={{textAlign:"center",padding:24,color:C.muted,background:C.panel,borderRadius:8,border:`1px solid ${C.border}`,fontFamily:"'IBM Plex Mono',monospace"}}>No designs yet — be the first! 🚁</div>
           : (
             <div style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:8,overflow:"hidden"}}>
-              <div style={{display:"grid",gridTemplateColumns:"36px 1fr 100px 66px 70px 50px",gap:6,padding:"7px 14px",background:C.bg,borderBottom:`1px solid ${C.border}`,fontSize:8,color:C.muted,fontFamily:"'DM Mono',monospace",textTransform:"uppercase"}}>
+              <div style={{display:"grid",gridTemplateColumns:"36px 1fr 100px 66px 70px 50px",gap:6,padding:"7px 14px",background:C.bg,borderBottom:`1px solid ${C.border}`,fontSize:8,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:"uppercase"}}>
                 {["#","Designer",at.label,"L/D","MTOW",""].map((h,i)=><span key={i}>{h}</span>)}
               </div>
               {sorted.map((row,i)=>(
@@ -622,12 +622,12 @@ export function LeaderboardPanel({ C, onLoadDesign }) {
                   onClick={()=>onLoadDesign?.(row)}>
                   <span style={{textAlign:"center",fontSize:14}}>{["🥇","🥈","🥉"][i]||<span style={{fontSize:10,color:C.muted}}>{i+1}</span>}</span>
                   <div>
-                    <div style={{fontSize:10,fontWeight:700,color:C.text,fontFamily:"'DM Mono',monospace"}}>{row.display_name||"Anon"}</div>
-                    <div style={{fontSize:8,color:C.muted,fontFamily:"'DM Mono',monospace"}}>{row.name?.slice(0,36)||"—"}</div>
+                    <div style={{fontSize:10,fontWeight:700,color:C.text,fontFamily:"'IBM Plex Mono',monospace"}}>{row.display_name||"Anon"}</div>
+                    <div style={{fontSize:8,color:C.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{row.name?.slice(0,36)||"—"}</div>
                   </div>
-                  <span style={{fontSize:11,fontWeight:700,color:at.col,fontFamily:"'DM Mono',monospace"}}>{at.fmt(row[at.f])}</span>
-                  <span style={{fontSize:10,color:C.teal,fontFamily:"'DM Mono',monospace"}}>{row.metric_ld?.toFixed(2)||"—"}</span>
-                  <span style={{fontSize:10,color:C.amber,fontFamily:"'DM Mono',monospace"}}>{row.metric_mtow?.toFixed(0)||"—"} kg</span>
+                  <span style={{fontSize:11,fontWeight:700,color:at.col,fontFamily:"'IBM Plex Mono',monospace"}}>{at.fmt(row[at.f])}</span>
+                  <span style={{fontSize:10,color:C.teal,fontFamily:"'IBM Plex Mono',monospace"}}>{row.metric_ld?.toFixed(2)||"—"}</span>
+                  <span style={{fontSize:10,color:C.amber,fontFamily:"'IBM Plex Mono',monospace"}}>{row.metric_mtow?.toFixed(0)||"—"} kg</span>
                   <button type="button" onClick={e=>{e.stopPropagation();row.share_id&&window.open(`?design=${row.share_id}`,"_blank");}}
                     style={{padding:"2px 6px",background:`${C.teal}22`,border:`1px solid ${C.teal}44`,borderRadius:3,color:C.teal,fontSize:8,cursor:"pointer"}}>
                     View
@@ -900,7 +900,7 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
   const B = (col, active = false) => ({
     padding: "7px 16px", borderRadius: 6, border: `1px solid ${col}66`,
     background: active ? `${col}33` : `${col}18`, color: col,
-    fontSize: 11, fontWeight: 700, fontFamily: "'DM Mono',monospace", cursor: "pointer",
+    fontSize: 11, fontWeight: 700, fontFamily: "'IBM Plex Mono',monospace", cursor: "pointer",
   });
 
   const connectedPeerIds = Object.keys(voice.peers).filter(id => voice.peers[id]?.state === "connected");
@@ -910,9 +910,9 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
 
       {/* Header */}
       <div style={{background:`linear-gradient(135deg,${C.teal}18,${C.blue}18)`,border:`1px solid ${C.teal}33`,borderRadius:10,padding:"14px 18px"}}>
-        <div style={{fontSize:9,color:C.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.18em",marginBottom:4}}>REAL-TIME COLLABORATION v6</div>
+        <div style={{fontSize:9,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.18em",marginBottom:4}}>REAL-TIME COLLABORATION v6</div>
         <div style={{fontSize:16,fontWeight:800,color:C.text}}><span style={{color:C.teal}}>Live</span> Design Sessions</div>
-        <div style={{fontSize:10,color:C.muted,fontFamily:"'DM Mono',monospace",marginTop:4,lineHeight:1.7}}>
+        <div style={{fontSize:10,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",marginTop:4,lineHeight:1.7}}>
           Host approval · Editor/Viewer roles · Bidirectional param sync · WebRTC voice<br/>
           <strong style={{color:C.amber}}>Session persists across tabs — click Leave to end.</strong>
         </div>
@@ -922,19 +922,19 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
       {!inSession && !waiting && (
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           <div style={{background:C.panel,border:`1px solid ${C.teal}33`,borderRadius:8,padding:"14px 16px"}}>
-            <div style={{fontSize:10,fontWeight:700,color:C.teal,fontFamily:"'DM Mono',monospace",marginBottom:8}}>🏠 Host a Session</div>
-            <div style={{fontSize:10,color:C.muted,lineHeight:1.6,fontFamily:"'DM Mono',monospace",marginBottom:12}}>
+            <div style={{fontSize:10,fontWeight:700,color:C.teal,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>🏠 Host a Session</div>
+            <div style={{fontSize:10,color:C.muted,lineHeight:1.6,fontFamily:"'IBM Plex Mono',monospace",marginBottom:12}}>
               Start a session. You approve joiners and can set them as Editor or Viewer.
               Editors can change design params — changes sync both ways in real-time.
             </div>
             <button onClick={()=>{ if(!user){setShowAuthModalCollab(true);return;} hostSession(); }} disabled={busy&&!!user} type="button" style={B(C.teal)}>
               {busy ? "Starting…" : "Start Session →"}
             </button>
-            {!user && <div style={{fontSize:9,color:C.amber,marginTop:6,fontFamily:"'DM Mono',monospace"}}>⚠ Sign in required</div>}
+            {!user && <div style={{fontSize:9,color:C.amber,marginTop:6,fontFamily:"'IBM Plex Mono',monospace"}}>⚠ Sign in required</div>}
           </div>
           <div style={{background:C.panel,border:`1px solid ${C.blue}33`,borderRadius:8,padding:"14px 16px"}}>
-            <div style={{fontSize:10,fontWeight:700,color:C.blue,fontFamily:"'DM Mono',monospace",marginBottom:8}}>🔗 Join a Session</div>
-            <div style={{fontSize:10,color:C.muted,fontFamily:"'DM Mono',monospace",marginBottom:8,lineHeight:1.6}}>
+            <div style={{fontSize:10,fontWeight:700,color:C.blue,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>🔗 Join a Session</div>
+            <div style={{fontSize:10,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8,lineHeight:1.6}}>
               Paste the session ID. The host sees a popup to Accept or Deny your request.
             </div>
             <input value={joinId} onChange={e=>setJoinId(e.target.value)}
@@ -942,11 +942,11 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
               placeholder="e.g. abc123xyz…"
               style={{width:"100%",boxSizing:"border-box",background:C.bg,border:`1px solid ${C.border}`,
                 borderRadius:4,color:C.text,fontSize:11,padding:"7px 10px",
-                fontFamily:"'DM Mono',monospace",outline:"none",marginBottom:8}}/>
+                fontFamily:"'IBM Plex Mono',monospace",outline:"none",marginBottom:8}}/>
             <button onClick={()=>{ if(!user){setShowAuthModalCollab(true);return;} sendJoinRequest(); }} disabled={busy&&!!user} type="button" style={B(C.blue)}>
               {busy ? "Requesting…" : "Send Join Request →"}
             </button>
-            {!user && <div style={{fontSize:9,color:C.amber,marginTop:6,fontFamily:"'DM Mono',monospace"}}>⚠ Sign in required</div>}
+            {!user && <div style={{fontSize:9,color:C.amber,marginTop:6,fontFamily:"'IBM Plex Mono',monospace"}}>⚠ Sign in required</div>}
           </div>
         </div>
       )}
@@ -955,10 +955,10 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
       {waiting && (
         <div style={{background:C.panel,border:`1px solid ${C.amber}55`,borderRadius:8,padding:24,textAlign:"center"}}>
           <div style={{fontSize:28,marginBottom:8}}>⏳</div>
-          <div style={{fontSize:13,fontWeight:700,color:C.amber,fontFamily:"'DM Mono',monospace",marginBottom:6}}>
+          <div style={{fontSize:13,fontWeight:700,color:C.amber,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6}}>
             Waiting for host approval…
           </div>
-          <div style={{fontSize:10,color:C.muted,fontFamily:"'DM Mono',monospace",marginBottom:16,lineHeight:1.6}}>
+          <div style={{fontSize:10,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:16,lineHeight:1.6}}>
             The host will see a popup notification. This page updates automatically when approved.
           </div>
           <button onClick={leave} type="button" style={B(C.red)}>Cancel Request</button>
@@ -972,10 +972,10 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
           <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 16px",background:`${C.green}11`,border:`1px solid ${C.green}44`,borderRadius:8,flexWrap:"wrap"}}>
             <div style={{width:8,height:8,borderRadius:"50%",background:C.green,animation:"pulse 2s infinite",flexShrink:0}}/>
             <div style={{flex:1,minWidth:180}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.green,fontFamily:"'DM Mono',monospace"}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.green,fontFamily:"'IBM Plex Mono',monospace"}}>
                 {isHost ? "🏠 Hosting" : `👥 Joined as ${role}`}
               </div>
-              <div style={{fontSize:9,color:C.muted,fontFamily:"'DM Mono',monospace",marginTop:2}}>
+              <div style={{fontSize:9,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>
                 ID: <strong style={{color:C.amber}}>{sid}</strong>
                 {"  ·  "}{role==="editor"
                   ? "✏️ Editor — your changes sync to all participants"
@@ -993,7 +993,7 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
           {/* ── Pending join requests (host only) ── */}
           {isHost && pending.length > 0 && (
             <div style={{background:C.panel,border:`2px solid ${C.amber}`,borderRadius:8,padding:"14px 16px",boxShadow:`0 0 24px ${C.amber}33`}}>
-              <div style={{fontSize:11,fontWeight:700,color:C.amber,fontFamily:"'DM Mono',monospace",marginBottom:10}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.amber,fontFamily:"'IBM Plex Mono',monospace",marginBottom:10}}>
                 📩 {pending.length} join request{pending.length > 1 ? "s" : ""}
               </div>
               {pending.map(req => (
@@ -1002,15 +1002,15 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
                     {(req.display_name||"?")[0].toUpperCase()}
                   </div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:12,fontWeight:700,color:C.text,fontFamily:"'DM Mono',monospace"}}>{req.display_name}</div>
-                    <div style={{fontSize:9,color:C.muted,fontFamily:"'DM Mono',monospace"}}>Wants to join your session</div>
+                    <div style={{fontSize:12,fontWeight:700,color:C.text,fontFamily:"'IBM Plex Mono',monospace"}}>{req.display_name}</div>
+                    <div style={{fontSize:9,color:C.muted,fontFamily:"'IBM Plex Mono',monospace"}}>Wants to join your session</div>
                   </div>
                   <button onClick={()=>handleApproval(req,true)} type="button"
-                    style={{padding:"7px 16px",background:`${C.green}22`,border:`1px solid ${C.green}66`,borderRadius:5,color:C.green,fontSize:10,cursor:"pointer",fontFamily:"'DM Mono',monospace",fontWeight:700}}>
+                    style={{padding:"7px 16px",background:`${C.green}22`,border:`1px solid ${C.green}66`,borderRadius:5,color:C.green,fontSize:10,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>
                     ✓ Accept
                   </button>
                   <button onClick={()=>handleApproval(req,false)} type="button"
-                    style={{padding:"7px 16px",background:`${C.red}11`,border:`1px solid ${C.red}33`,borderRadius:5,color:C.red,fontSize:10,cursor:"pointer",fontFamily:"'DM Mono',monospace"}}>
+                    style={{padding:"7px 16px",background:`${C.red}11`,border:`1px solid ${C.red}33`,borderRadius:5,color:C.red,fontSize:10,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace"}}>
                     ✕ Deny
                   </button>
                 </div>
@@ -1021,7 +1021,7 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
           {/* Members list */}
           {members.length > 0 && (
             <div style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:8,padding:"12px 14px"}}>
-              <div style={{fontSize:9,color:C.muted,fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>
+              <div style={{fontSize:9,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>
                 👥 Session Members ({members.length})
               </div>
               {members.map(mem => {
@@ -1039,15 +1039,15 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
                       {isVoiceOn && <div style={{position:"absolute",bottom:-2,right:-2,width:11,height:11,borderRadius:"50%",background:C.green,border:`2px solid ${C.panel}`,animation:"pulse 1s infinite"}}/>}
                     </div>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:11,fontWeight:700,color:C.text,fontFamily:"'DM Mono',monospace"}}>{mem.display_name}</div>
-                      <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",color:mem.role==="editor"?C.amber:C.muted}}>
+                      <div style={{fontSize:11,fontWeight:700,color:C.text,fontFamily:"'IBM Plex Mono',monospace"}}>{mem.display_name}</div>
+                      <div style={{fontSize:9,fontFamily:"'IBM Plex Mono',monospace",color:mem.role==="editor"?C.amber:C.muted}}>
                         {mem.role==="editor" ? "✏️ Editor" : "👁 Viewer"}
                         {isVoiceOn && <span style={{color:C.green,marginLeft:8}}>🎙 Voice on</span>}
                       </div>
                     </div>
                     {isHost && (
                       <button onClick={()=>handleRoleChange(mem, mem.role==="editor"?"viewer":"editor")} type="button"
-                        style={{padding:"4px 12px",background:mem.role==="editor"?`${C.muted}18`:`${C.amber}18`,border:`1px solid ${mem.role==="editor"?C.muted:C.amber}55`,borderRadius:4,color:mem.role==="editor"?C.muted:C.amber,fontSize:9,cursor:"pointer",fontFamily:"'DM Mono',monospace"}}>
+                        style={{padding:"4px 12px",background:mem.role==="editor"?`${C.muted}18`:`${C.amber}18`,border:`1px solid ${mem.role==="editor"?C.muted:C.amber}55`,borderRadius:4,color:mem.role==="editor"?C.muted:C.amber,fontSize:9,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace"}}>
                         {mem.role==="editor" ? "→ Viewer" : "→ Editor"}
                       </button>
                     )}
@@ -1059,7 +1059,7 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
 
           {/* ── Voice Chat ── */}
           <div style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:8,padding:"14px 16px"}}>
-            <div style={{fontSize:9,color:C.muted,fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>
+            <div style={{fontSize:9,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>
               🎙️ Voice Chat (WebRTC + TURN relay)
             </div>
 
@@ -1069,7 +1069,7 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
                   style={{...B(C.teal),display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
                   🎙️ Enable Microphone
                 </button>
-                <div style={{fontSize:10,color:C.muted,fontFamily:"'DM Mono',monospace",lineHeight:1.8,background:C.bg,borderRadius:6,padding:"10px 12px",border:`1px solid ${C.border}`}}>
+                <div style={{fontSize:10,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.8,background:C.bg,borderRadius:6,padding:"10px 12px",border:`1px solid ${C.border}`}}>
                   <strong style={{color:C.text}}>How voice works:</strong><br/>
                   1. <strong>Both</strong> people click "Enable Microphone"<br/>
                   2. Allow mic access when the browser asks<br/>
@@ -1117,7 +1117,7 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
                     }}/>
                     <span style={{fontSize:11,fontWeight:700,
                       color: voice.listening ? C.amber : voice.muted ? C.red : C.green,
-                      fontFamily:"'DM Mono',monospace"}}>
+                      fontFamily:"'IBM Plex Mono',monospace"}}>
                       {voice.listening ? "Listening only" : voice.muted ? "Muted" : "Transmitting"}
                     </span>
                   </div>
@@ -1125,18 +1125,18 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
 
                 {connectedPeerIds.length > 0 ? (
                   <div style={{background:`${C.green}0e`,border:`1px solid ${C.green}33`,borderRadius:6,padding:"10px 14px"}}>
-                    <div style={{fontSize:9,color:C.green,fontFamily:"'DM Mono',monospace",fontWeight:700,marginBottom:6}}>
+                    <div style={{fontSize:9,color:C.green,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,marginBottom:6}}>
                       🔗 Voice connected with {connectedPeerIds.length} peer{connectedPeerIds.length>1?"s":""}
                     </div>
                     {connectedPeerIds.map(id => (
                       <div key={id} style={{display:"flex",alignItems:"center",gap:8,padding:"3px 0"}}>
                         <div style={{width:7,height:7,borderRadius:"50%",background:C.green,animation:"pulse 1s infinite"}}/>
-                        <span style={{fontSize:11,color:C.text,fontFamily:"'DM Mono',monospace"}}>
+                        <span style={{fontSize:11,color:C.text,fontFamily:"'IBM Plex Mono',monospace"}}>
                           {voice.peers[id]?.name || id}
                         </span>
-                        <span style={{fontSize:9,color:C.green,fontFamily:"'DM Mono',monospace"}}>● live audio</span>
+                        <span style={{fontSize:9,color:C.green,fontFamily:"'IBM Plex Mono',monospace"}}>● live audio</span>
                         {voice.listening && (
-                          <span style={{fontSize:8,color:C.amber,fontFamily:"'DM Mono',monospace",marginLeft:4}}>
+                          <span style={{fontSize:8,color:C.amber,fontFamily:"'IBM Plex Mono',monospace",marginLeft:4}}>
                             (you are in listen mode)
                           </span>
                         )}
@@ -1145,10 +1145,10 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
                   </div>
                 ) : (
                   <div style={{background:`${C.amber}0e`,border:`1px solid ${C.amber}33`,borderRadius:6,padding:"10px 14px"}}>
-                    <div style={{fontSize:10,fontWeight:700,color:C.amber,fontFamily:"'DM Mono',monospace",marginBottom:4}}>
+                    <div style={{fontSize:10,fontWeight:700,color:C.amber,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>
                       ⏳ Mic is on — waiting for the other person
                     </div>
-                    <div style={{fontSize:9,color:C.muted,fontFamily:"'DM Mono',monospace",lineHeight:1.6}}>
+                    <div style={{fontSize:9,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.6}}>
                       Tell the other person to open the <strong style={{color:C.text}}>Collaboration tab</strong> and click <strong style={{color:C.teal}}>"Enable Microphone"</strong>.
                       Connection will establish automatically within a few seconds.
                     </div>
@@ -1158,7 +1158,7 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
             )}
 
             {voice.audioErr && (
-              <div style={{marginTop:10,padding:"10px 14px",background:`${C.red}0e`,border:`1px solid ${C.red}44`,borderRadius:6,fontSize:10,color:C.red,fontFamily:"'DM Mono',monospace",lineHeight:1.7}}>
+              <div style={{marginTop:10,padding:"10px 14px",background:`${C.red}0e`,border:`1px solid ${C.red}44`,borderRadius:6,fontSize:10,color:C.red,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.7}}>
                 {voice.audioErr}
               </div>
             )}
@@ -1166,15 +1166,15 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
 
           {/* Activity log */}
           <div style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px"}}>
-            <div style={{fontSize:9,color:C.muted,fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Activity</div>
+            <div style={{fontSize:9,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Activity</div>
             {log.length===0
-              ? <div style={{fontSize:10,color:C.subtle,fontFamily:"'DM Mono',monospace"}}>No activity yet…</div>
+              ? <div style={{fontSize:10,color:C.subtle,fontFamily:"'IBM Plex Mono',monospace"}}>No activity yet…</div>
               : (
                 <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:160,overflowY:"auto"}}>
                   {log.map(a => (
                     <div key={a.id} style={{display:"flex",gap:10,alignItems:"baseline"}}>
-                      <span style={{fontSize:8,color:C.subtle,fontFamily:"'DM Mono',monospace",flexShrink:0}}>{a.t}</span>
-                      <span style={{fontSize:10,color:C.text,fontFamily:"'DM Mono',monospace"}}>{a.msg}</span>
+                      <span style={{fontSize:8,color:C.subtle,fontFamily:"'IBM Plex Mono',monospace",flexShrink:0}}>{a.t}</span>
+                      <span style={{fontSize:10,color:C.text,fontFamily:"'IBM Plex Mono',monospace"}}>{a.msg}</span>
                     </div>
                   ))}
                 </div>
@@ -1185,7 +1185,7 @@ export function CollabPanel({ user, params, onParamChange, C, onAuth }) {
       )}
 
       {err && (
-        <div style={{padding:"8px 14px",background:`${C.red}11`,border:`1px solid ${C.red}44`,borderRadius:6,fontSize:10,color:C.red,fontFamily:"'DM Mono',monospace"}}>
+        <div style={{padding:"8px 14px",background:`${C.red}11`,border:`1px solid ${C.red}44`,borderRadius:6,fontSize:10,color:C.red,fontFamily:"'IBM Plex Mono',monospace"}}>
           {err}
           <button onClick={()=>setErr("")} type="button" style={{marginLeft:10,background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:12}}>✕</button>
         </div>
@@ -1211,13 +1211,13 @@ export function PublicDesignBanner({ shareId, onLoad, C }) {
 
   if (!shareId || gone) return null;
   if (loading) return (
-    <div style={{padding:"10px 18px",background:`${C.blue}18`,border:`1px solid ${C.blue}44`,borderRadius:8,marginBottom:10,fontSize:10,color:C.blue,fontFamily:"'DM Mono',monospace"}}>
+    <div style={{padding:"10px 18px",background:`${C.blue}18`,border:`1px solid ${C.blue}44`,borderRadius:8,marginBottom:10,fontSize:10,color:C.blue,fontFamily:"'IBM Plex Mono',monospace"}}>
       ⏳ Loading shared design…
     </div>
   );
   if (err || !design) return (
     <div style={{padding:"10px 18px",background:`${C.red}11`,border:`1px solid ${C.red}33`,borderRadius:8,marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-      <span style={{fontSize:10,color:C.red,fontFamily:"'DM Mono',monospace"}}>❌ {err||"Failed to load design."}</span>
+      <span style={{fontSize:10,color:C.red,fontFamily:"'IBM Plex Mono',monospace"}}>❌ {err||"Failed to load design."}</span>
       <button onClick={()=>setGone(true)} type="button" style={{background:"none",border:"none",color:C.muted,cursor:"pointer"}}>✕</button>
     </div>
   );
@@ -1228,13 +1228,13 @@ export function PublicDesignBanner({ shareId, onLoad, C }) {
     <div style={{padding:"12px 18px",background:`${C.teal}11`,border:`1px solid ${C.teal}44`,borderRadius:8,marginBottom:10,display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
       <span style={{fontSize:18}}>🔗</span>
       <div style={{flex:1,minWidth:180}}>
-        <div style={{fontSize:10,fontWeight:700,color:C.teal,fontFamily:"'DM Mono',monospace"}}>Shared by {design.display_name||"Anonymous"}</div>
-        <div style={{fontSize:9,color:C.muted,fontFamily:"'DM Mono',monospace",marginTop:2}}>
+        <div style={{fontSize:10,fontWeight:700,color:C.teal,fontFamily:"'IBM Plex Mono',monospace"}}>Shared by {design.display_name||"Anonymous"}</div>
+        <div style={{fontSize:9,color:C.muted,fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>
           MTOW {res.MTOW} kg · L/D {res.LDact} · {res.Etot} kWh · {design.view_count} views
         </div>
       </div>
       <button onClick={()=>{ onLoad(design); setGone(true); }} type="button"
-        style={{padding:"7px 16px",background:`linear-gradient(135deg,${C.teal}33,${C.blue}33)`,border:`1px solid ${C.teal}66`,borderRadius:5,color:C.teal,fontSize:10,cursor:"pointer",fontFamily:"'DM Mono',monospace",fontWeight:700}}>
+        style={{padding:"7px 16px",background:`linear-gradient(135deg,${C.teal}33,${C.blue}33)`,border:`1px solid ${C.teal}66`,borderRadius:5,color:C.teal,fontSize:10,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>
         Load & Explore →
       </button>
       <button onClick={()=>setGone(true)} type="button"

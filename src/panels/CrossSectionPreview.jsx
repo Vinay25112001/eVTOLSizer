@@ -71,7 +71,7 @@ export function CrossSectionPreview({ params, SR, SC, U }) {
     <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10}}>
       {/* Fuselage Cross-Section */}
       <div style={{background:SC.panel, border:`1px solid ${SC.border}`, borderRadius:8, padding:12}}>
-        <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6,letterSpacing:'0.1em'}}>
+        <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6,letterSpacing:'0.1em'}}>
           FUSELAGE X-SECTION @ {(station*100).toFixed(0)}% L
         </div>
         <input type="range" min="0" max="1" step="0.01" value={station}
@@ -87,10 +87,10 @@ export function CrossSectionPreview({ params, SR, SC, U }) {
             <line key={'vg'+i} x1={CX+i*40} y1="0" x2={CX+i*40} y2="200" stroke={SC.border} strokeWidth="0.5"/>
           ))}
           {/* Dimension labels */}
-          <text x={CX} y={CY-ry-6} textAnchor="middle" fontSize="8" fill={SC.muted} fontFamily="DM Mono,monospace">
+          <text x={CX} y={CY-ry-6} textAnchor="middle" fontSize="8" fill={SC.muted} fontFamily="IBM Plex Mono,monospace">
             {uc.len(cs.h)}{uc.lenU}
           </text>
-          <text x={CX+rx+6} y={CY+4} textAnchor="start" fontSize="8" fill={SC.muted} fontFamily="DM Mono,monospace">
+          <text x={CX+rx+6} y={CY+4} textAnchor="start" fontSize="8" fill={SC.muted} fontFamily="IBM Plex Mono,monospace">
             {uc.len(cs.w)}{uc.lenU}
           </text>
           {/* Ellipse cross-section */}
@@ -104,10 +104,10 @@ export function CrossSectionPreview({ params, SR, SC, U }) {
 
       {/* Wing Airfoil */}
       <div style={{background:SC.panel, border:`1px solid ${SC.border}`, borderRadius:8, padding:12}}>
-        <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6,letterSpacing:'0.1em'}}>
+        <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6,letterSpacing:'0.1em'}}>
           WING AIRFOIL — NACA {Math.round(tc*100).toString().padStart(2,'0')} (t/c={tc})
         </div>
-        <div style={{fontSize:8,color:SC.subtle,fontFamily:"'DM Mono',monospace",marginBottom:8}}>
+        <div style={{fontSize:8,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>
           Root chord: {uc.len(Cr)}{uc.lenU}  |  Tip chord: {uc.len(Ct)}{uc.lenU}
         </div>
         <svg width="100%" viewBox={`0 0 ${W2+PAD*2} ${H2}`} style={{display:'block'}}>
@@ -118,16 +118,16 @@ export function CrossSectionPreview({ params, SR, SC, U }) {
           <path d={airfoilPath} fill={`${SC.teal}22`} stroke={SC.teal} strokeWidth="1.5"/>
           {/* Quarter chord mark */}
           <line x1={PAD+W2*0.25} y1={H2*0.1} x2={PAD+W2*0.25} y2={H2*0.9} stroke={SC.amber} strokeWidth="1" strokeDasharray="3,2"/>
-          <text x={PAD+W2*0.25} y={8} textAnchor="middle" fontSize="7" fill={SC.amber} fontFamily="DM Mono,monospace">c/4</text>
+          <text x={PAD+W2*0.25} y={8} textAnchor="middle" fontSize="7" fill={SC.amber} fontFamily="IBM Plex Mono,monospace">c/4</text>
         </svg>
       </div>
 
       {/* Wing Planform */}
       <div style={{background:SC.panel, border:`1px solid ${SC.border}`, borderRadius:8, padding:12}}>
-        <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6,letterSpacing:'0.1em'}}>
+        <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6,letterSpacing:'0.1em'}}>
           WING PLANFORM (TOP VIEW)
         </div>
-        <div style={{fontSize:8,color:SC.subtle,fontFamily:"'DM Mono',monospace",marginBottom:8}}>
+        <div style={{fontSize:8,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>
           b={uc.len(bW)}{uc.lenU}  |  Λ={sw.toFixed(1)}°  |  λ={( Ct/Cr).toFixed(2)}
         </div>
         <svg width="100%" viewBox="0 0 200 80" style={{display:'block'}}>
@@ -137,7 +137,7 @@ export function CrossSectionPreview({ params, SR, SC, U }) {
           <line x1="100" y1="0" x2="100" y2="80" stroke={SC.amber} strokeWidth="0.8" strokeDasharray="4,3"/>
           {/* Span arrow */}
           <line x1="10" y1="72" x2="190" y2="72" stroke={SC.muted} strokeWidth="0.8"/>
-          <text x="100" y="79" textAnchor="middle" fontSize="7" fill={SC.muted} fontFamily="DM Mono,monospace">b={uc.len(bW)}{uc.lenU}</text>
+          <text x="100" y="79" textAnchor="middle" fontSize="7" fill={SC.muted} fontFamily="IBM Plex Mono,monospace">b={uc.len(bW)}{uc.lenU}</text>
         </svg>
       </div>
     </div>

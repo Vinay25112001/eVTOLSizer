@@ -49,7 +49,7 @@ export function OverviewTab(ctx) {
                 {/* ── Uncertainty bands from Monte Carlo (shown when MC has been run) ── */}
                 {mcResults&&(
                   <div style={{background:SC.panel,border:`1px solid #7c3aed44`,borderRadius:8,padding:"12px 16px"}}>
-                    <div style={{fontSize:9,color:SC.purple,fontFamily:"'DM Mono',monospace",letterSpacing:"0.14em",marginBottom:8}}>MC UNCERTAINTY BANDS — {mcResults.N.toLocaleString()} SAMPLES</div>
+                    <div style={{fontSize:9,color:SC.purple,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.14em",marginBottom:8}}>MC UNCERTAINTY BANDS — {mcResults.N.toLocaleString()} SAMPLES</div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:10}}>
                       {[
                         ["MTOW",SR.MTOW,mcResults.MTOW.stats,"kg",SC.amber],
@@ -58,18 +58,18 @@ export function OverviewTab(ctx) {
                         ["Static Margin",(SR.SM_vt*100).toFixed(1),mcResults.SM?.stats||null,"%",SC.purple],
                       ].map(([label,nominal,stats,unit,col])=>(
                         <div key={label} style={{background:SC.bg,border:`1px solid ${col}33`,borderRadius:6,padding:"8px 10px"}}>
-                          <div style={{fontSize:9,color:col,fontFamily:"'DM Mono',monospace",fontWeight:700,marginBottom:4}}>{label}</div>
-                          <div style={{fontSize:13,fontWeight:800,color:SC.text,fontFamily:"'DM Mono',monospace"}}>{nominal} <span style={{fontSize:9,color:SC.muted}}>{unit}</span></div>
-                          <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginTop:3}}>
+                          <div style={{fontSize:9,color:col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,marginBottom:4}}>{label}</div>
+                          <div style={{fontSize:13,fontWeight:800,color:SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>{nominal} <span style={{fontSize:9,color:SC.muted}}>{unit}</span></div>
+                          <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginTop:3}}>
                             μ={typeof stats.mean==="number"?stats.mean.toFixed(1):stats.mean} ± {typeof stats.std==="number"?stats.std.toFixed(1):stats.std} {unit}
                           </div>
-                          <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>
+                          <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>
                             P5={typeof stats.p5==="number"?stats.p5.toFixed(1):stats.p5} — P95={typeof stats.p95==="number"?stats.p95.toFixed(1):stats.p95} {unit}
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginTop:6}}>
+                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginTop:6}}>
                       ⓘ Run Monte Carlo (Tab 9) to update these bands. Current nominal is the deterministic point estimate.
                     </div>
                   </div>
@@ -105,7 +105,7 @@ export function OverviewTab(ctx) {
                     <table style={{width:"100%",borderCollapse:"collapse",fontSize:10}}>
                       <thead><tr style={{background:SC.panel}}>
                         {["Phase","Time (s)",`Power (${U.powerU})`,"Energy (kWh)",`Velocity (${U.speedU})`].map(hdr=>(
-                          <th key={hdr} style={{padding:"5px 12px",textAlign:"left",color:SC.muted,fontFamily:"'DM Mono',monospace",fontSize:8,fontWeight:600,letterSpacing:"0.05em"}}>{hdr}</th>
+                          <th key={hdr} style={{padding:"5px 12px",textAlign:"left",color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",fontSize:8,fontWeight:600,letterSpacing:"0.05em"}}>{hdr}</th>
                         ))}
                       </tr></thead>
                       <tbody>
@@ -118,10 +118,10 @@ export function OverviewTab(ctx) {
                         ].map(([ph,t,pw,e,v],i)=>(
                           <tr key={i} style={{borderTop:`1px solid ${SC.border}`,background:i%2?SC.inset:SC.bg}}>
                             <td style={{padding:"6px 12px",color:SC.text,fontWeight:600}}>{ph}</td>
-                            <td style={{padding:"6px 12px",color:SC.amber,fontFamily:"'DM Mono',monospace"}}>{t}</td>
-                            <td style={{padding:"6px 12px",color:PHC[i],fontFamily:"'DM Mono',monospace"}}>{U.power(pw)} {U.powerU}</td>
-                            <td style={{padding:"6px 12px",color:SC.teal,fontFamily:"'DM Mono',monospace"}}>{e}</td>
-                            <td style={{padding:"6px 12px",color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{U.speed(v)} {U.speedU}</td>
+                            <td style={{padding:"6px 12px",color:SC.amber,fontFamily:"'IBM Plex Mono',monospace"}}>{t}</td>
+                            <td style={{padding:"6px 12px",color:PHC[i],fontFamily:"'IBM Plex Mono',monospace"}}>{U.power(pw)} {U.powerU}</td>
+                            <td style={{padding:"6px 12px",color:SC.teal,fontFamily:"'IBM Plex Mono',monospace"}}>{e}</td>
+                            <td style={{padding:"6px 12px",color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{U.speed(v)} {U.speedU}</td>
                           </tr>
                         ))}
                       </tbody>

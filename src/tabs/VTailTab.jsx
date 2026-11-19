@@ -97,7 +97,7 @@ function ConventionalTail({ SR, U, params }) {
   const th = { textAlign: "left", padding: "6px 10px", color: SC.muted,
                fontSize: 11, borderBottom: `1px solid ${SC.border}` };
   const td = { padding: "6px 10px", fontSize: 12,
-               fontFamily: "DM Mono,monospace", borderBottom: `1px solid ${SC.border}` };
+               fontFamily: "IBM Plex Mono,monospace", borderBottom: `1px solid ${SC.border}` };
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 10 }}>
@@ -195,7 +195,7 @@ export function VTailTab(ctx) {
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
                     <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 14px"}}>
                       <div style={{fontSize:9,color:SC.muted,textTransform:"uppercase",letterSpacing:"0.12em",
-                        fontFamily:"'DM Mono',monospace",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
+                        fontFamily:"'IBM Plex Mono',monospace",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
                         Panel Geometry
                       </div>
                       {[["Panel span",`${U.len(SR.bvt_panel)} ${U.lenU}`],["Root chord",`${U.len(SR.Cr_vt)} ${U.lenU}`],
@@ -207,13 +207,13 @@ export function VTailTab(ctx) {
                       ].map(([k,v],i)=>(
                         <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:`1px solid #0f131a`}}>
                           <span style={{fontSize:10,color:SC.muted}}>{k}</span>
-                          <span style={{fontSize:10,color:SC.amber,fontFamily:"'DM Mono',monospace",fontWeight:600}}>{v}</span>
+                          <span style={{fontSize:10,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace",fontWeight:600}}>{v}</span>
                         </div>
                       ))}
                     </div>
                     <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 14px"}}>
                       <div style={{fontSize:9,color:SC.muted,textTransform:"uppercase",letterSpacing:"0.12em",
-                        fontFamily:"'DM Mono',monospace",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
+                        fontFamily:"'IBM Plex Mono',monospace",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
                         Weight & Drag
                       </div>
                       {[["V-tail total mass",`${U.mass(SR.Wvt_total)} ${U.massU}`],
@@ -222,19 +222,19 @@ export function VTailTab(ctx) {
                       ].map(([k,v],i)=>(
                         <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:`1px solid #0f131a`}}>
                           <span style={{fontSize:10,color:SC.muted}}>{k}</span>
-                          <span style={{fontSize:10,color:SC.teal,fontFamily:"'DM Mono',monospace",fontWeight:600}}>{v}</span>
+                          <span style={{fontSize:10,color:SC.teal,fontFamily:"'IBM Plex Mono',monospace",fontWeight:600}}>{v}</span>
                         </div>
                       ))}
                     </div>
                     {/* SVG schematic — below Weight & Drag, beside Control Authority */}
                     <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 14px"}}>
                       <div style={{fontSize:9,color:SC.muted,textTransform:"uppercase",letterSpacing:"0.12em",
-                        fontFamily:"'DM Mono',monospace",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
+                        fontFamily:"'IBM Plex Mono',monospace",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
                         Rear View Schematic
                       </div>
                       <svg viewBox="-110 -95 220 130" width="100%" height={160} style={{overflow:"visible"}}>
                         <circle cx={0} cy={0} r={12} fill={SC.inset} stroke={SC.dim} strokeWidth={1.5}/>
-                        <text x={0} y={4} textAnchor="middle" fill={SC.muted} fontSize={7} fontFamily="DM Mono,monospace">fus</text>
+                        <text x={0} y={4} textAnchor="middle" fill={SC.muted} fontSize={7} fontFamily="IBM Plex Mono,monospace">fus</text>
                         {(()=>{
                           const gr=params.vtGamma*Math.PI/180;
                           const panelLen=65;
@@ -250,14 +250,14 @@ export function VTailTab(ctx) {
                               fill={SC.amber} opacity={0.25} stroke={SC.amber} strokeWidth={0.5}/>
                             <path d={`M ${28*Math.cos(Math.PI-gr)},${-28*Math.sin(Math.PI-gr)} A 28 28 0 0 1 ${28*Math.cos(gr)},${-28*Math.sin(gr)}`}
                               fill="none" stroke={SC.teal} strokeWidth={1} strokeDasharray="3 2"/>
-                            <text x={0} y={-31} textAnchor="middle" fill={SC.teal} fontSize={10} fontFamily="DM Mono,monospace">Γ={params.vtGamma}°</text>
-                            <text x={0} y={-43} textAnchor="middle" fill={SC.green} fontSize={9} fontFamily="DM Mono,monospace">opt={SR.vtGamma_opt}°</text>
-                            <text x={x2l-3} y={y2l-7} textAnchor="middle" fill={SC.amber} fontSize={8} fontFamily="DM Mono,monospace">{SR.bvt_panel}m</text>
-                            <text x={x2r+3} y={y2r-7} textAnchor="middle" fill={SC.amber} fontSize={8} fontFamily="DM Mono,monospace">{SR.bvt_panel}m</text>
+                            <text x={0} y={-31} textAnchor="middle" fill={SC.teal} fontSize={10} fontFamily="IBM Plex Mono,monospace">Γ={params.vtGamma}°</text>
+                            <text x={0} y={-43} textAnchor="middle" fill={SC.green} fontSize={9} fontFamily="IBM Plex Mono,monospace">opt={SR.vtGamma_opt}°</text>
+                            <text x={x2l-3} y={y2l-7} textAnchor="middle" fill={SC.amber} fontSize={8} fontFamily="IBM Plex Mono,monospace">{SR.bvt_panel}m</text>
+                            <text x={x2r+3} y={y2r-7} textAnchor="middle" fill={SC.amber} fontSize={8} fontFamily="IBM Plex Mono,monospace">{SR.bvt_panel}m</text>
                             <line x1={-85} y1={0} x2={85} y2={0} stroke={SC.inset} strokeWidth={1} strokeDasharray="4 3"/>
                             <line x1={0} y1={-85} x2={0} y2={18} stroke={SC.inset} strokeWidth={1} strokeDasharray="4 3"/>
-                            <text x={87} y={4} fill={SC.dim} fontSize={7} fontFamily="DM Mono,monospace">H</text>
-                            <text x={2} y={-87} fill={SC.dim} fontSize={7} fontFamily="DM Mono,monospace">V</text>
+                            <text x={87} y={4} fill={SC.dim} fontSize={7} fontFamily="IBM Plex Mono,monospace">H</text>
+                            <text x={2} y={-87} fill={SC.dim} fontSize={7} fontFamily="IBM Plex Mono,monospace">V</text>
                           </>);
                         })()}
                       </svg>
@@ -267,14 +267,14 @@ export function VTailTab(ctx) {
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
                     <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 14px"}}>
                       <div style={{fontSize:9,color:SC.muted,textTransform:"uppercase",letterSpacing:"0.12em",
-                        fontFamily:"'DM Mono',monospace",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
+                        fontFamily:"'IBM Plex Mono',monospace",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
                         Dihedral Angle Trade — Intrinsic Effectiveness &amp; Required Area
                       </div>
                       {/* Two-panel layout: left = effectiveness curves, right = area cost */}
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                         {/* Panel A: cos²/sin² effectiveness — smooth, bounded 0–100% */}
                         <div>
-                          <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>
+                          <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>
                             Authority split (fixed panel)
                           </div>
                           <ResponsiveContainer width="100%" height={160}>
@@ -307,7 +307,7 @@ export function VTailTab(ctx) {
                         </div>
                         {/* Panel B: total panel area required vs Γ — shows area cost of wrong angle */}
                         <div>
-                          <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>
+                          <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>
                             Total panel area required (m²)
                           </div>
                           <ResponsiveContainer width="100%" height={160}>
@@ -339,7 +339,7 @@ export function VTailTab(ctx) {
                           </ResponsiveContainer>
                         </div>
                       </div>
-                      <div style={{fontSize:8,color:"#4b5563",fontFamily:"'DM Mono',monospace",marginTop:4,padding:"3px 6px",background:SC.inset,borderRadius:3}}>
+                      <div style={{fontSize:8,color:"#4b5563",fontFamily:"'IBM Plex Mono',monospace",marginTop:4,padding:"3px 6px",background:SC.inset,borderRadius:3}}>
                         Left: intrinsic authority split for fixed panel area (cos²Γ + sin²Γ = 1, always bounded).
                         Right: total panel area required to meet both Sh_req and Sv_req — minimum at Γ_opt.
                       </div>
@@ -347,10 +347,10 @@ export function VTailTab(ctx) {
                     {/* Control Authority checks */}
                     <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 14px"}}>
                       <div style={{fontSize:9,color:SC.muted,textTransform:"uppercase",letterSpacing:"0.12em",
-                        fontFamily:"'DM Mono',monospace",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
+                        fontFamily:"'IBM Plex Mono',monospace",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
                         Control Authority vs Requirement
                       </div>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6,padding:"4px 6px",background:SC.inset,borderRadius:4}}>
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6,padding:"4px 6px",background:SC.inset,borderRadius:4}}>
                         Sh_eff = S_panel·cos²Γ &nbsp;|&nbsp; Sv_eff = S_panel·sin²Γ &nbsp;|&nbsp; Panel sized to governing constraint
                       </div>
                       {[
@@ -369,8 +369,8 @@ export function VTailTab(ctx) {
                         <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:`1px solid #0f131a`}}>
                           <span style={{fontSize:10,color:SC.muted}}>{k}</span>
                           <div style={{textAlign:"right"}}>
-                            <span style={{fontSize:10,color:col,fontFamily:"'DM Mono',monospace",fontWeight:600}}>{v}</span>
-                            {s&&<div style={{fontSize:9,color:"#4b5563",fontFamily:"'DM Mono',monospace"}}>{s}</div>}
+                            <span style={{fontSize:10,color:col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:600}}>{v}</span>
+                            {s&&<div style={{fontSize:9,color:"#4b5563",fontFamily:"'IBM Plex Mono',monospace"}}>{s}</div>}
                           </div>
                         </div>
                       ))}
@@ -382,7 +382,7 @@ export function VTailTab(ctx) {
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
                     {/* Plot 1: Pitch trim δ_rv vs Γ */}
                     <div>
-                      <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>
+                      <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>
                         Pitch trim δ_rv vs dihedral Γ (symmetric)
                       </div>
                       <ResponsiveContainer width="100%" height={180}>
@@ -417,7 +417,7 @@ export function VTailTab(ctx) {
                     </div>
                     {/* Plot 2: Yaw trim δ_rv vs sideslip β */}
                     <div>
-                      <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>
+                      <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>
                         Yaw trim δ_rv vs sideslip β (differential)
                       </div>
                       <ResponsiveContainer width="100%" height={180}>
@@ -450,7 +450,7 @@ export function VTailTab(ctx) {
                     </div>
                     {/* Plot 3: Combined deflection vs SM */}
                     <div>
-                      <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>
+                      <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>
                         Pitch trim δ_rv vs Static Margin (% MAC)
                       </div>
                       <ResponsiveContainer width="100%" height={180}>
@@ -495,9 +495,9 @@ export function VTailTab(ctx) {
                       ["Yaw OK",Math.abs(SR.delta_yaw_rv_deg)<=20?"Within limits":"Exceeds",Math.abs(SR.delta_yaw_rv_deg)<=20?SC.green:SC.red,""],
                     ].map(([l,v,col,sub])=>(
                       <div key={l} style={{display:"flex",flexDirection:"column",gap:1}}>
-                        <span style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{l}</span>
-                        <span style={{fontSize:11,color:col,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{v}</span>
-                        {sub&&<span style={{fontSize:8,color:"#4b5563",fontFamily:"'DM Mono',monospace"}}>{sub}</span>}
+                        <span style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{l}</span>
+                        <span style={{fontSize:11,color:col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{v}</span>
+                        {sub&&<span style={{fontSize:8,color:"#4b5563",fontFamily:"'IBM Plex Mono',monospace"}}>{sub}</span>}
                       </div>
                     ))}
                   </div>

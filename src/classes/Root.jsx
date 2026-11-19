@@ -25,15 +25,17 @@ import { routeFromSearch, STUDIO_TYPES, INITIAL_SEARCH, clearRoutingParams } fro
 import { DESIGN_MODE_EVENT } from "./aircraft/DesignModeSwitch.jsx";
 import { AuthSessionProvider } from "../lib/auth-session.jsx";
 import { UnitSystemProvider } from "../lib/unit-system.jsx";
+import { useDarkMode } from "../lib/display.js";
+import { GlassStyle, useGlassSheen } from "../ui/glass.jsx";
 
 const AircraftStudio = lazy(() => import("./aircraft/AircraftStudio.jsx"));
 const DroneStudio = lazy(() => import("./drone/DroneStudio.jsx"));
-const loadingAircraft = <div style={{ padding: 32, fontFamily: "system-ui, sans-serif" }}>Loading the aircraft engine…</div>;
-const loadingDrone = <div style={{ padding: 32, fontFamily: "system-ui, sans-serif" }}>Loading the drone engine…</div>;
+const loadingAircraft = <div style={{ padding: 32, fontFamily: "'IBM Plex Sans',system-ui, sans-serif" }}>Loading the aircraft engine…</div>;
+const loadingDrone = <div style={{ padding: 32, fontFamily: "'IBM Plex Sans',system-ui, sans-serif" }}>Loading the drone engine…</div>;
 
 function UnknownClass({ id }) {
   return (
-    <div style={{ padding: 32, fontFamily: "system-ui, sans-serif", color: "#C8D8E8", background: "#0A0E14", minHeight: "100vh" }}>
+    <div style={{ padding: 32, fontFamily: "'IBM Plex Sans',system-ui, sans-serif", color: "#C8D8E8", background: "#0A0E14", minHeight: "100vh" }}>
       <h1 style={{ fontSize: 20 }}>Unknown aircraft class “{id}”</h1>
       <p style={{ fontSize: 13 }}>This build knows: {CLASS_IDS.join(", ")}.</p>
       <p style={{ fontSize: 13 }}><a href="?" style={{ color: "#4090D8" }}>Open the eVTOL sizer</a></p>
@@ -76,6 +78,14 @@ export default function Root() {
     return () => window.removeEventListener(DESIGN_MODE_EVENT, on);
   }, []);
 
+  /* ONE theme and ONE glass stylesheet for the three engines. Each studio
+     used to keep its own day/night state and inject its own copy of the
+     stylesheet; with all three mounted, the last to render set the shared
+     palette and a hidden studio's stylesheet kept applying (lib/display.js
+     has the measurement). */
+  const dark = useDarkMode();
+  useGlassSheen();
+
   if (initial.unknown) return <UnknownClass id={initial.unknown} />;
   /* THE PROVIDER WRAPS ALL THREE, which is the whole point: the studios
      stay mounted together, so one session held above them is one fact
@@ -83,6 +93,7 @@ export default function Root() {
   return (
     <AuthSessionProvider>
       <UnitSystemProvider>
+      <GlassStyle dark={dark} />
       {evtolMounted && (
         <div style={{ display: mode === "evtol" ? "contents" : "none" }}>
           <App />

@@ -292,6 +292,7 @@ export function mountHangar({ canvas, labelLayer = null, plan, dark = true, step
     const at = (g, fb = c) => (homeBox.get(g) ? homeBox.get(g).getCenter(new THREE.Vector3()) : fb.clone());
     const span = sz.z, len = sz.x;
     const m0 = model.groups.find((g) => g.key === "motors")?.items.reduce((best, it) => (!best || it.userData.homeP.x + it.userData.homeP.z > best.userData.homeP.x + best.userData.homeP.z ? it : best), null);
+    const m0Size = m0 ? solidBox(m0, new THREE.Box3()).getSize(new THREE.Vector3()).length() : 0;
     return steps.map((k) => {
       switch (k) {
         case "parts": {
@@ -309,9 +310,11 @@ export function mountHangar({ canvas, labelLayer = null, plan, dark = true, step
         case "wing": return view(at("wing"), V(0.7, 0.75, 0.9), span / 2 + 0.4);
         /* From behind and a little above: both tail panels, as a V. */
         case "tail": return view(at("tail"), V(-1, 0.42, 0.32), 3.2);
-        case "booms": return view(at("booms"), V(0.6, 0.85, 0.9), span * 0.36 + 0.6);
+        /* Booms under the wing are seen from below the wing's level. */
+        case "booms": return view(at("booms"), curPlan?.boomsAbove === false ? V(0.7, 0.12, 0.9) : V(0.6, 0.85, 0.9), span * 0.36 + 0.6);
+        case "arms": return view(at("arms"), V(0.6, 0.8, 0.9), span / 2 + 0.6);
         /* Side on to the near boom, so the stack is seen standing on it. */
-        case "motors": return view(m0 ? m0.userData.homeP.clone().add(V(-0.9, -0.1, 0)) : c, V(0.22, 0.42, 1), 2.6);
+        case "motors": return view(m0 ? m0.userData.homeP.clone().add(V(-0.9, -0.1, 0)) : c, V(0.22, 0.42, 1), Math.max(2.6, 1.6 * m0Size));
         case "rotors": return view(c.clone().setY(c.y + 0.6), V(0.6, 0.95, 0.85), span / 2 + 0.6);
         case "pusher": return view(at("pusher"), V(-1, 0.5, 0.45), 3.0);
         /* Side on, with the person by the nose in the picture. */
@@ -328,8 +331,11 @@ export function mountHangar({ canvas, labelLayer = null, plan, dark = true, step
   }
 
   function setPlan(pl, { keepCamera = false } = {}) {
+    /* The camera is refitted when the layout changes or the aircraft's size
+       does; a wingless layout has no wing to measure, so take the whole. */
+    const sizeOfAll = () => { const a = new THREE.Box3(); for (const b of homeBox.values()) a.union(b); return a.getSize(new THREE.Vector3()).length(); };
+    const oldKey = curPlan?.configKey, oldSize = model ? sizeOfAll() : null;
     curPlan = pl; steps = pl.steps;
-    const oldSpan = model ? homeBox.get("wing")?.getSize(new THREE.Vector3()).z : null;
     if (model) { scene.remove(model.group, model.stands, model.person); disposeGroup(model.group); disposeGroup(model.stands); disposeGroup(model.person); }
     anchorObjs.forEach((a) => { a.removeFromParent(); a.element.remove(); }); anchorObjs = [];
     if (personTag) { personTag.removeFromParent(); personTag.element.remove(); personTag = null; }
@@ -375,8 +381,7 @@ export function mountHangar({ canvas, labelLayer = null, plan, dark = true, step
     }
     presets = makePresets();
     poseInstant(current = clamp(current, 0, steps.length - 1));
-    const span = homeBox.get("wing")?.getSize(new THREE.Vector3()).z;
-    if (!keepCamera || !oldSpan || Math.abs(span / oldSpan - 1) > 0.05) flyCamera(presets[current], true);
+    if (!keepCamera || oldKey !== pl.configKey || !oldSize || Math.abs(sizeOfAll() / oldSize - 1) > 0.05) flyCamera(presets[current], true);
     tint(pinned ?? hoverKey);
     return model;
   }
@@ -396,7 +401,7 @@ export function mountHangar({ canvas, labelLayer = null, plan, dark = true, step
     const g = model.groups.find((x) => x.key === root.userData.groupKey);
     return g ? { key: g.key, label: g.label, count: g.items.length } : null;
   };
-  const onMove = (e) => { pointer = { x: e.clientX, y: e.clientY }; };
+  const onMove = (e) => { pointer = { x: e.clientX, y: e.clientY }; pointerMoved = true; };
   const onLeave = () => { pointer = null; if (hoverKey) { hoverKey = null; tint(pinned); onHover?.(null); } };
   const onDown = (e) => { down = { x: e.clientX, y: e.clientY }; };
   const onUp = (e) => {
@@ -438,31 +443,50 @@ export function mountHangar({ canvas, labelLayer = null, plan, dark = true, step
       personTag.element.style.visibility = off ? "hidden" : "";
     }
   }
+  /* RENDER ON DEMAND. The picture is drawn when something in it changes
+     (a part or the camera moving, a hover, a setting from the panel) and
+     not otherwise. Drawing the same still picture 60 times a second kept
+     a laptop core busy with the bench idle (Edge, 2026-11-18: 37-67 % of
+     a core for the eVTOL lab, 27 % for the drone bench). Off the screen
+     (another tab, a hidden studio) nothing is drawn at all. */
+  let dirty = 2, onScreen = true, tidyDue = false, pointerMoved = false;
+  const wake = () => { dirty = Math.max(dirty, 2); };
+  const io = typeof window.IntersectionObserver === "function"
+    ? new window.IntersectionObserver((es) => { onScreen = es.some((e) => e.isIntersecting); if (onScreen) wake(); }) : null;
+  io?.observe(canvas);
+  controls.addEventListener("change", wake);
   let raf = 0, last = 0, alive = true, lastPickAt = 0, lastTidy = 0;
   function frame(now) {
     if (!alive) return;
+    raf = requestAnimationFrame(frame);
     const dt = clamp((now - last) / 1000, 0, 0.05); last = now;
-    if (playing) stepAnim(dt * speed);
+    if (!onScreen) return;
+    let moving = false;
+    if (playing && anim.size > 0) { stepAnim(dt * speed); moving = true; }
     if (camAnim.t < 1) {
       camAnim.t = Math.min(1, camAnim.t + dt / 1.2);
       const e = easeInOut(camAnim.t);
       camera.position.lerpVectors(camAnim.fp, camAnim.tp, e); controls.target.lerpVectors(camAnim.ft, camAnim.tt, e);
+      moving = true;
     }
-    if (pointer && now - lastPickAt > 60) {
-      lastPickAt = now;
+    if (controls.update()) moving = true;
+    if (pointer && (pointerMoved || moving) && now - lastPickAt > 60) {
+      lastPickAt = now; pointerMoved = false;
       const g = pick(pointer.x, pointer.y), k = g?.key ?? null;
-      if (k !== hoverKey) { hoverKey = k; tint(pinned ?? hoverKey); onHover?.(g, pointer.x, pointer.y); canvas.style.cursor = g ? "pointer" : "grab"; }
+      if (k !== hoverKey) { hoverKey = k; tint(pinned ?? hoverKey); onHover?.(g, pointer.x, pointer.y); canvas.style.cursor = g ? "pointer" : "grab"; dirty = Math.max(dirty, 1); }
       else if (g) onHover?.(g, pointer.x, pointer.y);
     }
-    controls.update();
-    renderer.render(scene, camera);
-    labels?.render(scene, camera);
-    if (labels && labelsOn && now - lastTidy > 150) { lastTidy = now; declutter(); }
-    raf = requestAnimationFrame(frame);
+    if (moving || dirty > 0) {
+      renderer.render(scene, camera);
+      labels?.render(scene, camera);
+      if (labels && labelsOn) tidyDue = true;
+      if (dirty > 0) dirty--;
+    }
+    if (tidyDue && now - lastTidy > 150) { lastTidy = now; tidyDue = false; declutter(); }
   }
   raf = requestAnimationFrame((n) => { last = n; frame(n); });
 
-  return {
+  const api = {
     setStep: (i) => applyStep(i),
     replay: () => applyStep(current, { replay: true }),
     setPlaying: (on) => { playing = !!on; },
@@ -504,11 +528,15 @@ export function mountHangar({ canvas, labelLayer = null, plan, dark = true, step
     },
     resize: () => { sizeTo(); if (model) presets = makePresets(); },
     dispose() {
-      alive = false; cancelAnimationFrame(raf); controls.dispose();
+      alive = false; cancelAnimationFrame(raf); io?.disconnect(); controls.removeEventListener("change", wake); controls.dispose();
       canvas.removeEventListener("pointermove", onMove); canvas.removeEventListener("pointerleave", onLeave);
       canvas.removeEventListener("pointerdown", onDown); canvas.removeEventListener("pointerup", onUp);
       anchorObjs.forEach((a) => a.element.remove()); personTag?.element.remove();
       disposeGroup(scene); env.dispose(); renderer.dispose(); renderer.forceContextLoss?.();
     },
   };
+  /* Whatever the panel asks for (a step, a highlight, the labels, the
+     theme, a resize) changes the picture: draw it again. */
+  for (const k of Object.keys(api)) { const f = api[k]; api[k] = (...a) => { const r = f(...a); wake(); return r; }; }
+  return api;
 }

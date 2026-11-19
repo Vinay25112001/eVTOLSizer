@@ -424,7 +424,7 @@ export function AIAssistantPanel({ params, SR, SC, onParamChange, user }) {
       <div style={{background:`linear-gradient(135deg,${SC.bg},#120a1f)`,border:`1px solid ${SC.purple}44`,borderRadius:10,padding:'16px 20px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:10}}>
           <div>
-            <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:'0.18em',marginBottom:4}}>
+            <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:'0.18em',marginBottom:4}}>
               {/* THE CAPTION NAMED A MODEL THAT NO LONGER EXISTS. This string
                   was written out by hand and said LLAMA 3 while the two calls
                   below sent GROQ_MODEL_FAST; Groq shut that model down on
@@ -437,7 +437,7 @@ export function AIAssistantPanel({ params, SR, SC, onParamChange, user }) {
             <div style={{fontSize:18,fontWeight:800,color:SC.text}}>
               <span style={{color:SC.purple}}>AI</span> {mode==='design'?'Design Assistant':'Chat Assistant'}
               {mode==='design'&&iterCount>0&&<span style={{fontSize:11,color:SC.green,marginLeft:12}}>✓ {iterCount} design{iterCount>1?'s':''} optimized</span>}
-          <span style={{fontSize:9,color:SC.subtle,marginLeft:8,fontFamily:"'DM Mono',monospace"}}>auto-saved</span>
+          <span style={{fontSize:9,color:SC.subtle,marginLeft:8,fontFamily:"'IBM Plex Mono',monospace"}}>auto-saved</span>
             </div>
           </div>
 
@@ -462,7 +462,7 @@ export function AIAssistantPanel({ params, SR, SC, onParamChange, user }) {
                   border:'none',
                   color:mode===key?'#e9d5ff':SC.muted,
                   fontSize:10,fontWeight:mode===key?800:500,
-                  cursor:'pointer',fontFamily:"'DM Mono',monospace",
+                  cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace",
                   transition:'all 0.15s',
                 }}>
                 {icon} {label}
@@ -484,7 +484,7 @@ export function AIAssistantPanel({ params, SR, SC, onParamChange, user }) {
               <div style={{maxWidth:'84%',padding:'10px 14px',borderRadius:10,
                 background:m.role==='user'?`${SC.purple}33`:SC.bg,
                 border:`1px solid ${m.role==='user'?SC.purple+'55':SC.border}`,
-                fontSize:11,color:SC.text,fontFamily:"'DM Mono',monospace",lineHeight:1.8,whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
+                fontSize:11,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.8,whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
                 {m.role==='assistant'&&<span style={{fontSize:8,color:SC.purple,fontWeight:800,display:'block',marginBottom:4}}>AI ASSISTANT{m.mode==='chat'?' · CHAT':m.mode==='design'?' · DESIGN':''}</span>}
                 {m.content}
               </div>
@@ -492,7 +492,7 @@ export function AIAssistantPanel({ params, SR, SC, onParamChange, user }) {
           ))}
           {thinking&&(
             <div style={{display:'flex',justifyContent:'flex-start'}}>
-              <div style={{padding:'10px 14px',borderRadius:10,background:SC.bg,border:`1px solid ${SC.border}`,fontSize:11,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>
+              <div style={{padding:'10px 14px',borderRadius:10,background:SC.bg,border:`1px solid ${SC.border}`,fontSize:11,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>
                 <span style={{fontSize:8,color:SC.purple,fontWeight:800,display:'block',marginBottom:4}}>AI ASSISTANT</span>
                 {mode==='design'?'⟳ Optimizing…':'⟳ Thinking…'}
               </div>
@@ -504,10 +504,10 @@ export function AIAssistantPanel({ params, SR, SC, onParamChange, user }) {
           <input value={input} onChange={e=>setInput(e.target.value)}
             onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&send()}
             placeholder={mode==='design'?"e.g. '4 passengers, 100km, EASA SC-VTOL, minimise MTOW'":"Ask anything — BEM theory, certification, aerodynamics, comparisons…"}
-            style={{flex:1,background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:6,color:SC.text,fontSize:11,padding:'8px 12px',fontFamily:"'DM Mono',monospace",outline:'none'}}
+            style={{flex:1,background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:6,color:SC.text,fontSize:11,padding:'8px 12px',fontFamily:"'IBM Plex Mono',monospace",outline:'none'}}
             disabled={thinking}/>
           <button onClick={send} disabled={thinking||!input.trim()} type="button"
-            style={{padding:'8px 20px',background:thinking?'transparent':`linear-gradient(135deg,#2d1b69,${SC.purple})`,border:`2px solid ${SC.purple}`,borderRadius:6,color:thinking?SC.muted:'#e9d5ff',fontSize:11,fontWeight:800,cursor:thinking||!input.trim()?'not-allowed':'pointer',fontFamily:"'DM Mono',monospace"}}>
+            style={{padding:'8px 20px',background:thinking?'transparent':`linear-gradient(135deg,#2d1b69,${SC.purple})`,border:`2px solid ${SC.purple}`,borderRadius:6,color:thinking?SC.muted:'#e9d5ff',fontSize:11,fontWeight:800,cursor:thinking||!input.trim()?'not-allowed':'pointer',fontFamily:"'IBM Plex Mono',monospace"}}>
             {thinking?'⟳':'→ Send'}
           </button>
         </div>
@@ -515,12 +515,12 @@ export function AIAssistantPanel({ params, SR, SC, onParamChange, user }) {
 
       <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'12px 14px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
-          <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>
+          <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>
             {mode==='design'?'DESIGN QUICK PROMPTS':'CHAT QUICK PROMPTS'}
           </div>
           <button onClick={()=>setConfirmClearChat(true)}
             type="button"
-            style={{padding:'3px 10px',background:'transparent',border:`1px solid ${SC.red}55`,borderRadius:4,color:SC.red,fontSize:9,cursor:'pointer',fontFamily:"'DM Mono',monospace"}}>
+            style={{padding:'3px 10px',background:'transparent',border:`1px solid ${SC.red}55`,borderRadius:4,color:SC.red,fontSize:9,cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace"}}>
             Clear History
           </button>
         </div>
@@ -543,7 +543,7 @@ export function AIAssistantPanel({ params, SR, SC, onParamChange, user }) {
             "What is figure of merit for a helicopter rotor?",
           ]).map(q=>(
             <button key={q} onClick={()=>setInput(q)} type="button"
-              style={{padding:'5px 12px',background:`${SC.purple}18`,border:`1px solid ${SC.purple}44`,borderRadius:5,color:SC.purple,fontSize:9,cursor:'pointer',fontFamily:"'DM Mono',monospace"}}>
+              style={{padding:'5px 12px',background:`${SC.purple}18`,border:`1px solid ${SC.purple}44`,borderRadius:5,color:SC.purple,fontSize:9,cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace"}}>
               {q}
             </button>
           ))}
@@ -557,12 +557,12 @@ export function AIAssistantPanel({ params, SR, SC, onParamChange, user }) {
             padding:"28px 32px",width:360,maxWidth:"90vw",boxShadow:"0 20px 60px rgba(0,0,0,0.6)"}}>
             
             <div style={{fontSize:15,fontWeight:700,color:SC.text,textAlign:"center",marginBottom:8}}>Clear all chat history?</div>
-            <div style={{fontSize:11,color:SC.muted,fontFamily:"'DM Mono',monospace",textAlign:"center",marginBottom:24,lineHeight:1.6}}>All conversation history and design iterations will be permanently deleted. This cannot be undone.</div>
+            <div style={{fontSize:11,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",textAlign:"center",marginBottom:24,lineHeight:1.6}}>All conversation history and design iterations will be permanently deleted. This cannot be undone.</div>
             <div style={{display:"flex",gap:10}}>
               <button type="button" onClick={()=>setConfirmClearChat(false)}
-                style={{flex:1,padding:"10px 0",background:"transparent",border:`1px solid ${SC.border}`,borderRadius:6,color:SC.muted,fontSize:12,cursor:"pointer",fontFamily:"system-ui,sans-serif",fontWeight:600}}>Cancel</button>
+                style={{flex:1,padding:"10px 0",background:"transparent",border:`1px solid ${SC.border}`,borderRadius:6,color:SC.muted,fontSize:12,cursor:"pointer",fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontWeight:600}}>Cancel</button>
               <button type="button" onClick={()=>{clearChat();setConfirmClearChat(false);}}
-                style={{flex:1,padding:"10px 0",background:`${SC.red}22`,border:`1px solid ${SC.red}`,borderRadius:6,color:SC.red,fontSize:12,cursor:"pointer",fontFamily:"system-ui,sans-serif",fontWeight:700}}>Yes, Clear All</button>
+                style={{flex:1,padding:"10px 0",background:`${SC.red}22`,border:`1px solid ${SC.red}`,borderRadius:6,color:SC.red,fontSize:12,cursor:"pointer",fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontWeight:700}}>Yes, Clear All</button>
             </div>
           </div>
         </div>

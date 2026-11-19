@@ -161,7 +161,16 @@ export function mountFlight({ canvas, variants, bounds, discColours, profile, tr
     const w = canvas.clientWidth || 640, h = canvas.clientHeight || 360;
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
   };
-  const ro = typeof window.ResizeObserver === "function" ? new window.ResizeObserver(sizeTo) : null;
+  /* DRAWN WHEN IT CHANGES. The view is drawn when the aircraft moves, a
+     rotor turns, the camera eases or is dragged, or the size changes, and
+     not otherwise; off the screen (another tab, a hidden studio) it is not
+     drawn at all. It used to draw every frame regardless. */
+  let dirty = 2, onScreen = true;
+  const io = typeof window.IntersectionObserver === "function"
+    ? new window.IntersectionObserver((es) => { onScreen = es.some((e) => e.isIntersecting); if (onScreen) dirty = 2; }) : null;
+  io?.observe(canvas);
+  controls.addEventListener("change", () => { dirty = 2; });   // a drag in the orbit view
+  const ro = typeof window.ResizeObserver === "function" ? new window.ResizeObserver(() => { sizeTo(); dirty = 2; }) : null;
   ro?.observe(canvas); sizeTo();
 
   const place = () => {
@@ -180,44 +189,50 @@ export function mountFlight({ canvas, variants, bounds, discColours, profile, tr
 
   const tick = (now) => {
     if (!alive) return;
+    raf = requestAnimationFrame(tick);
     const dt = Math.max(0, Math.min(0.1, (now - last) / 1000)); last = now;
+    if (!onScreen) return;
+    let moving = snap;
     const active = frame.nacelleTiltDeg === 0 ? plane : heli;
     active.rotors.forEach((r, i) => {
       const on = !!frame.turning[i];
-      r.disc.visible = on;
-      if (on) { r.angle += 2 * Math.PI * DRAWN_SPIN_REV_PER_S * dt * (i % 2 ? -1 : 1); r.pivot.quaternion.setFromAxisAngle(r.axis, r.angle); }
+      if (r.disc.visible !== on) { r.disc.visible = on; moving = true; }
+      if (on) { r.angle += 2 * Math.PI * DRAWN_SPIN_REV_PER_S * dt * (i % 2 ? -1 : 1); r.pivot.quaternion.setFromAxisAngle(r.axis, r.angle); moving = true; }
     });
     const prevTarget = target.clone();
     target.copy(craft.position);
+    if (!target.equals(prevTarget)) moving = true;
     if (mode === "orbit") {
       camera.position.add(target.clone().sub(prevTarget));
-      controls.target.copy(target); controls.update();
+      controls.target.copy(target); if (controls.update()) moving = true;
     } else {
       /* The camera eases its OFFSET from the aircraft, never its position:
          at a compressed clock the aircraft covers a kilometre a second, and
          a camera chasing a position would trail hundreds of metres behind. */
       if (mode === "chase") camGoal.set(-(L * 1.9 + 6), L * 0.55 + 2.5, L * 0.85);
       else camGoal.set(0, L * 0.12, L * 3.2 + 12);
+      if (camOffset.distanceToSquared(camGoal) > 1e-8) moving = true;
       if (snap) camOffset.copy(camGoal); else camOffset.lerp(camGoal, 1 - Math.exp(-dt * 5));
       camera.position.copy(target).add(camOffset);
       camera.lookAt(target);
     }
     snap = false;
+    if (!moving && dirty <= 0) return;
+    if (dirty > 0) dirty--;
     renderer.render(scene, camera);
-    raf = requestAnimationFrame(tick);
   };
   place();
   raf = requestAnimationFrame(tick);
 
   return {
-    setFrame(f) { frame = f; place(); },
+    setFrame(f) { frame = f; place(); dirty = 2; },
     setCamera(m) {
       if (!CAMERAS.includes(m)) return;
-      mode = m; controls.enabled = m === "orbit"; snap = m !== "orbit";
+      mode = m; controls.enabled = m === "orbit"; snap = m !== "orbit"; dirty = 2;
       if (m === "orbit") { camera.position.copy(craft.position).add(new THREE.Vector3(-L * 1.6, L * 0.9, L * 1.6)); controls.target.copy(craft.position); controls.update(); }
     },
     dispose() {
-      alive = false; cancelAnimationFrame(raf); ro?.disconnect(); controls.dispose();
+      alive = false; cancelAnimationFrame(raf); ro?.disconnect(); io?.disconnect(); controls.dispose();
       disposeTree(scene); renderer.dispose(); renderer.forceContextLoss?.();
     },
   };

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { SC } from "../lib/theme.js";
 import { capturePanel } from "../lib/capture.js";
-import { T, S, R, MONO, SANS, numeric, labelStyle } from "./tokens.js";
+import { T, S, MONO, SANS, numeric, labelStyle } from "./tokens.js";
 import { ProvChip } from "./Provenance.jsx";
 
 export function Slider({label,unit,value,min,max,step,onChange,note}){
@@ -30,7 +30,7 @@ export function Slider({label,unit,value,min,max,step,onChange,note}){
   return(
     <div style={{marginBottom:12}}>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:4,alignItems:"center"}}>
-        <span style={{fontSize:11,color:active?SC.text:SC.muted,fontFamily:"system-ui,sans-serif",
+        <span style={{fontSize:11,color:active?SC.text:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",
           letterSpacing:"0.01em",transition:"color 0.15s"}}>{label}</span>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
           <input
@@ -43,29 +43,31 @@ export function Slider({label,unit,value,min,max,step,onChange,note}){
               if(evt.key==="Enter") { commit(evt.target.value); evt.target.blur(); }
               if(evt.key==="Escape"){ setDraft(null); evt.target.blur(); }
             }}
-            style={{width:62,background:SC.panel,border:`1px solid ${active?SC.amber:SC.border}`,borderRadius:3,
-              color:SC.amber,fontSize:11,textAlign:"right",padding:"2px 5px",
-              fontFamily:"'DM Mono',monospace",outline:"none",transition:"border-color 0.15s"}}
+            className="gc-lcd"
+            style={{width:64,border:`1px solid ${active?SC.accent:"transparent"}`,borderRadius:6,
+              color:SC.text,fontSize:11.5,textAlign:"right",padding:"3px 6px",
+              fontFamily:"'IBM Plex Mono',monospace",fontVariantNumeric:"tabular-nums",outline:"none",transition:"border-color 0.15s"}}
           />
-          <span style={{fontSize:9,color:SC.subtle,minWidth:26,fontFamily:"'DM Mono',monospace"}}>{unit}</span>
+          <span style={{fontSize:9,color:SC.subtle,minWidth:26,fontFamily:"'IBM Plex Mono',monospace"}}>{unit}</span>
         </div>
       </div>
-      <div style={{position:"relative",height:active?5:3,background:SC.border,borderRadius:3,
-        transition:"height 0.12s ease",marginTop:active?-1:0}}>
+      {/* A recessed track, the filled run in the ACCENT (the caution amber it
+          used said "warning" about every input), and a machined knob. */}
+      <div className="gc-well" style={{position:"relative",height:5,borderRadius:3,marginTop:4,marginBottom:6}}>
         <div style={{position:"absolute",left:0,top:0,height:"100%",width:`${pct}%`,
-          background:flash?SC.teal:SC.amber,borderRadius:3,
-          transition:"width 0.08s ease, background 0.2s",
-          boxShadow:active?`0 0 8px ${SC.amber}88`:flash?`0 0 6px ${SC.teal}66`:"none"}}/>
+          background:flash?SC.nominal:SC.accent,borderRadius:3,
+          transition:"width 0.08s ease, background 0.2s"}}/>
         <div style={{
           position:"absolute",top:"50%",
-          left:`calc(${pct}% - ${active?8:5}px)`,
-          transform:"translateY(-50%)",
-          width:active?16:10,height:active?16:10,
-          background:active?SC.amber:SC.panel,
-          border:`2px solid ${flash?SC.teal:SC.amber}`,
+          left:`calc(${pct}% - 8px)`,
+          transform:`translateY(-50%) scale(${active?1.12:1})`,
+          width:16,height:16,
+          background:"radial-gradient(circle at 40% 35%, #F4F8FB, #AFC0CF 60%, #6F8294)",
           borderRadius:"50%",
-          transition:"width 0.12s ease,height 0.12s ease,left 0.08s ease,background 0.15s,border-color 0.2s,box-shadow 0.15s",
-          boxShadow:active?`0 0 0 3px ${SC.amber}33,0 0 12px ${SC.amber}55`:flash?`0 0 0 2px ${SC.teal}44`:"none",
+          transition:"left 0.08s ease,transform 0.12s ease,box-shadow 0.15s",
+          boxShadow:active
+            ?`0 0 0 4px color-mix(in srgb, ${SC.accent} 22%, transparent), 0 2px 4px rgb(0 0 0 / 0.45)`
+            :"0 2px 4px rgb(0 0 0 / 0.45), inset 0 -1px 1px rgb(0 0 0 / 0.25)",
           pointerEvents:"none",zIndex:1,
         }}/>
         <input type="range" value={value} min={min} max={max} step={step}
@@ -82,7 +84,7 @@ export function Slider({label,unit,value,min,max,step,onChange,note}){
           The emphasis change on interaction is kept; the resting state is now
           legible rather than a divider colour used as type. */}
       {note&&<div style={{fontSize:10,color:active?SC.text:SC.subtle,marginTop:active?4:2,
-        fontFamily:"'DM Mono',monospace",transition:"color 0.15s,margin-top 0.12s"}}>{note}</div>}
+        fontFamily:"'IBM Plex Mono',monospace",transition:"color 0.15s,margin-top 0.12s"}}>{note}</div>}
     </div>
   );
 }
@@ -108,11 +110,16 @@ export function KPI({label,value,unit,sub,color,pk,band}){
      call sites keep working unchanged; they simply show no chip until the key
      is added. `band` is an optional published reference range, so a number can
      be read against what real aircraft do rather than in isolation. */
+  /* An off-nominal card shows an annunciator lamp beside its label (it had a
+     coloured left rail, a card trope that says "something" without saying
+     what); the figure keeps the verdict colour. */
+  const lampState = col===SC.warning||col===SC.red ? "warning"
+    : col===SC.caution||col===SC.amber ? "caution" : null;
   return(
-    <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:R.md,
-      padding:`${S.md}px ${S.lg}px`,minWidth:0,
-      borderLeft: nominal ? `1px solid ${SC.border}` : `2px solid ${col}`}}>
+    <div className="gc-card" style={{background:SC.panel,border:`1px solid ${SC.rim}`,borderRadius:12,
+      padding:`${S.md}px ${S.lg}px`,minWidth:0}}>
       <div style={{display:"flex",alignItems:"center",gap:S.sm,marginBottom:2}}>
+        {lampState&&<span className="gc-lamp" data-state={lampState} aria-hidden="true"/>}
         <span style={{...labelStyle(SC),whiteSpace:"nowrap",overflow:"hidden",
           textOverflow:"ellipsis"}}>{label}</span>
         {pk&&<span style={{marginLeft:"auto",flexShrink:0}}><ProvChip k={pk} compact/></span>}
@@ -137,24 +144,21 @@ export function Panel({title,children,ht,onSave}){
   const containerRef = useRef(null);
   return(
     <div ref={containerRef}
-      style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 14px",height:ht||"auto"}}>
-      <div style={{fontSize:11,color:SC.muted,textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:"system-ui,sans-serif",
-        marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5,
+      className="gc-card"
+      style={{background:SC.panel,border:`1px solid ${SC.rim}`,borderRadius:12,padding:"12px 14px",height:ht||"auto"}}>
+      <div className="gc-eyebrow" style={{
+        marginBottom:10,minHeight:20,
         display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <span>{title}</span>
         {onSave&&(
           <button type="button"
             onClick={()=>{ capturePanel(containerRef,title); onSave(); }}
             title="Save exact chart image as PNG to your device"
-            style={{padding:"2px 8px",background:"transparent",
-              border:`1px solid ${SC.border}`,borderRadius:4,
-              color:SC.amber,fontSize:10,cursor:"pointer",
-              fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",
-              transition:"all 0.15s",flexShrink:0,marginLeft:8,
-              whiteSpace:"nowrap"}}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor=SC.amber;e.currentTarget.style.background=`${SC.amber}18`;}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor=SC.border;e.currentTarget.style.background="transparent";}}>
-            💾 Save Plot
+            className="gc-key"
+            style={{minHeight:24,padding:"0 8px",fontSize:10.5,flexShrink:0,marginLeft:8,
+              textTransform:"none",letterSpacing:0}}>
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+            Save plot
           </button>
         )}
       </div>
@@ -170,8 +174,9 @@ export function Acc({title,icon,children}){
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%",background:"transparent",border:"none",cursor:"pointer",
         display:"flex",alignItems:"center",gap:7,padding:"4px 0"}}>
         <span style={{fontSize:12}}>{icon}</span>
-        <span style={{fontSize:11,fontWeight:700,color:SC.muted,textTransform:"uppercase",letterSpacing:"0.06em",fontFamily:"system-ui,sans-serif"}}>{title}</span>
-        <span style={{marginLeft:"auto",color:SC.subtle,fontSize:10}}>{open?"▾":"▸"}</span>
+        <span className="gc-eyebrow">{title}</span>
+        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={SC.subtle} strokeWidth="2" strokeLinecap="round"
+          style={{marginLeft:"auto",transform:open?"none":"rotate(-90deg)",transition:"transform 0.15s"}}><path d="M6 9l6 6 6-6"/></svg>
       </button>
       {open&&<div style={{paddingTop:4}}>{children}</div>}
     </div>

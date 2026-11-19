@@ -35,7 +35,7 @@ import {
 } from "./radio.js";
 
 const num = (v, d = 1) => (v == null || !isFinite(v) ? "—" : v.toFixed(d));
-const axis = { stroke: SC.muted, fontSize: 11, fontFamily: MONO };
+const axis = { get stroke() { return SC.muted; }, fontSize: 11, fontFamily: MONO }; // a getter: read at render, so it follows Day/Night
 
 export default function AvionicsPanel({ design }) {
   const { result, ok, built } = design;

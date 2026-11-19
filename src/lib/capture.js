@@ -53,14 +53,14 @@ export function capturePanel(containerRef, title){
 
       // ── Title ──
       ctx.fillStyle   = "#f59e0b";
-      ctx.font        = "bold 13px 'DM Mono',monospace,sans-serif";
+      ctx.font        = "bold 13px 'IBM Plex Mono',monospace,sans-serif";
       ctx.textBaseline= "top";
       ctx.fillText(title.slice(0, 90), PAD, 10);
 
       // ── Meta subtitle ──
       const now = new Date().toLocaleString();
       ctx.fillStyle = "#64748b";
-      ctx.font      = "10px 'DM Mono',monospace,sans-serif";
+      ctx.font      = "10px 'IBM Plex Mono',monospace,sans-serif";
       ctx.fillText(`eVTOL Sizer ${appVersionLabel()}  ·  ${now}`, PAD, 30);
 
       // ── Divider line ──

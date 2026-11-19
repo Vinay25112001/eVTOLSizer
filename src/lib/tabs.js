@@ -1,5 +1,5 @@
 /* =====================================================================
-   TAB REGISTRY — 29 tabs, and where a person is meant to look
+   TAB REGISTRY — 30 tabs, and where a person is meant to look
    =====================================================================
    Two things were wrong here, and both were navigation problems rather than
    cosmetic ones.
@@ -47,7 +47,10 @@
    the second held only the live collaboration panel, so a user looking for
    the archive opened a collaboration session instead (found writing
    docs/USER-GUIDE.md, 2026-09-16). Named for what they contain. */
-export const TABS=["Overview","Mission","Wing & Aero","Propulsion","Battery","Performance","Stability","V-Tail","Convergence","Monte Carlo","Certification","Noise","Cost","Mission Builder","Weather & Atmos","OpenVSP","Designs & References","Collaboration","V-n Diagram","Design Space","BEM Rotor","Reg Tracker","AI Assistant","W&B Envelope","Components","Constraint Diagram","Compare Layouts","Uncertainty","NASA VSP Models"];
+export const TABS=["Overview","Mission","Wing & Aero","Propulsion","Battery","Performance","Stability","V-Tail","Convergence","Monte Carlo","Certification","Noise","Cost","Mission Builder","Weather & Atmos","OpenVSP","Designs & References","Collaboration","V-n Diagram","Design Space","BEM Rotor","Reg Tracker","AI Assistant","W&B Envelope","Components","Constraint Diagram","Compare Layouts","Uncertainty","NASA VSP Models","Build eVTOL"];
+/* Tab 29, "Build eVTOL" (2026-11-18): the build lab and its test flight,
+   moved off the OpenVSP tab. Appended, not inserted, so every numeric
+   ?tab= link keeps its meaning; the Tools group shows it beside OpenVSP. */
 
 /* Ordered WITHIN each group by the sequence the question is asked in, not by
    tab index -- Convergence leads Physics because "did it close" precedes every
@@ -63,7 +66,7 @@ export const TAB_GROUPS=[
   {label:"Physics",    tabs:[8,5,6,23,18,25,20]},
   {label:"Trades",     tabs:[19,26,9,27,12]},
   {label:"Compliance", tabs:[10,11,21]},
-  {label:"Tools",      tabs:[24,16,28,15,17,22]},
+  {label:"Tools",      tabs:[24,16,28,15,29,17,22]},
 ];
 
 /* The keys these groups are actually bound to in App.jsx. Kept as data so the

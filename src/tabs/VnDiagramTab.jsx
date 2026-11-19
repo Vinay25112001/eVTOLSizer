@@ -91,7 +91,7 @@ export function VnDiagramTab(ctx) {
               return(
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
                 <div style={{background:`linear-gradient(135deg,${SC.bg},#0f1a2e)`,border:`1px solid #3b82f644`,borderRadius:10,padding:"16px 20px"}}>
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.18em",marginBottom:4}}>MOC SC-VTOL VTOL.2200(f) · VTOL.2215(f)</div>
+                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.18em",marginBottom:4}}>MOC SC-VTOL VTOL.2200(f) · VTOL.2215(f)</div>
                   <div style={{fontSize:18,fontWeight:800,color:SC.text,marginBottom:6}}>
                     <span style={{color:"#60a5fa"}}>V-n Diagram</span> & One-Engine-Inoperative Analysis
                   </div>
@@ -102,7 +102,7 @@ export function VnDiagramTab(ctx) {
                 {/* V-n Chart */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                   <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 14px"}}>
-                    <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace",marginBottom:8}}>V-n Maneuvering Envelope</div>
+                    <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>V-n Maneuvering Envelope</div>
                     <ResponsiveContainer width="100%" height={280}>
                       <ComposedChart data={pts} margin={{top:10,right:20,left:0,bottom:20}}>
                         <CartesianGrid {...chartGrid()}/>
@@ -129,7 +129,7 @@ export function VnDiagramTab(ctx) {
                   {/* Key values */}
                   <div style={{display:"flex",flexDirection:"column",gap:8}}>
                     <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 14px"}}>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Envelope Speeds</div>
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Envelope Speeds</div>
                       {[["Stall Speed VS",`${SR.Vstall.toFixed(1)} m/s (${(SR.Vstall*1.944).toFixed(0)} kt)`,SC.amber],
                         ["Manoeuvre Speed VA",`${SR.VA.toFixed(1)} m/s (${(SR.VA*1.944).toFixed(0)} kt)`,SC.green],
                         ["Cruise Speed VC",`${VC.toFixed(1)} m/s (${(VC*1.944).toFixed(0)} kt)`,SC.teal],
@@ -141,21 +141,21 @@ export function VnDiagramTab(ctx) {
                         ["Gust alleviation Kg",Kg==null?"—":`${Kg.toFixed(3)} (mass ratio μ ${mu})`,SC.muted],
                       ].map(([k,v,col])=>(
                         <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:`1px solid ${SC.border}22`}}>
-                          <span style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{k}</span>
-                          <span style={{fontSize:10,color:col,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{v}</span>
+                          <span style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{k}</span>
+                          <span style={{fontSize:10,color:col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{v}</span>
                         </div>
                       ))}
                     </div>
                     <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 14px"}}>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Structural Checks (CS-VTOL)</div>
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Structural Checks (CS-VTOL)</div>
                       {[
                         [`n+ ≥ ${VB.limitPosMin} g, n− ≤ ${VB.limitNegMin} g (MOC VTOL.2200(f))`,nLimitCheck,"PASS","FAIL"],
                         ["VD ≥ 1.25 VC",SR.VD>=VC*1.25,"PASS","FAIL"],
                         ["VA = VS×√n+",Math.abs(SR.VA-SR.Vstall*Math.sqrt(nPosLimit))<0.5,"PASS","FAIL"],
                       ].map(([label,ok,p,f])=>(
                         <div key={label} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:`1px solid ${SC.border}22`}}>
-                          <span style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{label}</span>
-                          <span style={{fontSize:10,fontWeight:800,fontFamily:"'DM Mono',monospace",color:ok?SC.green:SC.red}}>{ok?`✓ ${p}`:`✗ ${f}`}</span>
+                          <span style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{label}</span>
+                          <span style={{fontSize:10,fontWeight:800,fontFamily:"'IBM Plex Mono',monospace",color:ok?SC.green:SC.red}}>{ok?`✓ ${p}`:`✗ ${f}`}</span>
                         </div>
                       ))}
                     </div>
@@ -163,39 +163,39 @@ export function VnDiagramTab(ctx) {
                 </div>
                 {/* OEI Analysis */}
                 <div style={{background:SC.panel,border:`2px solid ${OEI_margin_pct>0?SC.green:SC.red}`,borderRadius:8,padding:"14px 16px"}}>
-                  <div style={{fontSize:11,fontWeight:700,color:OEI_margin_pct>0?SC.green:SC.red,fontFamily:"'DM Mono',monospace",marginBottom:10}}>
+                  <div style={{fontSize:11,fontWeight:700,color:OEI_margin_pct>0?SC.green:SC.red,fontFamily:"'IBM Plex Mono',monospace",marginBottom:10}}>
                     {mark(OEI_margin_pct>0)} One-Engine-Inoperative (OEI) — CS-VTOL AMC 27.65
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:12}}>
                     {[["Rotors",N,""],["OEI Thrust Margin",`${OEI_margin_pct.toFixed(1)}%`,OEI_margin_pct>0?SC.green:SC.red],["Power per Motor (OEI)",`${U.power(P_per_motor_OEI/1000)} ${U.powerU}`,motorSurvivable?SC.green:SC.red],["Motor Overload",`+${P_overhead_pct.toFixed(1)}%`,P_overhead_pct<50?SC.green:SC.red],
                     ].map(([k,v,col])=>(
                       <div key={k} style={{background:SC.bg,borderRadius:6,padding:"10px 12px",border:`1px solid ${SC.border}`}}>
-                        <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>{k}</div>
-                        <div style={{fontSize:14,fontWeight:800,color:col||SC.text,fontFamily:"'DM Mono',monospace"}}>{v}</div>
+                        <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>{k}</div>
+                        <div style={{fontSize:14,fontWeight:800,color:col||SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>{v}</div>
                       </div>
                     ))}
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                     <div>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6}}>Thrust Analysis</div>
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6}}>Thrust Analysis</div>
                       {[["Total hover thrust req.",`${(T_required/1000).toFixed(2)} kN`],["OEI thrust available",`${(T_remaining/1000).toFixed(2)} kN`],["Thrust margin",`${OEI_margin_pct.toFixed(2)}%`],["Each motor thrust",`${(T_per_motor/1000).toFixed(2)} kN`],
                       ].map(([k,v])=>(
-                        <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:`1px solid ${SC.border}22`,fontSize:9,fontFamily:"'DM Mono',monospace"}}>
+                        <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:`1px solid ${SC.border}22`,fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}}>
                           <span style={{color:SC.muted}}>{k}</span><span style={{color:SC.text,fontWeight:700}}>{v}</span>
                         </div>
                       ))}
                     </div>
                     <div>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6}}>Power & Control</div>
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6}}>Power & Control</div>
                       {[["Nominal motor power",`${U.power(P_per_motor/1000)} ${U.powerU}`],["OEI motor power",`${U.power(P_per_motor_OEI/1000)} ${U.powerU}`],["Peak motor rating",`${U.power(SR.PpeakKW)} ${U.powerU}`],["Motor survivable",motorSurvivable?"YES":"NO ✗"],["Yaw controllable",yawControllable?"YES":"NO ✗"],["OEI yaw moment",`${(Myaw_OEI/1000).toFixed(2)} kN·m`],
                       ].map(([k,v])=>(
-                        <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:`1px solid ${SC.border}22`,fontSize:9,fontFamily:"'DM Mono',monospace"}}>
+                        <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:`1px solid ${SC.border}22`,fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}}>
                           <span style={{color:SC.muted}}>{k}</span><span style={{color:SC.text,fontWeight:700}}>{v}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div style={{marginTop:10,padding:"8px 12px",background:OEI_margin_pct>0?`${SC.green}11`:`${SC.red}11`,borderRadius:6,fontSize:10,color:OEI_margin_pct>0?SC.green:SC.red,fontFamily:"'DM Mono',monospace",lineHeight:1.7}}>
+                  <div style={{marginTop:10,padding:"8px 12px",background:OEI_margin_pct>0?`${SC.green}11`:`${SC.red}11`,borderRadius:6,fontSize:10,color:OEI_margin_pct>0?SC.green:SC.red,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.7}}>
                     {OEI_margin_pct>0
                       ?`✓ OEI SURVIVABLE: With ${N-1} of ${N} motors operating, thrust margin is +${OEI_margin_pct.toFixed(1)}%. Each remaining motor needs ${U.power(P_per_motor_OEI/1000)} ${U.powerU} (${P_overhead_pct.toFixed(0)}% overload vs nominal, ${motorSurvivable?"within":"EXCEEDS"} ${U.power(SR.PpeakKW)} ${U.powerU} peak rating).`
                       :`✗ OEI NOT SURVIVABLE: With 1 motor failed, remaining thrust (${(T_remaining/1000).toFixed(1)} kN) < weight (${(T_required/1000).toFixed(1)} kN). Increase rotor count or T/W ratio. Consider adding a ${Math.ceil(N*1.15)}-rotor configuration.`

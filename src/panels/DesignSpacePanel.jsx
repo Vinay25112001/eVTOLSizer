@@ -145,8 +145,8 @@ export function DesignSpacePanel({ params, SC, TTP, runSizingFn, onApply, U }) {
     if(colorBy==="emptyFrac") return `hsl(${Math.max(0,120-pt.emptyFrac*2)},90%,55%)`;
     return "#60a5fa";
   };
-  const sel={background:SC.bg,border:`1px solid ${SC.border}`,color:SC.text,borderRadius:4,padding:"4px 8px",fontSize:10,fontFamily:"'DM Mono',monospace",outline:"none"};
-  const sm={fontSize:10,fontFamily:"'DM Mono',monospace",color:SC.muted};
+  const sel={background:SC.bg,border:`1px solid ${SC.border}`,color:SC.text,borderRadius:4,padding:"4px 8px",fontSize:10,fontFamily:"'IBM Plex Mono',monospace",outline:"none"};
+  const sm={fontSize:10,fontFamily:"'IBM Plex Mono',monospace",color:SC.muted};
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
@@ -155,7 +155,7 @@ export function DesignSpacePanel({ params, SC, TTP, runSizingFn, onApply, U }) {
         <div style={{display:"flex",alignItems:"center",gap:6}}><span style={sm}>X:</span><select value={xAxis} onChange={evt=>setXAxis(evt.target.value)} style={sel}>{axes.map(a=><option key={a.key} value={a.key}>{a.label}</option>)}</select></div>
         <div style={{display:"flex",alignItems:"center",gap:6}}><span style={sm}>Y:</span><select value={yAxis} onChange={evt=>setYAxis(evt.target.value)} style={sel}>{axes.map(a=><option key={a.key} value={a.key}>{a.label}</option>)}</select></div>
         <div style={{display:"flex",alignItems:"center",gap:6}}><span style={sm}>Color:</span><select value={colorBy} onChange={evt=>setColorBy(evt.target.value)} style={sel}>{colorOpts.map(a=><option key={a.key} value={a.key}>{a.label}</option>)}</select></div>
-        <button onClick={runDSE} disabled={running} type="button" style={{padding:"7px 20px",background:running?"transparent":`linear-gradient(135deg,#4c1d95,#7c3aed)`,border:"2px solid #7c3aed",borderRadius:6,color:running?SC.muted:"#e9d5ff",fontSize:11,fontWeight:800,cursor:running?"not-allowed":"pointer",fontFamily:"'DM Mono',monospace"}}>
+        <button onClick={runDSE} disabled={running} type="button" style={{padding:"7px 20px",background:running?"transparent":`linear-gradient(135deg,#4c1d95,#7c3aed)`,border:"2px solid #7c3aed",borderRadius:6,color:running?SC.muted:"#e9d5ff",fontSize:11,fontWeight:800,cursor:running?"not-allowed":"pointer",fontFamily:"'IBM Plex Mono',monospace"}}>
           {running?"⟳ Computing…":"Run Design Space Exploration"}
         </button>
         {results&&(
@@ -167,7 +167,7 @@ export function DesignSpacePanel({ params, SC, TTP, runSizingFn, onApply, U }) {
               {k:"infeasible",label:`✗ Bad (${results.total-results.feasCount})`, col:SC.warning},
             ].map(({k,label,col})=>(
               <button key={k} type="button" onClick={()=>setDseFilter(k)}
-                style={{padding:"4px 10px",fontSize:9,fontFamily:"'DM Mono',monospace",cursor:"pointer",
+                style={{padding:"4px 10px",fontSize:9,fontFamily:"'IBM Plex Mono',monospace",cursor:"pointer",
                   background:dseFilter===k?`${col}22`:"transparent",
                   border:`1px solid ${dseFilter===k?col:SC.border}`,
                   color:dseFilter===k?col:SC.muted,borderRadius:4,fontWeight:dseFilter===k?700:400,
@@ -182,8 +182,8 @@ export function DesignSpacePanel({ params, SC, TTP, runSizingFn, onApply, U }) {
       {!results&&!running&&(
         <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:32,textAlign:"center"}}>
           
-          <div style={{fontSize:13,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace",marginBottom:8}}>Click "Run Design Space Exploration"</div>
-          <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",lineHeight:1.8,maxWidth:500,margin:"0 auto"}}>
+          <div style={{fontSize:13,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>Click "Run Design Space Exploration"</div>
+          <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.8,maxWidth:500,margin:"0 auto"}}>
             Latin Hypercube Sampling sweeps 8 design variables (±20-40% range).<br/>
             Each sample = complete sizing solution. Green = feasible, Red = infeasible.<br/>
             <strong style={{color:SC.caution}}>Yellow = Pareto-optimal</strong> — no design beats them on all 3 objectives simultaneously.<br/>
@@ -195,13 +195,13 @@ export function DesignSpacePanel({ params, SC, TTP, runSizingFn, onApply, U }) {
       {running&&(
         <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:32,textAlign:"center"}}>
           
-          <div style={{fontSize:12,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:10}}>
+          <div style={{fontSize:12,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:10}}>
             Running {nSamples} Latin Hypercube samples… {dseProgress}%
           </div>
           <div style={{height:8,background:SC.border,borderRadius:4,maxWidth:320,margin:"0 auto 8px"}}>
             <div style={{width:`${dseProgress}%`,height:"100%",background:"#7c3aed",borderRadius:4,transition:"width 0.15s ease"}}/>
           </div>
-          <div style={{fontSize:10,color:SC.subtle,fontFamily:"'DM Mono',monospace"}}>
+          <div style={{fontSize:10,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace"}}>
             {Math.round(dseProgress*nSamples/100)} / {nSamples} points computed
           </div>
         </div>
@@ -211,14 +211,14 @@ export function DesignSpacePanel({ params, SC, TTP, runSizingFn, onApply, U }) {
         <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
           {[["Total Samples",results.total,SC.text],["Feasible",`${results.feasCount} (${(results.feasCount/results.total*100).toFixed(0)}%)`,SC.green],["Infeasible",results.total-results.feasCount,SC.red],["Pareto-Optimal",`${results.paretoCount} ★`,"#f59e0b"]].map(([label,val,col])=>(
             <div key={label} style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"10px 14px",textAlign:"center"}}>
-              <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",textTransform:"uppercase",marginBottom:4}}>{label}</div>
-              <div style={{fontSize:18,fontWeight:800,color:col,fontFamily:"'DM Mono',monospace"}}>{val}</div>
+              <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:"uppercase",marginBottom:4}}>{label}</div>
+              <div style={{fontSize:18,fontWeight:800,color:col,fontFamily:"'IBM Plex Mono',monospace"}}>{val}</div>
             </div>
           ))}
         </div>
 
         <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 14px"}}>
-          <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace",marginBottom:8}}>
+          <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>
             {axes.find(a=>a.key===xAxis)?.label} vs {axes.find(a=>a.key===yAxis)?.label}
             <span style={{color:SC.muted,fontWeight:400,marginLeft:8}}>
               — showing {dseFilter==="all"?"all":dseFilter==="feasible"?"feasible only":dseFilter==="pareto"?"Pareto-optimal only":"infeasible only"} designs
@@ -245,7 +245,7 @@ export function DesignSpacePanel({ params, SC, TTP, runSizingFn, onApply, U }) {
             const TooltipContent=({payload})=>{
               if(!payload?.length) return null;
               const d=payload[0].payload;
-              return(<div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:6,padding:"8px 12px",fontSize:9,fontFamily:"'DM Mono',monospace",maxHeight:320,overflowY:"auto",zIndex:999}}>
+              return(<div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:6,padding:"8px 12px",fontSize:9,fontFamily:"'IBM Plex Mono',monospace",maxHeight:320,overflowY:"auto",zIndex:999}}>
                 {[["Total Range",uc.dist(d.range)+" "+uc.distU],["Mission Range",uc.dist(d.missionRange||d.range)+" "+uc.distU],["Payload",uc.mass(d.payload)+" "+uc.massU],["MTOW",uc.mass(d.MTOW)+" "+uc.massU],["Empty Wt",uc.mass(d.Wempty)+" "+uc.massU],["Battery",uc.mass(d.Wbat)+" "+uc.massU],["Energy",d.Etot+" kWh"],["Pack Cap",d.PackkWh+" kWh"],["Hover Pwr",uc.power(d.Phov)+" "+uc.powerU],["Cruise Pwr",uc.power(d.Pcr)+" "+uc.powerU],["L/D (actual)",d.LDact],["L/D (input)",d.LD],["Bat Frac",d.batFrac+"%"],["Empty Frac",d.emptyFrac+"%"],["Wing Span",uc.len(d.bWing)+" "+uc.lenU],["Wing Area",uc.area(d.Swing)+" "+uc.areaU],["Wing Loading",uc.wl(d.WL)+" "+uc.wlU],["Static Margin",d.SM+"%"],["Tip Mach",d.TipMach],["RPM",d.RPM],["Cell SED",d.sedCell+" Wh/kg"],["Pack SED",d.SEDpack+" Wh/kg"],["AR",d.AR],["η_hov",d.etaHov],["η_sys",d.etaSys],["Status",d.feasible?"Feasible":"Infeasible"],["Pareto",d.pareto?"Yes":"—"]].map(([k,v])=>(
                   <div key={k} style={{display:"flex",gap:16,justifyContent:"space-between"}}><span style={{color:SC.muted}}>{k}</span><span style={{color:SC.text,fontWeight:700}}>{v}</span></div>
                 ))}
@@ -254,7 +254,7 @@ export function DesignSpacePanel({ params, SC, TTP, runSizingFn, onApply, U }) {
             return(
             <>
             {onApply&&(
-              <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6,padding:"4px 8px",background:`${SC.amber}11`,border:`1px solid ${SC.amber}33`,borderRadius:4}}>
+              <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6,padding:"4px 8px",background:`${SC.amber}11`,border:`1px solid ${SC.amber}33`,borderRadius:4}}>
                  Click any dot to apply that design's parameters to the sizer — all tabs will update instantly.
                 {applied!==null&&<span style={{color:SC.amber,marginLeft:8}}>✓ Point #{applied+1} applied</span>}
               </div>
@@ -303,10 +303,10 @@ export function DesignSpacePanel({ params, SC, TTP, runSizingFn, onApply, U }) {
         </div>
 
           <div style={{background:SC.panel,border:"1px solid #f59e0b44",borderRadius:8,padding:"12px 14px"}}>
-            <div style={{fontSize:10,fontWeight:700,color:SC.caution,fontFamily:"'DM Mono',monospace",marginBottom:4}}>★ Pareto-Optimal Designs ({results.paretoCount}) — Non-dominated frontier</div>
-            {onApply&&<div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:8}}>Click any row to apply that design to the sizer.</div>}
+            <div style={{fontSize:10,fontWeight:700,color:SC.caution,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>★ Pareto-Optimal Designs ({results.paretoCount}) — Non-dominated frontier</div>
+            {onApply&&<div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>Click any row to apply that design to the sizer.</div>}
             <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:9,fontFamily:"'DM Mono',monospace"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}}>
                 <thead><tr style={{background:SC.bg}}>{["Range km","Payload kg","MTOW kg","Batt kg","Energy kWh","L/D","SM %","Span m","Bat %","Pack SED"].map(h=><th key={h} style={{padding:"5px 8px",textAlign:"right",color:SC.muted,fontWeight:700,borderBottom:`1px solid ${SC.border}`}}>{h}</th>)}</tr></thead>
                 <tbody>{results.pts.filter(p=>p.pareto).sort((a,b)=>b.range-a.range).slice(0,10).map((pt,i)=>(
                   <tr key={i} onClick={onApply?()=>{

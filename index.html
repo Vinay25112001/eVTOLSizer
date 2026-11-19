@@ -11,7 +11,23 @@
     <!-- Google Fonts — loaded here so they are not re-fetched on every theme toggle -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- The saved Day/Night choice, painted before the scripts load so a night page does not flash white.
+         Same precedence as src/lib/display.js: ?theme= in the address, then the saved choice, then the system. -->
+    <script>
+      (function () {
+        try {
+          var p = {}; try { p = JSON.parse(localStorage.getItem("evtol-display") || "{}") || {}; } catch (e) {}
+          var q = new URLSearchParams(location.search).get("theme");
+          var t = q === "dark" || q === "light" ? q : p.theme;
+          var d = t === "dark" || (t !== "light" && (!window.matchMedia || matchMedia("(prefers-color-scheme: dark)").matches));
+          var h = document.documentElement;
+          h.setAttribute("data-theme", d ? "dark" : "light");
+          h.style.colorScheme = d ? "dark" : "light";
+          h.style.backgroundColor = d ? "#060A10" : "#EEF2F6";
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

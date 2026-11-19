@@ -286,14 +286,14 @@ export function BEMPanel({ params, SR, SC, U }) {
     });
   };
 
-  const S = { fontSize:10, fontFamily:"'DM Mono',monospace", color:SC.muted };
+  const S = { fontSize:10, fontFamily:"'IBM Plex Mono',monospace", color:SC.muted };
   const uc = U || {power:v=>+v.toFixed(1), powerU:"kW", speed:v=>+v.toFixed(1), speedU:"m/s", len:v=>+v.toFixed(2), lenU:"m"};
 
   return (
     <div style={{display:'flex',flexDirection:'column',gap:12}}>
       {/* Header */}
       <div style={{background:`linear-gradient(135deg,${SC.bg},#0d1f0d)`,border:`1px solid ${SC.green}44`,borderRadius:10,padding:'16px 20px'}}>
-        <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:'0.18em',marginBottom:4}}>
+        <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:'0.18em',marginBottom:4}}>
           ITERATIVE BEM · TIP+ROOT LOSS · BUHL CT-TRIGGER · SWIRL (a′) · HUB CUTOUT
         </div>
         <div style={{fontSize:18,fontWeight:800,color:SC.text,marginBottom:6}}>
@@ -309,7 +309,7 @@ export function BEMPanel({ params, SR, SC, U }) {
 
       {/* Controls */}
       <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'14px 16px'}}>
-        <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Blade Geometry Inputs</div>
+        <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:12}}>Blade Geometry Inputs</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
           {[
             ['Collective θ₀.₇₅', theta0, setTheta0, 2, 22, 0.5, '°', 'Pitch at 0.75R. Increase until T_BEM ≈ T_required.'],
@@ -327,13 +327,13 @@ export function BEMPanel({ params, SR, SC, U }) {
                   onChange={evt=>setter(+evt.target.value)} style={{flex:1}}/>
                 <span style={{...S,color:SC.amber,fontWeight:700,minWidth:40,textAlign:'right'}}>{val}</span>
               </div>
-              <div style={{fontSize:8,color:SC.subtle,fontFamily:"'DM Mono',monospace",marginTop:2,lineHeight:1.4}}>{tip}</div>
+              <div style={{fontSize:8,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",marginTop:2,lineHeight:1.4}}>{tip}</div>
             </div>
           ))}
         </div>
         <div style={{marginTop:14,display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
           <button onClick={runBEM} type="button"
-            style={{padding:'9px 28px',background:`linear-gradient(135deg,#052e16,${SC.green}88)`,border:`2px solid ${SC.green}`,borderRadius:7,color:SC.green,fontSize:12,fontWeight:800,cursor:'pointer',fontFamily:"'DM Mono',monospace"}}>
+            style={{padding:'9px 28px',background:`linear-gradient(135deg,#052e16,${SC.green}88)`,border:`2px solid ${SC.green}`,borderRadius:7,color:SC.green,fontSize:12,fontWeight:800,cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace"}}>
             Run BEM Analysis
           </button>
           {SR&&(
@@ -342,7 +342,7 @@ export function BEMPanel({ params, SR, SC, U }) {
             </span>
           )}
         </div>
-        {warning&&<div style={{marginTop:10,padding:'8px 12px',background:`${SC.amber}15`,border:`1px solid ${SC.amber}44`,borderRadius:6,fontSize:10,color:SC.amber,fontFamily:"'DM Mono',monospace",lineHeight:1.7}}>{warning}</div>}
+        {warning&&<div style={{marginTop:10,padding:'8px 12px',background:`${SC.amber}15`,border:`1px solid ${SC.amber}44`,borderRadius:6,fontSize:10,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.7}}>{warning}</div>}
       </div>
 
       {results&&(<>
@@ -357,14 +357,14 @@ export function BEMPanel({ params, SR, SC, U }) {
             ['P_BEM total',   `${uc.power(results.P_BEM_kW)} ${uc.powerU}`, SC.purple],
           ].map(([label,val,col])=>(
             <div key={label} style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'8px 10px',textAlign:'center',borderTop:`2px solid ${col}`}}>
-              <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",textTransform:'uppercase',marginBottom:3}}>{label}</div>
-              <div style={{fontSize:13,fontWeight:800,color:col,fontFamily:"'DM Mono',monospace"}}>{val}</div>
+              <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:'uppercase',marginBottom:3}}>{label}</div>
+              <div style={{fontSize:13,fontWeight:800,color:col,fontFamily:"'IBM Plex Mono',monospace"}}>{val}</div>
             </div>
           ))}
         </div>
 
         {/* Insight box */}
-        <div style={{padding:'12px 16px',background:results.T_ratio<80?`${SC.amber}0e`:`${SC.green}0e`,border:`1px solid ${results.T_ratio<80?SC.amber:SC.green}44`,borderRadius:8,fontSize:11,color:SC.text,fontFamily:"'DM Mono',monospace",lineHeight:1.9}}>
+        <div style={{padding:'12px 16px',background:results.T_ratio<80?`${SC.amber}0e`:`${SC.green}0e`,border:`1px solid ${results.T_ratio<80?SC.amber:SC.green}44`,borderRadius:8,fontSize:11,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.9}}>
           {results.T_ratio<80
             ?`⚠ T_BEM (${results.T_total}N) = ${results.T_ratio}% of T_req. Increase collective θ₀.₇₅ or c/R. σ_global=${results.sigma_global} — target σ > 0.09 for adequate loading.`
             :`✓ T_BEM matches requirement. FM=${results.FM} — typical hover FM: 0.65–0.80 (${results.FM>=0.75?'well-designed':results.FM>=0.65?'acceptable':'review blade geometry'}). BEM: ${uc.power(results.P_BEM_kW)} ${uc.powerU} vs actuator disk: ${uc.power(results.P_AKT_kW)} ${uc.powerU} (Δ${results.delta_pct>0?'+':''}${results.delta_pct}%). Torque/rotor: ${results.Q_total}N·m.`
@@ -373,7 +373,7 @@ export function BEMPanel({ params, SR, SC, U }) {
         </div>
 
         {/* Validity / model notes box */}
-        <div style={{padding:'10px 14px',background:`${SC.blue}08`,border:`1px solid ${SC.blue}33`,borderRadius:8,fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",lineHeight:1.8}}>
+        <div style={{padding:'10px 14px',background:`${SC.blue}08`,border:`1px solid ${SC.blue}33`,borderRadius:8,fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.8}}>
           <strong style={{color:SC.blue}}>Model assumptions & validity envelope:</strong>{' '}
           Hover only (V∞=0) · Incompressible (M_tip {'<'} 0.7) · Constant chord (1st-order) ·
           Cl=f(α) empirical (not Re-dependent — use XFOIL for high fidelity) ·
@@ -385,7 +385,7 @@ export function BEMPanel({ params, SR, SC, U }) {
         {/* Charts 2×2 */}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
           <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'12px 14px'}}>
-            <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace",marginBottom:8}}>Thrust Grading dT/dr (N/m) vs r/R</div>
+            <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>Thrust Grading dT/dr (N/m) vs r/R</div>
             <ResponsiveContainer width="100%" height={190}>
               <AreaChart data={results.stations} margin={{top:4,right:12,left:-10,bottom:16}}>
                 <defs><linearGradient id="bemg1" x1="0" y1="0" x2="0" y2="1">
@@ -402,14 +402,14 @@ export function BEMPanel({ params, SR, SC, U }) {
           </div>
 
           <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'12px 14px'}}>
-            <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace",marginBottom:8}}>Axial (a) & Tangential (a′) Induction vs r/R</div>
+            <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>Axial (a) & Tangential (a′) Induction vs r/R</div>
             <ResponsiveContainer width="100%" height={190}>
               <LineChart data={results.stations} margin={{top:4,right:12,left:-10,bottom:16}}>
                 <CartesianGrid {...chartGrid()}/>
                 <XAxis dataKey="rR" tick={{fontSize:9,fill:SC.muted}} label={{value:'r/R',position:'insideBottom',offset:-6,fontSize:9,fill:SC.muted}} {...chartAxis()}/>
                 <YAxis tick={{fontSize:9,fill:SC.muted}} {...chartAxis()}/>
                 <Tooltip contentStyle={{background:SC.panel,border:`1px solid ${SC.border}`,fontSize:9}} {...chartTooltip()}/>
-                <Legend iconSize={8} wrapperStyle={{fontSize:8,fontFamily:"'DM Mono',monospace"}} {...chartLegend()}/>
+                <Legend iconSize={8} wrapperStyle={{fontSize:8,fontFamily:"'IBM Plex Mono',monospace"}} {...chartLegend()}/>
                 <Line isAnimationActive={false} type="monotone" dataKey="a"   stroke={SC.blue}  strokeWidth={2}   dot={false} name="a (axial)"/>
                 <Line isAnimationActive={false} type="monotone" dataKey="ap"  stroke={SC.purple} strokeWidth={2}  dot={false} name="a′ (tangential)"/>
                 <Line isAnimationActive={false} type="monotone" dataKey="F"   stroke={SC.amber} strokeWidth={1.5} dot={false} name="F (tip+root)"/>
@@ -418,14 +418,14 @@ export function BEMPanel({ params, SR, SC, U }) {
           </div>
 
           <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'12px 14px'}}>
-            <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace",marginBottom:8}}>Section Cl, Cd & Inflow Angle φ (°) vs r/R</div>
+            <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>Section Cl, Cd & Inflow Angle φ (°) vs r/R</div>
             <ResponsiveContainer width="100%" height={190}>
               <LineChart data={results.stations} margin={{top:4,right:12,left:-10,bottom:16}}>
                 <CartesianGrid {...chartGrid()}/>
                 <XAxis dataKey="rR" tick={{fontSize:9,fill:SC.muted}} label={{value:'r/R',position:'insideBottom',offset:-6,fontSize:9,fill:SC.muted}} {...chartAxis()}/>
                 <YAxis tick={{fontSize:9,fill:SC.muted}} {...chartAxis()}/>
                 <Tooltip contentStyle={{background:SC.panel,border:`1px solid ${SC.border}`,fontSize:9}} {...chartTooltip()}/>
-                <Legend iconSize={8} wrapperStyle={{fontSize:8,fontFamily:"'DM Mono',monospace"}} {...chartLegend()}/>
+                <Legend iconSize={8} wrapperStyle={{fontSize:8,fontFamily:"'IBM Plex Mono',monospace"}} {...chartLegend()}/>
                 <Line isAnimationActive={false} type="monotone" dataKey="Cl"      stroke={SC.teal}   strokeWidth={2}   dot={false} name="Cl"/>
                 <Line isAnimationActive={false} type="monotone" dataKey="phi_deg" stroke={SC.orange} strokeWidth={2}   dot={false} name="φ (°)"/>
                 <Line isAnimationActive={false} type="monotone" dataKey="Cd"      stroke={SC.red}    strokeWidth={1.5} dot={false} name="Cd×10" formatter={(v)=>(v*10).toFixed(4)}/>
@@ -434,7 +434,7 @@ export function BEMPanel({ params, SR, SC, U }) {
           </div>
 
           <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'12px 14px'}}>
-            <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace",marginBottom:8}}>Section AoA α (°) vs r/R — stall onset at 10°</div>
+            <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>Section AoA α (°) vs r/R — stall onset at 10°</div>
             <ResponsiveContainer width="100%" height={190}>
               <AreaChart data={results.stations} margin={{top:4,right:12,left:-10,bottom:16}}>
                 <defs><linearGradient id="bemg2" x1="0" y1="0" x2="0" y2="1">
@@ -455,10 +455,10 @@ export function BEMPanel({ params, SR, SC, U }) {
 
         {/* Station table — every 5th */}
         <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'12px 14px',overflowX:'auto'}}>
-          <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace",marginBottom:8}}>
+          <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>
             Station Table (every 5th) — chord constant at c/R={chord_r}, hub cutout at r/R={hubR}
           </div>
-          <table style={{width:'100%',borderCollapse:'collapse',fontSize:9,fontFamily:"'DM Mono',monospace"}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}}>
             <thead>
               <tr style={{background:SC.bg}}>
                 {['r/R','λ','a′','φ(°)','α(°)','Cl','Cd','F','a','dT/dr(N/m)'].map(h=>(

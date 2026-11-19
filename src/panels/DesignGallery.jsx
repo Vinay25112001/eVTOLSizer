@@ -233,16 +233,16 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
           }}
           style={{padding:'7px 18px',background:'linear-gradient(135deg,#22c55e,#16a34a)',
             border:'none',borderRadius:6,color:'#fff',fontSize:11,fontWeight:700,
-            cursor:'pointer',fontFamily:"'DM Mono',monospace",
+            cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace",
             display:'flex',alignItems:'center',gap:5}}>
           {!user&&<span style={{fontSize:10}}>⚿</span>}Share My Current Design
         </button>
         <button type="button" onClick={fetchDesigns}
           style={{padding:'7px 12px',background:'transparent',border:`1px solid ${SC.border}`,
-            borderRadius:6,color:SC.muted,fontSize:10,cursor:'pointer',fontFamily:"'DM Mono',monospace"}}>
+            borderRadius:6,color:SC.muted,fontSize:10,cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace"}}>
           ↻ Refresh
         </button>
-        <span style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>
+        <span style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>
           Designs are visible to everyone who opens this app.
         </span>
       </div>
@@ -251,10 +251,10 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
       {showShareModal && (
         <div style={{background:SC.panel,border:`1px solid #22c55e66`,borderRadius:8,
           padding:'14px 16px',display:'flex',flexDirection:'column',gap:10}}>
-          <div style={{fontSize:12,fontWeight:700,color:'#22c55e',fontFamily:"'DM Mono',monospace"}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#22c55e',fontFamily:"'IBM Plex Mono',monospace"}}>
             Publish to Community Gallery
           </div>
-          <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",lineHeight:1.7}}>
+          <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.7}}>
             Your design will be stored in the cloud and visible to all users.
             Only you can edit or delete it.{' '}
             {SR && <span style={{color:SC.text}}>
@@ -266,27 +266,27 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
               placeholder="Give your design a name…"
               style={{flex:1,background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:5,
                 color:SC.text,fontSize:11,padding:'7px 10px',
-                fontFamily:"'DM Mono',monospace",outline:'none'}}
+                fontFamily:"'IBM Plex Mono',monospace",outline:'none'}}
               onKeyDown={e=>e.key==='Enter'&&handleShare()}/>
             <button type="button" onClick={handleShare} disabled={saving}
               style={{padding:'7px 16px',background:saving?'#166534':'#22c55e',border:'none',
                 borderRadius:5,color:'#fff',fontSize:11,fontWeight:700,
-                cursor:saving?'default':'pointer',fontFamily:"'DM Mono',monospace"}}>
+                cursor:saving?'default':'pointer',fontFamily:"'IBM Plex Mono',monospace"}}>
               {saving ? '…Saving' : '✓ Publish'}
             </button>
             <button type="button" onClick={()=>setShowShareModal(false)}
               style={{padding:'7px 12px',background:SC.bg,border:`1px solid ${SC.border}`,
                 borderRadius:5,color:SC.muted,fontSize:11,cursor:'pointer',
-                fontFamily:"'DM Mono',monospace"}}>✕</button>
+                fontFamily:"'IBM Plex Mono',monospace"}}>✕</button>
           </div>
-          {shareMsg && <div style={{fontSize:9,color:'#f59e0b',fontFamily:"'DM Mono',monospace"}}>{shareMsg}</div>}
+          {shareMsg && <div style={{fontSize:9,color:'#f59e0b',fontFamily:"'IBM Plex Mono',monospace"}}>{shareMsg}</div>}
         </div>
       )}
 
       {/* ── Filter bar ────────────────────────────────────────────────── */}
       <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',
         background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'10px 14px'}}>
-        <span style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",whiteSpace:'nowrap'}}>FILTER:</span>
+        <span style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",whiteSpace:'nowrap'}}>FILTER:</span>
         {[
           ['mtow', [['all','All MTOW'],['light','Light (<1t)'],['medium','Medium (1–3.5t)'],['heavy','Heavy (>3.5t)']]],
           ['range',[['all','All Range'],['short','Short (<80km)'],['medium','Mid (80–180km)'],['long','Long (>180km)']]],
@@ -294,11 +294,11 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
         ].map(([key,opts])=>(
           <select key={key} value={filter[key]} onChange={e=>setFilter(f=>({...f,[key]:e.target.value}))}
             style={{background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:5,color:SC.text,
-              fontSize:9,padding:'4px 8px',fontFamily:"'DM Mono',monospace",cursor:'pointer'}}>
+              fontSize:9,padding:'4px 8px',fontFamily:"'IBM Plex Mono',monospace",cursor:'pointer'}}>
             {opts.map(([val,label])=><option key={val} value={val}>{label}</option>)}
           </select>
         ))}
-        <span style={{fontSize:8,color:SC.subtle,fontFamily:"'DM Mono',monospace",marginLeft:'auto'}}>
+        <span style={{fontSize:8,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",marginLeft:'auto'}}>
           {loading ? '⟳ loading…' : `${filtered.length} design${filtered.length!==1?'s':''} shown`}
         </span>
       </div>
@@ -313,27 +313,27 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
             {isOwner(d) && (
               <div style={{position:'absolute',top:6,right:6,fontSize:7,padding:'2px 6px',
                 background:'#22c55e33',color:'#22c55e',borderRadius:3,
-                fontFamily:"'DM Mono',monospace",fontWeight:700,zIndex:2}}>YOURS</div>
+                fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,zIndex:2}}>YOURS</div>
             )}
             <div style={{background:SC.bg,display:'flex',justifyContent:'center',alignItems:'center',padding:'8px 0'}}>
               <AircraftThumb d={d}/>
             </div>
             <div style={{padding:'10px 12px'}}>
               <div style={{fontSize:11,fontWeight:700,color:d.color,
-                fontFamily:"'DM Mono',monospace",marginBottom:2}}>{d.name}</div>
-              <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6}}>
+                fontFamily:"'IBM Plex Mono',monospace",marginBottom:2}}>{d.name}</div>
+              <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6}}>
                 {d.author} · {d.config}
               </div>
               <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
                 {d.tags.map(t=>(
                   <span key={t} style={{fontSize:7,padding:'2px 6px',borderRadius:3,
-                    background:`${d.color}22`,color:d.color,fontFamily:"'DM Mono',monospace"}}>{t}</span>
+                    background:`${d.color}22`,color:d.color,fontFamily:"'IBM Plex Mono',monospace"}}>{t}</span>
                 ))}
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:4}}>
                 {[['MTOW',uc.mass(d.MTOW)+uc.massU],['Range',uc.dist(d.range)+uc.distU],
                   ['Payload',uc.mass(d.payload)+uc.massU],['SM',d.SM+'%']].map(([l,v])=>(
-                  <div key={l} style={{fontSize:8,fontFamily:"'DM Mono',monospace"}}>
+                  <div key={l} style={{fontSize:8,fontFamily:"'IBM Plex Mono',monospace"}}>
                     <span style={{color:SC.muted}}>{l}: </span>
                     <span style={{color:SC.text,fontWeight:600}}>{v}</span>
                   </div>
@@ -356,7 +356,7 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
                 <input value={editName} onChange={e=>setEditName(e.target.value)}
                   style={{flex:1,background:SC.bg,border:`1px solid ${sel.color}`,borderRadius:5,
                     color:SC.text,fontSize:14,fontWeight:700,padding:'4px 8px',
-                    fontFamily:"'DM Mono',monospace",outline:'none'}}
+                    fontFamily:"'IBM Plex Mono',monospace",outline:'none'}}
                   onKeyDown={e=>e.key==='Enter'&&handleSaveEdit(sel.id)}/>
                 <button type="button" onClick={()=>handleSaveEdit(sel.id)}
                   style={{padding:'4px 12px',background:'#22c55e',border:'none',borderRadius:4,
@@ -368,17 +368,17 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
             ) : (
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
                 <div style={{fontSize:16,fontWeight:800,color:sel.color,
-                  fontFamily:"'DM Mono',monospace"}}>{sel.name}</div>
+                  fontFamily:"'IBM Plex Mono',monospace"}}>{sel.name}</div>
                 {isOwner(sel) && (
                   <button type="button"
                     onClick={e=>{e.stopPropagation();setEditingId(sel.id);setEditName(sel.name);}}
                     style={{fontSize:10,padding:'2px 8px',background:'#22c55e22',
                       border:`1px solid #22c55e66`,borderRadius:4,color:'#22c55e',
-                      cursor:'pointer',fontFamily:"'DM Mono',monospace"}}>Rename</button>
+                      cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace"}}>Rename</button>
                 )}
               </div>
             )}
-            <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:10}}>
+            <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:10}}>
               {sel.author} · {sel.config} · {sel.nProp} hover rotors · D={uc.len(sel.Drotor)}{uc.lenU}
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:12}}>
@@ -389,8 +389,8 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
               ].map(([l,v,u])=>(
                 <div key={l} style={{background:SC.bg,border:`1px solid ${SC.border}`,
                   borderRadius:5,padding:'7px 9px'}}>
-                  <div style={{fontSize:7,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{l}</div>
-                  <div style={{fontSize:14,fontWeight:700,color:sel.color,fontFamily:"'DM Mono',monospace"}}>
+                  <div style={{fontSize:7,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{l}</div>
+                  <div style={{fontSize:14,fontWeight:700,color:sel.color,fontFamily:"'IBM Plex Mono',monospace"}}>
                     {v}<span style={{fontSize:8,color:SC.muted}}> {u}</span>
                   </div>
                 </div>
@@ -401,7 +401,7 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
                 style={{padding:'9px 24px',
                   background:`linear-gradient(135deg,${sel.color},${sel.color}aa)`,
                   border:'none',borderRadius:6,color:'#fff',fontSize:12,fontWeight:800,
-                  cursor:'pointer',fontFamily:"'DM Mono',monospace"}}>
+                  cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace"}}>
                 ↩ Load This Design Into Sizing Tool
               </button>
               {isOwner(sel) && (
@@ -409,7 +409,7 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
                   onClick={e=>{e.stopPropagation(); setConfirmDeleteId(sel.id);}}
                   style={{padding:'9px 16px',background:'#ef444422',border:`1px solid #ef4444`,
                     borderRadius:6,color:'#ef4444',fontSize:11,fontWeight:700,
-                    cursor:'pointer',fontFamily:"'DM Mono',monospace"}}>
+                    cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace"}}>
                   Delete
                 </button>
               )}
@@ -418,7 +418,7 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
                   onClick={e=>{e.stopPropagation();handleUpdateDesign(sel.id);}}
                   style={{padding:'9px 16px',background:'#3b82f622',border:`1px solid #3b82f6`,
                     borderRadius:6,color:'#3b82f6',fontSize:11,fontWeight:700,
-                    cursor:'pointer',fontFamily:"'DM Mono',monospace"}}>
+                    cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace"}}>
                   Update with Current Results
                 </button>
               )}
@@ -440,7 +440,7 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
             <div style={{fontSize:15,fontWeight:700,color:SC.text,textAlign:"center",marginBottom:8}}>
               Delete from community gallery?
             </div>
-            <div style={{fontSize:11,color:SC.muted,fontFamily:"'DM Mono',monospace",
+            <div style={{fontSize:11,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",
               textAlign:"center",marginBottom:24,lineHeight:1.6}}>
               This will permanently remove the design from the public gallery. This cannot be undone.
             </div>
@@ -448,13 +448,13 @@ export function DesignGallery({ SC, onLoadDesign, SR, params, customAirfoil, use
               <button type="button" onClick={()=>setConfirmDeleteId(null)}
                 style={{flex:1,padding:"10px 0",background:"transparent",
                   border:`1px solid ${SC.border}`,borderRadius:6,color:SC.muted,
-                  fontSize:12,cursor:"pointer",fontFamily:"system-ui,sans-serif",fontWeight:600}}>
+                  fontSize:12,cursor:"pointer",fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontWeight:600}}>
                 Cancel
               </button>
               <button type="button" onClick={()=>{handleDelete(confirmDeleteId);setConfirmDeleteId(null);}}
                 style={{flex:1,padding:"10px 0",background:"#ef444422",
                   border:"1px solid #ef4444",borderRadius:6,color:SC.warning,
-                  fontSize:12,cursor:"pointer",fontFamily:"system-ui,sans-serif",fontWeight:700}}>
+                  fontSize:12,cursor:"pointer",fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontWeight:700}}>
                 Yes, Delete
               </button>
             </div>

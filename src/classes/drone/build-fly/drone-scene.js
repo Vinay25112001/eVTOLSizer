@@ -285,7 +285,9 @@ export function mountWorkbench({ canvas, labelLayer = null, airframe, kit, dark 
   function spinTo(i, dt) {
     const want = BENCH_STEPS[i] === "review" && !reduced ? 5 : 0;           // a drawn turn, not rpm
     spinRate += (want - spinRate) * Math.min(1, dt * 1.5);
+    if (Math.abs(spinRate) < 1e-3 && want === 0) { spinRate = 0; return false; }
     for (const r of drone?.rotors ?? []) { r.angle += r.spin * spinRate * dt; r.blades.rotation.y = r.angle; }
+    return true;
   }
 
   /* Camera views, one per step, framed on what that step fits. */
@@ -388,7 +390,7 @@ export function mountWorkbench({ canvas, labelLayer = null, airframe, kit, dark 
     return g ? { key: g.key, part: g.part, label: g.label, count: g.items.length } : null;
   };
   const isShown = (o) => { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; };
-  const onMove = (e) => { pointer = { x: e.clientX, y: e.clientY }; };
+  const onMove = (e) => { pointer = { x: e.clientX, y: e.clientY }; pointerMoved = true; };
   const onLeave = () => { pointer = null; if (hoverKey) { hoverKey = null; tint(pinned); onHover?.(null); } };
   const onDown = (e) => { down = { x: e.clientX, y: e.clientY }; };
   const onUp = (e) => {
@@ -423,32 +425,51 @@ export function mountWorkbench({ canvas, labelLayer = null, airframe, kit, dark 
       placed.push({ l: x.l, r: x.r, t: x.t + dy, b: x.b + dy });
     }
   }
+  /* RENDER ON DEMAND. The picture is drawn when something in it changes
+     (a part or the camera moving, a hover, a setting from the panel) and
+     not otherwise. Drawing the same still picture 60 times a second kept
+     a laptop core busy with the bench idle (Edge, 2026-11-18: 37-67 % of
+     a core for the eVTOL lab, 27 % for the drone bench). Off the screen
+     (another tab, a hidden studio) nothing is drawn at all. */
+  let dirty = 2, onScreen = true, tidyDue = false, pointerMoved = false;
+  const wake = () => { dirty = Math.max(dirty, 2); };
+  const io = typeof window.IntersectionObserver === "function"
+    ? new window.IntersectionObserver((es) => { onScreen = es.some((e) => e.isIntersecting); if (onScreen) wake(); }) : null;
+  io?.observe(canvas);
+  controls.addEventListener("change", wake);
   let raf = 0, last = 0, alive = true, lastPickAt = 0, lastTidy = 0;
   function frame(now) {
     if (!alive) return;
+    raf = requestAnimationFrame(frame);
     const dt = clamp((now - last) / 1000, 0, 0.05); last = now;
-    if (playing) stepAnim(dt * speed);
-    spinTo(current, dt);
+    if (!onScreen) return;
+    let moving = false;
+    if (playing && anim.size > 0) { stepAnim(dt * speed); moving = true; }
+    if (spinTo(current, dt)) moving = true;
     if (camAnim.t < 1) {
       camAnim.t = Math.min(1, camAnim.t + dt / 1.1);
       const e = easeInOut(camAnim.t);
       camera.position.lerpVectors(camAnim.fp, camAnim.tp, e); controls.target.lerpVectors(camAnim.ft, camAnim.tt, e);
+      moving = true;
     }
-    if (pointer && now - lastPickAt > 60) {
-      lastPickAt = now;
+    if (controls.update()) moving = true;
+    if (pointer && (pointerMoved || moving) && now - lastPickAt > 60) {
+      lastPickAt = now; pointerMoved = false;
       const g = pick(pointer.x, pointer.y), k = g?.key ?? null;
-      if (k !== hoverKey) { hoverKey = k; tint(pinned ?? hoverKey); onHover?.(g, pointer.x, pointer.y); canvas.style.cursor = g ? "pointer" : "grab"; }
+      if (k !== hoverKey) { hoverKey = k; tint(pinned ?? hoverKey); onHover?.(g, pointer.x, pointer.y); canvas.style.cursor = g ? "pointer" : "grab"; dirty = Math.max(dirty, 1); }
       else if (g) onHover?.(g, pointer.x, pointer.y);
     }
-    controls.update();
-    renderer.render(scene, camera);
-    labels?.render(scene, camera);
-    if (labels && current === 0 && labelsOn && now - lastTidy > 150) { lastTidy = now; declutter(); }
-    raf = requestAnimationFrame(frame);
+    if (moving || dirty > 0) {
+      renderer.render(scene, camera);
+      labels?.render(scene, camera);
+      if (labels && current === 0 && labelsOn) tidyDue = true;
+      if (dirty > 0) dirty--;
+    }
+    if (tidyDue && now - lastTidy > 150) { lastTidy = now; tidyDue = false; declutter(); }
   }
   raf = requestAnimationFrame((n) => { last = n; frame(n); });
 
-  return {
+  const api = {
     setStep: (i) => applyStep(i),
     replay: () => applyStep(current, { replay: true }),
     setPlaying: (on) => { playing = !!on; },
@@ -495,13 +516,17 @@ export function mountWorkbench({ canvas, labelLayer = null, airframe, kit, dark 
     },
     resize: () => { sizeTo(renderer, camera, canvas, labels); if (drone) presets = makePresets(); },
     dispose() {
-      alive = false; cancelAnimationFrame(raf); controls.dispose();
+      alive = false; cancelAnimationFrame(raf); io?.disconnect(); controls.removeEventListener("change", wake); controls.dispose();
       canvas.removeEventListener("pointermove", onMove); canvas.removeEventListener("pointerleave", onLeave);
       canvas.removeEventListener("pointerdown", onDown); canvas.removeEventListener("pointerup", onUp);
       anchorObjs.forEach((a) => a.element.remove());
       disposeGroup(scene); env.dispose(); renderer.dispose(); renderer.forceContextLoss?.();
     },
   };
+  /* Whatever the panel asks for (a step, a highlight, the labels, the
+     theme, a resize) changes the picture: draw it again. */
+  for (const k of Object.keys(api)) { const f = api[k]; api[k] = (...a) => { const r = f(...a); wake(); return r; }; }
+  return api;
 }
 
 /* ── THE ARENA (Fly tab) ────────────────────────────────────────────── */

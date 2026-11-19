@@ -30,8 +30,10 @@
    never print.
    ===================================================================== */
 import { useMemo, useState } from "react";
-import { SC, applyTheme } from "../../lib/theme.js";
+import { SC } from "../../lib/theme.js";
 import { T, S, MONO, SANS } from "../../ui/tokens.js";
+import { DayNightKey } from "../../ui/glass.jsx";
+import { useDarkMode } from "../../lib/display.js";
 import { Card, th, td } from "../ui-kit.jsx";
 import { appVersionLabel } from "../../lib/designfile.js";
 import DesignModeSwitch from "../aircraft/DesignModeSwitch.jsx";
@@ -136,9 +138,9 @@ function NotBuilt({ title, needs, children }) {
 export default function DroneStudio() {
   const design = useDroneDesign();
   const qs = new URLSearchParams(INITIAL_SEARCH);
-  const [dark, setDark] = useState(() => (qs.get("theme") === "light" ? false : qs.get("theme") === "dark" ? true
-    : (typeof window !== "undefined" ? (window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true) : true)));
-  applyTheme(dark);
+  /* The theme is the tool's, not this studio's (lib/display.js): one value
+     for the three engines, saved in this browser. */
+  const dark = useDarkMode();
 
   const [frameClass, setFrameClass] = useState(() => {
     const f = (qs.get("frame") || "").split("/")[0];
@@ -207,9 +209,10 @@ export default function DroneStudio() {
   }, [mtomKg, frame]);
 
   return (
-    <div style={{ background: SC.bg, color: SC.text, minHeight: "100vh", fontFamily: SANS }}>
+    /* The glass frame's backdrop (ui/glass.jsx), shared with the eVTOL sizer. */
+    <div className="gc-backdrop" style={{ color: SC.text, minHeight: "100vh", fontFamily: SANS }}>
       <style>{"body{margin:0}"}</style>
-      <header style={{ background: SC.panel, borderBottom: `1px solid ${SC.border}` }}>
+      <header className="gc-glass" style={{ margin: "10px 10px 0", zIndex: 40 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 18px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
             <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: "-0.025em", lineHeight: 1, color: SC.primary }}>
@@ -227,9 +230,9 @@ export default function DroneStudio() {
           </nav>
           <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
             <UnitToggle style={chip(false)} />
-            <button type="button" style={chip(false)} onClick={() => setDark((d) => !d)}>{dark ? "DAY" : "NIGHT"}</button>
+            <DayNightKey />
             {/* The same session the eVTOL and aircraft studios show. */}
-            <SharedAuthBar dark={dark} />
+            <SharedAuthBar />
           </div>
         </div>
         <div style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap",

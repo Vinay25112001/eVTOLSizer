@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef } from "react";
+import { useDarkMode } from "../lib/display.js";
 import { SC } from "../lib/theme.js";
 import { aircraftGeometry } from "../engine/geometry.js";
 /* Moved to their own module so the mission animation draws the aircraft
@@ -30,6 +31,9 @@ import { project, bodyPolys, VIEWS } from "./projection.js";
 
 
 function ViewPane({ geo, yaw, pitch, label, w, h, showDims }) {
+  /* the faces carry their colours, so they are worked out again for Day
+     or Night (they kept the day colours after a switch, Edge 2026-11-18) */
+  const dark = useDarkMode();
   const polys = useMemo(() => {
     const out = [];
     for (const b of geo.bodies) for (const q of bodyPolys(b)) {
@@ -38,7 +42,7 @@ function ViewPane({ geo, yaw, pitch, label, w, h, showDims }) {
     }
     /* Painter's algorithm: far first. Enough for a convex-ish wireframe. */
     return out.sort((a, b) => a.depth - b.depth);
-  }, [geo, yaw, pitch]);
+  }, [geo, yaw, pitch, dark]);
 
   if (!polys.length) return null;
   let uMin = Infinity, uMax = -Infinity, vMin = Infinity, vMax = -Infinity;
@@ -59,7 +63,7 @@ function ViewPane({ geo, yaw, pitch, label, w, h, showDims }) {
        viewport. Safe now that every body carries a bright stroke — it was NOT
        safe before, when the fuselage was SC.panel on SC.bg. */
     <svg width={w} height={h} style={{ background: SC.bg, borderRadius: 6, border: `1px solid ${SC.border}` }}>
-      <text x={8} y={13} fill={SC.muted} fontSize={9} fontFamily="'DM Mono',monospace">{label}</text>
+      <text x={8} y={13} fill={SC.muted} fontSize={9} fontFamily="'IBM Plex Mono',monospace">{label}</text>
       {polys.map((q, i) => (
         <polygon key={i}
           points={q.proj.map((p) => `${X(p).toFixed(1)},${Y(p).toFixed(1)}`).join(" ")}
@@ -67,7 +71,7 @@ function ViewPane({ geo, yaw, pitch, label, w, h, showDims }) {
       ))}
       {showDims && (
         <text x={w - 8} y={h - 6} fill={SC.muted} fontSize={8.5} textAnchor="end"
-          fontFamily="'DM Mono',monospace">
+          fontFamily="'IBM Plex Mono',monospace">
           {((uMax - uMin)).toFixed(2)} × {((vMax - vMin)).toFixed(2)} m
         </text>
       )}
@@ -97,7 +101,7 @@ export function Aircraft3D({ params, SR }) {
 
   const ext = geo.extents;
   const btn = (on) => ({ padding: "4px 9px", borderRadius: 4, cursor: "pointer", fontSize: 10,
-    fontFamily: "system-ui,sans-serif", background: on ? `${SC.amber}22` : "transparent",
+    fontFamily: "'IBM Plex Sans',system-ui,sans-serif", background: on ? `${SC.amber}22` : "transparent",
     border: `1px solid ${on ? SC.amber : SC.border}`, color: on ? SC.amber : SC.muted });
 
   return (
@@ -109,7 +113,7 @@ export function Aircraft3D({ params, SR }) {
           <button key={k} type="button" style={btn(false)}
             onClick={() => { setYaw(v.yaw); setPitch(v.pitch); }}>{v.label}</button>
         ))}
-        <span style={{ marginLeft: "auto", fontSize: 10, color: SC.muted, fontFamily: "'DM Mono',monospace" }}>
+        <span style={{ marginLeft: "auto", fontSize: 10, color: SC.muted, fontFamily: "'IBM Plex Mono',monospace" }}>
           {ext && `L ${(ext.xMax - ext.xMin).toFixed(2)} × W ${(ext.yMax - ext.yMin).toFixed(2)} × H ${(ext.zMax - ext.zMin).toFixed(2)} m`}
         </span>
       </div>
@@ -128,7 +132,7 @@ export function Aircraft3D({ params, SR }) {
         </div>
       )}
 
-      <div style={{ marginTop: 8, fontSize: 10, color: SC.muted, fontFamily: "system-ui,sans-serif", lineHeight: 1.5 }}>
+      <div style={{ marginTop: 8, fontSize: 10, color: SC.muted, fontFamily: "'IBM Plex Sans',system-ui,sans-serif", lineHeight: 1.5 }}>
         <b>{geo.note}</b>
         <br/>
         <span style={{ color: SC.green }}>■</span> turning rotor&nbsp;&nbsp;

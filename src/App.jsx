@@ -1,6 +1,6 @@
 import { mark } from "./ui/marks.jsx";
 import React, { useState, useMemo, useCallback, useEffect, useRef, useDeferredValue } from "react";
-import { AuthGate, UserHeaderBar, saveSession, clearSession, addNotif, saveDesign, addReport, setAuthTheme } from "./AuthSystem";
+import { AuthGate, UserHeaderBar, saveSession, clearSession, addNotif, saveDesign, addReport } from "./AuthSystem";
 import { useAuthSession } from "./lib/auth-session.jsx";
 import { ShareDesignButton, LeaderboardPanel, CollabPanel, PublicDesignBanner } from "./CommunityFeatures";
 import { WBEnvelopePanel, ComponentDBPanel } from "./Components";
@@ -63,6 +63,9 @@ import { SensitivityAnalysis } from "./panels/SensitivityAnalysis.jsx";
 import { TABS, TAB_GROUPS, GROUP_KEYS } from "./lib/tabs.js";
 import DesignModeSwitch, { requestDesignMode } from "./classes/aircraft/DesignModeSwitch.jsx";
 import { pressCSS, tap } from "./ui/feedback.js";
+import { DayNightKey } from "./ui/glass.jsx";
+import { useDarkMode } from "./lib/display.js";
+import { DISPLAY } from "./ui/tokens.js";
 import { publishAudit } from "./ui/audit.js";
 
 /* ── ADDRESSABLE STATE ────────────────────────────────────────────────
@@ -77,8 +80,6 @@ const qsTab = (() => {
 })();
 const qsGroup = qsTab == null ? null
   : Math.max(0, TAB_GROUPS.findIndex(g => g.tabs.includes(qsTab)));
-const qsTheme = QS.get("theme") === "dark" ? true
-              : QS.get("theme") === "light" ? false : null;
 const qsAudit = QS.get("audit") === "1";
 
 import { hiddenTabs, tailTabLabel, TAB } from "./lib/tabvisibility.js";
@@ -98,6 +99,7 @@ import { CostTab } from "./tabs/CostTab.jsx";
 import { MissionBuilderTab } from "./tabs/MissionBuilderTab.jsx";
 import { WeatherTab } from "./tabs/WeatherTab.jsx";
 import { OpenVSPTab } from "./tabs/OpenVSPTab.jsx";
+import { BuildEvtolTab } from "./tabs/BuildEvtolTab.jsx";
 import { CommunityTab } from "./tabs/CommunityTab.jsx";
 import { VnDiagramTab } from "./tabs/VnDiagramTab.jsx";
 import { ConstraintDiagramTab } from "./tabs/ConstraintDiagramTab.jsx";
@@ -168,7 +170,10 @@ export default function App(){
   const auth=useAuthSession();
   const user=auth?auth.user:null;
   const setShowAuthModal=(v)=>{ if(auth) v?auth.openAuth():auth.closeAuth(); };
-  const[darkMode,setDarkMode]=useState(()=>qsTheme ?? (window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? true));
+  /* One theme for the whole tool (lib/display.js): the aircraft and drone
+     studios read the same value, it is saved in this browser, and ?theme=
+     still wins for a link. It was a useState here and in each studio. */
+  const darkMode=useDarkMode();
   const[useImperial,setUseImperial]=useState(false);
 
   /* ── SELF-AUDIT, ONLY WHEN ASKED ──────────────────────────────────────
@@ -368,10 +373,9 @@ export default function App(){
     {name:"Dayton, OH",   lat:39.7589,lon:-84.1916, alt:306, flag:""},
   ];
 
-  // Update global C on every render based on theme
-  applyTheme(darkMode);   // mutates the shared SC object in place
-  // Sync theme to AuthSystem so modal inputs also update
-  setAuthTheme(darkMode);
+  /* The palette (SC) is written by lib/display.js when the theme changes,
+     not here on every render: with three engines mounted, the one that
+     rendered last used to choose the colours for the other two. */
 
   /* ── SIGNIFICANT FIGURES: DO NOT CLAIM PRECISION THE MODEL HAS NOT GOT ──
      Masses, powers and energies were displayed to one decimal place, so MTOW
@@ -1077,17 +1081,19 @@ export default function App(){
     wxError, wxLoading, wxResults, wxSearch,
   };
 
-  const stCol=!SR?SC.red:SR.feasible?SC.green:SC.amber;
   const stTxt=!SR?"ERROR":SR.feasible?"FEASIBLE":"CHECK DESIGN";
 
   return(
     <PowertrainContext.Provider value={deferredParams.powertrain==="turboelectric"?"turboelectric":"battery"}>
-    <div style={{display:"flex",flexDirection:"column",height:"100vh",
-      background:SC.bg,color:SC.text,
-      fontFamily:"'Barlow',system-ui,sans-serif",overflow:"hidden",
-      transition:"background 0.2s,color 0.2s"}}>
+    {/* The studio root is the glass frame's backdrop (ui/glass.jsx): the chart
+       is its background and it is the stacking context the panes' ::before
+       glass paints into, so its background is set by the class, not here. */}
+    <div className="gc-backdrop" style={{display:"flex",flexDirection:"column",height:"100vh",
+      color:SC.text,padding:10,gap:10,
+      fontFamily:"'IBM Plex Sans',system-ui,sans-serif",overflow:"hidden",
+      transition:"color 0.2s"}}>
       <style>{`
-        html,body{background:${SC.bg};color:${SC.text};margin:0;padding:0}
+        html,body{background:${SC.page};color:${SC.text};margin:0;padding:0}
         *{box-sizing:border-box}
         ::-webkit-scrollbar{width:5px;height:5px}
         ::-webkit-scrollbar-track{background:${SC.bg}}
@@ -1113,17 +1119,17 @@ export default function App(){
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
         @media (prefers-reduced-motion: reduce){*,*::before,*::after{transition:none !important;animation:none !important}}
         /* ── Font hierarchy:
-           DM Mono  → numeric values, equations, code, unit labels, status badges
+           IBM Plex Mono  → numeric values, equations, code, unit labels, status badges
            System   → panel headings, section titles, sidebar labels, descriptive text
            Override monospace on headings/labels with .lbl class ── */
-        .lbl{font-family:system-ui,-apple-system,sans-serif !important}
-        .acc-title{font-family:system-ui,-apple-system,sans-serif !important;letter-spacing:0 !important}
-        .panel-title{font-family:system-ui,-apple-system,sans-serif !important;letter-spacing:0.01em !important}
-        .tab-label{font-family:system-ui,-apple-system,sans-serif !important}
+        .lbl{font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif !important}
+        .acc-title{font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif !important;letter-spacing:0 !important}
+        .panel-title{font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif !important;letter-spacing:0.01em !important}
+        .tab-label{font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif !important}
         /* Slider label — the descriptive name above the track */
-        .slider-label{font-family:system-ui,-apple-system,sans-serif !important;font-size:11px}
+        .slider-label{font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif !important;font-size:11px}
         /* Tab group category pill */
-        .tab-group-pill{font-family:system-ui,-apple-system,sans-serif !important}
+        .tab-group-pill{font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif !important}
       `}</style>
 
       {/* PDF BRANDING POPUP */}
@@ -1135,7 +1141,7 @@ export default function App(){
             padding:"24px 28px",width:460,maxWidth:"92vw",boxShadow:"0 20px 60px rgba(0,0,0,0.6)"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
               <div>
-                <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.15em",marginBottom:4}}>PDF REPORT</div>
+                <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.15em",marginBottom:4}}>PDF REPORT</div>
                 <div style={{fontSize:16,fontWeight:800,color:SC.text}}>
                   <span style={{color:SC.amber}}>eVTOL</span> — Report Branding
                 </div>
@@ -1153,13 +1159,13 @@ export default function App(){
               ["Report Date","date",new Date().toLocaleDateString()],
             ].map(([lbl,key,ph])=>(
               <div key={key} style={{marginBottom:12}}>
-                <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",
+                <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",
                   textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>{lbl}</div>
                 <input value={pdfBranding[key]||""} onChange={evt=>setPdfBranding(prev_b=>({...prev_b,[key]:evt.target.value}))}
                   placeholder={ph} type="text"
                   style={{width:"100%",boxSizing:"border-box",background:SC.bg,border:`1px solid ${SC.border}`,
                     borderRadius:6,color:SC.text,fontSize:12,padding:"8px 12px",
-                    fontFamily:"'DM Mono',monospace",outline:"none"}}
+                    fontFamily:"'IBM Plex Mono',monospace",outline:"none"}}
                   onFocus={evt=>evt.target.style.borderColor=SC.amber}
                   onBlur={evt=>evt.target.style.borderColor=SC.border}/>
               </div>
@@ -1167,13 +1173,13 @@ export default function App(){
 
             {/* Logo — file upload (always works) */}
             <div style={{marginBottom:12}}>
-              <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",
+              <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",
                 textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Logo Image</div>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
                 {/* Upload button */}
                 <label style={{flex:1,display:"flex",alignItems:"center",gap:8,padding:"8px 12px",
                   background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:6,cursor:"pointer",
-                  fontSize:11,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>
+                  fontSize:11,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>
                   
                   <span>{pdfBranding.logoUrl&&pdfBranding.logoUrl.startsWith("data:")?"✓ Logo loaded — click to change":"Upload logo from computer"}</span>
                   <input type="file" accept="image/*" style={{display:"none"}}
@@ -1198,23 +1204,23 @@ export default function App(){
                   border:`1px solid ${SC.border}`,display:"flex",alignItems:"center",gap:10}}>
                   <img src={pdfBranding.logoUrl} alt="Logo preview"
                     style={{height:40,maxWidth:120,objectFit:"contain",borderRadius:4}}/>
-                  <span style={{fontSize:9,color:SC.green,fontFamily:"'DM Mono',monospace"}}>✓ Will appear on PDF cover</span>
+                  <span style={{fontSize:9,color:SC.green,fontFamily:"'IBM Plex Mono',monospace"}}>✓ Will appear on PDF cover</span>
                 </div>
               )}
-              <div style={{fontSize:9,color:SC.subtle,marginTop:5,fontFamily:"'DM Mono',monospace"}}>
+              <div style={{fontSize:9,color:SC.subtle,marginTop:5,fontFamily:"'IBM Plex Mono',monospace"}}>
                 Save the image from your browser first (right-click → Save image), then upload it here.
               </div>
             </div>
 
             <div style={{marginTop:6,padding:"8px 12px",background:`${SC.green}11`,
               border:`1px solid ${SC.green}44`,borderRadius:6,fontSize:10,color:SC.green,
-              fontFamily:"'DM Mono',monospace"}}>
+              fontFamily:"'IBM Plex Mono',monospace"}}>
               ✓ These details will appear on the PDF cover page when you click PDF REPORT
             </div>
 
             {/* Cross-device sync status */}
             <div style={{marginTop:8,padding:"8px 12px",borderRadius:6,fontSize:9,
-              fontFamily:"'DM Mono',monospace",display:"flex",alignItems:"center",gap:8,
+              fontFamily:"'IBM Plex Mono',monospace",display:"flex",alignItems:"center",gap:8,
               background: user ? (brandSynced ? `${SC.teal}15` : `${SC.amber}15`) : `${SC.amber}15`,
               border: `1px solid ${user ? (brandSynced ? SC.teal+"55" : SC.amber+"55") : SC.amber+"55"}`,
               color: user ? (brandSynced ? SC.teal : SC.amber) : SC.amber,
@@ -1228,7 +1234,7 @@ export default function App(){
             {!user && (
               <div style={{marginTop:6,padding:"7px 12px",background:`${SC.purple}11`,
                 border:`1px solid ${SC.purple}33`,borderRadius:6,fontSize:9,color:SC.muted,
-                fontFamily:"'DM Mono',monospace",lineHeight:1.6}}>
+                fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.6}}>
                  Tip: Log in with your account to save your logo and branding to the cloud. It will automatically load on any browser or device you sign into.
               </div>
             )}
@@ -1237,25 +1243,25 @@ export default function App(){
       )}
 
       {/* HEADER */}
-      <div style={{display:"flex",alignItems:"center",padding:"8px 18px",background:SC.panel,
-        borderBottom:`1px solid ${SC.border}`,gap:14,flexShrink:0,flexWrap:"wrap"}}>
+      <header className="gc-glass" style={{display:"flex",alignItems:"center",padding:"8px 14px",
+        gap:"10px 16px",flexShrink:0,flexWrap:"wrap",zIndex:40}}>
         <div>
-          <div style={{fontSize:9,color:SC.muted,letterSpacing:"0.2em",fontFamily:"'DM Mono',monospace"}}>AEROSPACE DESIGN SUITE</div>
-          <div style={{fontSize:19,fontWeight:800,letterSpacing:"-0.03em",lineHeight:1}}>
-            <span style={{color:SC.caution}}>eVTOL</span>
-            <span style={{color:SC.primary}}> SIZER</span>
-            <span style={{fontSize:10,color:SC.subtle,marginLeft:6,fontFamily:"'DM Mono',monospace",fontWeight:400}}>{appVersionLabel()} · NDARC / AFDD methods</span>
+          <div className="gc-eyebrow" style={{fontSize:10}}>Aerospace design suite</div>
+          <div style={{fontFamily:DISPLAY,fontSize:21,fontWeight:700,lineHeight:1.05,color:SC.primary}}>
+            eVTOL Sizer
+            <span style={{fontSize:10.5,color:SC.subtle,marginLeft:8,fontFamily:"'IBM Plex Mono',monospace",fontWeight:400}}>{appVersionLabel()} · NDARC / AFDD methods</span>
           </div>
         </div>
         {/* eVTOL or fixed-wing aircraft: the two engines (src/classes/Root.jsx) */}
         <DesignModeSwitch mode="evtol"/>
-        <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 10px",
-          background:`${stCol}11`,border:`1px solid ${stCol}44`,borderRadius:4}}>
-          <div style={{width:6,height:6,borderRadius:"50%",background:stCol,boxShadow:`0 0 8px ${stCol}`}}/>
-          <span style={{fontSize:9,color:stCol,fontFamily:"'DM Mono',monospace",fontWeight:700,letterSpacing:"0.08em"}}>{stTxt}</span>
+        {/* The design's state is an annunciator, not a button: a lamp in a
+            recessed window. The words keep their meaning without the colour. */}
+        <div className="gc-well" role="status" style={{display:"flex",alignItems:"center",gap:8,padding:"7px 11px"}}>
+          <span className="gc-lamp" data-state={!SR?"warning":SR.feasible?"nominal":"caution"}/>
+          <span style={{fontSize:11,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",fontWeight:600,letterSpacing:"0.06em"}}>{stTxt}</span>
         </div>
         {SR&&(
-          <div style={{display:"flex",gap:14,marginLeft:6,flexWrap:"wrap"}}>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
             {[
               [" MTOW",  "MTOW",  U.mass(SR.MTOW),  U.massU,  SR.MTOW<4000?SC.green:SR.MTOW<5000?SC.amber:SC.red, "MTOW",  0,0],
               ["E_total","Etot",  SR.Etot,           U.energyU,SC.teal,                                             "Etot",  5,1],
@@ -1266,48 +1272,49 @@ export default function App(){
               const d=deltaMap[deltaKey];
               const isNum=typeof v==="number";
               const dispVal=isNum?v.toLocaleString():v;
+              /* A display window per figure. Colour only when the figure is
+                 off-nominal: green-when-fine and an identity hue per figure
+                 (teal energy, blue power) said nothing a reader could act on. */
+              const off = col===SC.amber || col===SC.red || col===SC.caution || col===SC.warning;
               return(
-                <div key={l} style={{textAlign:"center",position:"relative",cursor:"pointer"}}
+                <button key={l} type="button" className="gc-lcd"
+                  style={{textAlign:"left",position:"relative",cursor:"pointer",border:0,
+                    padding:"5px 10px",minWidth:76,color:SC.text}}
                   title={`Go to ${TABS[tabIdx]}`}
                   onClick={()=>{setTab(tabIdx);setActiveGroup(grpIdx);}}>
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em"}}>{l}</div>
-                  <div style={{fontSize:13,fontWeight:700,color:col,fontFamily:"'DM Mono',monospace",lineHeight:1.1}}>
-                    {dispVal}<span style={{fontSize:10,color:SC.subtle,marginLeft:2}}>{u}</span>
+                  <div className="gc-eyebrow" style={{fontSize:9.5,letterSpacing:"0.06em",textTransform:"none"}}>{l.trim()}</div>
+                  <div style={{fontSize:14,fontWeight:600,color:off?col:SC.primary,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.2,fontVariantNumeric:"tabular-nums"}}>
+                    {dispVal}<span style={{fontSize:10.5,color:SC.subtle,marginLeft:3,fontWeight:400}}>{u}</span>
                   </div>
                   {d!=null&&(
-                    <div style={{position:"absolute",top:-10,right:-4,fontSize:8,fontFamily:"'DM Mono',monospace",
+                    <div style={{position:"absolute",top:-10,right:-4,fontSize:8,fontFamily:"'IBM Plex Mono',monospace",
                       color:d>0?"#f87171":"#34d399",fontWeight:700,whiteSpace:"nowrap",
                       background:SC.panel,borderRadius:3,padding:"0 3px",border:`1px solid ${d>0?"#f8717155":"#34d39955"}`}}>
                       {d>0?"+":""}{d.toFixed(1)}
                     </div>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>
         )}
 
         {/* Action buttons — primary visible, secondary behind ••• */}
-        <div style={{display:"flex",gap:6,marginLeft:"auto",alignItems:"center",position:"relative"}}>
-          {/* Units toggle — metric / imperial */}
-          <button onClick={()=>setUseImperial(u=>!u)} type="button"
-            title={useImperial?"Switch to Metric (SI)":"Switch to Imperial (US)"}
-            style={{padding:"5px 10px",background:"transparent",
-              border:`1px solid ${useImperial?SC.caution:SC.border}`,borderRadius:4,
-              color:useImperial?SC.caution:SC.muted,fontSize:10,cursor:"pointer",
-              fontFamily:"'DM Mono',monospace",fontWeight:700,letterSpacing:"0.08em"}}>
-            {useImperial?"IMP":"SI"}
-          </button>
+        {/* Wraps on a phone: at 390 px the last key (Register) was cut off. */}
+        <div style={{display:"flex",flexWrap:"wrap",gap:6,marginLeft:"auto",alignItems:"center",position:"relative"}}>
+          {/* Units — a recessed two-way switch, so the current system is
+              always visible rather than implied by one button's label. */}
+          <div className="gc-well" role="group" aria-label="Units" style={{display:"flex",gap:2,padding:3}}>
+            <button type="button" className="gc-key" aria-pressed={!useImperial}
+              title="Metric (SI)" onClick={()=>setUseImperial(false)}
+              style={{minHeight:28,padding:"0 10px",fontFamily:"'IBM Plex Mono',monospace"}}>SI</button>
+            <button type="button" className="gc-key" aria-pressed={useImperial}
+              title="Imperial (US)" onClick={()=>setUseImperial(true)}
+              style={{minHeight:28,padding:"0 10px",fontFamily:"'IBM Plex Mono',monospace"}}>US</button>
+          </div>
 
-          {/* Dark/Light toggle — typographic, no emoji */}
-          <button onClick={()=>setDarkMode(d=>!d)} type="button"
-            title={darkMode?"Switch to Light Mode":"Switch to Dark Mode"}
-            style={{padding:"5px 10px",background:"transparent",
-              border:`1px solid ${SC.border}`,borderRadius:4,
-              color:SC.muted,fontSize:10,cursor:"pointer",lineHeight:1,
-              fontFamily:"'DM Mono',monospace",fontWeight:700,letterSpacing:"0.08em"}}>
-            {darkMode?"DAY":"NIGHT"}
-          </button>
+          {/* Day / night: the same key in all three studios (ui/glass.jsx) */}
+          <DayNightKey/>
 
           {/* PRIMARY: Save Design */}
           {SR&&(
@@ -1316,11 +1323,8 @@ export default function App(){
                 /* Was a dark-green gradient with a neon glow and hard-coded
                    #0f2a0f / #14532d / #86efac — three colours that exist in
                    neither palette. Save is an ordinary action, not a status. */
-                style={{padding:"6px 16px",background:"transparent",
-                  border:`1px solid ${SC.border}`,borderRadius:3,color:SC.text,fontSize:11,cursor:"pointer",
-                  fontFamily:"'DM Mono',monospace",fontWeight:500,letterSpacing:"0.06em",
-                  display:"flex",alignItems:"center",gap:5}}>
-                {!user&&<span style={{fontSize:10,opacity:0.7}}>⚿</span>}SAVE
+                type="button" className="gc-key">
+                {!user&&<span aria-hidden="true" style={{fontSize:10,opacity:0.7}}>⚿</span>}Save
               </button>
             </AuthGate>
           )}
@@ -1329,17 +1333,15 @@ export default function App(){
             style={{display:"none"}} onChange={onDesignFileChosen} data-design-file-input="1"/>
           {/* SECONDARY: overflow ••• menu */}
           <div ref={overflowRef} style={{position:"relative"}}>
-            <button type="button" onClick={()=>setShowOverflow(v=>!v)}
-              style={{padding:"6px 10px",background:"transparent",
-                border:`1px solid ${SC.border}`,borderRadius:4,
-                color:SC.muted,fontSize:14,cursor:"pointer",lineHeight:1,
-                fontFamily:"'DM Mono',monospace"}}>
+            <button type="button" className="gc-key" onClick={()=>setShowOverflow(v=>!v)}
+              aria-label="More actions" aria-expanded={showOverflow} title="More actions"
+              style={{fontSize:14,letterSpacing:"0.1em",padding:"0 10px"}}>
               •••
             </button>
             {showOverflow&&(
-              <div style={{position:"absolute",top:"calc(100% + 6px)",right:0,zIndex:200,
-                background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,
-                padding:"6px 0",minWidth:190,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
+              <div className="gc-float" style={{position:"absolute",top:"calc(100% + 6px)",right:0,zIndex:200,
+                background:SC.panel,border:`1px solid ${SC.rim}`,borderRadius:12,
+                padding:"6px 0",minWidth:200}}>
                 {/* Export CSV */}
                 {SR&&(
                   <button onClick={()=>{
@@ -1348,7 +1350,7 @@ export default function App(){
                   }} type="button"
                     style={{width:"100%",padding:"8px 16px",background:"transparent",border:"none",
                       cursor:"pointer",textAlign:"left",fontSize:11,color:SC.text,
-                      fontFamily:"'DM Mono',monospace",display:"flex",alignItems:"center",gap:8}}>
+                      fontFamily:"'IBM Plex Mono',monospace",display:"flex",alignItems:"center",gap:8}}>
                     {!user&&<span style={{fontSize:10,opacity:0.7}}>⚿</span>}↓ Export CSV
                   </button>
                 )}
@@ -1388,7 +1390,7 @@ export default function App(){
                     }}
                     style={{width:"100%",padding:"8px 16px",background:"transparent",border:"none",
                       cursor:"pointer",textAlign:"left",fontSize:11,color:SC.text,
-                      fontFamily:"'DM Mono',monospace",display:"flex",alignItems:"center",gap:8}}>
+                      fontFamily:"'IBM Plex Mono',monospace",display:"flex",alignItems:"center",gap:8}}>
                     {!user&&<span style={{fontSize:10,opacity:0.7}}>⚿</span>}↓ PDF Report
                   </button>
                 )}
@@ -1400,7 +1402,7 @@ export default function App(){
                   }} type="button"
                     style={{width:"100%",padding:"8px 16px",background:"transparent",border:"none",
                       cursor:"pointer",textAlign:"left",fontSize:11,color:SC.text,
-                      fontFamily:"'DM Mono',monospace",display:"flex",alignItems:"center",gap:8}}>
+                      fontFamily:"'IBM Plex Mono',monospace",display:"flex",alignItems:"center",gap:8}}>
                     {!user&&<span style={{fontSize:10,opacity:0.7}}>⚿</span>}◈ Brand PDF
                   </button>
                 )}
@@ -1417,7 +1419,7 @@ export default function App(){
                     disabled={!undoCount}
                     style={{flex:1,padding:"7px 8px",background:"transparent",border:`1px solid ${SC.border}`,
                       borderRadius:4,color:undoCount?SC.text:SC.subtle,fontSize:10,
-                      cursor:undoCount?"pointer":"default",fontFamily:"system-ui,sans-serif",
+                      cursor:undoCount?"pointer":"default",fontFamily:"'IBM Plex Sans',system-ui,sans-serif",
                       display:"flex",alignItems:"center",gap:4}}>
                     ↩ Undo <span style={{fontSize:8,color:SC.subtle}}>({undoCount})</span>
                   </button>
@@ -1425,7 +1427,7 @@ export default function App(){
                     disabled={!redoCount}
                     style={{flex:1,padding:"7px 8px",background:"transparent",border:`1px solid ${SC.border}`,
                       borderRadius:4,color:redoCount?SC.text:SC.subtle,fontSize:10,
-                      cursor:redoCount?"pointer":"default",fontFamily:"system-ui,sans-serif",
+                      cursor:redoCount?"pointer":"default",fontFamily:"'IBM Plex Sans',system-ui,sans-serif",
                       display:"flex",alignItems:"center",gap:4}}>
                     ↪ Redo <span style={{fontSize:8,color:SC.subtle}}>({redoCount})</span>
                   </button>
@@ -1435,31 +1437,31 @@ export default function App(){
                 <button type="button" onClick={()=>{downloadDesignFile();setShowOverflow(false);}}
                   style={{width:"100%",padding:"8px 16px",background:"transparent",border:"none",
                     cursor:"pointer",textAlign:"left",fontSize:11,color:SC.text,
-                    fontFamily:"system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
                   ⤓ Download design file
                 </button>
                 <button type="button" onClick={()=>{designFileInputRef.current?.click();setShowOverflow(false);}}
                   style={{width:"100%",padding:"8px 16px",background:"transparent",border:"none",
                     cursor:"pointer",textAlign:"left",fontSize:11,color:SC.text,
-                    fontFamily:"system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
                   ⤒ Open design file…
                 </button>
                 <button type="button" onClick={()=>{exportInterchange("cpacs");setShowOverflow(false);}}
                   style={{width:"100%",padding:"8px 16px",background:"transparent",border:"none",
                     cursor:"pointer",textAlign:"left",fontSize:11,color:SC.text,
-                    fontFamily:"system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
                   ⤓ Export CPACS 3.5 (.xml)
                 </button>
                 <button type="button" onClick={()=>{exportInterchange("autopilot");setShowOverflow(false);}}
                   style={{width:"100%",padding:"8px 16px",background:"transparent",border:"none",
                     cursor:"pointer",textAlign:"left",fontSize:11,color:SC.text,
-                    fontFamily:"system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
                   ⤓ Export autopilot (.param + .params)
                 </button>
                 <button type="button" onClick={()=>{exportInterchange("trace");setShowOverflow(false);}}
                   style={{width:"100%",padding:"8px 16px",background:"transparent",border:"none",
                     cursor:"pointer",textAlign:"left",fontSize:11,color:SC.text,
-                    fontFamily:"system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
                   ⤓ Export requirements traceability (.csv)
                 </button>
                 <div style={{height:1,background:SC.border,margin:"2px 0"}}/>
@@ -1470,7 +1472,7 @@ export default function App(){
                   <button key={id} type="button" onClick={()=>{setShowOverflow(false);requestDesignMode("aircraft",id);}}
                     style={{width:"100%",padding:"8px 16px",background:"transparent",border:"none",
                       cursor:"pointer",textAlign:"left",fontSize:11,color:SC.text,
-                      fontFamily:"system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
+                      fontFamily:"'IBM Plex Sans',system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
                     {label}
                   </button>
                 ))}
@@ -1482,30 +1484,36 @@ export default function App(){
                 <button onClick={()=>{setParams(DEFAULT_PARAMS);setShowOverflow(false);}}
                   style={{width:"100%",padding:"8px 16px",background:"transparent",border:"none",
                     cursor:"pointer",textAlign:"left",fontSize:11,color:SC.muted,
-                    fontFamily:"system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif",display:"flex",alignItems:"center",gap:8}}>
                   ↺ Reset to defaults
                 </button>
               </div>
             )}
           </div>
 
-          <UserHeaderBar user={user} onSignOut={handleSignOut} onSignIn={()=>setShowAuthModal(true)} onUpdate={handleUpdate}/>
+          <UserHeaderBar user={user} onSignOut={handleSignOut} onSignIn={()=>setShowAuthModal(true)} onRegister={()=>auth?.openAuth("register")} onUpdate={handleUpdate}/>
           {/* AuthModal is rendered once by AuthSessionProvider, above all three studios. */}
         </div>
-      </div>
+      </header>
 
-      <div style={{display:"flex",flex:1,overflow:"hidden"}}>
-        {/* SIDEBAR — collapsible */}
-        <div style={{
-          width: sidebarOpen ? 262 : 32,
-          minWidth: sidebarOpen ? 262 : 32,
+      <div style={{display:"flex",flex:1,overflow:"hidden",gap:10,minHeight:0}}>
+        {/* SIDEBAR — collapsible. A glass pane (outer, which does not
+            scroll) around the scroller (inner): a ::before glass layer inside
+            a scrolling box would scroll away with the content. */}
+        <aside className="gc-glass" aria-label="Design inputs" style={{
+          width: sidebarOpen ? 274 : 44,
+          minWidth: sidebarOpen ? 274 : 44,
           flexShrink: 0,
-          background: SC.panel,
-          borderRight: `1px solid ${SC.border}`,
+          overflow: "hidden",
+          display: "flex",
+          transition: "width 0.22s cubic-bezier(.4,0,.2,1), min-width 0.22s cubic-bezier(.4,0,.2,1)",
+        }}>
+        <div style={{
+          flex: 1,
+          minWidth: 0,
           overflowY: sidebarOpen ? "auto" : "hidden",
           overflowX: "hidden",
-          padding: sidebarOpen ? "10px 13px 24px" : "10px 0 24px",
-          transition: "width 0.22s cubic-bezier(.4,0,.2,1), min-width 0.22s cubic-bezier(.4,0,.2,1)",
+          padding: sidebarOpen ? "10px 13px 24px" : "10px 6px 24px",
           position: "relative",
         }}>
           {/* Toggle arrow — always visible */}
@@ -1520,20 +1528,15 @@ export default function App(){
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: sidebarOpen ? "100%" : 32,
-              height: 28,
-              marginBottom: 6,
-              background: SC.bg,
-              border: `1px solid ${SC.border}`,
-              borderRadius: 5,
-              cursor: "pointer",
-              color: SC.muted,
+              width: "100%",
+              minHeight: 28,
+              marginBottom: 8,
+              padding: 0,
               fontSize: 14,
               lineHeight: 1,
-              transition: "background 0.15s",
             }}
-            onMouseEnter={e=>e.currentTarget.style.background=`${SC.amber}18`}
-            onMouseLeave={e=>e.currentTarget.style.background=SC.bg}
+            className="gc-key"
+            aria-expanded={sidebarOpen}
           >
             {sidebarOpen ? "‹" : "›"}
           </button>
@@ -1550,7 +1553,7 @@ export default function App(){
                 <div key={tip} title={`${tip}: ${val}`}
                   style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1,cursor:"default"}}>
                   <span style={{fontSize:14,lineHeight:1}}>{icon}</span>
-                  <span style={{fontSize:9,color:col,fontFamily:"'DM Mono',monospace",
+                  <span style={{fontSize:9,color:col,fontFamily:"'IBM Plex Mono',monospace",
                     fontWeight:700,lineHeight:1,textAlign:"center",maxWidth:28,
                     overflow:"hidden",whiteSpace:"nowrap"}}>{val}</span>
                 </div>
@@ -1596,13 +1599,13 @@ export default function App(){
             {/* POWERTRAIN — engine/turboelectric.js. Battery is every earlier
                 result; turboelectric adds a turboshaft-generator and keeps the
                 pack for an engine-out landing only. */}
-            <div style={{fontSize:11,color:SC.muted,fontFamily:"system-ui,sans-serif",marginBottom:5}}>Powertrain</div>
+            <div style={{fontSize:11,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:5}}>Powertrain</div>
             <div data-powertrain-toggle="1" style={{display:"flex",gap:4,marginBottom:6}}>
               {[["battery","Battery-electric"],["turboelectric","Turboelectric"]].map(([k,lab])=>(
                 <button key={k} type="button" onClick={()=>set("powertrain")(k)}
                   aria-pressed={(params.powertrain??"battery")===k}
                   style={{flex:1,padding:"4px 6px",fontSize:9,borderRadius:4,cursor:"pointer",
-                    fontFamily:"system-ui,sans-serif",fontWeight:600,
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontWeight:600,
                     background:(params.powertrain??"battery")===k?`${SC.amber}22`:SC.panel,
                     color:(params.powertrain??"battery")===k?SC.amber:SC.muted,
                     border:`1px solid ${(params.powertrain??"battery")===k?SC.amber+"66":SC.border}`}}>
@@ -1610,13 +1613,13 @@ export default function App(){
                 </button>))}
             </div>
             {params.powertrain==="turboelectric"&&SR&&(
-              <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",lineHeight:1.5,marginBottom:8}}>
+              <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.5,marginBottom:8}}>
                 Turboshaft {SR.turboshaftRatedKW} kW (SLS) · {SR.turboshaftMassKg} kg · generator {SR.generatorMassKg} kg<br/>
                 Fuel {SR.fuelMassKg} kg carried, {SR.fuelBurnKg} kg burned · pack {SR.Wbat} kg for a 2-min engine-out hover<br/>
                 NASA's model (Silva 2018; TM-20210017971). Validated on one aircraft only.
               </div>
             )}
-            <div style={{fontSize:11,color:SC.muted,fontFamily:"system-ui,sans-serif",marginBottom:5}}>Layout</div>
+            <div style={{fontSize:11,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:5}}>Layout</div>
             {/* ══ SELECTING A LAYOUT MUST APPLY THE LAYOUT ══════════════
                 This used to set `configType` alone, leaving rotor count and
                 diameter at the previous layout's values. The result was
@@ -1762,7 +1765,7 @@ export default function App(){
                 });
               }}
               style={{width:"100%",padding:"6px 8px",borderRadius:5,fontSize:11,
-                fontFamily:"system-ui,sans-serif",background:SC.panel,color:SC.text,
+                fontFamily:"'IBM Plex Sans',system-ui,sans-serif",background:SC.panel,color:SC.text,
                 border:`1px solid ${SC.border}`,cursor:"pointer",marginBottom:8}}>
               {Object.entries(CONFIGURATIONS).map(([k,c])=>(
                 <option key={k} value={k}>{c.label}</option>
@@ -1784,11 +1787,11 @@ export default function App(){
               const ref=referenceMissionFor(key);
               const row=(l,v)=>(
                 <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"2px 0"}}>
-                  <span style={{fontSize:10,color:SC.muted,fontFamily:"system-ui,sans-serif"}}>{l}</span>
-                  <span style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace"}}>{v}</span>
+                  <span style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>{l}</span>
+                  <span style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>{v}</span>
                 </div>);
               return(<>
-                <div style={{fontSize:10,color:SC.muted,fontFamily:"system-ui,sans-serif",
+                <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",
                   lineHeight:1.45,marginBottom:8,fontStyle:"italic"}}>{c.note}</div>
                 {/* Rotors that stop in cruise is the single number that most
                     changes a layout's mass and drag, so it is editable here
@@ -1808,7 +1811,7 @@ export default function App(){
                      that does nothing. Say what is fixed and why instead. */
                   if(lo>=hi) return (
                     <div style={{fontSize:10,color:SC.muted,padding:"4px 2px",
-                      fontFamily:"system-ui,sans-serif"}}>
+                      fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>
                       All {N} lift rotors stop in cruise — this layout has no tilt
                       mechanism, so a rotor left turning would make drag and no thrust.
                       The pusher carries cruise.
@@ -1844,11 +1847,11 @@ export default function App(){
                   <div style={{marginTop:8,padding:"7px 9px",borderRadius:5,
                     background:`${SC.amber}14`,border:`1px solid ${SC.amber}55`}}>
                     <div style={{fontSize:10,color:SC.amber,fontWeight:700,
-                      fontFamily:"system-ui,sans-serif",marginBottom:3}}>
+                      fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:3}}>
                       ⚠ Mission likely too long for a rotor-borne layout
                     </div>
                     <div style={{fontSize:9.5,color:SC.text,lineHeight:1.45,
-                      fontFamily:"system-ui,sans-serif"}}>
+                      fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>
                       This layout has no wing, so it stays rotor-borne in cruise and
                       its lift-to-drag is roughly 5–7 rather than 10–14. At{" "}
                       {params.range} km the battery grows faster than the aircraft
@@ -1859,7 +1862,7 @@ export default function App(){
                 )}
                 {ref&&(
                   <div style={{marginTop:8}}>
-                    <div style={{fontSize:10,color:SC.muted,fontFamily:"system-ui,sans-serif",marginBottom:4}}>
+                    <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:4}}>
                       Reference mission for this layout
                     </div>
                     <button type="button"
@@ -1873,12 +1876,12 @@ export default function App(){
                         ...(ref.etaHov!=null?{etaHov:ref.etaHov}:{})}))}
                       title={ref.src}
                       style={{width:"100%",padding:"6px 0",borderRadius:4,cursor:"pointer",
-                        fontSize:10,fontFamily:"system-ui,sans-serif",
+                        fontSize:10,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",
                         background:"transparent",border:`1px solid ${SC.border}`,color:SC.muted}}>
                       Apply: {ref.label}
                     </button>
                     {ref.note&&<div style={{fontSize:9,color:SC.muted,marginTop:3,
-                      fontFamily:"system-ui,sans-serif",fontStyle:"italic"}}>{ref.note}</div>}
+                      fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontStyle:"italic"}}>{ref.note}</div>}
                   </div>
                 )}
               </>);
@@ -1900,19 +1903,19 @@ export default function App(){
               return(
                 <div style={{padding:"4px 0 6px",borderBottom:`1px solid ${SC.border}22`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                    <span style={{fontSize:10,color:SC.muted,fontFamily:"system-ui,sans-serif"}}>Seats</span>
+                    <span style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>Seats</span>
                     <div style={{display:"flex",gap:5,alignItems:"center"}}>
                       <input type="number" min={1} max={19} step={1}
                         value={stated?Number(raw):""} placeholder="not stated"
                         onChange={(e)=>{const v=e.target.value.trim();set("nSeats")(v===""?null:Math.max(1,Math.round(Number(v)||0))||null);}}
-                        style={{width:64,padding:"2px 6px",background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:4,color:stated?SC.amber:SC.subtle,fontSize:11,fontWeight:700,fontFamily:"'DM Mono',monospace",textAlign:"right"}}/>
+                        style={{width:64,padding:"2px 6px",background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:4,color:stated?SC.amber:SC.subtle,fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",textAlign:"right"}}/>
                       {stated&&(
                         <button type="button" onClick={()=>set("nSeats")(null)} title="clear — leave the seat count unstated"
-                          style={{padding:"2px 7px",background:"transparent",border:`1px solid ${SC.border}`,borderRadius:4,color:SC.muted,fontSize:9,cursor:"pointer",fontFamily:"'DM Mono',monospace"}}>clear</button>
+                          style={{padding:"2px 7px",background:"transparent",border:`1px solid ${SC.border}`,borderRadius:4,color:SC.muted,fontSize:9,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace"}}>clear</button>
                       )}
                     </div>
                   </div>
-                  <div style={{fontSize:9,color:SC.subtle,fontFamily:"system-ui,sans-serif",lineHeight:1.5}}>
+                  <div style={{fontSize:9,color:SC.subtle,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",lineHeight:1.5}}>
                     Occupants including crew. Sets the applicability gate on the Regulatory tab{stated?"":"; blank leaves it undecided"}.
                     {stated&&Number(raw)>9&&<span style={{color:SC.red}}> Above SC-VTOL&apos;s limit of 9.</span>}
                     {stated&&Number(raw)>6&&Number(raw)<=9&&<span style={{color:SC.amber}}> Above the FAA&apos;s limit of 6.</span>}
@@ -1933,20 +1936,20 @@ export default function App(){
               return(
                 <div style={{padding:"4px 0 6px",borderBottom:`1px solid ${SC.border}22`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                    <span style={{fontSize:10,color:SC.muted,fontFamily:"system-ui,sans-serif"}}>V<sub>NO</sub></span>
+                    <span style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>V<sub>NO</sub></span>
                     <div style={{display:"flex",gap:5,alignItems:"center"}}>
                       <input type="number" min={1} max={400} step={1}
                         value={stated?Number(raw):""} placeholder="not stated"
                         onChange={(e)=>{const v=e.target.value.trim();set("vno")(v===""?null:Math.max(1,Number(v)||0)||null);}}
-                        style={{width:64,padding:"2px 6px",background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:4,color:stated?SC.amber:SC.subtle,fontSize:11,fontWeight:700,fontFamily:"'DM Mono',monospace",textAlign:"right"}}/>
-                      <span style={{fontSize:9,color:SC.subtle,fontFamily:"'DM Mono',monospace"}}>KCAS</span>
+                        style={{width:64,padding:"2px 6px",background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:4,color:stated?SC.amber:SC.subtle,fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",textAlign:"right"}}/>
+                      <span style={{fontSize:9,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace"}}>KCAS</span>
                       {stated&&(
                         <button type="button" onClick={()=>set("vno")(null)} title="clear — leave VNO undeclared"
-                          style={{padding:"2px 7px",background:"transparent",border:`1px solid ${SC.border}`,borderRadius:4,color:SC.muted,fontSize:9,cursor:"pointer",fontFamily:"'DM Mono',monospace"}}>clear</button>
+                          style={{padding:"2px 7px",background:"transparent",border:`1px solid ${SC.border}`,borderRadius:4,color:SC.muted,fontSize:9,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace"}}>clear</button>
                       )}
                     </div>
                   </div>
-                  <div style={{fontSize:9,color:SC.subtle,fontFamily:"system-ui,sans-serif",lineHeight:1.5}}>
+                  <div style={{fontSize:9,color:SC.subtle,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",lineHeight:1.5}}>
                     Maximum structural cruising speed, declared not computed. Sets the applicability gate on the Regulatory tab{stated?"":"; blank leaves it undecided"}.
                     {stated&&Number(raw)>250&&<span style={{color:SC.red}}> Above SC-VTOL&apos;s limit of 250 KCAS.</span>}
                     {stated&&Number.isFinite(cruiseKt)&&cruiseKt>Number(raw)&&<span style={{color:SC.amber}}> Below this design&apos;s cruise of {cruiseKt.toFixed(0)} kt.</span>}
@@ -1967,12 +1970,12 @@ export default function App(){
               return(
                 <div style={{padding:"4px 0 6px",borderBottom:`1px solid ${SC.border}22`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                    <span style={{fontSize:10,color:SC.muted,fontFamily:"system-ui,sans-serif"}}>Reserve Range</span>
-                    <span style={{fontSize:11,fontWeight:700,color:SC.amber,fontFamily:"'DM Mono',monospace"}}>{resDist_sb} <span style={{fontSize:8,color:SC.subtle}}>km</span></span>
+                    <span style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>Reserve Range</span>
+                    <span style={{fontSize:11,fontWeight:700,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace"}}>{resDist_sb} <span style={{fontSize:8,color:SC.subtle}}>km</span></span>
                   </div>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"3px 7px",background:`${SC.amber}11`,borderRadius:4,border:`1px solid ${SC.amber}33`}}>
-                    <span style={{fontSize:9,color:SC.amber,fontFamily:"system-ui,sans-serif",fontWeight:600}}>Total Range (mission+reserve)</span>
-                    <span style={{fontSize:12,fontWeight:800,color:SC.amber,fontFamily:"'DM Mono',monospace"}}>{totalRange_sb} <span style={{fontSize:8}}>km</span></span>
+                    <span style={{fontSize:9,color:SC.amber,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontWeight:600}}>Total Range (mission+reserve)</span>
+                    <span style={{fontSize:12,fontWeight:800,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace"}}>{totalRange_sb} <span style={{fontSize:8}}>km</span></span>
                   </div>
                 </div>
               );
@@ -1982,7 +1985,7 @@ export default function App(){
               {[["time","Reserve by TIME"],["distance","by DISTANCE"]].map(([k,lab])=>(
                 <button key={k} onClick={()=>setParams(q=>({...q,reserveBasis:k}))}
                   style={{flex:1,padding:"4px 6px",fontSize:9,borderRadius:4,cursor:"pointer",
-                    fontFamily:"system-ui,sans-serif",fontWeight:600,
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontWeight:600,
                     background:(params.reserveBasis??"time")===k?`${SC.amber}22`:SC.panel,
                     color:(params.reserveBasis??"time")===k?SC.amber:SC.muted,
                     border:`1px solid ${(params.reserveBasis??"time")===k?SC.amber+"66":SC.border}`}}>
@@ -2104,7 +2107,7 @@ export default function App(){
               if(d==null) return null;
               return(
                 <div style={{marginTop:6,fontSize:9.5,color:SC.muted,
-                  fontFamily:"system-ui,sans-serif",lineHeight:1.45}}>
+                  fontFamily:"'IBM Plex Sans',system-ui,sans-serif",lineHeight:1.45}}>
                   C-rate derate <b style={{color:SC.text}}>{(100*d).toFixed(2)}%</b>
                   {x!=null&&<> at <b style={{color:SC.text}}>{x.toFixed(2)}C</b> hover</>}
                   {ov
@@ -2142,11 +2145,11 @@ export default function App(){
                 <div style={{marginTop:8,padding:"7px 9px",borderRadius:5,
                   background:`${SC.teal}10`,border:`1px solid ${SC.teal}44`}}>
                   <div style={{fontSize:10,color:SC.teal,fontWeight:700,marginBottom:3,
-                    fontFamily:"system-ui,sans-serif"}}>
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>
                     Effective usable energy: {eff.toFixed(0)} Wh/kg
                   </div>
                   <div style={{fontSize:9.5,color:SC.text,lineHeight:1.45,
-                    fontFamily:"system-ui,sans-serif"}}>
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>
                     {params.sedCell} cell × {(100*(1-(params.socMin??0.19))).toFixed(0)}% SoC
                     × {(100*(1-cd)).toFixed(1)}% C-rate
                     × {(100*etaEff).toFixed(1)}% battery efficiency.
@@ -2182,7 +2185,7 @@ export default function App(){
             {/* SC-VTOL certification category — drives avionics redundancy and
                 the MOC VTOL.2120 climb requirement. */}
             <div style={{marginBottom:10}}>
-              <div style={{fontSize:11,color:SC.muted,fontFamily:"system-ui,sans-serif",marginBottom:4}}>SC-VTOL Category</div>
+              <div style={{fontSize:11,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:4}}>SC-VTOL Category</div>
               <div style={{display:"flex",gap:4}}>
                 {[["enhanced","Enhanced","continued safe flight and landing after any single failure — triplex avionics, 2.5% climb gradient one unit down"],
                   ["basic","Basic","controlled emergency landing permitted — duplex avionics, 2.5% climb gradient all-operating at ISA SL"]].map(([k,lbl,tip])=>{
@@ -2190,7 +2193,7 @@ export default function App(){
                   return(
                     <button key={k} type="button" title={tip} onClick={()=>set("vtolCategory")(k)}
                       style={{flex:1,padding:"5px 0",borderRadius:4,cursor:"pointer",
-                        fontSize:10,fontWeight:on?700:400,fontFamily:"system-ui,sans-serif",
+                        fontSize:10,fontWeight:on?700:400,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",
                         background:on?`${SC.amber}22`:"transparent",
                         border:`1px solid ${on?SC.amber:SC.border}`,
                         color:on?SC.amber:SC.muted}}>{lbl}</button>
@@ -2198,7 +2201,7 @@ export default function App(){
                 })}
               </div>
               {SR&&SR.certClimbGradientPct!=null&&(
-                <div style={{fontSize:9,color:SR.certClimbPass?SC.green:SC.red,marginTop:4,fontFamily:"'DM Mono',monospace"}}>
+                <div style={{fontSize:9,color:SR.certClimbPass?SC.green:SC.red,marginTop:4,fontFamily:"'IBM Plex Mono',monospace"}}>
                   MOC VTOL.2120: {SR.certClimbGradientPct}% vs {SR.certClimbRequiredPct}% required — CFP {SR.certClimbCFP}
                 </div>)}
             </div>
@@ -2223,7 +2226,7 @@ export default function App(){
               note={`Proposal, MOC VTOL.2200(f) floor ${SC_VTOL_N_NEG_FLOOR} · draws the V-n envelope; sizes no structure here`}/>
             {/* Empty-weight model selector — fraction (input) vs buildup (computed) */}
             <div style={{marginBottom:10}}>
-              <div style={{fontSize:11,color:SC.muted,fontFamily:"system-ui,sans-serif",marginBottom:4}}>Empty Weight Model</div>
+              <div style={{fontSize:11,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:4}}>Empty Weight Model</div>
               <div style={{display:"flex",gap:4}}>
                 {[["fraction","Fraction","ewf slider drives MTOW"],
                   ["buildup","Buildup","component sum drives MTOW"]].map(([k,lbl,tip])=>{
@@ -2231,7 +2234,7 @@ export default function App(){
                   return(
                     <button key={k} type="button" title={tip} onClick={()=>set("weightModel")(k)}
                       style={{flex:1,padding:"5px 0",borderRadius:4,cursor:"pointer",
-                        fontSize:10,fontWeight:on?700:400,fontFamily:"system-ui,sans-serif",
+                        fontSize:10,fontWeight:on?700:400,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",
                         background:on?`${SC.amber}22`:"transparent",
                         border:`1px solid ${on?SC.amber:SC.border}`,
                         color:on?SC.amber:SC.muted}}>{lbl}</button>
@@ -2242,17 +2245,17 @@ export default function App(){
                 <div style={{marginTop:6,padding:"6px 8px",background:`${SC.teal}0d`,
                   border:`1px solid ${SC.teal}33`,borderRadius:5}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                    <span style={{fontSize:10,color:SC.teal,fontFamily:"system-ui,sans-serif"}}>Computed EWF</span>
-                    <span style={{fontSize:11,fontWeight:800,color:SC.teal,fontFamily:"'DM Mono',monospace"}}>{SR.ewfImplied}</span>
+                    <span style={{fontSize:10,color:SC.teal,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>Computed EWF</span>
+                    <span style={{fontSize:11,fontWeight:800,color:SC.teal,fontFamily:"'IBM Plex Mono',monospace"}}>{SR.ewfImplied}</span>
                   </div>
                   {SR.weightGroups&&Object.entries(SR.weightGroups)
                     .sort((a,b)=>b[1]-a[1]).map(([k,v])=>(
                     <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"1px 0"}}>
-                      <span style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{k}</span>
-                      <span style={{fontSize:9,color:SC.text,fontFamily:"'DM Mono',monospace"}}>{U.mass(v)} {U.massU}</span>
+                      <span style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{k}</span>
+                      <span style={{fontSize:9,color:SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>{U.mass(v)} {U.massU}</span>
                     </div>
                   ))}
-                  <div style={{fontSize:8,color:SC.subtle,fontFamily:"'DM Mono',monospace",marginTop:4,lineHeight:1.4}}>
+                  <div style={{fontSize:8,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",marginTop:4,lineHeight:1.4}}>
                     Raymer GA group equations + composite factors. Validated MAE 36.6% vs
                     published aircraft — under-predicts eVTOL structure. Opt-in until calibrated.
                   </div>
@@ -2266,25 +2269,28 @@ export default function App(){
           {/* Design checks */}
           {SR&&(
             <div style={{marginTop:10,borderTop:`1px solid ${SC.border}`,paddingTop:10}}>
-              <div style={{fontSize:10,color:SC.muted,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"'DM Mono',monospace",marginBottom:7}}>Design Checks</div>
+              <div style={{fontSize:10,color:SC.muted,textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"'IBM Plex Mono',monospace",marginBottom:7}}>Design Checks</div>
               {SR.checks.map((chkItem,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 0",borderBottom:`1px solid #0f131a`}}>
+                <div key={i} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 0",borderBottom:`1px solid ${SC.border}`}}>
                   <span style={{fontSize:11}}>{mark(chkItem.ok)}</span>
-                  <span style={{fontSize:10,color:chkItem.ok?SC.green:SC.red,flex:1,fontFamily:"'DM Mono',monospace"}}>{chkItem.label}</span>
-                  <span style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{convertCheckVal(chkItem.val)}</span>
+                  <span style={{fontSize:10,color:chkItem.ok?SC.green:SC.red,flex:1,fontFamily:"'IBM Plex Mono',monospace"}}>{chkItem.label}</span>
+                  <span style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{convertCheckVal(chkItem.val)}</span>
                 </div>
               ))}
             </div>
           )}
           </div>{/* end full sidebar content */}
-        </div>{/* end sidebar */}
+        </div>{/* end sidebar scroller */}
+        </aside>{/* end sidebar */}
 
         {/* MAIN */}
-        <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-          {/* Tabs — two-row: category pills on top, sub-tabs below */}
-          <div style={{flexShrink:0,background:SC.panel,borderBottom:`1px solid ${SC.border}`}}>
-            {/* Row 1 — category pills */}
-            <div style={{display:"flex",gap:4,padding:"6px 10px 0",overflowX:"auto"}}>
+        <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",gap:10,minWidth:0}}>
+          {/* Tabs — two rows on one glass pane: groups on top (underlined in
+              the accent when current), the group's tabs below (a recessed key
+              when current). */}
+          <nav className="gc-glass" aria-label="Tabs" style={{flexShrink:0,padding:"0 12px 8px"}}>
+            {/* Row 1 — groups */}
+            <div style={{display:"flex",gap:22,padding:"0 2px",overflowX:"auto",borderBottom:`1px solid ${SC.border}`}}>
               {TAB_GROUPS.map((grp,gi)=>{
                 const isActive=gi===activeGroup;
                 return(
@@ -2307,39 +2313,29 @@ export default function App(){
                        in both themes. The active group now reads by contrast
                        and weight, which is what a label in a tab strip should
                        read by; the group's identity is its name. */
-                    style={{padding:"4px 14px",border:`1px solid ${isActive?SC.border:"transparent"}`,
-                      borderBottom:"none",borderRadius:"2px 2px 0 0",cursor:"pointer",
-                      background:isActive?SC.panel:"transparent",
-                      color:isActive?SC.text:SC.muted,
-                      fontSize:12,fontWeight:isActive?600:400,
-                      whiteSpace:"nowrap",transition:"all 0.15s",
-                      fontFamily:"system-ui,sans-serif",letterSpacing:"0.01em"}}>
+                    className="gc-tab" aria-current={isActive?"true":undefined}>
                     {grp.label}
                   </button>
                 );
               })}
             </div>
-            {/* Row 2 — sub-tabs for active group */}
-            <div style={{display:"flex",overflowX:"auto",padding:"0 6px",
-              borderTop:`1px solid ${SC.border}`,background:SC.bg}}>
+            {/* Row 2 — the active group's tabs */}
+            <div style={{display:"flex",gap:4,overflowX:"auto",paddingTop:8}}>
               {TAB_GROUPS[activeGroup].tabs.filter(i=>!hiddenForCfg.has(i)).map(i=>{
-                const grpColor=SC.text;   // one accent, not one per group
                 const isActive=i===tab;
                 return(
                   <button key={i} type="button" onClick={()=>{setTab(i);tap("selection");}}
-                    style={{padding:"7px 14px",background:"transparent",border:"none",cursor:"pointer",
-                      borderBottom:isActive?`2px solid ${grpColor}`:"2px solid transparent",
-                      color:isActive?SC.text:SC.muted,
-                      fontSize:11,fontFamily:"system-ui,sans-serif",
-                      whiteSpace:"nowrap",transition:"color 0.15s",letterSpacing:"0.01em"}}>
+                    className="gc-sub" aria-current={isActive?"page":undefined}>
                     {i===TAB.TAIL?tailTabLabel(cfgCap):TABS[i]}
                   </button>
                 );
               })}
             </div>
-          </div>
+          </nav>
 
-          <div style={{flex:1,overflowY:"auto",padding:"14px 18px 28px",background:SC.bg}}>
+          {/* The content scrolls over the backdrop; each tab's cards are glass
+              through the translucent SC.panel. */}
+          <main style={{flex:1,overflowY:"auto",padding:"4px 2px 28px",minHeight:0}}>
             <TabErrorBoundary SC={SC}>
             {/* Shared design banner — shown when ?design= is in URL */}
             {sharedDesignId&&(
@@ -2347,7 +2343,7 @@ export default function App(){
             )}
             <DesignNotice notice={designNotice} onClose={()=>setDesignNotice(null)}/>
             <ResultWarnings warnings={resultWarn} params={deferredParams}/>
-            {!SR&&<div style={{color:SC.red,fontFamily:"'DM Mono',monospace",padding:20}}>Calculation error — adjust inputs.</div>}
+            {!SR&&<div style={{color:SC.red,fontFamily:"'IBM Plex Mono',monospace",padding:20}}>Calculation error — adjust inputs.</div>}
             {/* ══ NON-CONVERGENCE BANNER ══════════════════════════════════
                 A diverged run still returns a full result object, and every
                 number in it is the last iterate of a runaway — the engine's
@@ -2369,10 +2365,10 @@ export default function App(){
               <div style={{margin:"0 0 14px",padding:"12px 14px",borderRadius:8,
                 background:`${SC.red}14`,border:`1px solid ${SC.red}66`}}>
                 <div style={{fontSize:13,fontWeight:800,color:SC.red,
-                  fontFamily:"system-ui,sans-serif",marginBottom:6}}>
+                  fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:6}}>
                   ⚠ THIS DESIGN DID NOT CONVERGE — the numbers below are not a result
                 </div>
-                <div style={{fontSize:11,color:SC.text,fontFamily:"system-ui,sans-serif",lineHeight:1.5}}>
+                <div style={{fontSize:11,color:SC.text,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",lineHeight:1.5}}>
                   The sizing loop ran away instead of closing, so every value shown
                   is the last iterate of a divergence rather than a sized aircraft.
                   {SR.configLabel&&<> Current layout: <b>{SR.configLabel}</b>.</>}
@@ -2451,7 +2447,7 @@ export default function App(){
             <div style={{display:tab===19?'block':'none'}}>
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
                 <div style={{background:`linear-gradient(135deg,${SC.bg},#1a0a2e)`,border:`1px solid #8b5cf644`,borderRadius:10,padding:"16px 20px"}}>
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.18em",marginBottom:4}}>LATIN HYPERCUBE SAMPLING — PARETO ANALYSIS</div>
+                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.18em",marginBottom:4}}>LATIN HYPERCUBE SAMPLING — PARETO ANALYSIS</div>
                   <div style={{fontSize:18,fontWeight:800,color:SC.text,marginBottom:6}}>
                     <span style={{color:SC.purple}}>Design Space</span> Explorer
                   </div>
@@ -2525,8 +2521,13 @@ export default function App(){
                  Pick a released NASA .vsp3 and size THAT aircraft — geometry
                  straight out of the file, gross weight left as a result. */}
             {tab===28&&<VspModelsTab {...tabCtx}/>}
+
+            {/* ──── TAB 29: BUILD eVTOL ────
+                 The sized aircraft built step by step, then test-flown
+                 through its mission (tabs/BuildEvtolTab.jsx). */}
+            {tab===29&&<BuildEvtolTab {...tabCtx}/>}
             </TabErrorBoundary>
-          </div>
+          </main>
         </div>
       </div>
       {/* Always-present instrument: convergence, closure margin, growth factor

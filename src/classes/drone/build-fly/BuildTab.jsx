@@ -24,7 +24,7 @@ import { BUILD_STEPS, rotorMismatch, massLabelG, stepSummary, isFourInOne, stepN
 
 const num = (v, d = 1) => (v == null || !Number.isFinite(v) ? "—" : v.toFixed(d));
 const MASS_COLOURS = { Payload: "#4ea1ff", Structure: "#9b8cff", Avionics: "#54c7a8", Propulsion: "#f2a33c", Battery: "#e0574a" };
-const COND = "'Oswald','Barlow Condensed','Roboto Condensed','Arial Narrow',sans-serif";
+const COND = "'IBM Plex Sans Condensed','Arial Narrow',sans-serif";
 const pad2 = (i) => String(i + 1).padStart(2, "0");
 /* The workbench yellow: badges, the active step and the next-step button.
    One colour in both themes, always under dark ink (about 10:1). Text that
@@ -570,7 +570,7 @@ export default function BuildTab({ design, frame, pickFrame, onFly, dark, initia
                       style={{ display: "flex", alignItems: "center", gap: 10, textAlign: "left", cursor: "pointer", fontFamily: SANS, padding: "7px 10px", borderRadius: 8,
                                background: hl === x.group ? SC.inset : SC.panel, border: `1px solid ${hl === x.group ? ACC : SC.border}`, color: SC.text }}>
                       <Tick on={on} />
-                      <span style={{ flex: "0 0 auto", minWidth: 34, textAlign: "center", fontFamily: MONO, fontSize: T.micro, fontWeight: 700, borderRadius: 5, padding: "2px 6px", background: SC.text, color: SC.panel }}>{x.qty}×</span>
+                      <span style={{ flex: "0 0 auto", minWidth: 34, textAlign: "center", fontFamily: MONO, fontSize: T.micro, fontWeight: 700, borderRadius: 5, padding: "2px 6px", background: SC.text, color: SC.panelSolid }}>{x.qty}×</span>
                       <span style={{ flex: 1, fontSize: T.label, lineHeight: 1.4, textDecoration: on ? "line-through" : "none", color: on ? SC.muted : SC.text }}>{x.text}</span>
                       {x.note && <span style={{ fontSize: T.micro, color: SC.subtle, fontStyle: "italic" }}>{x.note}</span>}
                     </button>

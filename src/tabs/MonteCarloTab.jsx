@@ -31,7 +31,7 @@ export function MonteCarloTab(ctx) {
                 {/* Header */}
                 <div style={{background:SC.panel,
                   border:`1px solid #7c3aed44`,borderRadius:10,padding:"16px 20px"}}>
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>UNCERTAINTY QUANTIFICATION — MONTE CARLO METHOD</div>
+                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>UNCERTAINTY QUANTIFICATION — MONTE CARLO METHOD</div>
                   <div style={{fontSize:18,fontWeight:800,color:SC.text,letterSpacing:"-0.02em",marginBottom:6}}>
                     <span style={{color:SC.purple}}>Monte Carlo</span> Uncertainty Analysis
                   </div>
@@ -45,7 +45,7 @@ export function MonteCarloTab(ctx) {
 
                 {/* Parameter ranges config */}
                 <Panel title="Uncertain Parameter Ranges — Click to Edit">
-                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:12,lineHeight:1.6}}>
+                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:12,lineHeight:1.6}}>
                     Each parameter is sampled from a <span style={{color:SC.purple}}>Normal distribution</span> (μ = midpoint, σ = range/6 so ±3σ covers full range) or
                     <span style={{color:SC.teal}}> Uniform distribution</span>.
                     Ranges are based on peer-reviewed eVTOL uncertainty literature.
@@ -68,27 +68,27 @@ export function MonteCarloTab(ctx) {
                       const r=mcRanges[key];
                       return(
                         <div key={key} style={{background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:8,padding:"10px 12px"}}>
-                          <div style={{fontSize:10,fontWeight:700,color:SC.purple,fontFamily:"'DM Mono',monospace",marginBottom:6}}>{label}</div>
+                          <div style={{fontSize:10,fontWeight:700,color:SC.purple,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6}}>{label}</div>
                           <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
                             <div style={{flex:1}}>
-                              <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:2}}>MIN</div>
+                              <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:2}}>MIN</div>
                               <input type="number" value={r.min} step={key==="payload"?5:key==="sedCell"?5:key==="AR"?0.5:0.01}
                                 onChange={evt=>setMcRanges(prev=>({...prev,[key]:{...prev[key],min:parseFloat(evt.target.value)||prev[key].min}}))}
                                 style={{width:"100%",boxSizing:"border-box",background:SC.panel,border:`1px solid ${SC.border}`,
-                                  borderRadius:4,color:SC.text,fontSize:11,padding:"4px 6px",fontFamily:"'DM Mono',monospace",outline:"none"}}/>
+                                  borderRadius:4,color:SC.text,fontSize:11,padding:"4px 6px",fontFamily:"'IBM Plex Mono',monospace",outline:"none"}}/>
                             </div>
                             <div style={{flex:1}}>
-                              <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:2}}>MAX</div>
+                              <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:2}}>MAX</div>
                               <input type="number" value={r.max} step={key==="payload"?5:key==="sedCell"?5:key==="AR"?0.5:0.01}
                                 onChange={evt=>setMcRanges(prev=>({...prev,[key]:{...prev[key],max:parseFloat(evt.target.value)||prev[key].max}}))}
                                 style={{width:"100%",boxSizing:"border-box",background:SC.panel,border:`1px solid ${SC.border}`,
-                                  borderRadius:4,color:SC.text,fontSize:11,padding:"4px 6px",fontFamily:"'DM Mono',monospace",outline:"none"}}/>
+                                  borderRadius:4,color:SC.text,fontSize:11,padding:"4px 6px",fontFamily:"'IBM Plex Mono',monospace",outline:"none"}}/>
                             </div>
                           </div>
                           <div style={{display:"flex",gap:4,marginBottom:4}}>
                             {["normal","uniform"].map(d=>(
                               <button key={d} onClick={()=>setMcRanges(prev=>({...prev,[key]:{...prev[key],dist:d}}))} type="button"
-                                style={{flex:1,padding:"3px 0",fontSize:8,fontFamily:"'DM Mono',monospace",cursor:"pointer",
+                                style={{flex:1,padding:"3px 0",fontSize:8,fontFamily:"'IBM Plex Mono',monospace",cursor:"pointer",
                                   background:r.dist===d?SC.inset:"transparent",
                                   border:`1px solid ${r.dist===d?(d==="normal"?SC.purple:SC.teal):SC.border}`,
                                   color:r.dist===d?(d==="normal"?SC.purple:SC.teal):SC.muted,fontWeight:r.dist===d?600:400,borderRadius:3}}>
@@ -96,8 +96,8 @@ export function MonteCarloTab(ctx) {
                               </button>
                             ))}
                           </div>
-                          <div style={{fontSize:8,color:SC.subtle,fontFamily:"'DM Mono',monospace"}}>{note}</div>
-                          {unit&&<div style={{fontSize:8,color:SC.amber,fontFamily:"'DM Mono',monospace"}}>{unit}</div>}
+                          <div style={{fontSize:8,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace"}}>{note}</div>
+                          {unit&&<div style={{fontSize:8,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace"}}>{unit}</div>}
                           {/* mini range bar */}
                           <div style={{marginTop:6,height:4,background:SC.border,borderRadius:2,position:"relative"}}>
                             <div style={{position:"absolute",left:"10%",right:"10%",top:0,height:"100%",
@@ -105,7 +105,7 @@ export function MonteCarloTab(ctx) {
                             <div style={{position:"absolute",left:"50%",top:-3,width:2,height:10,
                               background:SC.amber,transform:"translateX(-50%)"}}/>
                           </div>
-                          <div style={{display:"flex",justifyContent:"space-between",fontSize:8,color:SC.subtle,fontFamily:"'DM Mono',monospace",marginTop:2}}>
+                          <div style={{display:"flex",justifyContent:"space-between",fontSize:8,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>
                             <span>{r.min}</span><span>μ={(+((r.min+r.max)/2).toFixed(2))}</span><span>{r.max}</span>
                           </div>
                         </div>
@@ -118,10 +118,10 @@ export function MonteCarloTab(ctx) {
                     background:SC.bg,borderRadius:8,border:`1px solid ${SC.border}`}}>
                     <div style={{flex:1}}>
                       <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                        <span style={{fontSize:11,color:SC.text,fontFamily:"'DM Mono',monospace"}}>
+                        <span style={{fontSize:11,color:SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>
                           Simulations: <span style={{color:SC.purple,fontWeight:700}}>{mcN.toLocaleString()}</span>
                         </span>
-                        <span style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>
+                        <span style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>
                           ~{(mcN*0.06).toFixed(0)}ms runtime
                         </span>
                       </div>
@@ -137,7 +137,7 @@ export function MonteCarloTab(ctx) {
                         background:mcRunning?"transparent":`linear-gradient(135deg,#4c1d95,#6d28d9)`,
                         border:`2px solid #7c3aed`,borderRadius:8,color:mcRunning?SC.muted:"#e9d5ff",
                         fontSize:13,fontWeight:800,cursor:mcRunning?"not-allowed":"pointer",
-                        fontFamily:"'DM Mono',monospace",letterSpacing:"0.05em",
+                        fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.05em",
                         boxShadow:mcRunning?"none":"0 0 20px #7c3aed44",
                         transition:"all 0.2s"}}>
                       {mcRunning?"⟳ Running...":"Run Monte Carlo"}
@@ -147,14 +147,14 @@ export function MonteCarloTab(ctx) {
 
                 {/* Results */}
                 {!mcResults&&!mcRunning&&(
-                  <div style={{textAlign:"center",padding:"48px 0",color:SC.muted,fontFamily:"'DM Mono',monospace"}}>
+                  <div style={{textAlign:"center",padding:"48px 0",color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>
                     
                     <div style={{fontSize:14,fontWeight:600,color:SC.text,marginBottom:8}}>No simulation run yet</div>
                     <div style={{fontSize:12,color:SC.muted}}>Configure ranges above and click <span style={{color:SC.purple}}>Run Monte Carlo</span></div>
                   </div>
                 )}
                 {mcRunning&&(
-                  <div style={{textAlign:"center",padding:"48px 0",color:SC.purple,fontFamily:"'DM Mono',monospace"}}>
+                  <div style={{textAlign:"center",padding:"48px 0",color:SC.purple,fontFamily:"'IBM Plex Mono',monospace"}}>
                     <div style={{fontSize:36,marginBottom:12,animation:"spin 1s linear infinite",display:"inline-block"}}>⟳</div>
                     <div style={{fontSize:14,fontWeight:700}}>Running {mcN.toLocaleString()} simulations...</div>
                     <div style={{fontSize:11,color:SC.muted,marginTop:6}}>Each calling the full eVTOL physics engine</div>
@@ -179,7 +179,7 @@ export function MonteCarloTab(ctx) {
 
                     {/* MTOW Probability Distribution */}
                     <Panel title={`MTOW Probability Distribution — ${mcResults.N.toLocaleString()} Monte Carlo Samples`} ht={320} onSave={true}>
-                      <div style={{fontSize:10,color:SC.muted,marginBottom:6,paddingLeft:4,fontFamily:"'DM Mono',monospace"}}>
+                      <div style={{fontSize:10,color:SC.muted,marginBottom:6,paddingLeft:4,fontFamily:"'IBM Plex Mono',monospace"}}>
                         Each bar = count of designs in that MTOW bin. Bell shape confirms normal convergence.
                         <span style={{color:SC.amber}}> Nominal MTOW = {U.mass(SR.MTOW)} {U.massU}</span> (deterministic).
                         <span style={{color:SC.purple}}> Mean MC = {U.mass(mcResults.MTOW.stats.mean)} {U.massU}</span>.
@@ -209,7 +209,7 @@ export function MonteCarloTab(ctx) {
 
                     {/* CDF */}
                     <Panel title="Cumulative Distribution Function (CDF) — MTOW" ht={290} onSave={true}>
-                      <div style={{fontSize:10,color:SC.muted,marginBottom:6,paddingLeft:4,fontFamily:"'DM Mono',monospace"}}>
+                      <div style={{fontSize:10,color:SC.muted,marginBottom:6,paddingLeft:4,fontFamily:"'IBM Plex Mono',monospace"}}>
                         Read as: <span style={{color:SC.green}}>P(MTOW ≤ x)</span>. The <span style={{color:SC.amber}}>P90 line</span> shows that 90% of all possible designs have MTOW below this value.
                         This is the key output for design margin decisions.
                       </div>
@@ -303,11 +303,11 @@ export function MonteCarloTab(ctx) {
 
                     {/* Statistics Table */}
                     <Panel title="Full Statistical Summary — All Output Quantities">
-                      <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:10}}>
+                      <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:10}}>
                         P5/P50/P95 = 5th, 50th, 95th percentile. σ = standard deviation. CV = coefficient of variation (σ/μ) — lower is more robust.
                       </div>
                       <div style={{overflowX:"auto"}}>
-                        <table style={{width:"100%",borderCollapse:"collapse",fontSize:10,fontFamily:"'DM Mono',monospace"}}>
+                        <table style={{width:"100%",borderCollapse:"collapse",fontSize:10,fontFamily:"'IBM Plex Mono',monospace"}}>
                           <thead>
                             <tr style={{background:SC.panel}}>
                               {["Quantity","Unit","Min","P5","P25","Median","P75","P95","Max","Mean","σ","CV %"].map(hdr=>(
@@ -346,7 +346,7 @@ export function MonteCarloTab(ctx) {
                       </div>
                       <div style={{marginTop:10,padding:"8px 12px",background:`${"#a78bfa"}11`,
                         border:`1px solid ${"#a78bfa"}44`,borderRadius:6,fontSize:10,
-                        color:SC.purple,fontFamily:"'DM Mono',monospace",lineHeight:1.7}}>
+                        color:SC.purple,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.7}}>
                          <strong>Key insight:</strong> There is a <strong>{(mcResults.MTOW.stats.p95/mcResults.MTOW.stats.mean*100-100).toFixed(1)}% mass growth risk</strong> from
                         P50→P95. Design your structure and battery for the <strong>P90 MTOW = {U.mass(mcResults.MTOW.stats.p95)} {U.massU}</strong> to cover
                         95% of all possible technology combinations within the given uncertainty bounds.

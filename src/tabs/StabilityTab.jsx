@@ -90,7 +90,7 @@ export function StabilityTab(ctx) {
                       {/* nose */}
                       <div style={{position:"absolute",left:"6%",top:"41%",width:0,height:0,borderTop:"5px solid transparent",borderBottom:"5px solid transparent",borderLeft:`9px solid ${SC.muted}`}}/>
                       {/* length label */}
-                      <div style={{position:"absolute",right:"2%",bottom:4,fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{(Number(SR?.fusLen)||Number(params.fusLen)).toFixed(2)} m</div>
+                      <div style={{position:"absolute",right:"2%",bottom:4,fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{(Number(SR?.fusLen)||Number(params.fusLen)).toFixed(2)} m</div>
                       {/* scale ticks */}
                       {[0.25,0.5,0.75,1.0].map(frac=>(
                         <div key={frac} style={{position:"absolute",left:`${10+frac*82}%`,top:"55%",width:1,height:12,background:"#1e2a3a"}}/>
@@ -99,7 +99,7 @@ export function StabilityTab(ctx) {
                         :[[SR.xCGtotal,SC.amber,"CG"]]).map(([x,col,lbl])=>{
                         const pct=Math.min(92,Math.max(10,(x/(Number(SR?.fusLen)||Number(params.fusLen)))*82+10));
                         return(<div key={lbl} style={{position:"absolute",left:`${pct}%`,top:0,bottom:0,transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-                          <div style={{fontSize:10,color:col,fontFamily:"'DM Mono',monospace",fontWeight:700,
+                          <div style={{fontSize:10,color:col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,
                             writingMode:"vertical-rl",textOrientation:"mixed",transform:"rotate(180deg)",
                             letterSpacing:"0.05em",lineHeight:1,marginBottom:4,whiteSpace:"nowrap"}}>
                             {lbl}={U.len(x)}{U.lenU}
@@ -120,7 +120,7 @@ export function StabilityTab(ctx) {
                     ).map(([k,v],i)=>(
                       <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:`1px solid #0f131a`}}>
                         <span style={{fontSize:10,color:SC.muted}}>{k}</span>
-                        <span style={{fontSize:10,color:SC.amber,fontFamily:"'DM Mono',monospace"}}>{v}</span>
+                        <span style={{fontSize:10,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace"}}>{v}</span>
                       </div>
                     ))}
                   </Panel>
@@ -179,7 +179,7 @@ export function StabilityTab(ctx) {
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                       {/* CG vs Mass chart */}
                       <div>
-                        <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>
+                        <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>
                           CG position ({U.lenU} from nose) vs Aircraft Mass ({U.massU})
                         </div>
                         <ResponsiveContainer width="100%" height={175}>
@@ -203,7 +203,7 @@ export function StabilityTab(ctx) {
                       </div>
                       {/* SM vs Mass chart */}
                       <div>
-                        <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>
+                        <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>
                           Static Margin (% MAC) vs Aircraft Mass — band from the engine criterion, advisory
                         </div>
                         <ResponsiveContainer width="100%" height={175}>
@@ -235,8 +235,8 @@ export function StabilityTab(ctx) {
                       ["NP",`${U.len(SR.xNP)} ${U.lenU}`,SC.blue],["ΔCG travel",`${U.len(Math.abs(SR.xCGtotal-SR.xCGempty))} ${U.lenU}`,SC.green]
                     ].map(([l,v,col])=>(
                       <div key={l} style={{display:"flex",flexDirection:"column",gap:2}}>
-                        <span style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{l}</span>
-                        <span style={{fontSize:11,color:col,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{v}</span>
+                        <span style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{l}</span>
+                        <span style={{fontSize:11,color:col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{v}</span>
                       </div>
                     ))}
                   </div>
@@ -251,10 +251,10 @@ export function StabilityTab(ctx) {
                         <div key={i} style={{background:SC.bg,borderRadius:5,padding:"7px 9px",border:`1px solid ${chk.ok?SC.green+"33":SC.red+"33"}`}}>
                           <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:2}}>
                             <span>{mark(chk.ok)}</span>
-                            <span style={{fontSize:8,color:chk.ok?SC.green:SC.red,fontWeight:700,fontFamily:"'DM Mono',monospace"}}>{chk.ok?"PASS":"FAIL"}</span>
+                            <span style={{fontSize:8,color:chk.ok?SC.green:SC.red,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace"}}>{chk.ok?"PASS":"FAIL"}</span>
                           </div>
                           <div style={{fontSize:8,color:SC.muted,marginBottom:2}}>{chk.label}</div>
-                          <div style={{fontSize:9,color:chk.ok?SC.green:SC.red,fontFamily:"'DM Mono',monospace"}}>{convertCheckVal(chk.val)}</div>
+                          <div style={{fontSize:9,color:chk.ok?SC.green:SC.red,fontFamily:"'IBM Plex Mono',monospace"}}>{convertCheckVal(chk.val)}</div>
                         </div>
                       ))}
                     </div>

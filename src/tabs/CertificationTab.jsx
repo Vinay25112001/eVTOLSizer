@@ -582,7 +582,7 @@ export function CertificationTab(ctx) {
                 {/* Header */}
                 <div style={{background:SC.panel,
                   border:`1px solid #3b82f644`,borderRadius:10,padding:"16px 20px"}}>
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>REGULATORY COMPLIANCE — CONCEPTUAL DESIGN PHASE</div>
+                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>REGULATORY COMPLIANCE — CONCEPTUAL DESIGN PHASE</div>
                   <div style={{fontSize:18,fontWeight:800,color:SC.text,marginBottom:6}}>
                     <span style={{color:SC.blue}}>Certification</span> Compliance Checker
                   </div>
@@ -602,7 +602,7 @@ export function CertificationTab(ctx) {
                     ["Combined",allScore,allScore.critical_fail===0?SC.green:SC.red,""],
                   ].map(([title,s,col,flag])=>(
                     <div key={title} style={{background:SC.panel,border:`2px solid ${col}44`,borderRadius:10,padding:"16px 18px"}}>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.1em",marginBottom:6}}>{flag} {title}</div>
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.1em",marginBottom:6}}>{flag} {title}</div>
                       {/* Score circle */}
                       <div style={{display:"flex",alignItems:"center",gap:14}}>
                         <div style={{width:64,height:64,borderRadius:"50%",flexShrink:0,
@@ -610,17 +610,17 @@ export function CertificationTab(ctx) {
                           display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
                           <div style={{width:50,height:50,borderRadius:"50%",background:SC.panel,
                             display:"flex",alignItems:"center",justifyContent:"center",
-                            fontSize:14,fontWeight:800,color:col,fontFamily:"'DM Mono',monospace"}}>
+                            fontSize:14,fontWeight:800,color:col,fontFamily:"'IBM Plex Mono',monospace"}}>
                             {s.pct}%
                           </div>
                         </div>
                         <div>
-                          <div style={{fontSize:13,fontWeight:700,color:col,fontFamily:"'DM Mono',monospace"}}>
+                          <div style={{fontSize:13,fontWeight:700,color:col,fontFamily:"'IBM Plex Mono',monospace"}}>
                             {s.passed}/{s.total} passed
                           </div>
-                          {s.critical_fail>0&&<div style={{fontSize:10,color:SC.red,fontFamily:"'DM Mono',monospace"}}>{s.critical_fail} critical fail{s.critical_fail>1?"s":""}</div>}
-                          {s.major_fail>0&&<div style={{fontSize:10,color:SC.amber,fontFamily:"'DM Mono',monospace"}}>⚠ {s.major_fail} major fail{s.major_fail>1?"s":""}</div>}
-                          {s.critical_fail===0&&s.major_fail===0&&<div style={{fontSize:10,color:SC.green,fontFamily:"'DM Mono',monospace"}}>✓ No critical/major issues</div>}
+                          {s.critical_fail>0&&<div style={{fontSize:10,color:SC.red,fontFamily:"'IBM Plex Mono',monospace"}}>{s.critical_fail} critical fail{s.critical_fail>1?"s":""}</div>}
+                          {s.major_fail>0&&<div style={{fontSize:10,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace"}}>⚠ {s.major_fail} major fail{s.major_fail>1?"s":""}</div>}
+                          {s.critical_fail===0&&s.major_fail===0&&<div style={{fontSize:10,color:SC.green,fontFamily:"'IBM Plex Mono',monospace"}}>✓ No critical/major issues</div>}
                         </div>
                       </div>
                       <div style={{marginTop:10,height:4,background:SC.border,borderRadius:2}}>
@@ -632,7 +632,7 @@ export function CertificationTab(ctx) {
 
                 {/* Key parameters used */}
                 <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 16px"}}>
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.1em",marginBottom:10,textTransform:"uppercase"}}>Design Parameters Used in Compliance Check</div>
+                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.1em",marginBottom:10,textTransform:"uppercase"}}>Design Parameters Used in Compliance Check</div>
                   <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
                     {[
                       ["MTOW",`${U.mass(MTOW_kg)} ${U.massU} / ${MTOW_lb.toFixed(0)} lb`,SC.amber],
@@ -647,8 +647,8 @@ export function CertificationTab(ctx) {
                       ["Reserve",`${(SR.tres/60).toFixed(1)} min`,SR.tres>=1200?SC.green:SC.red],
                     ].map(([lbl,val,col])=>(
                       <div key={lbl} style={{background:SC.bg,border:`1px solid ${col}33`,borderRadius:6,padding:"6px 10px"}}>
-                        <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{lbl}</div>
-                        <div style={{fontSize:11,color:col,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{val}</div>
+                        <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{lbl}</div>
+                        <div style={{fontSize:11,color:col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{val}</div>
                       </div>
                     ))}
                   </div>
@@ -659,18 +659,18 @@ export function CertificationTab(ctx) {
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,borderBottom:`1px solid ${SC.border}`,paddingBottom:10}}>
                     
                     <div>
-                      <div style={{fontSize:13,fontWeight:800,color:SC.blue,fontFamily:"'DM Mono',monospace"}}>FAA AC 21.17-4</div>
-                      <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>Type Certification — Powered-lift (July 2025) · 14 CFR §21.17(b)</div>
+                      <div style={{fontSize:13,fontWeight:800,color:SC.blue,fontFamily:"'IBM Plex Mono',monospace"}}>FAA AC 21.17-4</div>
+                      <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>Type Certification — Powered-lift (July 2025) · 14 CFR §21.17(b)</div>
                     </div>
                     <div style={{marginLeft:"auto",textAlign:"right"}}>
-                      <div style={{fontSize:18,fontWeight:800,color:faaScore.pct>=80?SC.green:faaScore.pct>=60?SC.amber:SC.red,fontFamily:"'DM Mono',monospace"}}>{faaScore.pct}%</div>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{faaScore.passed}/{faaScore.total} checks</div>
+                      <div style={{fontSize:18,fontWeight:800,color:faaScore.pct>=80?SC.green:faaScore.pct>=60?SC.amber:SC.red,fontFamily:"'IBM Plex Mono',monospace"}}>{faaScore.pct}%</div>
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{faaScore.passed}/{faaScore.total} checks</div>
                     </div>
                   </div>
                   {/* Group by category */}
                   {[...new Set(rules.FAA.map(rl=>rl.category))].map(cat=>(
                     <div key={cat} style={{marginBottom:14}}>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.12em",
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.12em",
                         textTransform:"uppercase",marginBottom:6,paddingLeft:2}}>{cat}</div>
                       {rules.FAA.filter(rl=>rl.category===cat).map(rule=>(
                         <div key={rule.id} style={{
@@ -682,21 +682,21 @@ export function CertificationTab(ctx) {
                             <div style={{flex:1}}>
                               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                                 <span style={{fontSize:14}}>{mark(rule.check)}</span>
-                                <span style={{fontSize:11,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace"}}>{rule.title}</span>
+                                <span style={{fontSize:11,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>{rule.title}</span>
                                 {!rule.check&&(
                                   <span style={{fontSize:8,padding:"2px 6px",borderRadius:3,fontWeight:700,
-                                    fontFamily:"'DM Mono',monospace",
+                                    fontFamily:"'IBM Plex Mono',monospace",
                                     background:`${sevColor[rule.severity]}22`,color:sevColor[rule.severity]}}>
                                     {sevLabel[rule.severity]}
                                   </span>
                                 )}
                               </div>
-                              <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4,lineHeight:1.5}}>{rule.desc}</div>
-                              <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>Ref: {rule.ref}</div>
+                              <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4,lineHeight:1.5}}>{rule.desc}</div>
+                              <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>Ref: {rule.ref}</div>
                             </div>
                             <div style={{textAlign:"right",flexShrink:0,minWidth:130}}>
-                              <div style={{fontSize:11,color:rule.check?SC.green:sevColor[rule.severity],fontFamily:"'DM Mono',monospace",fontWeight:700}}>{rule.value}</div>
-                              <div style={{fontSize:9,color:SC.subtle,fontFamily:"'DM Mono',monospace",marginTop:2}}>Limit: {rule.limit}</div>
+                              <div style={{fontSize:11,color:rule.check?SC.green:sevColor[rule.severity],fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{rule.value}</div>
+                              <div style={{fontSize:9,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>Limit: {rule.limit}</div>
                             </div>
                           </div>
                         </div>
@@ -710,17 +710,17 @@ export function CertificationTab(ctx) {
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,borderBottom:`1px solid ${SC.border}`,paddingBottom:10}}>
                     
                     <div>
-                      <div style={{fontSize:13,fontWeight:800,color:SC.amber,fontFamily:"'DM Mono',monospace"}}>EASA SC-VTOL Issue 2</div>
-                      <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>Special Condition for VTOL-capable aircraft · MOC-3 SC-VTOL Battery Safety</div>
+                      <div style={{fontSize:13,fontWeight:800,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace"}}>EASA SC-VTOL Issue 2</div>
+                      <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>Special Condition for VTOL-capable aircraft · MOC-3 SC-VTOL Battery Safety</div>
                     </div>
                     <div style={{marginLeft:"auto",textAlign:"right"}}>
-                      <div style={{fontSize:18,fontWeight:800,color:easaScore.pct>=80?SC.green:easaScore.pct>=60?SC.amber:SC.red,fontFamily:"'DM Mono',monospace"}}>{easaScore.pct}%</div>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{easaScore.passed}/{easaScore.total} checks</div>
+                      <div style={{fontSize:18,fontWeight:800,color:easaScore.pct>=80?SC.green:easaScore.pct>=60?SC.amber:SC.red,fontFamily:"'IBM Plex Mono',monospace"}}>{easaScore.pct}%</div>
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{easaScore.passed}/{easaScore.total} checks</div>
                     </div>
                   </div>
                   {[...new Set(rules.EASA.map(rl=>rl.category))].map(cat=>(
                     <div key={cat} style={{marginBottom:14}}>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.12em",
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.12em",
                         textTransform:"uppercase",marginBottom:6,paddingLeft:2}}>{cat}</div>
                       {rules.EASA.filter(rl=>rl.category===cat).map(rule=>(
                         <div key={rule.id} style={{
@@ -732,21 +732,21 @@ export function CertificationTab(ctx) {
                             <div style={{flex:1}}>
                               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                                 <span style={{fontSize:14}}>{mark(rule.check)}</span>
-                                <span style={{fontSize:11,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace"}}>{rule.title}</span>
+                                <span style={{fontSize:11,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>{rule.title}</span>
                                 {!rule.check&&(
                                   <span style={{fontSize:8,padding:"2px 6px",borderRadius:3,fontWeight:700,
-                                    fontFamily:"'DM Mono',monospace",
+                                    fontFamily:"'IBM Plex Mono',monospace",
                                     background:`${sevColor[rule.severity]}22`,color:sevColor[rule.severity]}}>
                                     {sevLabel[rule.severity]}
                                   </span>
                                 )}
                               </div>
-                              <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4,lineHeight:1.5}}>{rule.desc}</div>
-                              <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>Ref: {rule.ref}</div>
+                              <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4,lineHeight:1.5}}>{rule.desc}</div>
+                              <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>Ref: {rule.ref}</div>
                             </div>
                             <div style={{textAlign:"right",flexShrink:0,minWidth:130}}>
-                              <div style={{fontSize:11,color:rule.check?SC.green:sevColor[rule.severity],fontFamily:"'DM Mono',monospace",fontWeight:700}}>{rule.value}</div>
-                              <div style={{fontSize:9,color:SC.subtle,fontFamily:"'DM Mono',monospace",marginTop:2}}>Limit: {rule.limit}</div>
+                              <div style={{fontSize:11,color:rule.check?SC.green:sevColor[rule.severity],fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{rule.value}</div>
+                              <div style={{fontSize:9,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>Limit: {rule.limit}</div>
                             </div>
                           </div>
                         </div>
@@ -757,7 +757,7 @@ export function CertificationTab(ctx) {
 
                 {/* Disclaimer */}
                 <div style={{padding:"10px 14px",background:`${SC.blue}0a`,border:`1px solid ${SC.blue}22`,
-                  borderRadius:6,fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",lineHeight:1.7}}>
+                  borderRadius:6,fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.7}}>
                   ⓘ <strong style={{color:SC.text}}>Important:</strong> This checker provides <em>conceptual-design phase guidance</em> based on publicly available FAA AC 21.17-4 (July 2025),
                   EASA SC-VTOL Issue 2, and MOC-3 SC-VTOL. It is <strong>not a substitute for formal compliance documentation</strong>.
                   Actual type certification requires full qualification testing, G-1/G-2 issue papers, and regulatory authority approval.

@@ -420,10 +420,10 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
         ].map(([lbl,val,sub,col,bg])=>(
           <div key={lbl} style={{background:bg,border:`1px solid ${col}44`,borderRadius:7,
             padding:'8px 10px',borderTop:`3px solid ${col}`}}>
-            <div style={{fontSize:9,color:col,fontFamily:"'DM Mono',monospace",textTransform:'uppercase',
+            <div style={{fontSize:9,color:col,fontFamily:"'IBM Plex Mono',monospace",textTransform:'uppercase',
               letterSpacing:'0.07em',marginBottom:2,fontWeight:700}}>{lbl}</div>
-            <div style={{fontSize:14,fontWeight:800,color:col,fontFamily:"'DM Mono',monospace"}}>{val}</div>
-            <div style={{fontSize:9,color:SC.subtle,fontFamily:"'DM Mono',monospace",marginTop:1}}>{sub}</div>
+            <div style={{fontSize:14,fontWeight:800,color:col,fontFamily:"'IBM Plex Mono',monospace"}}>{val}</div>
+            <div style={{fontSize:9,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",marginTop:1}}>{sub}</div>
           </div>
         ))}
       </div>
@@ -435,9 +435,9 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
           border:`1px solid ${SC.border}`,borderRadius:6,
           display:'flex',alignItems:'center',gap:10,marginTop:8}}>
           <span style={{fontSize:18,color:SC.muted}}>—</span>
-          <div style={{fontSize:11,fontWeight:700,color:SC.muted,fontFamily:'system-ui,sans-serif'}}>
+          <div style={{fontSize:11,fontWeight:700,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>
             No longitudinal envelope for this configuration
-            <div style={{fontSize:9,fontWeight:400,color:SC.subtle,marginTop:2,fontFamily:"'DM Mono',monospace"}}>
+            <div style={{fontSize:9,fontWeight:400,color:SC.subtle,marginTop:2,fontFamily:"'IBM Plex Mono',monospace"}}>
               This layout has no wing, so there is no mean aerodynamic chord to measure a static
               margin against and no neutral point to place limits around. A rotor-borne aircraft is
               balanced by differential rotor thrust, which is reported as the hover thrust split —
@@ -450,14 +450,14 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
         border:`1px solid ${inEnv?SC.green:SC.red}44`,borderRadius:6,
         display:'flex',alignItems:'center',gap:10}}>
         <span style={{fontSize:18}}>{inEnv?'✓':'⚠'}</span>
-        <div style={{fontSize:11,fontWeight:700,color:inEnv?SC.green:SC.red,fontFamily:'system-ui,sans-serif'}}>
+        <div style={{fontSize:11,fontWeight:700,color:inEnv?SC.green:SC.red,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>
           {inEnv?'CG within safe limits at MTOW':'CG outside safe limits — adjust battery or seat positions'}
           {/* A LENGTH WAS FORMATTED BY THE MASS UNIT, AND THE IMPERIAL BRANCH
               INVENTED ONE. It read metres x 3.28084 x 100 and labelled the
               result "ft·%", which is not a unit: 0.53 ft printed as
               "53.0 ft·%". Feet and inches are what an imperial reader wants
               for a CG margin, and the LENGTH unit decides, not the mass. */}
-          <span style={{fontSize:10,fontWeight:400,color:SC.muted,marginLeft:10,fontFamily:"'DM Mono',monospace"}}>
+          <span style={{fontSize:10,fontWeight:400,color:SC.muted,marginLeft:10,fontFamily:"'IBM Plex Mono',monospace"}}>
             Fwd margin: {cgMargin(xCGtotal-xCG_fwd)} · Aft margin: {cgMargin(xCG_aft-xCGtotal)}
           </span>
         </div>
@@ -467,10 +467,10 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
       {/* ── GA diagram ── */}
       <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'14px'}}>
         <div style={{fontSize:11,color:SC.muted,textTransform:'uppercase',letterSpacing:'0.08em',
-          fontFamily:'system-ui,sans-serif',marginBottom:8,borderBottom:`1px solid ${SC.border}`,
+          fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:8,borderBottom:`1px solid ${SC.border}`,
           paddingBottom:5,display:'flex',justifyContent:'space-between'}}>
           <span>General Arrangement — Plan View (Nose ▲ Top · Bottom ▼ Tail)</span>
-          <span style={{fontSize:9,color:SC.subtle,fontFamily:"'DM Mono',monospace"}}>
+          <span style={{fontSize:9,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace"}}>
             fL={uc.len(fL)}{uc.lenU} · b={uc.len(SR.bWing)}{uc.lenU} · Cr={uc.len(Cr)}{uc.lenU} · uniform scale
           </span>
         </div>
@@ -499,7 +499,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
                     x2={sy( yM).toFixed(1)} y2={sx(xQC).toFixed(1)}
                     stroke={SC.green} strokeWidth={1} strokeDasharray="5,3" opacity={0.5}/>
               <text x={(sy(-yM)-6).toFixed(1)} y={(sx(xQC)-4).toFixed(1)}
-                fontSize={7} fill={SC.green} fontFamily="DM Mono,monospace" opacity={0.8}>MAC c/4</text>
+                fontSize={7} fill={SC.green} fontFamily="IBM Plex Mono,monospace" opacity={0.8}>MAC c/4</text>
             </>);
           })()}
 
@@ -511,7 +511,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
             return(
               <text key={`wbl${i}`} x={(sy(sgn*yM)+3).toFixed(1)} y={sx(lM).toFixed(1)}
                 textAnchor="middle" fontSize={8} fill={SC.teal}
-                fontFamily="DM Mono,monospace" fontWeight={700}>
+                fontFamily="IBM Plex Mono,monospace" fontWeight={700}>
                 {sgn<0?'R':'L'} BAT
               </text>
             );
@@ -529,7 +529,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
                 <text x={(sy(sgn*(yBatEnd+yBoom)/2)+3).toFixed(1)}
                   y={(sx((leE+leB)/2+(cE+cB)/2*0.47)).toFixed(1)}
                   textAnchor="middle" fontSize={7} fill={SC.subtle}
-                  fontFamily="DM Mono,monospace">{uc.len(0.5)}{uc.lenU} gap</text>
+                  fontFamily="IBM Plex Mono,monospace">{uc.len(0.5)}{uc.lenU} gap</text>
               </g>
             );
           })}
@@ -567,7 +567,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
                 r={3.5} fill={SC.amber}/>
               <text x={(sy(sgn*bHalf) + (sgn<0?-Rry-6:Rry+13)).toFixed(1)} y={(sx(xTipRotor)).toFixed(1)}
                 textAnchor="middle" fontSize={8} fill={SC.amber}
-                fontFamily="DM Mono,monospace" fontWeight={700}>TIP ROTOR</text>
+                fontFamily="IBM Plex Mono,monospace" fontWeight={700}>TIP ROTOR</text>
             </g>
           ))}
 
@@ -581,7 +581,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
             fill={`${SC.orange}44`} stroke={SC.orange} strokeWidth={1.8}/>
           <text x={(CX+3).toFixed(1)} y={(sx((xCargoBase+xCargoTip*2)/3)).toFixed(1)}
             textAnchor="middle" fontSize={8} fill={SC.orange}
-            fontFamily="DM Mono,monospace" fontWeight={700}>CARGO</text>
+            fontFamily="IBM Plex Mono,monospace" fontWeight={700}>CARGO</text>
 
           {/* Main battery */}
           <rect x={(CX-mbH/2).toFixed(1)} y={(sx(xBatVis)-mbW/2).toFixed(1)}
@@ -589,7 +589,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
             fill={`${SC.amber}44`} stroke={SC.amber} strokeWidth={2} rx={4}/>
           <text x={(CX+3).toFixed(1)} y={sx(xBatVis).toFixed(1)}
             textAnchor="middle" fontSize={7} fill={SC.amber}
-            fontFamily="DM Mono,monospace" fontWeight={700}>MAIN BAT</text>
+            fontFamily="IBM Plex Mono,monospace" fontWeight={700}>MAIN BAT</text>
 
           {/* Pilot */}
           <rect x={(CX-sH/2).toFixed(1)} y={(sx(xPilot)-sW/2).toFixed(1)}
@@ -597,7 +597,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
             fill={`${SC.purple}66`} stroke={SC.purple} strokeWidth={2} rx={3}/>
           <text x={(CX+3).toFixed(1)} y={sx(xPilot).toFixed(1)}
             textAnchor="middle" fontSize={7} fill={SC.purple}
-            fontFamily="DM Mono,monospace" fontWeight={700}>PILOT</text>
+            fontFamily="IBM Plex Mono,monospace" fontWeight={700}>PILOT</text>
 
           {/* Row 1 */}
           {[-0.27,+0.27].map((yOff,i)=>(
@@ -607,7 +607,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
                 fill={`${SC.teal}55`} stroke={SC.teal} strokeWidth={2} rx={3}/>
               <text x={(sy(yOff*fD)+3).toFixed(1)} y={sx(xRow1).toFixed(1)}
                 textAnchor="middle" fontSize={7} fill={SC.teal}
-                fontFamily="DM Mono,monospace">P{i+1}</text>
+                fontFamily="IBM Plex Mono,monospace">P{i+1}</text>
             </g>
           ))}
 
@@ -619,7 +619,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
                 fill={`${SC.green}55`} stroke={SC.green} strokeWidth={2} rx={3}/>
               <text x={(sy(yOff*fD)+3).toFixed(1)} y={sx(xRow2).toFixed(1)}
                 textAnchor="middle" fontSize={7} fill={SC.green}
-                fontFamily="DM Mono,monospace">P{i+3}</text>
+                fontFamily="IBM Plex Mono,monospace">P{i+3}</text>
             </g>
           ))}
 
@@ -638,14 +638,14 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
 
           {/* Direction labels */}
           <text x={(CX+4).toFixed(1)} y={(fNY-5).toFixed(1)}
-            textAnchor="middle" fontSize={9} fill={SC.muted} fontFamily="DM Mono,monospace">▲ NOSE</text>
+            textAnchor="middle" fontSize={9} fill={SC.muted} fontFamily="IBM Plex Mono,monospace">▲ NOSE</text>
           <text x={(CX+4).toFixed(1)} y={(fTY+14).toFixed(1)}
-            textAnchor="middle" fontSize={9} fill={SC.muted} fontFamily="DM Mono,monospace">TAIL ▼</text>
+            textAnchor="middle" fontSize={9} fill={SC.muted} fontFamily="IBM Plex Mono,monospace">TAIL ▼</text>
           <text x={(sy(-bHalf)-10).toFixed(1)} y={(sx(xTipLE+Ct*0.5)).toFixed(1)}
-            textAnchor="middle" fontSize={9} fill={SC.blue} fontFamily="DM Mono,monospace"
+            textAnchor="middle" fontSize={9} fill={SC.blue} fontFamily="IBM Plex Mono,monospace"
             transform={`rotate(-90,${sy(-bHalf)-10},${sx(xTipLE+Ct*0.5)})`}>RIGHT WING</text>
           <text x={(sy(bHalf)+18).toFixed(1)} y={(sx(xTipLE+Ct*0.5)).toFixed(1)}
-            textAnchor="middle" fontSize={9} fill={SC.blue} fontFamily="DM Mono,monospace"
+            textAnchor="middle" fontSize={9} fill={SC.blue} fontFamily="IBM Plex Mono,monospace"
             transform={`rotate(90,${sy(bHalf)+18},${sx(xTipLE+Ct*0.5)})`}>LEFT WING</text>
 
           {/* Dimension annotations */}
@@ -655,20 +655,20 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
           <line x1={(SVG_W-11).toFixed(1)} y1={fNY.toFixed(1)} x2={(SVG_W-3).toFixed(1)} y2={fNY.toFixed(1)} stroke={SC.dim} strokeWidth={0.5}/>
           <line x1={(SVG_W-11).toFixed(1)} y1={fTY.toFixed(1)} x2={(SVG_W-3).toFixed(1)} y2={fTY.toFixed(1)} stroke={SC.dim} strokeWidth={0.5}/>
           <text x={(SVG_W-1).toFixed(1)} y={((fNY+fTY)/2).toFixed(1)}
-            textAnchor="middle" fontSize={8} fill={SC.dim} fontFamily="DM Mono,monospace"
+            textAnchor="middle" fontSize={8} fill={SC.dim} fontFamily="IBM Plex Mono,monospace"
             transform={`rotate(90,${SVG_W-1},${(fNY+fTY)/2})`}>fL = {uc.len(fL)} {uc.lenU}</text>
 
           <line x1={sy(-bHalf).toFixed(1)} y1={(sx(xTipLE+Ct*0.9)).toFixed(1)}
                 x2={sy( bHalf).toFixed(1)} y2={(sx(xTipLE+Ct*0.9)).toFixed(1)}
                 stroke={SC.dim} strokeWidth={0.4}/>
           <text x={(CX+4).toFixed(1)} y={(sx(xTipLE+Ct*0.9)+13).toFixed(1)}
-            fontSize={8} fill={SC.dim} fontFamily="DM Mono,monospace">b = {uc.len(SR.bWing)} {uc.lenU}</text>
+            fontSize={8} fill={SC.dim} fontFamily="IBM Plex Mono,monospace">b = {uc.len(SR.bWing)} {uc.lenU}</text>
 
         </svg>
 
         {/* Legend */}
         <div style={{display:'flex',gap:12,flexWrap:'wrap',marginTop:10,paddingTop:8,
-          borderTop:`1px solid ${SC.border}`,fontSize:10,fontFamily:"'DM Mono',monospace"}}>
+          borderTop:`1px solid ${SC.border}`,fontSize:10,fontFamily:"'IBM Plex Mono',monospace"}}>
           {[
             [SC.purple,'■','Pilot seat'],
             [SC.teal,  '■','PAX Row 1 (fwd)'],
@@ -691,7 +691,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
       {/* ── CG Ruler — zoomed view, no overlap ── */}
       <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'12px 14px'}}>
         <div style={{fontSize:11,color:SC.muted,textTransform:'uppercase',letterSpacing:'0.08em',
-          fontFamily:'system-ui,sans-serif',marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
+          fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
           CG Position Ruler — Zoomed View ({uc.lenU} from nose)
         </div>
         <svg viewBox={`0 0 700 ${RH}`} width="100%" style={{display:'block',overflow:'visible'}}>
@@ -703,7 +703,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
             fill={`${SC.green}22`} stroke="none"/>
           <text x={((rx(xCG_fwd)+rx(xCG_aft))/2).toFixed(1)} y={(RH/2+5).toFixed(1)}
             textAnchor="middle" fontSize={7} fill={SC.green}
-            fontFamily="DM Mono,monospace" fontWeight={700}>SAFE ZONE</text>
+            fontFamily="IBM Plex Mono,monospace" fontWeight={700}>SAFE ZONE</text>
           {/* Markers — alternating top/bottom to avoid overlap */}
           {sortedM.map((m,i)=>{
             const mx=rx(m.xm);
@@ -720,10 +720,10 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
                   fill={`${m.col}22`} stroke={`${m.col}55`} strokeWidth={1}/>
                 <text x={mx.toFixed(1)} y={(labelY+10).toFixed(1)}
                   textAnchor="middle" fontSize={8} fill={m.col}
-                  fontFamily="DM Mono,monospace" fontWeight={700}>{m.label}</text>
+                  fontFamily="IBM Plex Mono,monospace" fontWeight={700}>{m.label}</text>
                 <text x={mx.toFixed(1)} y={valY.toFixed(1)}
                   textAnchor="middle" fontSize={8} fill={m.col}
-                  fontFamily="DM Mono,monospace">{uc.len(m.xm)}</text>
+                  fontFamily="IBM Plex Mono,monospace">{uc.len(m.xm)}</text>
                 {/* Connector line from label to tick */}
                 <line x1={mx.toFixed(1)} y1={(above?labelY+14:labelY-2).toFixed(1)}
                       x2={mx.toFixed(1)} y2={(above?RH/2-12:RH/2+12).toFixed(1)}
@@ -733,21 +733,21 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
           })}
           {/* End labels */}
           <text x={(RL-4).toFixed(1)} y={(RH/2+4).toFixed(1)} textAnchor="end"
-            fontSize={8} fill={SC.dim} fontFamily="DM Mono,monospace">0 {uc.lenU} nose</text>
+            fontSize={8} fill={SC.dim} fontFamily="IBM Plex Mono,monospace">0 {uc.lenU} nose</text>
         </svg>
       </div>
 
       {/* ── Loading table ── */}
       <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:'12px 14px'}}>
         <div style={{fontSize:11,color:SC.muted,textTransform:'uppercase',letterSpacing:'0.08em',
-          fontFamily:'system-ui,sans-serif',marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
+          fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:8,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
           Loading Scenario Analysis
         </div>
         <table style={{width:'100%',borderCollapse:'collapse'}}>
           <thead>
             <tr>{[`Condition`,`Weight (${uc.massU})`,`CG (${uc.lenU})`,`SM (% MAC)`,``].map(h=>(
               <th key={h} style={{fontSize:10,color:SC.muted,textAlign:'left',padding:'4px 8px',
-                borderBottom:`1px solid ${SC.border}`,fontFamily:"'DM Mono',monospace"}}>{h}</th>
+                borderBottom:`1px solid ${SC.border}`,fontFamily:"'IBM Plex Mono',monospace"}}>{h}</th>
             ))}</tr>
           </thead>
           <tbody>
@@ -791,10 +791,10 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
                 const ok=hasMargin&&sm>=crit.smMin*100&&sm<=crit.smMax*100;
                 return(
                   <tr key={i} style={{background:i%2===0?SC.bg:'transparent',borderTop:`1px solid ${SC.border}22`}}>
-                    <td style={{fontSize:10,color:SC.text,padding:'4px 8px',fontFamily:"'DM Mono',monospace"}}>{lbl}</td>
-                    <td style={{fontSize:10,color:SC.amber,padding:'4px 8px',fontFamily:"'DM Mono',monospace"}}>{uc.mass(W)}</td>
-                    <td style={{fontSize:10,color:SC.teal,padding:'4px 8px',fontFamily:"'DM Mono',monospace"}}>{uc.len(xCG)}</td>
-                    <td style={{fontSize:10,color:hasMargin?(ok?SC.green:SC.red):SC.muted,padding:'4px 8px',fontFamily:"'DM Mono',monospace",fontWeight:700}}>{hasMargin?sm.toFixed(1)+'%':'—'}</td>
+                    <td style={{fontSize:10,color:SC.text,padding:'4px 8px',fontFamily:"'IBM Plex Mono',monospace"}}>{lbl}</td>
+                    <td style={{fontSize:10,color:SC.amber,padding:'4px 8px',fontFamily:"'IBM Plex Mono',monospace"}}>{uc.mass(W)}</td>
+                    <td style={{fontSize:10,color:SC.teal,padding:'4px 8px',fontFamily:"'IBM Plex Mono',monospace"}}>{uc.len(xCG)}</td>
+                    <td style={{fontSize:10,color:hasMargin?(ok?SC.green:SC.red):SC.muted,padding:'4px 8px',fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{hasMargin?sm.toFixed(1)+'%':'—'}</td>
                     <td style={{fontSize:12,padding:'4px 8px'}}>{hasMargin?(ok?'✓':'⚠'):'—'}</td>
                   </tr>
                 );
@@ -806,7 +806,7 @@ export function WBEnvelopePanel({ params, SR, SC, U }) {
 
       {/* Physics note */}
       <div style={{padding:'7px 12px',background:`${SC.blue}0d`,border:`1px solid ${SC.blue}22`,
-        borderRadius:5,fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",lineHeight:1.6}}>
+        borderRadius:5,fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.6}}>
         <span style={{color:SC.blue,fontWeight:700}}>ⓘ </span>
         Battery mass is constant throughout flight on the all-electric paths; a turboelectric or
         hybrid design burns fuel and its CG moves, which this panel does not yet model.
@@ -999,7 +999,7 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
         <div style={{display:"flex",gap:2,background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:6,padding:3}}>
           {CATS.map(c=>(
             <button key={c} type="button" onClick={()=>{setCat(c);setSearch("");}}
-              style={{padding:"5px 14px",borderRadius:4,border:"none",cursor:"pointer",fontFamily:"system-ui,sans-serif",
+              style={{padding:"5px 14px",borderRadius:4,border:"none",cursor:"pointer",fontFamily:"'IBM Plex Sans',system-ui,sans-serif",
                 fontSize:11,fontWeight:cat===c?700:400,
                 background:cat===c?SC.amber:SC.bg,
                 color:cat===c?SC.bg:SC.muted,
@@ -1014,7 +1014,7 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
           value={search} onChange={e=>setSearch(e.target.value)}
           placeholder="Search by name, manufacturer, type…"
           style={{flex:1,minWidth:200,padding:"6px 12px",background:SC.panel,border:`1px solid ${SC.border}`,
-            borderRadius:5,color:SC.text,fontSize:11,fontFamily:"'DM Mono',monospace",outline:"none"}}
+            borderRadius:5,color:SC.text,fontSize:11,fontFamily:"'IBM Plex Mono',monospace",outline:"none"}}
           onFocus={e=>e.target.style.borderColor=SC.amber}
           onBlur={e=>e.target.style.borderColor=SC.border}
         />
@@ -1024,7 +1024,7 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
           style={{padding:"6px 14px",background:aiLoading?"transparent":`${SC.purple}22`,
             border:`1px solid ${SC.purple}66`,borderRadius:5,
             color:SC.purple,fontSize:11,cursor:aiLoading?"default":"pointer",
-            fontFamily:"system-ui,sans-serif",fontWeight:600,
+            fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontWeight:600,
             display:"flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>
           {aiLoading ? "⏳ Fetching…" : "Fetch Latest via AI"}
         </button>
@@ -1032,13 +1032,13 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
 
       {aiError && (
         <div style={{padding:"8px 12px",background:`${SC.red}15`,border:`1px solid ${SC.red}44`,
-          borderRadius:5,fontSize:10,color:SC.red,fontFamily:"'DM Mono',monospace"}}>
+          borderRadius:5,fontSize:10,color:SC.red,fontFamily:"'IBM Plex Mono',monospace"}}>
           {aiError}
         </div>
       )}
 
       {/* Component count */}
-      <div style={{fontSize:10,color:SC.subtle,fontFamily:"'DM Mono',monospace"}}>
+      <div style={{fontSize:10,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace"}}>
         {filtered.length} {CAT_LABELS[cat].toLowerCase()} — {DB[cat]?.length||0} curated
         {aiComponents.filter(c=>c.category===cat).length>0 && ` + ${aiComponents.filter(c=>c.category===cat).length} AI-fetched`}
         {search && ` (filtered)`}
@@ -1062,12 +1062,12 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
                 display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                    <span style={{fontSize:12,fontWeight:700,color:SC.text,fontFamily:"system-ui,sans-serif"}}>{comp.name}</span>
+                    <span style={{fontSize:12,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>{comp.name}</span>
                     {comp.badge && (
                       <span style={{fontSize:8,padding:"1px 6px",borderRadius:10,
                         background:`${badgeColor(comp.badge)}22`,
                         border:`1px solid ${badgeColor(comp.badge)}55`,
-                        color:badgeColor(comp.badge),fontFamily:"'DM Mono',monospace",
+                        color:badgeColor(comp.badge),fontFamily:"'IBM Plex Mono',monospace",
                         fontWeight:700,letterSpacing:"0.04em",whiteSpace:"nowrap"}}>
                         {comp.badge}
                       </span>
@@ -1075,12 +1075,12 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
                     {isAI && (
                       <span style={{fontSize:8,padding:"1px 6px",borderRadius:10,
                         background:`${SC.purple}22`,border:`1px solid ${SC.purple}55`,
-                        color:SC.purple,fontFamily:"'DM Mono',monospace",whiteSpace:"nowrap"}}>
+                        color:SC.purple,fontFamily:"'IBM Plex Mono',monospace",whiteSpace:"nowrap"}}>
                         AI
                       </span>
                     )}
                   </div>
-                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginTop:2}}>
+                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>
                     {comp.mfr} · {comp.type} · {comp.year}
                   </div>
                 </div>
@@ -1097,10 +1097,10 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
                 display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"4px 8px"}}>
                 {specPairs(comp).map(([k,v])=>(
                   <div key={k} style={{minWidth:0}}>
-                    <div style={{fontSize:9,color:SC.subtle,fontFamily:"'DM Mono',monospace",
+                    <div style={{fontSize:9,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",
                       textTransform:"uppercase",letterSpacing:"0.06em"}}>{k}</div>
                     <div style={{fontSize:11,fontWeight:700,color:SC.amber,
-                      fontFamily:"'DM Mono',monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v}</div>
+                      fontFamily:"'IBM Plex Mono',monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v}</div>
                   </div>
                 ))}
               </div>
@@ -1108,12 +1108,12 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
               {/* Expanded notes */}
               {isExpanded && (
                 <div style={{padding:"0 12px 10px",borderTop:`1px solid ${SC.border}33`}}>
-                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",
+                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",
                     lineHeight:1.7,marginTop:8,marginBottom:8}}>
                     {comp.notes}
                   </div>
                   <a href={comp.url} target="_blank" rel="noopener noreferrer"
-                    style={{fontSize:9,color:SC.blue,fontFamily:"'DM Mono',monospace",textDecoration:"none"}}>
+                    style={{fontSize:9,color:SC.blue,fontFamily:"'IBM Plex Mono',monospace",textDecoration:"none"}}>
                     {comp.url}
                   </a>
                 </div>
@@ -1129,7 +1129,7 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
                     border:`1px solid ${isApplied?SC.green:comp.apply?SC.amber:SC.border}`,
                     borderRadius:4,cursor:comp.apply?"pointer":"default",
                     fontSize:10,color:isApplied?SC.green:comp.apply?SC.amber:SC.dim,
-                    fontFamily:"system-ui,sans-serif",fontWeight:600,
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontWeight:600,
                     transition:"all 0.2s"}}>
                   {isApplied ? "✓ Applied to design" : "Apply to design"}
                 </button>
@@ -1137,7 +1137,7 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
                   onClick={()=>setExpandedId(isExpanded?null:comp.id)}
                   style={{padding:"6px 10px",background:"transparent",
                     border:`1px solid ${SC.border}`,borderRadius:4,cursor:"pointer",
-                    fontSize:10,color:SC.muted,fontFamily:"system-ui,sans-serif"}}>
+                    fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>
                   {isExpanded?"Less":"Details"}
                 </button>
               </div>
@@ -1148,7 +1148,7 @@ Return ONLY the raw JSON array starting with [ and ending with ].`;
 
       {/* Footer note */}
       <div style={{padding:"10px 14px",background:`${SC.blue}0a`,border:`1px solid ${SC.blue}22`,
-        borderRadius:6,fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",lineHeight:1.7}}>
+        borderRadius:6,fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.7}}>
         <span style={{color:SC.blue,fontWeight:700}}>ⓘ Sources: </span>
         Specs from official manufacturer datasheets (EMRAX v1.5 2024, H3X Oct 2024, Molicel INR21700P45B-01, MDPI WEVJ 2025).
         Pack SED estimated at 80% of cell SED (BMS + cooling + structure overhead).

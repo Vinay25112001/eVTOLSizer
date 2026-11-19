@@ -1,5 +1,5 @@
 /* =====================================================================
-   EVTOL BUILD LAB — the panel (OpenVSP tab)
+   EVTOL BUILD LAB — the panel (Build eVTOL tab)
    =====================================================================
    The sized aircraft put together step by step on a hangar floor ruled in
    metres, the way the drone Build tab assembles a drone on its mat. Every
@@ -18,7 +18,7 @@ import { buildPlan, STEP_TEXT } from "./build-plan.js";
 
 export const LAB_TITLE = "Build lab — the sized aircraft, step by step, true scale";
 const FLIGHT_TITLE = "Mission flight — 3D, true scale";
-const COND = "'Oswald','Barlow Condensed','Roboto Condensed','Arial Narrow',sans-serif";
+const COND = "'IBM Plex Sans Condensed','Arial Narrow',sans-serif";
 const ACC = "#F2B23A", ACC_INK = "#1A1405";
 const pad2 = (i) => String(i + 1).padStart(2, "0");
 
@@ -114,7 +114,7 @@ function Hangar({ plan, step, dark, highlightKey, onThumbs, narrow }) {
 
   const api = () => apiRef.current;
   const facts = picked ? plan.facts(picked.key) : null;
-  const cur = STEP_TEXT[plan.steps[step]];
+  const cur = plan.stepText(plan.steps[step]);
   return (
     <section ref={wrapRef} aria-label="Hangar" style={{ ...panelBox(), padding: S.md, display: "flex", flexDirection: "column", gap: S.sm }}>
       <header style={{ display: "flex", alignItems: "center", gap: S.sm }}>
@@ -269,7 +269,15 @@ export function EvtolBuildLab({ params, SR, initialStep = 0 }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, [plan.ready]);
-  useEffect(() => { setThumbs(null); setStepRaw((i) => Math.min(i, nSteps - 1)); }, [plan]);   // eslint-disable-line react-hooks/exhaustive-deps
+  /* A new plan keeps the step by name: a layout switch leaves the student
+     on the same step when the new layout has it, else as near as it can. */
+  const prevSteps = useRef(null);
+  useEffect(() => {
+    const was = prevSteps.current, now = plan.ready ? plan.steps : null;
+    prevSteps.current = now;
+    setThumbs(null);
+    setStepRaw((i) => { const j = was && now ? now.indexOf(was[i]) : -1; return j >= 0 ? j : Math.min(i, nSteps - 1); });
+  }, [plan]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!plan.ready) {
     return (
@@ -290,7 +298,7 @@ export function EvtolBuildLab({ params, SR, initialStep = 0 }) {
     setStep((i) => i + (e.key === "ArrowRight" ? 1 : -1));
     e.preventDefault(); e.stopPropagation();
   };
-  const key = plan.steps[step], cur = STEP_TEXT[key];
+  const key = plan.steps[step], cur = plan.stepText(key);
   const needs = plan.needs(key), actions = plan.actions(key);
   const tick = (id) => setTicks((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const needsDone = needs.filter((_, i) => ticks.has(`${key}:need:${i}`)).length;
@@ -327,7 +335,7 @@ export function EvtolBuildLab({ params, SR, initialStep = 0 }) {
                         style={{ display: "flex", alignItems: "center", gap: 10, textAlign: "left", cursor: "pointer", fontFamily: SANS, padding: "7px 10px", borderRadius: 8,
                                  background: hl === x.group ? SC.inset : SC.panel, border: `1px solid ${hl === x.group ? ACC : SC.border}`, color: SC.text }}>
                         <Tick on={on} />
-                        <span style={{ flex: "0 0 auto", minWidth: 34, textAlign: "center", fontFamily: MONO, fontSize: T.micro, fontWeight: 700, borderRadius: 5, padding: "2px 6px", background: SC.text, color: SC.panel }}>{x.qty}×</span>
+                        <span style={{ flex: "0 0 auto", minWidth: 34, textAlign: "center", fontFamily: MONO, fontSize: T.micro, fontWeight: 700, borderRadius: 5, padding: "2px 6px", background: SC.text, color: SC.panelSolid }}>{x.qty}×</span>
                         <span style={{ flex: 1, fontSize: T.label, lineHeight: 1.4, textDecoration: on ? "line-through" : "none", color: on ? SC.muted : SC.text }}>{x.text}</span>
                         {x.note && <span style={{ fontSize: T.micro, color: SC.subtle, fontStyle: "italic" }}>{x.note}</span>}
                       </button>
@@ -381,7 +389,7 @@ export function EvtolBuildLab({ params, SR, initialStep = 0 }) {
                 </div>
               ))}
               <p style={{ fontSize: T.micro, color: SC.subtle, lineHeight: 1.5, margin: `${S.sm}px 0 0` }}>
-                Every figure is the sizer's: its geometry and its result, as the other views on this tab draw them. Parts marked drawn are shapes the sizing does not model.
+                Every figure is the sizer's: its geometry and its result, as the OpenVSP tab's views draw them. Parts marked drawn are shapes the sizing does not model.
               </p>
             </div>
             <div style={{ height: S.md }} />

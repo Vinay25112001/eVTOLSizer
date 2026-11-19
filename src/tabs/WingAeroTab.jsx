@@ -35,28 +35,28 @@ export function WingAeroTab(ctx) {
                     <DragPie SR={SR} SC={SC} TTP={TTP}/>
                   </Panel>
                   <Panel title="Airfoil Selection Score" ht={265}>
-                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6}}>
+                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6}}>
                       Re = {(SR.Re_/1e6).toFixed(2)}×10⁶ · CDmin interpolated at operating Re · 24 candidates
                     </div>
                     <div style={{height:185,overflowY:"auto"}}>
                       {[...SR.afScored].sort((a,b)=>b.score-a.score).map((af,i)=>(
                         <div key={i} style={{display:"flex",alignItems:"center",gap:7,padding:"4px 0",borderBottom:`1px solid ${SC.border}`}}>
                           <span style={{fontSize:9,minWidth:108,color:af.name===SR.selAF.name?SC.green:af.category==="Custom"?SC.amber:SC.text,
-                            fontFamily:"'DM Mono',monospace",fontWeight:af.name===SR.selAF.name?700:400}}>
+                            fontFamily:"'IBM Plex Mono',monospace",fontWeight:af.name===SR.selAF.name?700:400}}>
                             {af.name===SR.selAF.name?"★ ":af.category==="Custom"?"⊕ ":""}{af.name}
                           </span>
                           <div style={{flex:1,height:4,background:SC.border,borderRadius:2}}>
                             <div style={{height:"100%",width:`${af.score*100}%`,background:af.name===SR.selAF.name?SC.green:af.category==="Custom"?SC.amber:SC.muted,borderRadius:2}}/>
                           </div>
-                          <span style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",minWidth:42,textAlign:"right"}}>
+                          <span style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",minWidth:42,textAlign:"right"}}>
                             {af.CDmin.toFixed(4)}
                           </span>
-                          <span style={{fontSize:9,color:af.name===SR.selAF.name?SC.green:SC.muted,fontFamily:"'DM Mono',monospace",minWidth:32,textAlign:"right"}}>
+                          <span style={{fontSize:9,color:af.name===SR.selAF.name?SC.green:SC.muted,fontFamily:"'IBM Plex Mono',monospace",minWidth:32,textAlign:"right"}}>
                             {(af.score*100).toFixed(1)}%
                           </span>
                         </div>
                       ))}
-                      <div style={{marginTop:8,fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>
+                      <div style={{marginTop:8,fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>
                         ★ {SR.selAF.name} | t/c={SR.selAF.tc} CLmax={SR.selAF.CLmax} CDmin@Re={SR.selAF.CDmin.toFixed(4)} | {SR.selAF.source||""}
                       </div>
                     </div>
@@ -65,14 +65,14 @@ export function WingAeroTab(ctx) {
 
                 {/* ── Custom Airfoil Input ── */}
                 <Panel title="Custom Airfoil — Paste XFoil / UIUC Polar Data">
-                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:10,lineHeight:1.7}}>
+                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:10,lineHeight:1.7}}>
                     Paste XFoil polar output or UIUC ADB data (alpha, CL, CD columns). The app fits a parabolic drag polar
                     <strong style={{color:SC.text}}> CD = CDmin + k·(CL − CLd)²</strong> and overrides the library selection.
                     Clear the box to revert to automatic selection.
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:12,alignItems:"start"}}>
                     <div>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:4}}>
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:4}}>
                         Format: one row per alpha — <code>alpha  CL  CD</code> (whitespace or comma separated)
                       </div>
                       <textarea
@@ -81,18 +81,18 @@ export function WingAeroTab(ctx) {
                         placeholder={"Example (XFoil NACA 63-415 at Re=7M):\n alpha    CL       CD\n-4.00   0.0320   0.00740\n-2.00   0.2480   0.00440\n 0.00   0.4640   0.00420\n 2.00   0.6800   0.00440\n 4.00   0.8960   0.00480\n 6.00   1.1120   0.00580\n 8.00   1.3280   0.00750"}
                         style={{width:"100%",boxSizing:"border-box",height:140,background:SC.bg,
                           border:`1px solid ${SC.border}`,borderRadius:6,color:SC.text,
-                          fontSize:10,padding:"8px 10px",fontFamily:"'DM Mono',monospace",
+                          fontSize:10,padding:"8px 10px",fontFamily:"'IBM Plex Mono',monospace",
                           outline:"none",resize:"vertical"}}
                       />
                       {customAFError&&(
-                        <div style={{fontSize:10,color:SC.red,fontFamily:"'DM Mono',monospace",marginTop:4}}>
+                        <div style={{fontSize:10,color:SC.red,fontFamily:"'IBM Plex Mono',monospace",marginTop:4}}>
                           ⚠ {customAFError}
                         </div>
                       )}
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:8,minWidth:160}}>
                       <div style={{background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:6,padding:"10px 12px"}}>
-                        <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6}}>Airfoil metadata</div>
+                        <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6}}>Airfoil metadata</div>
                         {[
                           ["Name",customAFData?.name||"—"],
                           ["t/c",customAFData?customAFData.tc.toFixed(3):"—"],
@@ -103,8 +103,8 @@ export function WingAeroTab(ctx) {
                           ["CM",customAFData?customAFData.CM.toFixed(3):"—"],
                         ].map(([k,v])=>(
                           <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"2px 0",borderBottom:`1px solid ${SC.border}22`}}>
-                            <span style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{k}</span>
-                            <span style={{fontSize:9,color:SC.text,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{v}</span>
+                            <span style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{k}</span>
+                            <span style={{fontSize:9,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{v}</span>
                           </div>
                         ))}
                       </div>
@@ -136,13 +136,13 @@ export function WingAeroTab(ctx) {
                           setCustomAFError("");
                         }catch(e){setCustomAFError(e.message);setCustomAFData(null);}
                       }} style={{padding:"8px 0",background:`${SC.teal}22`,border:`1px solid ${SC.teal}55`,
-                        borderRadius:6,color:SC.teal,fontSize:11,cursor:"pointer",fontFamily:"'DM Mono',monospace",fontWeight:700}}>
+                        borderRadius:6,color:SC.teal,fontSize:11,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>
                         ⊕ Parse & Apply
                       </button>
                       {customAFData&&(
                         <button type="button" onClick={()=>{setCustomAFData(null);setCustomAirfoilInput("");setCustomAFError("");}}
                           style={{padding:"8px 0",background:`${SC.red}11`,border:`1px solid ${SC.red}33`,
-                            borderRadius:6,color:SC.red,fontSize:11,cursor:"pointer",fontFamily:"'DM Mono',monospace"}}>
+                            borderRadius:6,color:SC.red,fontSize:11,cursor:"pointer",fontFamily:"'IBM Plex Mono',monospace"}}>
                           ✕ Clear Custom
                         </button>
                       )}
@@ -150,7 +150,7 @@ export function WingAeroTab(ctx) {
                   </div>
                   {customAFData&&(
                     <div style={{marginTop:10,padding:"8px 12px",background:`${SC.teal}11`,border:`1px solid ${SC.teal}33`,
-                      borderRadius:6,fontSize:10,color:SC.teal,fontFamily:"'DM Mono',monospace"}}>
+                      borderRadius:6,fontSize:10,color:SC.teal,fontFamily:"'IBM Plex Mono',monospace"}}>
                       ✓ Custom airfoil active — overrides library selection. CDmin={customAFData.CDmin.toFixed(5)},
                       CLmax={customAFData.CLmax.toFixed(3)}, k={customAFData.kPolar.toFixed(5)}.
                       Polar fitted from {customAirfoilInput.trim().split('\n').filter(l=>l&&!/^[a-zA-Z#]/.test(l.trim())).length} data points.
@@ -226,7 +226,7 @@ export function WingAeroTab(ctx) {
                     const pt=(x,y)=>`${(cx+x).toFixed(1)},${y.toFixed(1)}`;
                     const ptL=(x,y)=>`${(cx-x).toFixed(1)},${y.toFixed(1)}`;
                     return(
-                    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{fontFamily:"'DM Mono',monospace",overflow:"visible"}}>
+                    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{fontFamily:"'IBM Plex Mono',monospace",overflow:"visible"}}>
                       {/* grid lines */}
                       {[0.25,0.5,0.75,1.0].map(frac=>{
                         const xg=frac*b/2*sc;

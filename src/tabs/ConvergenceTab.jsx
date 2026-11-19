@@ -41,7 +41,7 @@ export function ConvergenceTab(ctx) {
                 {/* T/W insight banner */}
                 <div style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:8,padding:"12px 16px",display:"flex",gap:16,flexWrap:"wrap",alignItems:"center"}}>
                   <div>
-                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.12em",marginBottom:3}}>THRUST-TO-WEIGHT ANALYSIS</div>
+                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.12em",marginBottom:3}}>THRUST-TO-WEIGHT ANALYSIS</div>
                     <div style={{fontSize:11,color:SC.text,lineHeight:1.6}}>
                       At T/W = <span style={{color:SC.amber,fontWeight:700}}>{params.twRatio.toFixed(2)}</span>, installed hover thrust = <span style={{color:SC.blue,fontWeight:700}}>{(params.twRatio*SR.MTOW*9.80665/1000).toFixed(1)} kN</span> → hover power = <span style={{color:SC.blue,fontWeight:700}}>{U.power(SR.Phov)} {U.powerU}</span>.
                       Round 1 gives <span style={{color:SC.muted,fontWeight:700}}>{U.mass(SR.MTOW1)} {U.massU}</span>. Dual-constraint converges to <span style={{color:SC.green,fontWeight:700}}>{U.mass(SR.MTOW)} {U.massU}</span> — a <span style={{color:SC.amber,fontWeight:700}}>{((SR.MTOW/SR.MTOW1-1)*100).toFixed(1)}%</span> increase driven by peak hover power sizing.
@@ -51,12 +51,12 @@ export function ConvergenceTab(ctx) {
 
                 {/* Tolerance control */}
                 <div style={{background:SC.panel,border:`1px solid ${"#22d3ee"}44`,borderRadius:8,padding:"14px 18px"}}>
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.12em",marginBottom:8}}>CONVERGENCE TOLERANCE CONTROL</div>
+                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.12em",marginBottom:8}}>CONVERGENCE TOLERANCE CONTROL</div>
                   <div style={{display:"flex",alignItems:"center",gap:20,flexWrap:"wrap"}}>
                     <div style={{flex:1,minWidth:220}}>
                       <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                        <span style={{fontSize:11,color:SC.text}}>ε = 10<sup>{params.convTolExp}</sup> → threshold 0.01·W·ε = <span style={{color:"#22d3ee",fontWeight:700,fontFamily:"'DM Mono',monospace"}}>{SR.tol.toExponential(1)} kg</span></span>
-                        <span style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>Range: 10⁻¹ → 10⁻¹⁰</span>
+                        <span style={{fontSize:11,color:SC.text}}>ε = 10<sup>{params.convTolExp}</sup> → threshold 0.01·W·ε = <span style={{color:"#22d3ee",fontWeight:700,fontFamily:"'IBM Plex Mono',monospace"}}>{SR.tol.toExponential(1)} kg</span></span>
+                        <span style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>Range: 10⁻¹ → 10⁻¹⁰</span>
                       </div>
                       <input type="range" min={-10} max={-1} step={1} value={params.convTolExp}
                         onChange={evt=>set("convTolExp")(+evt.target.value)}
@@ -68,7 +68,7 @@ export function ConvergenceTab(ctx) {
                     <div style={{display:"flex",gap:12}}>
                       {[["R1 Iters",SR.itersR1,"#22d3ee"],["R2 Iters",SR.itersR2,SR.r2Converged?SC.amber:SC.red],["Total",SR.itersR1+SR.itersR2,SR.r2Converged?SC.green:SC.red]].map(([l,v,c])=>(
                         <div key={l} style={{textAlign:"center",minWidth:60}}>
-                          <div style={{fontSize:22,fontWeight:800,color:c,fontFamily:"'DM Mono',monospace",lineHeight:1}}>{v}</div>
+                          <div style={{fontSize:22,fontWeight:800,color:c,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1}}>{v}</div>
                           <div style={{fontSize:9,color:SC.muted,marginTop:2}}>{l}</div>
                         </div>
                       ))}
@@ -125,7 +125,7 @@ export function ConvergenceTab(ctx) {
 
                 {/* Tolerance sweep table */}
                 <Panel title="Tolerance Sensitivity Sweep — All 10 Levels">
-                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,fontFamily:"'DM Mono',monospace"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,fontFamily:"'IBM Plex Mono',monospace"}}>
                     <thead>
                       <tr style={{borderBottom:`1px solid ${SC.border}`}}>
                         {["Tolerance",`R1 Iters`,"R2 Iters","Total",`MTOW (${U.massU})`,`ΔM vs 1e-10`].map(hdr=>(
@@ -186,7 +186,7 @@ export function ConvergenceTab(ctx) {
 
                 {/* T/W detailed table */}
                 <Panel title="T/W Sensitivity Table — Round 1 vs Round 2 MTOW">
-                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,fontFamily:"'DM Mono',monospace"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,fontFamily:"'IBM Plex Mono',monospace"}}>
                     <thead>
                       <tr style={{borderBottom:`1px solid ${SC.border}`}}>
                         {["T/W",`R1 MTOW (${U.massU})`,`R2 MTOW (${U.massU})`,`ΔM (${U.massU})`,"Δ% vs R1",`Phov at R2 (${U.powerU})`].map(hdr=>(
@@ -233,8 +233,8 @@ export function ConvergenceTab(ctx) {
                       ["Mach",SR.Mach,SR.Mach<0.45?SC.green:SC.amber],
                     ].map(([k,v,col],i)=>(
                       <div key={i} style={{background:SC.bg,borderRadius:4,padding:"6px 8px",borderLeft:`2px solid ${col}44`}}>
-                        <div style={{fontSize:7,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:1}}>{k}</div>
-                        <div style={{fontSize:10,color:col,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{v}</div>
+                        <div style={{fontSize:7,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:1}}>{k}</div>
+                        <div style={{fontSize:10,color:col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{v}</div>
                       </div>
                     ))}
                   </div>

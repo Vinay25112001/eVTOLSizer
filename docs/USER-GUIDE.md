@@ -33,7 +33,7 @@ The tabs are in five groups, in the order the work is usually done:
 | **Physics** | Ctrl+P | Convergence, Performance, Stability, W&B Envelope, V-n Diagram, Constraint Diagram, BEM Rotor |
 | **Trades** | Ctrl+A | Design Space, Compare Layouts, Monte Carlo, Uncertainty, Cost |
 | **Compliance** | Ctrl+Q | Certification, Noise, Reg Tracker |
-| **Tools** | Ctrl+B | Components, Designs & References, NASA VSP Models, OpenVSP, Collaboration, AI Assistant |
+| **Tools** | Ctrl+B | Components, Designs & References, NASA VSP Models, OpenVSP, Build eVTOL, Collaboration, AI Assistant |
 
 Some tabs are hidden on layouts they do not apply to (a wingless multicopter
 has no wing tab). The left and right arrow keys move between tabs in a group.
@@ -137,6 +137,14 @@ From **•••**:
   with the sources the check cites. A check that cites none says so.
 
 The **OpenVSP** tab exports geometry for NASA's OpenVSP.
+
+The **Build eVTOL** tab puts the sized aircraft together step by step on a
+hangar floor ruled in metres, then test-flies it through its sized mission
+in 3D. A pre-flight list shows the design checks that fail, and the
+playback stops with a red flag in the phase a failing check belongs to.
+Change the inputs and fly again to see whether the flag clears. Every
+figure is the sizing's own; the hover-to-wing transition is not modelled
+and the flight says so instead of drawing one.
 
 ## 7. Scripts and other tools
 

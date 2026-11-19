@@ -29,7 +29,7 @@ export function NoiseTab(ctx) {
                 {/* Header */}
                 <div style={{background:SC.panel,
                   border:`1px solid #8b5cf644`,borderRadius:10,padding:"16px 20px"}}>
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>ROTOR ACOUSTICS — BPF TONAL + BROADBAND MODEL</div>
+                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>ROTOR ACOUSTICS — BPF TONAL + BROADBAND MODEL</div>
                   <div style={{fontSize:18,fontWeight:800,color:SC.text,marginBottom:6}}>
                     <span style={{color:SC.purple}}>Noise</span> Estimation & dB Contour Map
                   </div>
@@ -110,17 +110,17 @@ export function NoiseTab(ctx) {
                         return(
                           <div key={dist} style={{display:"flex",alignItems:"center",gap:8,
                             padding:"5px 0",borderBottom:`1px solid ${SC.border}`}}>
-                            <span style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",minWidth:160}}>{label}</span>
+                            <span style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",minWidth:160}}>{label}</span>
                             <div style={{flex:1,height:6,background:SC.border,borderRadius:3}}>
                               <div style={{width:`${pct}%`,height:"100%",background:col,borderRadius:3,transition:"width 0.4s"}}/>
                             </div>
-                            <span style={{fontSize:11,color:col,fontFamily:"'DM Mono',monospace",fontWeight:700,minWidth:52,textAlign:"right"}}>{val} dBA</span>
+                            <span style={{fontSize:11,color:col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,minWidth:52,textAlign:"right"}}>{val} dBA</span>
                           </div>
                         );
                       })}
                     </div>
                     {/* Contour table */}
-                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.1em"}}>Noise Contour Radii</div>
+                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.1em"}}>Noise Contour Radii</div>
                     {[
                       ["55 dBA",SR.dist_55dBA,U.lenU,"near-quiet"],
                       ["65 dBA",SR.dist_65dBA,U.lenU,"EASA UAM limit"],
@@ -129,10 +129,10 @@ export function NoiseTab(ctx) {
                     ].map(([lbl,val,unit,note])=>(
                       <div key={lbl} style={{display:"flex",justifyContent:"space-between",
                         padding:"4px 0",borderBottom:`1px solid ${SC.border}22`}}>
-                        <span style={{fontSize:10,color:SC.text,fontFamily:"'DM Mono',monospace"}}>{lbl}</span>
-                        <span style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{note}</span>
+                        <span style={{fontSize:10,color:SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>{lbl}</span>
+                        <span style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{note}</span>
                         <span style={{fontSize:11,color:val<200?SC.green:val<500?SC.amber:SC.red,
-                          fontFamily:"'DM Mono',monospace",fontWeight:700}}>{U.len(val)} {unit}</span>
+                          fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{U.len(val)} {unit}</span>
                       </div>
                     ))}
                   </Panel>
@@ -140,7 +140,7 @@ export function NoiseTab(ctx) {
 
                 {/* BPF Harmonics spectrum */}
                 <Panel title="BPF Tonal Spectrum — First 4 Harmonics (A-weighted)" ht={270} onSave={true}>
-                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:8}}>
+                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>
                     Tonal noise at integer multiples of BPF = {SR.BPF.toFixed(1)} Hz.
                     Higher harmonics attenuate at ~6 dB/octave. A-weighting penalises low frequencies.
                   </div>
@@ -167,7 +167,7 @@ export function NoiseTab(ctx) {
 
                 {/* SVG dB Contour Map */}
                 <Panel title="dB Noise Contour Map — Top View (hover condition, all rotors)">
-                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:8}}>
+                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>
                     Concentric contours show A-weighted noise level at ground level below hovering aircraft.
                     Aircraft positioned at center. Distances to scale.
                   </div>
@@ -197,14 +197,14 @@ export function NoiseTab(ctx) {
                           return(
                             <g key={dBA}>
                               <circle cx={cx} cy={cy} r={r} fill={col+"18"} stroke={col} strokeWidth={1.5} strokeDasharray="6 3"/>
-                              <text x={cx+r+4} y={cy-4} fontSize={9} fill={col} fontFamily="DM Mono,monospace" fontWeight={700}>{label}</text>
-                              <text x={cx+r+4} y={cy+10} fontSize={8} fill={col} fontFamily="DM Mono,monospace">{Math.round(distM)}m</text>
+                              <text x={cx+r+4} y={cy-4} fontSize={9} fill={col} fontFamily="IBM Plex Mono,monospace" fontWeight={700}>{label}</text>
+                              <text x={cx+r+4} y={cy+10} fontSize={8} fill={col} fontFamily="IBM Plex Mono,monospace">{Math.round(distM)}m</text>
                             </g>
                           );
                         })}
                         {/* Aircraft icon at center */}
                         <circle cx={cx} cy={cy} r={6} fill={SC.amber} opacity={0.9}/>
-                        <text x={cx} y={cy+22} textAnchor="middle" fontSize={9} fill={SC.amber} fontFamily="DM Mono,monospace">Aircraft</text>
+                        <text x={cx} y={cy+22} textAnchor="middle" fontSize={9} fill={SC.amber} fontFamily="IBM Plex Mono,monospace">Aircraft</text>
                         {/* Rotor positions */}
                         {Array.from({length:params.nPropHover}).map((_,i)=>{
                           const ang=i*2*Math.PI/params.nPropHover-Math.PI/2;
@@ -214,11 +214,11 @@ export function NoiseTab(ctx) {
                         })}
                         {/* Scale bar */}
                         <line x1={W-90} y1={H-20} x2={W-90+100*scale} y2={H-20} stroke={SC.muted} strokeWidth={2}/>
-                        <text x={W-90} y={H-8} fontSize={9} fill={SC.muted} fontFamily="DM Mono,monospace">0</text>
-                        <text x={W-90+100*scale} y={H-8} fontSize={9} fill={SC.muted} fontFamily="DM Mono,monospace">100m</text>
+                        <text x={W-90} y={H-8} fontSize={9} fill={SC.muted} fontFamily="IBM Plex Mono,monospace">0</text>
+                        <text x={W-90+100*scale} y={H-8} fontSize={9} fill={SC.muted} fontFamily="IBM Plex Mono,monospace">100m</text>
                         {/* Legend */}
-                        <text x={10} y={20} fontSize={10} fill={SC.muted} fontFamily="DM Mono,monospace">Hover noise contours</text>
-                        <text x={10} y={34} fontSize={9} fill={SC.muted} fontFamily="DM Mono,monospace">BPF={SR.BPF.toFixed(0)}Hz · Vtip={U.speed(SR.TipSpd)}{U.speedU} · {params.nPropHover} rotors</text>
+                        <text x={10} y={20} fontSize={10} fill={SC.muted} fontFamily="IBM Plex Mono,monospace">Hover noise contours</text>
+                        <text x={10} y={34} fontSize={9} fill={SC.muted} fontFamily="IBM Plex Mono,monospace">BPF={SR.BPF.toFixed(0)}Hz · Vtip={U.speed(SR.TipSpd)}{U.speedU} · {params.nPropHover} rotors</text>
                       </svg>
                     );
                   })()}
@@ -242,16 +242,16 @@ export function NoiseTab(ctx) {
                         col:SC.blue},
                     ].map(({title,icon,current,impact,action,col})=>(
                       <div key={title} style={{background:SC.bg,border:`1px solid ${col}33`,borderRadius:8,padding:"12px 14px",borderLeft:`3px solid ${col}`}}>
-                        <div style={{fontSize:13,marginBottom:4}}>{icon} <span style={{fontSize:11,fontWeight:700,color:col,fontFamily:"'DM Mono',monospace"}}>{title}</span></div>
-                        <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:3}}>Current: {current}</div>
-                        <div style={{fontSize:10,color:SC.text,fontFamily:"'DM Mono',monospace",marginBottom:3}}>{impact}</div>
-                        <div style={{fontSize:9,color:SC.subtle,fontFamily:"'DM Mono',monospace"}}>→ {action}</div>
+                        <div style={{fontSize:13,marginBottom:4}}>{icon} <span style={{fontSize:11,fontWeight:700,color:col,fontFamily:"'IBM Plex Mono',monospace"}}>{title}</span></div>
+                        <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:3}}>Current: {current}</div>
+                        <div style={{fontSize:10,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",marginBottom:3}}>{impact}</div>
+                        <div style={{fontSize:9,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace"}}>→ {action}</div>
                       </div>
                     ))}
                   </div>
                   <div style={{marginTop:10,padding:"8px 12px",background:`${"#a78bfa"}11`,
                     border:`1px solid ${"#a78bfa"}33`,borderRadius:6,fontSize:10,
-                    color:SC.purple,fontFamily:"'DM Mono',monospace",lineHeight:1.7}}>
+                    color:SC.purple,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.7}}>
                     ⓘ Model accuracy: ±5 dB (typical for semi-empirical BPF methods at conceptual design phase).
                     Broadband noise dominates in forward flight; tonal noise (BPF harmonics) dominates in hover.
                     For high-fidelity prediction use ANOPP2 or PSU-WOPWOP with CFD inflow data.
@@ -262,10 +262,10 @@ export function NoiseTab(ctx) {
                 <Panel title="Acoustic Model — Methodology & Limitations">
                   <div>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px 0 10px 0'}}>
-                      <span style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>
+                      <span style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>
                         Gutin-inspired far-field approximation · 8 harmonics · per-frequency A-weighting
                       </span>
-                      <span style={{fontSize:9,color:SC.amber,fontFamily:"'DM Mono',monospace",padding:'3px 10px',border:`1px solid ${SC.amber}44`,borderRadius:4}}>
+                      <span style={{fontSize:9,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace",padding:'3px 10px',border:`1px solid ${SC.amber}44`,borderRadius:4}}>
                         Calibrated empirical model — not certification-grade
                       </span>
                     </div>
@@ -273,7 +273,7 @@ export function NoiseTab(ctx) {
 
                             {/* Formula box */}
                             <div style={{background:SC.bg,border:`1px solid ${SC.border}`,borderRadius:8,padding:'14px 16px'}}>
-                              <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace",marginBottom:10}}>
+                              <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",marginBottom:10}}>
                                 Exact Formulation
                               </div>
                               {[
@@ -303,26 +303,26 @@ export function NoiseTab(ctx) {
                                  'Free-field spherical spreading — no ground reflection or atmosphere'],
                               ].map(([title,formula,note],i)=>(
                                 <div key={i} style={{marginBottom:10,paddingBottom:10,borderBottom:i<7?`1px solid ${SC.border}22`:'none'}}>
-                                  <div style={{fontSize:9,color:SC.amber,fontFamily:"'DM Mono',monospace",fontWeight:700,marginBottom:3}}>{title}</div>
-                                  <div style={{fontSize:10,color:SC.teal,fontFamily:"'DM Mono',monospace",marginBottom:2}}>{formula}</div>
-                                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{note}</div>
+                                  <div style={{fontSize:9,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,marginBottom:3}}>{title}</div>
+                                  <div style={{fontSize:10,color:SC.teal,fontFamily:"'IBM Plex Mono',monospace",marginBottom:2}}>{formula}</div>
+                                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{note}</div>
                                 </div>
                               ))}
                             </div>
 
                             {/* Calibration */}
                             <div style={{background:SC.bg,border:`1px solid ${SC.green}33`,borderRadius:8,padding:'12px 16px'}}>
-                              <div style={{fontSize:10,fontWeight:700,color:SC.green,fontFamily:"'DM Mono',monospace",marginBottom:8}}>Calibration References</div>
+                              <div style={{fontSize:10,fontWeight:700,color:SC.green,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>Calibration References</div>
                               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
                                 {[
                                   ['Volocopter 2X (DLR 2020)','18 rotors, R=0.9m','~65 dBA at 100m','Model gives: '+SR.dBA_100m+' dBA at 100m'],
                                   ['Joby S4 (Joby Aviation 2021)','6 rotors, R=1.52m (similar to our design)','~65 dBA at 150m, ~45 at 500m','Model gives: '+SR.dBA_500m+' dBA at 500m (K_cal fitted to this class)'],
                                 ].map(([name,config,measured,modelled])=>(
                                   <div key={name} style={{background:`${SC.panel}`,border:`1px solid ${SC.border}`,borderRadius:6,padding:'10px 12px'}}>
-                                    <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace"}}>{name}</div>
-                                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{config}</div>
-                                    <div style={{fontSize:9,color:SC.green,fontFamily:"'DM Mono',monospace",marginTop:4}}>Measured: {measured}</div>
-                                    <div style={{fontSize:9,color:SC.teal,fontFamily:"'DM Mono',monospace"}}>{modelled}</div>
+                                    <div style={{fontSize:10,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>{name}</div>
+                                    <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{config}</div>
+                                    <div style={{fontSize:9,color:SC.green,fontFamily:"'IBM Plex Mono',monospace",marginTop:4}}>Measured: {measured}</div>
+                                    <div style={{fontSize:9,color:SC.teal,fontFamily:"'IBM Plex Mono',monospace"}}>{modelled}</div>
                                   </div>
                                 ))}
                               </div>
@@ -330,8 +330,8 @@ export function NoiseTab(ctx) {
 
                             {/* Limitations */}
                             <div style={{background:SC.bg,border:`1px solid ${SC.red}33`,borderRadius:8,padding:'12px 16px'}}>
-                              <div style={{fontSize:10,fontWeight:700,color:SC.red,fontFamily:"'DM Mono',monospace",marginBottom:8}}>Validity Envelope & Limitations</div>
-                              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,fontSize:9,fontFamily:"'DM Mono',monospace",color:SC.muted,lineHeight:1.7}}>
+                              <div style={{fontSize:10,fontWeight:700,color:SC.red,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8}}>Validity Envelope & Limitations</div>
+                              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,fontSize:9,fontFamily:"'IBM Plex Mono',monospace",color:SC.muted,lineHeight:1.7}}>
                                 {[
                                   ['Valid for:','Hover and low-speed flight (V∞ ≈ 0)'],
                                   ['Valid for:','M_tip < 0.70 (subsonic, no shock noise)'],

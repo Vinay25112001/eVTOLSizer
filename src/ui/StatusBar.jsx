@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SC } from "../lib/theme.js";
-import { T, S, R, MONO, SANS, numeric } from "./tokens.js";
+import { T, S, MONO, SANS, numeric } from "./tokens.js";
 import { ProvLedger } from "./Provenance.jsx";
 
 /* =====================================================================
@@ -77,9 +77,10 @@ export function StatusBar({ SR, U }) {
   const certOK = SR.MTOW < 5700;
 
   return (
-    <div style={{ position: "sticky", bottom: 0, zIndex: 40,
-      background: SC.panel, borderTop: `1px solid ${SC.border}`,
-      boxShadow: "0 -4px 16px rgba(0,0,0,0.35)" }}>
+    /* A glass pane (ui/glass.jsx) at the foot of the frame. The lamps are
+       annunciators: each one sits beside the words that carry its meaning. */
+    <div className="gc-glass" role="region" aria-label="Design status"
+      style={{ position: "sticky", bottom: 0, zIndex: 40, flexShrink: 0 }}>
 
       {open && (
         <div style={{ borderBottom: `1px solid ${SC.border}`, padding: `${S.lg}px ${S.xl}px`,
@@ -102,7 +103,7 @@ export function StatusBar({ SR, U }) {
             <div style={{ display: "flex", flexDirection: "column", gap: S.md }}>
               {failed.map((c, i) => (
                 <div key={i} style={{ display: "flex", gap: S.md, alignItems: "flex-start" }}>
-                  <span style={{ color: SC.warning, fontSize: T.body, lineHeight: 1.5 }}>■</span>
+                  <span className="gc-lamp" data-state="warning" style={{ marginTop: 5 }} aria-hidden="true" />
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontFamily: SANS, fontSize: T.body, color: SC.primary }}>{c.label}</div>
                     <div style={{ ...numeric, fontSize: T.micro, color: SC.muted,
@@ -128,14 +129,12 @@ export function StatusBar({ SR, U }) {
       )}
 
       <div style={{ display: "flex", alignItems: "center", gap: S.xxl,
-        padding: `${S.md}px ${S.xl}px`, overflowX: "auto" }}>
+        padding: `${S.sm}px ${S.lg}px`, overflowX: "auto" }}>
 
         <div style={{ display: "flex", alignItems: "center", gap: S.md, flexShrink: 0 }}>
-          <span style={{ color: converged ? SC.nominal : SC.warning, fontSize: T.body }}>
-            {converged ? "●" : "■"}
-          </span>
-          <span style={{ fontFamily: SANS, fontSize: T.body,
-            color: converged ? SC.muted : SC.warning }}>
+          <span className="gc-lamp" data-state={converged ? "nominal" : "warning"} aria-hidden="true" />
+          <span style={{ fontFamily: SANS, fontSize: T.body, fontWeight: 500,
+            color: converged ? SC.text : SC.warning }}>
             {converged ? "Converged" : "Did not converge — every value below is meaningless"}
           </span>
         </div>
@@ -160,14 +159,12 @@ export function StatusBar({ SR, U }) {
           </>
         )}
 
-        <button type="button" onClick={() => setOpen((o) => !o)}
-          style={{ marginLeft: "auto", flexShrink: 0, display: "flex",
-            alignItems: "center", gap: S.md, cursor: "pointer",
-            background: failed.length ? `${SC.warning}14` : "transparent",
-            border: `1px solid ${failed.length ? `${SC.warning}55` : SC.border}`,
-            borderRadius: R.md, padding: `${S.xs}px ${S.lg}px`,
+        <button type="button" onClick={() => setOpen((o) => !o)} className="gc-key"
+          aria-expanded={open}
+          style={{ marginLeft: "auto", flexShrink: 0, gap: S.md,
             fontFamily: MONO, fontSize: T.label,
-            color: failed.length ? SC.warning : SC.muted }}>
+            ...(failed.length ? { borderColor: `${SC.warning}88` } : null) }}>
+          <span className="gc-lamp" data-state={failed.length ? "warning" : "nominal"} aria-hidden="true" />
           <span>{passed}/{checks.length} checks</span>
           <span style={{ color: SC.subtle }}>{open ? "▾" : "▸"}</span>
         </button>

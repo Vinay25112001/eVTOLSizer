@@ -11,18 +11,25 @@ export function ResultWarnings({ warnings, params }) {
   const [open, setOpen] = useState(false);
   if (!warnings) return null;
   const { counts, items } = warnings;
-  const tone = counts.error ? SC.red : counts.warning ? SC.amber : SC.green;
   const u = uncertaintyStatement("MTOW", { params });
   const sevColor = { error: SC.red, warning: SC.amber, info: SC.muted };
   return (
     <div data-result-warnings={counts.error ? "error" : counts.warning ? "warning" : "info"}
-      style={{marginBottom:10,border:`1px solid ${SC.border}`,borderLeft:`4px solid ${tone}`,borderRadius:6,
-        background:SC.panel,fontFamily:"system-ui,sans-serif",fontSize:11,color:SC.text}}>
+      className="gc-card"
+      style={{marginBottom:10,border:`1px solid ${SC.rim ?? SC.border}`,borderRadius:12,
+        background:SC.panel,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",fontSize:11,color:SC.text}}>
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}
         style={{width:"100%",display:"flex",gap:10,alignItems:"center",padding:"8px 12px",background:"none",
           border:"none",cursor:"pointer",color:SC.text,textAlign:"left",fontSize:11}}>
-        <span style={{fontWeight:700,color:tone}}>{open ? "▾" : "▸"} Warnings and limitations</span>
-        <span style={{color:SC.muted,fontFamily:"'DM Mono',monospace",fontSize:10}}>
+        {/* An annunciator lamp carries the verdict (it was a coloured left
+            rail and coloured title text, which on the day theme read
+            amber-on-white). */}
+        <span className="gc-lamp" aria-hidden="true"
+          data-state={counts.error ? "warning" : counts.warning ? "caution" : "nominal"}/>
+        <span style={{fontWeight:600,color:SC.text}}>Warnings and limitations</span>
+        <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={SC.subtle} strokeWidth="2" strokeLinecap="round"
+          style={{transform:open?"none":"rotate(-90deg)",transition:"transform 0.15s",flexShrink:0}}><path d="M6 9l6 6 6-6"/></svg>
+        <span style={{color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",fontSize:10}}>
           {counts.error} error{counts.error !== 1 ? "s" : ""} · {counts.warning} warning{counts.warning !== 1 ? "s" : ""} · {counts.info} note{counts.info !== 1 ? "s" : ""}
         </span>
         <span style={{marginLeft:"auto",color:SC.muted,fontSize:10}}>

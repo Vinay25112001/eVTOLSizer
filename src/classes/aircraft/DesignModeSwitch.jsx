@@ -21,21 +21,21 @@ export default function DesignModeSwitch({ mode }) {
   const opt = (id, label, title) => {
     const on = mode === id;
     return (
-      <button type="button" key={id} aria-pressed={on} title={title}
+      <button type="button" key={id} aria-pressed={on} title={title} className="gc-key"
         onClick={() => { if (!on) requestDesignMode(id); }}
-        style={{ padding: "4px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", cursor: on ? "default" : "pointer",
-                 fontFamily: "'DM Mono',monospace", border: "none", borderRadius: 3,
-                 background: on ? SC.inset : "transparent", color: on ? SC.text : SC.muted }}>
+        style={{ minHeight: 28, padding: "0 11px", cursor: on ? "default" : "pointer" }}>
         {label}
       </button>
     );
   };
   return (
-    <div role="group" aria-label="Design mode"
-      style={{ display: "inline-flex", gap: 2, padding: 2, border: `1px solid ${SC.border}`, borderRadius: 4, background: SC.panel }}>
+    /* A recessed three-way switch (ui/glass.jsx): the chosen engine is the
+       lit key. */
+    <div role="group" aria-label="Design mode" className="gc-well"
+      style={{ display: "inline-flex", gap: 2, padding: 3 }}>
       {opt("evtol", "eVTOL", "Size an electric VTOL aircraft (the eVTOL engine)")}
-      {opt("aircraft", "AIRCRAFT", "Size a fixed-wing aircraft: trainer, turboprop, business jet or airliner (the aircraft engine)")}
-      {opt("drone", "DRONE", "Size a small uncrewed multirotor: tri, quad, hexa, octo or X8 (the drone engine)")}
+      {opt("aircraft", "Aircraft", "Size a fixed-wing aircraft: trainer, turboprop, business jet or airliner (the aircraft engine)")}
+      {opt("drone", "Drone", "Size a small uncrewed multirotor: tri, quad, hexa, octo or X8 (the drone engine)")}
     </div>
   );
 }

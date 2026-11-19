@@ -43,8 +43,8 @@ export function MissionTab(ctx) {
                     ["Range",SR?`${U.dist(SR.missionRange||params.range)}+${U.dist(SR.reserveDistKm||0)}=${U.dist(SR.totalRange||params.range)} ${U.distU}`:`${U.dist(params.range)} ${U.distU}`,SC.purple],
                   ].map(([lbl,val,col])=>(
                     <div key={lbl} style={{background:SC.panel,border:`1px solid ${SC.border}`,borderRadius:6,padding:"8px 10px",borderLeft:`2px solid ${col}`}}>
-                      <div style={{fontSize:8,color:SC.muted,fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:3}}>{lbl}</div>
-                      <div style={{fontSize:13,fontWeight:700,color:col,fontFamily:"'DM Mono',monospace"}}>{val}</div>
+                      <div style={{fontSize:8,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:3}}>{lbl}</div>
+                      <div style={{fontSize:13,fontWeight:700,color:col,fontFamily:"'IBM Plex Mono',monospace"}}>{val}</div>
                     </div>
                   ))}
                 </div>
@@ -151,7 +151,7 @@ export function MissionTab(ctx) {
 
                 {/* ── Combined Power + Energy vs Time (dual Y-axis) ── */}
                 <Panel title="Power & Energy vs Mission Time — Combined (Dual Axis)" onSave={true}>
-                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:8,paddingLeft:4}}>
+                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8,paddingLeft:4}}>
                     <span style={{color:SC.amber,fontWeight:700}}>■ Power ({U.powerU})</span> on left axis &nbsp;·&nbsp;
                     <span style={{color:SC.green,fontWeight:700}}>■ Phase Energy (kWh)</span> on right axis — both plotted step-wise per phase, matching the MATLAB reference.
                   </div>
@@ -216,9 +216,9 @@ export function MissionTab(ctx) {
                     ].map(([lbl,pw,e,col])=>(
                       <div key={lbl} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
                         <div style={{width:8,height:8,borderRadius:"50%",background:col}}/>
-                        <span style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{lbl}</span>
-                        <span style={{fontSize:10,color:SC.amber,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{U.power(pw)} {U.powerU}</span>
-                        <span style={{fontSize:10,color:SC.green,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{e} kWh</span>
+                        <span style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{lbl}</span>
+                        <span style={{fontSize:10,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{U.power(pw)} {U.powerU}</span>
+                        <span style={{fontSize:10,color:SC.green,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{e} kWh</span>
                       </div>
                     ))}
                   </div>
@@ -226,7 +226,7 @@ export function MissionTab(ctx) {
 
                 {/* Phase Power vs Phase Energy vs Phase Time — NEW grouped bar chart */}
                 <Panel title={`Phase Comparison — Power (${U.powerU}) · Energy (kWh) · Duration (s)`} onSave={true}>
-                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:8,paddingLeft:4}}>
+                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:8,paddingLeft:4}}>
                     Grouped bars show the three key metrics for each mission phase. Each metric is normalised relative to its maximum value so all three can be compared on the same axis.
                     Raw values shown in the data table below.
                   </div>
@@ -254,7 +254,7 @@ export function MissionTab(ctx) {
 
                   {/* Raw data table below the chart */}
                   <div style={{overflowX:"auto",marginTop:12}}>
-                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:10,fontFamily:"'DM Mono',monospace"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:10,fontFamily:"'IBM Plex Mono',monospace"}}>
                       <thead>
                         <tr style={{background:SC.panel}}>
                           {["Phase","Power (kW)","Energy (kWh)","Duration (s)","% Total E","% Total Time"].map(hdr=>(

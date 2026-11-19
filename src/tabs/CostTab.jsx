@@ -285,7 +285,7 @@ export function CostTab(ctx) {
                 {SR.powertrain==="turboelectric"&&(
                   <div role="alert" data-cost-powertrain-note="1"
                     style={{border:`1px solid ${SC.red}`,borderLeft:`4px solid ${SC.red}`,borderRadius:6,padding:"8px 12px",
-                      background:SC.panel,color:SC.text,fontSize:11,fontFamily:"system-ui,sans-serif",lineHeight:1.5}}>
+                      background:SC.panel,color:SC.text,fontSize:11,fontFamily:"'IBM Plex Sans',system-ui,sans-serif",lineHeight:1.5}}>
                     <b style={{color:SC.red}}>Not a cost for this aircraft.</b> This tab prices electricity and battery
                     cycling. The design is turboelectric: it burns {SR.fuelBurnKg} kg of fuel per mission, and neither a fuel
                     price nor turboshaft maintenance is modelled here. Energy and battery lines below describe a battery
@@ -296,7 +296,7 @@ export function CostTab(ctx) {
                 {/* Cost Assumption Sliders */}
                 <div style={{background:SC.panel,border:`1px solid ${SC.green}33`,borderRadius:8,padding:"12px 16px"}}>
                   <div style={{fontSize:11,color:SC.muted,textTransform:"uppercase",letterSpacing:"0.08em",
-                    fontFamily:"system-ui,sans-serif",marginBottom:10,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
+                    fontFamily:"'IBM Plex Sans',system-ui,sans-serif",marginBottom:10,borderBottom:`1px solid ${SC.border}`,paddingBottom:5}}>
                     Adjustable Cost Assumptions — drag to update DOC live
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}}>
@@ -308,13 +308,13 @@ export function CostTab(ctx) {
                     ].map(([lbl,unit,val,min,max,step,setter,note])=>(
                       <div key={lbl}>
                         <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
-                          <span style={{fontSize:11,color:SC.muted,fontFamily:"system-ui,sans-serif"}}>{lbl}</span>
-                          <span style={{fontSize:11,fontWeight:700,color:SC.green,fontFamily:"'DM Mono',monospace"}}>{unit}{typeof val==='number'&&step<1?val.toFixed(2):val}</span>
+                          <span style={{fontSize:11,color:SC.muted,fontFamily:"'IBM Plex Sans',system-ui,sans-serif"}}>{lbl}</span>
+                          <span style={{fontSize:11,fontWeight:700,color:SC.green,fontFamily:"'IBM Plex Mono',monospace"}}>{unit}{typeof val==='number'&&step<1?val.toFixed(2):val}</span>
                         </div>
                         <input type="range" min={min} max={max} step={step} value={val}
                           onChange={e=>setter(parseFloat(e.target.value))}
                           style={{width:"100%",accentColor:SC.green}}/>
-                        <div style={{fontSize:9,color:SC.subtle,fontFamily:"'DM Mono',monospace",marginTop:2}}>{note}</div>
+                        <div style={{fontSize:9,color:SC.subtle,fontFamily:"'IBM Plex Mono',monospace",marginTop:2}}>{note}</div>
                       </div>
                     ))}
                   </div>
@@ -323,7 +323,7 @@ export function CostTab(ctx) {
                 {/* Header */}
                 <div style={{background:darkMode?"linear-gradient(135deg,#0d1a0d,#0a1f14)":SC.panel,
                   border:`1px solid #22c55e44`,borderRadius:10,padding:"16px 20px"}}>
-                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>$/FLIGHT ECONOMICS — LIFECYCLE COST MODEL</div>
+                  <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.18em",marginBottom:6}}>$/FLIGHT ECONOMICS — LIFECYCLE COST MODEL</div>
                   <div style={{fontSize:18,fontWeight:800,color:SC.text,marginBottom:6}}>
                     <span style={{color:SC.green}}>Cost</span> Estimator & ROI Analysis
                   </div>
@@ -401,7 +401,7 @@ export function CostTab(ctx) {
                 <Panel title="Annual Economics — P&L Summary">
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
                     <div>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Annual Costs</div>
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Annual Costs</div>
                       {[
                         ["Energy",          energyCost_per_flight*flightsPerYear],
                         ["Battery",         battCost_per_flight*flightsPerYear],
@@ -415,21 +415,21 @@ export function CostTab(ctx) {
                         const pct=v/annualCost*100;
                         return(
                           <div key={k} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0",borderBottom:`1px solid ${SC.border}22`}}>
-                            <span style={{fontSize:10,color:SC.text,fontFamily:"'DM Mono',monospace",minWidth:110}}>{k}</span>
+                            <span style={{fontSize:10,color:SC.text,fontFamily:"'IBM Plex Mono',monospace",minWidth:110}}>{k}</span>
                             <div style={{flex:1,height:5,background:SC.border,borderRadius:2}}>
                               <div style={{width:`${pct}%`,height:"100%",background:SC.amber,borderRadius:2}}/>
                             </div>
-                            <span style={{fontSize:10,color:SC.amber,fontFamily:"'DM Mono',monospace",minWidth:60,textAlign:"right"}}>${(v/1000).toFixed(0)}k</span>
+                            <span style={{fontSize:10,color:SC.amber,fontFamily:"'IBM Plex Mono',monospace",minWidth:60,textAlign:"right"}}>${(v/1000).toFixed(0)}k</span>
                           </div>
                         );
                       })}
                       <div style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderTop:`2px solid ${SC.border}`,marginTop:4}}>
-                        <span style={{fontSize:11,fontWeight:700,color:SC.text,fontFamily:"'DM Mono',monospace"}}>Total Annual Cost</span>
-                        <span style={{fontSize:11,fontWeight:700,color:SC.red,fontFamily:"'DM Mono',monospace"}}>${(annualCost/1000).toFixed(0)}k</span>
+                        <span style={{fontSize:11,fontWeight:700,color:SC.text,fontFamily:"'IBM Plex Mono',monospace"}}>Total Annual Cost</span>
+                        <span style={{fontSize:11,fontWeight:700,color:SC.red,fontFamily:"'IBM Plex Mono',monospace"}}>${(annualCost/1000).toFixed(0)}k</span>
                       </div>
                     </div>
                     <div>
-                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Revenue & Profit</div>
+                      <div style={{fontSize:9,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Revenue & Profit</div>
                       {[
                         ["Flights/year",`${flightsPerYear.toLocaleString()}`,SC.muted],
                         ["Revenue/flight",`$${revenuePerFlight.toFixed(0)}`,SC.teal],
@@ -441,8 +441,8 @@ export function CostTab(ctx) {
                         ["Cost vs Heli",  `${savings_vs_heli_pct.toFixed(0)}% cheaper`,savings_vs_heli_pct>0?SC.green:SC.red],
                       ].map(([k,v,col])=>(
                         <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:`1px solid ${SC.border}22`}}>
-                          <span style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace"}}>{k}</span>
-                          <span style={{fontSize:11,color:col,fontFamily:"'DM Mono',monospace",fontWeight:700}}>{v}</span>
+                          <span style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace"}}>{k}</span>
+                          <span style={{fontSize:11,color:col,fontFamily:"'IBM Plex Mono',monospace",fontWeight:700}}>{v}</span>
                         </div>
                       ))}
                     </div>
@@ -468,7 +468,7 @@ export function CostTab(ctx) {
                   </ResponsiveContainer>
                   <div style={{marginTop:8,padding:"8px 12px",background:`${SC.green}11`,
                     border:`1px solid ${SC.green}33`,borderRadius:6,fontSize:10,
-                    color:SC.green,fontFamily:"'DM Mono',monospace",lineHeight:1.7}}>
+                    color:SC.green,fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.7}}>
                      <strong>DOC v4 — every line below is printed from the constants the code uses</strong><br/>
                     {/* Rendered from engine/economics/doc-constants.js. The previous
                         panel was hand-written prose and had drifted from the code on
@@ -487,7 +487,7 @@ export function CostTab(ctx) {
 
                 {/* Profit vs Load Factor curve */}
                 <Panel title="Profit vs Load Factor — Fare Scenario Sensitivity" ht={300} onSave={true}>
-                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'DM Mono',monospace",marginBottom:6,paddingLeft:4}}>
+                  <div style={{fontSize:10,color:SC.muted,fontFamily:"'IBM Plex Mono',monospace",marginBottom:6,paddingLeft:4}}>
                     Per-flight profit at each load factor for three market fare scenarios.
                     Zero-crossing = break-even LF. Above zero = profitable.
                   </div>

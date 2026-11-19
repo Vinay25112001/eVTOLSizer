@@ -28,7 +28,7 @@ import { packEnergyWh, dischargeLimitStatus, USABLE_FRACTION_SOURCES } from "./b
 import { sizeDrone } from "./sizing.js";
 
 const num = (v, d = 1) => (v == null || !isFinite(v) ? "—" : v.toFixed(d));
-const axis = { stroke: SC.muted, fontSize: 11, fontFamily: MONO };
+const axis = { get stroke() { return SC.muted; }, fontSize: 11, fontFamily: MONO }; // a getter: read at render, so it follows Day/Night
 
 export default function EndurancePanel({ v, built, mission, declared, selection, result, ok }) {
   const pack = built.pack;

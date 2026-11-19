@@ -134,8 +134,15 @@ function Arena({ model, airframe, energy, sizing, dark, obstacles, maxTiltDeg, p
   /* The loop: step the flight in real time, draw it, refresh the HUD. */
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    let raf = 0, last = 0, acc = 0, hudAt = 0, mapAt = 0, trailAt = -1, resetTrail = true;
+    let raf = 0, last = 0, acc = 0, hudAt = 0, mapAt = 0, trailAt = -1, resetTrail = true, shown = true;
+    /* Off the screen (scrolled away, or the drone studio hidden behind
+       another engine, which stays mounted) the flight holds still and
+       nothing is drawn: it ran on, drawing, with nobody looking. */
+    const io = typeof window.IntersectionObserver === "function" && stageRef.current
+      ? new window.IntersectionObserver((es) => { shown = es.some((e) => e.isIntersecting); }) : null;
+    io?.observe(stageRef.current);
     const frame = (now) => {
+      if (!shown) { last = now; raf = requestAnimationFrame(frame); return; }
       const real = Math.min(0.05, last ? (now - last) / 1000 : 0); last = now;
       const f = flightRef.current;
       if (f && !pausedRef.current && !f.ended) {
@@ -171,7 +178,7 @@ function Arena({ model, airframe, energy, sizing, dark, obstacles, maxTiltDeg, p
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); io?.disconnect(); };
   }, [run, model, obstacles]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   const onKeyDown = (ev) => {

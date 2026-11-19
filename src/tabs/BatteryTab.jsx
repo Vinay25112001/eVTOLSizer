@@ -55,7 +55,7 @@ export function BatteryTab(ctx) {
                     ].map(([k,v],i)=>(
                       <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:`1px solid #0f131a`}}>
                         <span style={{fontSize:9,color:SC.muted}}>{k}</span>
-                        <span style={{fontSize:9,color:SC.teal,fontFamily:"'DM Mono',monospace"}}>{v}</span>
+                        <span style={{fontSize:9,color:SC.teal,fontFamily:"'IBM Plex Mono',monospace"}}>{v}</span>
                       </div>
                     ))}
                   </Panel>
@@ -65,11 +65,11 @@ export function BatteryTab(ctx) {
                       return["Start","After T/O","After Climb","After Cruise","After Descent","After Landing","After Reserve"].map((lbl,i)=>{
                         const soc=Math.max(0,(1-E[i]/SR.PackkWh)*100),col=soc>60?SC.green:soc>30?SC.amber:SC.red;
                         return(<div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 0",borderBottom:`1px solid ${SC.border}`}}>
-                          <span style={{fontSize:8,color:SC.muted,minWidth:95,fontFamily:"'DM Mono',monospace"}}>{lbl}</span>
+                          <span style={{fontSize:8,color:SC.muted,minWidth:95,fontFamily:"'IBM Plex Mono',monospace"}}>{lbl}</span>
                           <div style={{flex:1,height:5,background:SC.border,borderRadius:2}}>
                             <div style={{height:"100%",width:`${soc}%`,background:col,borderRadius:2,transition:"width 0.3s"}}/>
                           </div>
-                          <span style={{fontSize:9,color:col,minWidth:42,textAlign:"right",fontFamily:"'DM Mono',monospace"}}>{soc.toFixed(1)}%</span>
+                          <span style={{fontSize:9,color:col,minWidth:42,textAlign:"right",fontFamily:"'IBM Plex Mono',monospace"}}>{soc.toFixed(1)}%</span>
                         </div>);
                       });
                     })()}

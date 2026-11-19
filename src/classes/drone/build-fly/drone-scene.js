@@ -583,6 +583,15 @@ export function mountArena({ canvas, airframe, obstacles = [], dark = true, payl
   const camera = new THREE.PerspectiveCamera(60, 1, 0.03, 1200);
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true; controls.enabled = false;
+  /* DRAWN WHEN SOMETHING MOVES. Paused, the flight is not stepped, and the
+     arena used to be drawn every frame anyway, identically. render() now
+     draws when time moves (dt > 0: the drone flies, the rotors turn), the
+     trail was reset, a rotor failed, or the orbit camera moved, and the
+     scene's own setters (camera, theme, airframe, obstacles, size) ask for
+     a draw. Flying, it draws every frame exactly as before. */
+  let dirty = 2, lastFailed = -1;
+  const wake = () => { dirty = 2; };
+  controls.addEventListener("change", wake);
 
   /* Ground, grid and pad. */
   const world = new THREE.Group(); scene.add(world);
@@ -669,6 +678,7 @@ export function mountArena({ canvas, airframe, obstacles = [], dark = true, payl
   function render(pose, { fracs, failed, dt = 1 / 60, resetTrail = false } = {}) {
     if (resetTrail) { trailN = 0; trailLastT = -1; trailGeo.setDrawRange(0, 0); }
     const snap = resetTrail;
+    let orbitMoved = false;
     const p = new THREE.Vector3(pose.y, pose.altitudeM, -pose.x);
     drone.group.position.copy(p);
     drone.group.quaternion.copy(nedQuatToThree(pose.q));
@@ -708,15 +718,21 @@ export function mountArena({ canvas, airframe, obstacles = [], dark = true, payl
     } else if (mode === "orbit") {
       const d = p.clone().sub(lastDrone);
       camera.position.add(d); controls.target.copy(p);
-      controls.update();
+      if (controls.update()) orbitMoved = true;
     }
     lastDrone.copy(p);
+    const failedN = failed?.size ?? 0;
+    const moving = dt > 0 || snap || orbitMoved || failedN !== lastFailed;
+    lastFailed = failedN;
+    if (!moving && dirty <= 0) return;
+    if (dirty > 0) dirty--;
     renderer.render(scene, camera);
   }
 
-  return {
+  const api = {
     render, setCamera, setObstacles,
     getCamera: () => mode,
+    redraw: wake,
     setAirframe(af, opts = {}) {
       if (opts.payload != null) payloadOn = opts.payload;
       if (opts.kit) kitNow = opts.kit;
@@ -731,7 +747,13 @@ export function mountArena({ canvas, airframe, obstacles = [], dark = true, payl
     },
     resize: () => sizeTo(renderer, camera, canvas),
     dispose() {
+      controls.removeEventListener("change", wake);
       controls.dispose(); disposeGroup(scene); env.dispose(); renderer.dispose(); renderer.forceContextLoss?.();
     },
   };
+  /* Anything that changes the scene other than the flight asks for a draw. */
+  for (const k of ["setCamera", "setObstacles", "setAirframe", "setDark", "resize"]) {
+    const f = api[k]; api[k] = (...a) => { const r = f(...a); wake(); return r; };
+  }
+  return api;
 }

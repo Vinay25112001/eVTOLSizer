@@ -135,11 +135,18 @@ function Arena({ model, airframe, energy, sizing, dark, obstacles, maxTiltDeg, p
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
     let raf = 0, last = 0, acc = 0, hudAt = 0, mapAt = 0, trailAt = -1, resetTrail = true, shown = true;
+    /* What the HUD and the minimap last showed. Paused, the flight does
+       not step, so they are not refreshed: they were redrawn ten and
+       twenty times a second with the same numbers. */
+    let hudSig = "", mapSig = "";
     /* Off the screen (scrolled away, or the drone studio hidden behind
        another engine, which stays mounted) the flight holds still and
        nothing is drawn: it ran on, drawing, with nobody looking. */
     const io = typeof window.IntersectionObserver === "function" && stageRef.current
-      ? new window.IntersectionObserver((es) => { shown = es.some((e) => e.isIntersecting); }) : null;
+      ? new window.IntersectionObserver((es) => {
+        shown = es.some((e) => e.isIntersecting);
+        if (shown) { apiRef.current?.redraw?.(); hudSig = ""; mapSig = ""; }
+      }) : null;
     io?.observe(stageRef.current);
     const frame = (now) => {
       if (!shown) { last = now; raf = requestAnimationFrame(frame); return; }
@@ -163,9 +170,10 @@ function Arena({ model, airframe, energy, sizing, dark, obstacles, maxTiltDeg, p
         apiRef.current?.render(pose, { fracs, failed, dt: pausedRef.current ? 0 : real, resetTrail });
         resetTrail = false;
         if (t - trailAt >= 0.1 || t < trailAt) { trailAt = t; trailRef.current.push([st[0], st[1]]); if (trailRef.current.length > 900) trailRef.current.shift(); }
-        if (now - mapAt > 50) { mapAt = now; drawMinimap(mapRef.current, pose, trailRef.current, obstacles, failed.size); }
-        if (now - hudAt > 100) {
-          hudAt = now;
+        const sig = `${f.s}|${failed.size}|${f.ended}`;
+        if (now - mapAt > 50 && sig !== mapSig) { mapAt = now; mapSig = sig; drawMinimap(mapRef.current, pose, trailRef.current, obstacles, failed.size); }
+        if (now - hudAt > 100 && sig !== hudSig) {
+          hudAt = now; hudSig = sig;
           setHud({
             t, alt: -st[2], vs: -st[5], gs: Math.hypot(st[3], st[4]),
             hdg: ((e.yawRad * 180 / Math.PI) + 360) % 360, roll: e.rollRad * 180 / Math.PI, pitch: e.pitchRad * 180 / Math.PI,

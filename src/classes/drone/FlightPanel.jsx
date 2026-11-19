@@ -44,12 +44,13 @@
    unattainable to it. That is on the Airframe tab, measured by ACAI, and
    it is not visible in any trajectory.
    ===================================================================== */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ReferenceLine, Legend,
+  Legend,
 } from "recharts";
 import { SC } from "../../lib/theme.js";
+import { useDarkMode } from "../../lib/display.js";
 import { T, S, MONO, SANS } from "../../ui/tokens.js";
 import { Card, Kpi, Q, th, td } from "../ui-kit.jsx";
 import { buildAirframe, DEG } from "./geometry3d.js";
@@ -62,6 +63,65 @@ import { DEFAULT_SCENE, firstContact, DECLARED_IMPACT_INPUTS } from "./obstacles
 import { buildEnergyModel } from "./flight-energy.js";
 
 const num = (v, d = 1) => (v == null || !isFinite(v) ? "—" : v.toFixed(d));
+
+/* ── THE TRACES ARE DRAWN ONCE PER FLIGHT, NOT ONCE PER FRAME ─────────
+   The chart plots every sample of the flight on four lines -- up to
+   15,000 points each under the 300 s cap -- and it used to sit in the
+   panel's render with a ReferenceLine at the playback time. Playing the
+   flight therefore laid out and drew all of it again sixty times a
+   second to move one vertical line, which was most of what the Flight
+   tab cost while playing (Edge, 2026-11-19).
+
+   So the chart is memoised on the trace and redrawn only when the
+   flight or the theme changes, and the playback time is a separate line
+   laid over the plot area. Both read TRACE_CHART, so the line cannot
+   drift from the plot it marks. What is plotted is unchanged: the same
+   trace, the same four lines. */
+const TRACE_CHART = {
+  height: 260, top: 8, right: 16, bottom: 22, left: 6,
+  yAxisW: 46,    // each Y axis, left and right
+  legendH: 22,   // the legend sits on top, inside the top offset
+  xAxisH: 30,    // Recharts' own default, stated so the line can rely on it
+};
+const FlightTraces = memo(function FlightTraces({ trace }) {
+  useDarkMode();   // the colours are read from SC, so Day/Night redraws it
+  const c = TRACE_CHART;
+  const axis = { stroke: SC.muted, fontSize: 11, fontFamily: MONO };
+  return (
+    <ResponsiveContainer width="100%" height={c.height}>
+      <LineChart data={trace} margin={{ top: c.top, right: c.right, bottom: c.bottom, left: c.left }}>
+        <CartesianGrid stroke={SC.border} strokeDasharray="2 3" />
+        <XAxis dataKey="t" {...axis} type="number" domain={["dataMin", "dataMax"]} height={c.xAxisH}
+          label={{ value: "s", position: "insideBottom", offset: -12, fill: SC.muted, fontSize: 11 }} />
+        <YAxis yAxisId="a" {...axis} width={c.yAxisW}
+          label={{ value: "deg", angle: -90, position: "insideLeft", fill: SC.muted, fontSize: 11 }} />
+        <YAxis yAxisId="h" orientation="right" {...axis} width={c.yAxisW}
+          label={{ value: "m", angle: 90, position: "insideRight", fill: SC.muted, fontSize: 11 }} />
+        <Tooltip formatter={(x, n) => [num(+x, 2), n]} labelFormatter={(t) => `t = ${num(+t, 2)} s`} />
+        <Legend verticalAlign="top" height={c.legendH} wrapperStyle={{ fontSize: 11 }} />
+        <Line yAxisId="a" type="monotone" dataKey="rollDeg" stroke="#4ea1ff" dot={false} strokeWidth={2} isAnimationActive={false} name="roll" />
+        <Line yAxisId="a" type="monotone" dataKey="pitchDeg" stroke="#f2a33c" dot={false} strokeWidth={2} isAnimationActive={false} name="pitch" />
+        <Line yAxisId="a" type="monotone" dataKey="yawDeg" stroke="#9b8cff" dot={false} strokeWidth={2} isAnimationActive={false} name="yaw" />
+        <Line yAxisId="h" type="monotone" dataKey="altitudeM" stroke="#54c7a8" dot={false} strokeWidth={2} isAnimationActive={false} name="altitude" />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+});
+/* The playback time, as a line over the plot area: the plot runs from the
+   left axis to the right one, and from under the legend to above the
+   time axis, with the time axis spanning the first sample to the last. */
+function TraceCursor({ t, t0, t1 }) {
+  const c = TRACE_CHART;
+  const left = c.left + c.yAxisW, right = c.right + c.yAxisW;
+  const top = c.top + c.legendH, bottom = c.bottom + c.xAxisH;
+  const f = t1 > t0 ? Math.min(1, Math.max(0, (t - t0) / (t1 - t0))) : 0;
+  return (
+    <div aria-hidden="true" data-trace-cursor="" style={{
+      position: "absolute", top, height: c.height - top - bottom, width: 1.5,
+      left: `calc(${left}px + (100% - ${left + right}px) * ${f.toFixed(6)} - 0.75px)`,
+      background: SC.caution, pointerEvents: "none" }} />
+  );
+}
 
 /* THE VIEWPORT IS AN INSTRUMENT CANVAS AND STAYS DARK IN BOTH THEMES, so
    every colour INSIDE it is fixed rather than a theme token — a token
@@ -348,6 +408,7 @@ export default function FlightPanel({ design, frame }) {
   const [restitution, setRestitution] = useState(DECLARED_IMPACT_INPUTS.restitution.value);
   const [breakSpeed, setBreakSpeed] = useState(DECLARED_IMPACT_INPUTS.bladeBreakSpeedMps.value);
   const drag = useRef(null);
+  const rootRef = useRef(null);
 
   const airframe = useMemo(() => {
     if (!ok) return null;
@@ -466,7 +527,11 @@ export default function FlightPanel({ design, frame }) {
   /* With an impact response declared the INTEGRATOR resolves contact and
      keeps flying, so the trace is already correct and must not be cut.
      Cutting is only right when nothing after the strike is modelled. */
-  const trace = (!bounce && strike) ? fullTrace.slice(0, Math.max(2, strike.index + 1)) : fullTrace;
+  /* Held as one array per flight: the traces chart is memoised on it, so
+     a fresh slice every render would redraw the chart every frame. */
+  const trace = useMemo(
+    () => ((!bounce && strike) ? fullTrace.slice(0, Math.max(2, strike.index + 1)) : fullTrace),
+    [fullTrace, bounce, strike]);
   /* PLAYBACK DOES NOT RESTART ON A COMMAND. It used to setI(0) whenever
      the scenario changed, so every press of the pad threw the animation
      back to t=0 — which is most of why flying it felt like it was not
@@ -517,8 +582,16 @@ export default function FlightPanel({ design, frame }) {
      what is and is not a state the integrator produced. */
   useEffect(() => {
     if (!playing || trace.length < 2) return;
-    let raf, last = performance.now(), acc = 0;
+    let raf, last = performance.now(), acc = 0, shown = true;
+    /* OFF THE SCREEN THE FLIGHT HOLDS STILL. Scrolled away, or with the
+       drone studio hidden behind another engine (it stays mounted), the
+       playback does not advance and nothing is re-rendered; it carries on
+       from the same instant when it is back in view. */
+    const io = typeof window.IntersectionObserver === "function" && rootRef.current
+      ? new window.IntersectionObserver((es) => { shown = es.some((e) => e.isIntersecting); }) : null;
+    io?.observe(rootRef.current);
     const step = (t) => {
+      if (!shown) { last = t; raf = requestAnimationFrame(step); return; }
       const dt = (t - last) / 1000; last = t;
       acc += dt * speed;
       const sampleDt = trace[1].t - trace[0].t;
@@ -561,7 +634,7 @@ export default function FlightPanel({ design, frame }) {
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+    return () => { cancelAnimationFrame(raf); io?.disconnect(); };
   }, [playing, speed, trace.length]);
 
   /* ── EVERY HOOK IS ABOVE EVERY RETURN, and must stay that way ───────
@@ -833,7 +906,6 @@ export default function FlightPanel({ design, frame }) {
     trail.push(project([pose.x, pose.y, -pose.altitudeM]));
   const shadow = project([pose.x, pose.y, 0]);
 
-  const axis = { stroke: SC.muted, fontSize: 11, fontFamily: MONO };
   const onDown = (e) => { drag.current = { x: e.clientX, y: e.clientY, ...view }; };
   const onMove = (e) => {
     if (!drag.current) return;
@@ -845,7 +917,7 @@ export default function FlightPanel({ design, frame }) {
   const run = sim.run;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: S.md }}>
+    <div ref={rootRef} style={{ display: "flex", flexDirection: "column", gap: S.md }}>
       <Card title="Flight — every frame is an integrated state, not a keyframe">
         <div style={{ display: "flex", gap: S.sm, flexWrap: "wrap", alignItems: "center", marginBottom: S.sm }}>
           <label style={{ fontSize: T.label, color: SC.muted }}>start from{" "}
@@ -1534,24 +1606,10 @@ export default function FlightPanel({ design, frame }) {
       </Card>
 
       <Card title="Traces — the same states, plotted">
-        <ResponsiveContainer width="100%" height={260}>
-          <LineChart data={trace} margin={{ top: 8, right: 16, bottom: 22, left: 6 }}>
-            <CartesianGrid stroke={SC.border} strokeDasharray="2 3" />
-            <XAxis dataKey="t" {...axis} type="number" domain={["dataMin", "dataMax"]}
-              label={{ value: "s", position: "insideBottom", offset: -12, fill: SC.muted, fontSize: 11 }} />
-            <YAxis yAxisId="a" {...axis} width={46}
-              label={{ value: "deg", angle: -90, position: "insideLeft", fill: SC.muted, fontSize: 11 }} />
-            <YAxis yAxisId="h" orientation="right" {...axis} width={46}
-              label={{ value: "m", angle: 90, position: "insideRight", fill: SC.muted, fontSize: 11 }} />
-            <Tooltip formatter={(x, n) => [num(+x, 2), n]} labelFormatter={(t) => `t = ${num(+t, 2)} s`} />
-            <Legend verticalAlign="top" height={22} wrapperStyle={{ fontSize: 11 }} />
-            <Line yAxisId="a" type="monotone" dataKey="rollDeg" stroke="#4ea1ff" dot={false} strokeWidth={2} isAnimationActive={false} name="roll" />
-            <Line yAxisId="a" type="monotone" dataKey="pitchDeg" stroke="#f2a33c" dot={false} strokeWidth={2} isAnimationActive={false} name="pitch" />
-            <Line yAxisId="a" type="monotone" dataKey="yawDeg" stroke="#9b8cff" dot={false} strokeWidth={2} isAnimationActive={false} name="yaw" />
-            <Line yAxisId="h" type="monotone" dataKey="altitudeM" stroke="#54c7a8" dot={false} strokeWidth={2} isAnimationActive={false} name="altitude" />
-            <ReferenceLine yAxisId="a" x={now.t} stroke={SC.caution} strokeWidth={1.5} />
-          </LineChart>
-        </ResponsiveContainer>
+        <div style={{ position: "relative" }}>
+          <FlightTraces trace={trace} />
+          <TraceCursor t={now.t} t0={trace[0].t} t1={trace[trace.length - 1].t} />
+        </div>
         <div style={{ fontSize: T.label, color: SC.muted, lineHeight: 1.6 }}>
           The vertical line is the frame on screen above. Nothing is drawn between samples: the
           trace is the integrator's own output at 20 ms.

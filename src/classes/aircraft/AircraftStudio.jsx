@@ -25,9 +25,12 @@ import { AIRCRAFT_TYPES, TYPE_IDS, typeOf, designAircraft, METHOD_ACCURACY } fro
 import { uncertaintyOf } from "./uncertainty.js";
 import { REFERENCE_AIRCRAFT } from "./reference-aircraft.js";
 import * as Tabs from "./tabs.jsx";
+import { AircraftBuildTab } from "./build-fly/BuildTab.jsx";
+import { AircraftFlyTab } from "./build-fly/FlyTab.jsx";
 
 export const STUDIO_GROUPS = Object.freeze([
-  { name: "Design", tabs: [["overview", "Overview", Tabs.OverviewTab], ["compare", "Compare types", Tabs.CompareTypesTab]] },
+  { name: "Design", tabs: [["overview", "Overview", Tabs.OverviewTab], ["compare", "Compare types", Tabs.CompareTypesTab],
+                           ["build", "Build · guided", AircraftBuildTab], ["fly", "Fly · mission", AircraftFlyTab]] },
   { name: "Physics", tabs: [["constraints", "Matching chart", Tabs.ConstraintTab], ["mission", "Mission", Tabs.MissionTab],
                             ["weights", "Weights", Tabs.WeightsTab], ["structure", "Structure", Tabs.StructureTab],
                             ["fuselage", "Fuselage", Tabs.FuselageTab], ["balance", "Balance", Tabs.BalanceTab], ["gear", "Landing gear", Tabs.LandingGearTab], ["controls", "Controls", Tabs.ControlsTab],
@@ -85,7 +88,7 @@ export default function AircraftStudio({ initialType = "transport", requestedTyp
   const tabParams = useMemo(() => (job === "analyse" ? { ...params, ...analysis } : params), [job, params, analysis]);
   const ctx = { type, mode: job, params: tabParams, analysis,
                 result: result && result.type === type ? result : null, reference: REFERENCE_AIRCRAFT,
-                setType, setParamsFor,
+                setType, setParamsFor, setTab,
                 onOpen: (d) => { setType(d.type); setJob(d.mode === "analyse" ? "analyse" : "size");
                                  setParamsFor(d.type, d.params ?? {}); if (d.analysis) setAnalysisBy((m) => ({ ...m, [d.type]: { ...m[d.type], ...d.analysis } })); } };
   const needsResult = !["compare", "validation", "methods"].includes(tab);

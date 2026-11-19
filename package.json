@@ -28,6 +28,7 @@
     "test:flight3d": "node validation/mission-flight-3d.mjs",
     "test:test-flight": "node validation/test-flight.mjs",
     "test:evtol-build": "node validation/evtol-build-lab.mjs",
+    "test:aircraft-build-fly": "node validation/aircraft-build-fly.mjs",
     "citations": "node validation/citations.mjs",
     "loadfactor": "node validation/load-factor-source.mjs",
     "economics": "node validation/economics.mjs",

@@ -29,6 +29,7 @@
     "test:test-flight": "node validation/test-flight.mjs",
     "test:evtol-build": "node validation/evtol-build-lab.mjs",
     "test:aircraft-build-fly": "node validation/aircraft-build-fly.mjs",
+    "test:aircraft-free-flight": "node validation/aircraft-free-flight.mjs",
     "citations": "node validation/citations.mjs",
     "loadfactor": "node validation/load-factor-source.mjs",
     "economics": "node validation/economics.mjs",

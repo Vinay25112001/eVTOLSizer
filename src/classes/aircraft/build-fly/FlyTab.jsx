@@ -232,12 +232,14 @@ export function AircraftFlyTab({ result, setTab }) {
             nose-up or nose-down angle you see, come from the drawing, not from flight mechanics.</li>
         <li>The aeroplane, the distances and the heights in the 3D view are at true scale. The runways, the ground, the pylons,
             the gear struts and the propeller blades are drawn.</li>
-        <li>Flying it yourself (throttle, pitch, bank) needs flight mechanics this sizing does not have, such as a clean
-            maximum lift coefficient, so it is not offered here.</li>
+        <li>This replay flies itself. To fly the aeroplane yourself (throttle, pitch, bank), open Fly · yourself: it starts at
+            the sized cruise point and adds a point-mass flight model, a clean maximum lift coefficient and a roll rate, each
+            with its source on that tab.</li>
       </ul>
 
       <div style={{ display: "flex", justifyContent: "flex-start", marginTop: S.md }}>
         <button type="button" style={chip(false)} onClick={() => setTab?.("build")}>← Build it</button>
+        <button type="button" style={{ ...chip(false), marginLeft: S.sm }} onClick={() => setTab?.("free")}>Fly it yourself →</button>
       </div>
     </section>
   );

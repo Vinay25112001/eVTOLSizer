@@ -463,3 +463,126 @@ export function mountFly({ canvas, plan, path, trackM, rollM, dark = true }) {
     dispose() { loop.stop(); controls.dispose(); disposeTree(scene); renderer.dispose(); renderer.forceContextLoss?.(); },
   };
 }
+
+/* ── Fly yourself: the aeroplane free in the sky ────────────────────── */
+
+/* The aeroplane stays at the origin and the world moves under it, so the
+   precision holds however far it flies (see Fly's PRECISION note). The
+   tab hands each frame's state: x north and z east in metres from the
+   start, h the height, psi the heading from x towards z, gam the flight
+   path angle, phi the bank. The attitude drawn is the flight path: the
+   model has no angle of attack. */
+const TRAIL_N = 4000, TRAIL_STEP_M = 40;
+export function mountFree({ canvas, plan, dark = true }) {
+  let pal = dark ? PAL.dark : PAL.light;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, logarithmicDepthBuffer: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  lights(scene);
+  const camera = new THREE.PerspectiveCamera(50, 16 / 9, 0.3, 600000);
+  const controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.enabled = false;
+
+  let L = plan.size.length, B = plan.size.span;
+  let world = null, ground = null, model = null, trail = null, drop = null, mode = "chase", spin = 0;
+  let last = { x: 0, z: 0, h: 1000, psi: 0, gam: 0, phi: 0 };
+  const pts = new Array(TRAIL_N * 3).fill(0);      // doubles: the trail is kept in absolute metres
+  let count = 0, head = 0;
+
+  function dress() {
+    if (world) { scene.remove(world); disposeTree(world); }
+    world = new THREE.Group();
+    scene.background = new THREE.Color(pal.sky);
+    scene.fog = new THREE.Fog(pal.sky, 20000, GROUND_M * 0.47);
+    const tex = groundTexture(pal); tex.repeat.set(GROUND_M / TILE_M, GROUND_M / TILE_M);
+    ground = new THREE.Mesh(new THREE.PlaneGeometry(GROUND_M, GROUND_M), new THREE.MeshLambertMaterial({ map: tex }));
+    ground.rotation.x = -Math.PI / 2; world.add(ground);
+    trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: pal.path, transparent: true, opacity: 0.7 }));
+    /* One slot more than the ring holds: the last point is the aeroplane. */
+    trail.geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array((TRAIL_N + 1) * 3), 3));
+    trail.frustumCulled = false; world.add(trail);
+    drop = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 1, 0)]),
+      new THREE.LineDashedMaterial({ color: pal.trim, dashSize: 60, gapSize: 60, transparent: true, opacity: 0.5 }));
+    drop.frustumCulled = false; world.add(drop);
+    scene.add(world);
+    if (model) { scene.remove(model.holder); disposeTree(model.holder); }
+    model = buildAircraft(plan, pal);
+    model.root.traverse((o) => { if (o.isMesh && o.material?.emissive) o.material.emissiveIntensity = 0; });
+    if (model.groups.gear) model.groups.gear.visible = false;      // in the air: gear up
+    const holder = new THREE.Group(); holder.add(model.root);
+    model.root.position.set(L * 0.45, 0, 0);
+    holder.rotation.order = "YZX";
+    model.holder = holder;
+    scene.add(holder);
+  }
+  dress();
+
+  function remember(s) {
+    const prev = count ? (head - 1 + TRAIL_N) % TRAIL_N : -1;
+    if (prev >= 0 && Math.hypot(s.x - pts[prev * 3], s.h - pts[prev * 3 + 1], s.z - pts[prev * 3 + 2]) < TRAIL_STEP_M) return;
+    pts[head * 3] = s.x; pts[head * 3 + 1] = s.h; pts[head * 3 + 2] = s.z;
+    head = (head + 1) % TRAIL_N; count = Math.min(TRAIL_N, count + 1);
+  }
+
+  function place(s) {
+    const h = model.holder;
+    h.position.set(0, s.h, 0);
+    h.rotation.set(s.phi, -s.psi, s.gam);
+    for (const p of model.props) p.rotation.x = spin;
+    ground.position.set(Math.round(s.x / TILE_M) * TILE_M + TILE_M / 2 - s.x, 0, Math.round(s.z / TILE_M) * TILE_M + TILE_M / 2 - s.z);
+    /* The trail, oldest first, relative to the aeroplane. */
+    const arr = trail.geometry.attributes.position.array;
+    const start = count < TRAIL_N ? 0 : head;
+    for (let i = 0; i < count; i++) {
+      const k = (start + i) % TRAIL_N;
+      arr[i * 3] = pts[k * 3] - s.x; arr[i * 3 + 1] = pts[k * 3 + 1]; arr[i * 3 + 2] = pts[k * 3 + 2] - s.z;
+    }
+    arr[count * 3] = 0; arr[count * 3 + 1] = s.h; arr[count * 3 + 2] = 0;
+    trail.geometry.setDrawRange(0, count + 1);
+    trail.geometry.attributes.position.needsUpdate = true;
+    /* The dashes are laid along the real height, so they are rebuilt with it. */
+    drop.geometry.attributes.position.setY(1, Math.max(1, s.h));
+    drop.geometry.attributes.position.needsUpdate = true;
+    drop.computeLineDistances();
+    const at = h.position.clone();
+    const fwd = new THREE.Vector3(Math.cos(s.psi), 0, Math.sin(s.psi));
+    if (mode === "chase") {
+      const back = L * 1.7 + B * 0.55;
+      camera.position.copy(at).addScaledVector(fwd, -back).add(new THREE.Vector3(0, back * 0.32, 0));
+      camera.lookAt(at.clone().addScaledVector(fwd, L * 0.6));
+    } else if (mode === "side") {
+      const left = new THREE.Vector3(fwd.z, 0, -fwd.x);
+      camera.position.copy(at).addScaledVector(left, Math.max(B, L) * 1.6).add(new THREE.Vector3(0, B * 0.12, 0));
+      camera.lookAt(at);
+    } else {
+      const off = camera.position.clone().sub(controls.target);
+      controls.target.copy(at);
+      camera.position.copy(at).add(off.lengthSq() > 1 ? off : new THREE.Vector3(L * 1.2, B * 0.6, B * 1.2));
+      controls.update();
+    }
+    last = s;
+  }
+
+  const loop = renderOnDemand(renderer, scene, camera, controls);
+  function resize() {
+    const w = canvas.clientWidth || 800, h = canvas.clientHeight || 450;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); loop.wake();
+  }
+  resize();
+  place(last);
+  return {
+    update(s, spinRad = spin) { spin = spinRad; remember(s); place(s); loop.wake(); },
+    clearTrail() { count = 0; head = 0; place(last); loop.wake(); },
+    setCamera(m) {
+      mode = CAMERAS.includes(m) ? m : "chase";
+      controls.enabled = mode === "orbit";
+      if (mode === "orbit") camera.position.copy(model.holder.position).add(new THREE.Vector3(L * 1.2, B * 0.6, B * 1.2));
+      place(last); loop.wake();
+    },
+    setPlan(next) { plan = next; L = plan.size.length; B = plan.size.span; dress(); place(last); loop.wake(); },
+    setDark(d) { pal = d ? PAL.dark : PAL.light; dress(); place(last); loop.wake(); },
+    resize,
+    redraw: loop.wake,
+    dispose() { loop.stop(); controls.dispose(); disposeTree(scene); renderer.dispose(); renderer.forceContextLoss?.(); },
+  };
+}

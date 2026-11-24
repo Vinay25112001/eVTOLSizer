@@ -8,11 +8,11 @@ import { fmt, Q } from "../../ui-kit.jsx";
 const CONVERTS = new Set(["m", "m²", "kg", "kt", "ft", "nm", "kN", "kW"]);
 
 export const PROV_TEXT = Object.freeze({
-  sized: "sized", sourced: "sourced", derived: "derived", partly: "partly sized", drawn: "drawn",
+  sized: "sized", sourced: "sourced", derived: "derived", partly: "partly sized", assumed: "assumed", drawn: "drawn",
 });
 
 export function ProvChip({ prov, title }) {
-  const tone = prov === "drawn" ? SC.caution : prov === "sourced" || prov === "derived" || prov === "partly" ? SC.advisory : SC.nominal;
+  const tone = prov === "drawn" || prov === "assumed" ? SC.caution : prov === "sourced" || prov === "derived" || prov === "partly" ? SC.advisory : SC.nominal;
   return (
     <span title={title ?? undefined} style={{ display: "inline-block", padding: "1px 7px", borderRadius: 999, fontSize: T.micro,
       fontFamily: SANS, letterSpacing: "0.04em", color: tone, border: `1px solid ${tone}`, whiteSpace: "nowrap" }}>

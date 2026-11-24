@@ -27,10 +27,12 @@ import { REFERENCE_AIRCRAFT } from "./reference-aircraft.js";
 import * as Tabs from "./tabs.jsx";
 import { AircraftBuildTab } from "./build-fly/BuildTab.jsx";
 import { AircraftFlyTab } from "./build-fly/FlyTab.jsx";
+import { AircraftFreeFlyTab } from "./build-fly/FreeFlyTab.jsx";
 
 export const STUDIO_GROUPS = Object.freeze([
   { name: "Design", tabs: [["overview", "Overview", Tabs.OverviewTab], ["compare", "Compare types", Tabs.CompareTypesTab],
-                           ["build", "Build · guided", AircraftBuildTab], ["fly", "Fly · mission", AircraftFlyTab]] },
+                           ["build", "Build · guided", AircraftBuildTab], ["fly", "Fly · mission", AircraftFlyTab],
+                           ["free", "Fly · yourself", AircraftFreeFlyTab]] },
   { name: "Physics", tabs: [["constraints", "Matching chart", Tabs.ConstraintTab], ["mission", "Mission", Tabs.MissionTab],
                             ["weights", "Weights", Tabs.WeightsTab], ["structure", "Structure", Tabs.StructureTab],
                             ["fuselage", "Fuselage", Tabs.FuselageTab], ["balance", "Balance", Tabs.BalanceTab], ["gear", "Landing gear", Tabs.LandingGearTab], ["controls", "Controls", Tabs.ControlsTab],

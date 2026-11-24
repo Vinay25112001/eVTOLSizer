@@ -1,6 +1,6 @@
 # Validation Report — eVTOL Conceptual Sizing Tool
 
-**Generated 2026-11-19 20:25 UTC from commit `867de2e`.**
+**Generated 2026-11-24 19:05 UTC from commit `39f81cb`.**
 
 This document is produced by `validation/report.mjs`, which runs every
 harness and captures what each one printed. It is not written by hand. If
@@ -69,7 +69,7 @@ any further work on the code.**
 
 ## 3. Verification
 
-76 harnesses, all gated in `npm test` and run in CI on every push.
+78 harnesses, all gated in `npm test` and run in CI on every push.
 
 | harness | what it proves | result |
 |---|---|---|
@@ -125,6 +125,8 @@ any further work on the code.**
 | `transport-aero.mjs` | The FLOPS drag build-up reproduces Aviary's aerodynamics tests and drag polars printed by FLOPS for three transports, by Aviary's own measure. | pass |
 | `bizjet.mjs` | Business jet: the jet method with business-jet inputs; Citation Latitude, Citation Longitude and Pilatus PC-24 against published operating weights and ranges. | pass |
 | `aircraft-engine.mjs` | The aircraft engine: one result for every fixed-wing type equal to the class's own numbers, and matching charts, payload-range, polars, trades, type comparison and reference aircraft consistent with the sizing. | pass |
+| `aircraft-build-fly.mjs` | The aircraft Build and Fly tabs claim no more than the sizing computed: every build fact and every replayed mission phase is marked sized, derived or drawn, a drawn phase may not be given a time and a sized one keeps the sizing's, an analysed design with no fuel breakdown is refused, a replay of the design mission says so with the fuel carried and the range it reaches, and the 3D scene loads only when a tab needs it. | pass |
+| `aircraft-free-flight.mjs` | Flying an aircraft yourself uses the class's own drag, thrust and fuel models and nothing invented: it starts trimmed at the sized cruise point, steady turns hold the textbook load factor and turn rate, the trainer stalls at the Cessna 172S handbook's speeds, cruise fuel matches the class's own, and deliberately broken copies of the model are each caught. | pass |
 | `turboprop.mjs` | Turboprop: Scholz & Nita's ATR 72 design point, Hamilton Standard propeller weights, and three regional turboprops against published empty weights. | pass |
 | `formula-register.mjs` | The Phase-0 formula inventory still describes the code it was extracted from. AUDIT/FORMULA-REGISTER.md records 2,429 engineering formulas with the file, line and expression each was taken from, and this holds every one of them to the source: a formula that moved, a file that vanished or a line past the end of its file fails here. It does NOT check completeness -- a formula newly added to src/ is not noticed, because re-running an extraction heuristic inside a gate would fail on refactors rather than on defects. Three findings in this repository (N-07, N-10, N-11) were records that drifted from what they recorded, which is why a 2,429-row record does not ship unprotected. | pass |
 | `phase2-ledger.mjs` | The per-formula Phase-2 verdict record still agrees with the register it was derived from. AUDIT/PHASE-2-LEDGER.md carries one row per retained engineering relation and one verdict per relation for each of the twenty questions P02-087 to P02-106, and this gate re-derives from AUDIT/FORMULA-REGISTER.md rather than regenerating the artefact it checks. It pins the register's two-table shape and its controlled vocabularies as COUNTS rather than allowlists, the exact population coverage (no orphans, no omissions, every site matching the register's file and line), the four-token verdict vocabulary, and the three questions that are register-bound -- units, duplication and coefficient sourcing -- so a verdict cannot be talked into disagreeing with the record it rests on. Two asymmetries are deliberate and both are enforced: the zero/negative/NaN question carries NO PASS, because absence of a guard is evidence while presence of one proves nothing a mechanical scan can read, and every verdict that is not UNVERIFIED must state its basis, which makes P02-112's ban on 'probably correct' mechanical. It then holds the document to its own arithmetic: the summary table, the determination total, the untouched-question count stated in prose, the complement of that count in the section 2 heading, and the per-row untouched tags are ALL recomputed from the body, and the row width is checked on the RAW row. That last check exists because the obvious one cannot fail -- the parser takes verdicts by index and folds surplus cells back into the notes, so eleven rows carrying a mathematical bar in a note stayed widened through every run while the gate reported twenty verdicts on each. A high UNVERIFIED count is deliberately NOT a failure condition, because making it one would create pressure to convert UNVERIFIED into a guess. The current counts are in Appendix A, from this run. | pass |
@@ -468,11 +470,11 @@ Required by [M&S 49].
 
 Everything below is captured from the run that produced this document.
 
-<details><summary><code>scope-check.mjs</code> — exit 0, 16660 ms</summary>
+<details><summary><code>scope-check.mjs</code> — exit 0, 13330 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
-SCOPE CHECK — 279 file(s) parsed
+SCOPE CHECK — 281 file(s) parsed
 ══════════════════════════════════════════════════════════════════════════
 PASS — every referenced identifier is imported, declared or a runtime global,
        and no component calls a hook below an early return.
@@ -480,7 +482,7 @@ PASS — every referenced identifier is imported, declared or a runtime global,
 
 </details>
 
-<details><summary><code>tab-registry.mjs</code> — exit 0, 399 ms</summary>
+<details><summary><code>tab-registry.mjs</code> — exit 0, 1124 ms</summary>
 
 ```
 TAB REGISTRY GATE
@@ -498,7 +500,7 @@ TAB REGISTRY GATE PASSED
 
 </details>
 
-<details><summary><code>unit-system.mjs</code> — exit 0, 1350 ms</summary>
+<details><summary><code>unit-system.mjs</code> — exit 0, 2563 ms</summary>
 
 ```
 ==============================================================================
@@ -527,7 +529,7 @@ UNIT SYSTEM GATE PASSED (6 checks, 28 conversion constants verified)
 
 </details>
 
-<details><summary><code>units.mjs</code> — exit 0, 701 ms</summary>
+<details><summary><code>units.mjs</code> — exit 0, 885 ms</summary>
 
 ```
 UNITS GATE
@@ -601,7 +603,7 @@ UNITS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>constants.mjs</code> — exit 0, 1208 ms</summary>
+<details><summary><code>constants.mjs</code> — exit 0, 2480 ms</summary>
 
 ```
 PHYSICAL CONSTANTS GATE
@@ -643,7 +645,7 @@ PHYSICAL CONSTANTS GATE
 
 -- every source file in src/ --
   PASS  the scan actually read the tree
-          412 source files — a passing result from an empty walk is not a result
+          415 source files — a passing result from an empty walk is not a result
   PASS  no source file writes a physical constant with a value of its own
           7 named exceptions, each with a reason: src/classes/trainer/weights.js 32.2; src/lib/units.js 9.807; src/engine/constants.js 9.81; src/engine/constants.js 287.052874; src/engine/constants.js 287.053; src/engine/constants.js 287.058; src/data/tyres.js 32.2
 
@@ -669,7 +671,7 @@ CONSTANTS GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>identities.mjs</code> — exit 0, 15932 ms</summary>
+<details><summary><code>identities.mjs</code> — exit 0, 20609 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -727,7 +729,7 @@ PASS — all 43 relations hold to 0.2%.
 
 </details>
 
-<details><summary><code>golden-master.mjs</code> — exit 0, 17526 ms</summary>
+<details><summary><code>golden-master.mjs</code> — exit 0, 18094 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -739,7 +741,7 @@ PASS — no output moved by more than 1e-6 relative.
 
 </details>
 
-<details><summary><code>components.mjs</code> — exit 0, 362 ms</summary>
+<details><summary><code>components.mjs</code> — exit 0, 407 ms</summary>
 
 ```
 ==============================================================================
@@ -954,7 +956,7 @@ COMPONENT GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>database-report.mjs</code> — exit 0, 268 ms</summary>
+<details><summary><code>database-report.mjs</code> — exit 0, 317 ms</summary>
 
 ```
 ======================================================================================
@@ -1060,7 +1062,7 @@ NASA CONCEPT VEHICLES — the only full weight statements in the field
 
 </details>
 
-<details><summary><code>sampled-uncertainty.mjs</code> — exit 0, 112349 ms</summary>
+<details><summary><code>sampled-uncertainty.mjs</code> — exit 0, 202508 ms</summary>
 
 ```
 SAMPLED UNCERTAINTY
@@ -1109,7 +1111,7 @@ SAMPLED UNCERTAINTY PASSED
 
 </details>
 
-<details><summary><code>analysis-layers.mjs</code> — exit 0, 32417 ms</summary>
+<details><summary><code>analysis-layers.mjs</code> — exit 0, 41305 ms</summary>
 
 ```
 ANALYSIS-LAYER GATE
@@ -1147,7 +1149,7 @@ ANALYSIS-LAYER GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-models.mjs</code> — exit 0, 7343 ms</summary>
+<details><summary><code>vsp-models.mjs</code> — exit 0, 14381 ms</summary>
 
 ```
 NASA OpenVSP MODEL REPLICATION GATE
@@ -1187,7 +1189,7 @@ VSP GATE PASSED
 
 </details>
 
-<details><summary><code>geometry-export.mjs</code> — exit 0, 181782 ms</summary>
+<details><summary><code>geometry-export.mjs</code> — exit 0, 188822 ms</summary>
 
 ```
 GEOMETRY & EXPORT GATE
@@ -1244,7 +1246,7 @@ GEOMETRY & EXPORT GATE PASSED
 
 </details>
 
-<details><summary><code>fuselage-outline.mjs</code> — exit 0, 1328 ms</summary>
+<details><summary><code>fuselage-outline.mjs</code> — exit 0, 1298 ms</summary>
 
 ```
 FUSELAGE OUTLINE GATE
@@ -1445,7 +1447,7 @@ FUSELAGE OUTLINE GATE PASSED (104 checks)
 
 </details>
 
-<details><summary><code>control-surface-stations.mjs</code> — exit 0, 746 ms</summary>
+<details><summary><code>control-surface-stations.mjs</code> — exit 0, 845 ms</summary>
 
 ```
 ==============================================================================
@@ -1582,7 +1584,7 @@ CONTROL-SURFACE STATIONS GATE PASSED (59 checks)
 
 </details>
 
-<details><summary><code>general-arrangement.mjs</code> — exit 0, 6485 ms</summary>
+<details><summary><code>general-arrangement.mjs</code> — exit 0, 3650 ms</summary>
 
 ```
 GENERAL ARRANGEMENT GATE — centre of gravity and gear stations
@@ -1706,7 +1708,7 @@ GENERAL ARRANGEMENT GATE PASSED (77 checks)
 
 </details>
 
-<details><summary><code>nasa-configs.mjs</code> — exit 0, 895 ms</summary>
+<details><summary><code>nasa-configs.mjs</code> — exit 0, 1338 ms</summary>
 
 ```
 ======================================================================================
@@ -1800,7 +1802,7 @@ PASS: 39 published comparisons, mean 10.2%, worst -26.9%
 
 </details>
 
-<details><summary><code>validate.mjs</code> — exit 0, 3366 ms</summary>
+<details><summary><code>validate.mjs</code> — exit 0, 4134 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════════
@@ -1913,7 +1915,7 @@ PASS: within the 40% gate
 
 </details>
 
-<details><summary><code>tab-visibility.mjs</code> — exit 0, 4080 ms</summary>
+<details><summary><code>tab-visibility.mjs</code> — exit 0, 4364 ms</summary>
 
 ```
 TAB VISIBILITY GATE
@@ -1939,7 +1941,7 @@ TAB VISIBILITY GATE PASSED
 
 </details>
 
-<details><summary><code>vsp-run.mjs</code> — exit 0, 212939 ms</summary>
+<details><summary><code>vsp-run.mjs</code> — exit 0, 259272 ms</summary>
 
 ```
 OPENVSP SCRIPT-RUN GATE
@@ -1959,7 +1961,7 @@ OPENVSP SCRIPT-RUN GATE PASSED — every configuration builds in OpenVSP
 
 </details>
 
-<details><summary><code>vspaero.mjs</code> — exit 0, 23298 ms</summary>
+<details><summary><code>vspaero.mjs</code> — exit 0, 65996 ms</summary>
 
 ```
 VSPAERO GATE — vortex-lattice polar on the exported model
@@ -1997,7 +1999,7 @@ VSPAERO GATE PASSED
 
 </details>
 
-<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 84 ms</summary>
+<details><summary><code>rotorcraft-tail.mjs</code> — exit 0, 474 ms</summary>
 
 ```
 ROTORCRAFT TAIL GATE
@@ -2017,7 +2019,7 @@ ROTORCRAFT TAIL GATE PASSED
 
 </details>
 
-<details><summary><code>drive-failure.mjs</code> — exit 0, 81 ms</summary>
+<details><summary><code>drive-failure.mjs</code> — exit 0, 408 ms</summary>
 
 ```
 DRIVE-SYSTEM FAILURE GATE
@@ -2045,7 +2047,7 @@ DRIVE-SYSTEM FAILURE GATE PASSED
 
 </details>
 
-<details><summary><code>autorotation.mjs</code> — exit 0, 3040 ms</summary>
+<details><summary><code>autorotation.mjs</code> — exit 0, 14738 ms</summary>
 
 ```
 AUTOROTATION GATE
@@ -2088,7 +2090,7 @@ AUTOROTATION GATE PASSED
 
 </details>
 
-<details><summary><code>whirl-flutter.mjs</code> — exit 0, 3645 ms</summary>
+<details><summary><code>whirl-flutter.mjs</code> — exit 0, 12518 ms</summary>
 
 ```
 WHIRL-FLUTTER GATE
@@ -2134,7 +2136,7 @@ WHIRL-FLUTTER GATE PASSED
 
 </details>
 
-<details><summary><code>load-cases.mjs</code> — exit 0, 3150 ms</summary>
+<details><summary><code>load-cases.mjs</code> — exit 0, 9389 ms</summary>
 
 ```
 STRUCTURAL LOAD CASE GATE
@@ -2171,7 +2173,7 @@ STRUCTURAL LOAD CASE GATE PASSED
 
 </details>
 
-<details><summary><code>reg-applicability.mjs</code> — exit 0, 4906 ms</summary>
+<details><summary><code>reg-applicability.mjs</code> — exit 0, 14986 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -2340,7 +2342,7 @@ REGULATORY APPLICABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>certification-climb.mjs</code> — exit 0, 83 ms</summary>
+<details><summary><code>certification-climb.mjs</code> — exit 0, 652 ms</summary>
 
 ```
 
@@ -2399,7 +2401,7 @@ PASS: 42 checks passed, 0 failed
 
 </details>
 
-<details><summary><code>round1-seed.mjs</code> — exit 0, 2533 ms</summary>
+<details><summary><code>round1-seed.mjs</code> — exit 0, 7063 ms</summary>
 
 ```
 
@@ -2462,7 +2464,7 @@ PASS: 40 checks passed, 0 failed
 
 </details>
 
-<details><summary><code>blade-twist.mjs</code> — exit 0, 4224 ms</summary>
+<details><summary><code>blade-twist.mjs</code> — exit 0, 11185 ms</summary>
 
 ```
 BLADE TWIST GATE
@@ -2504,7 +2506,7 @@ BLADE TWIST GATE PASSED
 
 </details>
 
-<details><summary><code>control-authority.mjs</code> — exit 0, 3220 ms</summary>
+<details><summary><code>control-authority.mjs</code> — exit 0, 14943 ms</summary>
 
 ```
 FAILURE-MODE CONTROLLABILITY GATE
@@ -2544,7 +2546,7 @@ FAILURE-MODE CONTROLLABILITY GATE PASSED
 
 </details>
 
-<details><summary><code>wing-modes-cr2144.mjs</code> — exit 0, 2348 ms</summary>
+<details><summary><code>wing-modes-cr2144.mjs</code> — exit 0, 9980 ms</summary>
 
 ```
 WING-BORNE MODES vs NASA CR-2144 GATE
@@ -2612,7 +2614,7 @@ WING-BORNE MODES vs CR-2144 GATE PASSED
 
 </details>
 
-<details><summary><code>hover-dynamics.mjs</code> — exit 0, 1745 ms</summary>
+<details><summary><code>hover-dynamics.mjs</code> — exit 0, 6884 ms</summary>
 
 ```
 HOVER DYNAMICS GATE
@@ -2660,7 +2662,7 @@ HOVER DYNAMICS GATE PASSED
 
 </details>
 
-<details><summary><code>render-freeze.mjs</code> — exit 0, 8123 ms</summary>
+<details><summary><code>render-freeze.mjs</code> — exit 0, 32082 ms</summary>
 
 ```
 RENDER FREEZE GATE
@@ -2698,7 +2700,7 @@ PASS: all 27 views render exactly as committed
 
 </details>
 
-<details><summary><code>design-file.mjs</code> — exit 0, 2638 ms</summary>
+<details><summary><code>design-file.mjs</code> — exit 0, 14531 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -2780,7 +2782,7 @@ DESIGN FILE: 54 passed, 0 failed
 
 </details>
 
-<details><summary><code>validation-domain.mjs</code> — exit 0, 1398 ms</summary>
+<details><summary><code>validation-domain.mjs</code> — exit 0, 8557 ms</summary>
 
 ```
 VALIDATION DOMAIN GATE
@@ -2804,7 +2806,7 @@ PASS  the app's domain file matches the harnesses
 
 </details>
 
-<details><summary><code>result-warnings.mjs</code> — exit 0, 2474 ms</summary>
+<details><summary><code>result-warnings.mjs</code> — exit 0, 10363 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════
@@ -2872,7 +2874,7 @@ RESULT WARNINGS: 41 passed, 0 failed
 
 </details>
 
-<details><summary><code>provenance-report.mjs</code> — exit 0, 6846 ms</summary>
+<details><summary><code>provenance-report.mjs</code> — exit 0, 7506 ms</summary>
 
 ```
 ══════════════════════════════════════════════════════════════════════════
@@ -2906,7 +2908,7 @@ PROVENANCE GATE PASSED - every output any layout emits is classified.
 
 </details>
 
-<details><summary><code>api.mjs</code> — exit 0, 20048 ms</summary>
+<details><summary><code>api.mjs</code> — exit 0, 18472 ms</summary>
 
 ```
 ENGINE API GATE
@@ -2916,11 +2918,11 @@ ENGINE API GATE
   PASS  size() returns warnings and the domain with the numbers
   PASS  sizeMany() sizes each case
   PASS  a design that does not close reports converged: false
-  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"867de2ef2f78","dirty":false,"builtAt":null,"mode":"node-api"}
+  PASS  records made through the API carry the package version  — {"version":"0.2.0-dev","commit":"39f81cb3a0c1","dirty":false,"builtAt":null,"mode":"node-api"}
   PASS  reopen() reproduces a record
   PASS  engineVersion() reports the package and format versions
   PASS  docs/API.md documents every export  — 19 exports
-  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit 867de2ef2f78; API 1; design format 1)
+  PASS  evtol-size --version names the package version  — evtol-size v0.2.0-dev (commit 39f81cb3a0c1; API 1; design format 1)
   PASS  a clean design exits 0
   PASS  a design that does not close exits 1
   PASS  unreadable input exits 2
@@ -2934,7 +2936,7 @@ ENGINE API GATE PASSED (17 checks)
 
 </details>
 
-<details><summary><code>turboelectric.mjs</code> — exit 0, 3198 ms</summary>
+<details><summary><code>turboelectric.mjs</code> — exit 0, 8008 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -2993,7 +2995,7 @@ TURBOELECTRIC GATE PASSED (24 checks)
 
 </details>
 
-<details><summary><code>cpacs-export.mjs</code> — exit 0, 1610 ms</summary>
+<details><summary><code>cpacs-export.mjs</code> — exit 0, 6282 ms</summary>
 
 ```
 CPACS AND TRACEABILITY EXPORT GATE
@@ -3029,7 +3031,7 @@ EXPORT GATE PASSED (25 checks)
 
 </details>
 
-<details><summary><code>release.mjs</code> — exit 0, 150 ms</summary>
+<details><summary><code>release.mjs</code> — exit 0, 569 ms</summary>
 
 ```
 RELEASE GATE
@@ -3055,7 +3057,7 @@ RELEASE GATE PASSED (0.2.0-dev, in preparation)
 
 </details>
 
-<details><summary><code>aircraft-classes.mjs</code> — exit 0, 592 ms</summary>
+<details><summary><code>aircraft-classes.mjs</code> — exit 0, 2746 ms</summary>
 
 ```
 AIRCRAFT-CLASS GATE
@@ -3094,7 +3096,7 @@ AIRCRAFT-CLASS GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>trainer.mjs</code> — exit 0, 134 ms</summary>
+<details><summary><code>trainer.mjs</code> — exit 0, 667 ms</summary>
 
 ```
 TRAINER GATE
@@ -3164,7 +3166,7 @@ TRAINER GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>trainer-domain.mjs</code> — exit 0, 556 ms</summary>
+<details><summary><code>trainer-domain.mjs</code> — exit 0, 2636 ms</summary>
 
 ```
 
@@ -3202,7 +3204,7 @@ TRAINER DOMAIN GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>gear-drag.mjs</code> — exit 0, 707 ms</summary>
+<details><summary><code>gear-drag.mjs</code> — exit 0, 3062 ms</summary>
 
 ```
 
@@ -3250,7 +3252,7 @@ GEAR DRAG GATE PASSED (29 checks)
 
 </details>
 
-<details><summary><code>aircraft-domain.mjs</code> — exit 0, 271 ms</summary>
+<details><summary><code>aircraft-domain.mjs</code> — exit 0, 1335 ms</summary>
 
 ```
 
@@ -3306,7 +3308,7 @@ AIRCRAFT DOMAIN GATE PASSED (35 checks)
 
 </details>
 
-<details><summary><code>transport.mjs</code> — exit 0, 1506 ms</summary>
+<details><summary><code>transport.mjs</code> — exit 0, 5221 ms</summary>
 
 ```
 TRANSPORT GATE
@@ -3390,7 +3392,7 @@ TRANSPORT GATE PASSED (60 checks)
 
 </details>
 
-<details><summary><code>transport-mission.mjs</code> — exit 0, 458 ms</summary>
+<details><summary><code>transport-mission.mjs</code> — exit 0, 1754 ms</summary>
 
 ```
 TRANSPORT MISSION AND LAYOUT GATE
@@ -3485,7 +3487,7 @@ TRANSPORT MISSION GATE PASSED (70 checks)
 
 </details>
 
-<details><summary><code>transport-aero.mjs</code> — exit 0, 2239 ms</summary>
+<details><summary><code>transport-aero.mjs</code> — exit 0, 11131 ms</summary>
 
 ```
 TRANSPORT DRAG BUILD-UP GATE
@@ -3542,7 +3544,7 @@ TRANSPORT DRAG GATE PASSED (34 checks)
 
 </details>
 
-<details><summary><code>bizjet.mjs</code> — exit 0, 405 ms</summary>
+<details><summary><code>bizjet.mjs</code> — exit 0, 2600 ms</summary>
 
 ```
 BUSINESS-JET GATE
@@ -3576,7 +3578,7 @@ BUSINESS-JET GATE PASSED (15 checks)
 
 </details>
 
-<details><summary><code>aircraft-engine.mjs</code> — exit 0, 1258 ms</summary>
+<details><summary><code>aircraft-engine.mjs</code> — exit 0, 6911 ms</summary>
 
 ```
 AIRCRAFT ENGINE GATE
@@ -3586,15 +3588,25 @@ AIRCRAFT ENGINE GATE
   PASS  Piston trainer: sized and analysed results are the class's own  — MTOW 1182 kg, OEW 699 kg, wing 16.5 m²
   PASS  Piston trainer: zero-fuel + fuel = take-off mass, and the weight groups add to the empty mass
   PASS  Piston trainer: mission segments add to the mission fuel  — 120.4 vs 120.4 kg
+  PASS  Piston trainer, sized: every mission segment is named in words, and the reserves are the class's own  — all named
   PASS  Turboprop airliner: sized and analysed results are the class's own  — MTOW 25397 kg, OEW 15659 kg, wing 68.1 m²
   PASS  Turboprop airliner: zero-fuel + fuel = take-off mass, and the weight groups add to the empty mass
   PASS  Turboprop airliner: mission segments add to the mission fuel  — 3277.7 vs 3277.7 kg
+  PASS  Turboprop airliner, analysed: the mission list flies the fuel carried over the range reported, or says it is the design mission  — design mission: needs 3025.2 kg over 715.0 nm; carries 1405.2 kg, reaches 163.7 nm
+  PASS  Turboprop airliner, sized: every mission segment is named in words, and the reserves are the class's own  — all named
+  PASS  Turboprop airliner, analysed: every mission segment is named in words, and the reserves are the class's own  — all named
   PASS  Business jet: sized and analysed results are the class's own  — MTOW 12548 kg, OEW 8718 kg, wing 41.8 m²
   PASS  Business jet: zero-fuel + fuel = take-off mass, and the weight groups add to the empty mass
   PASS  Business jet: mission segments add to the mission fuel  — 3466.8 vs 3466.8 kg
+  PASS  Business jet, analysed: the mission list flies the fuel carried over the range reported, or says it is the design mission  — flies what it carries: 4769.5 kg, 2967.6 nm
+  PASS  Business jet, sized: every mission segment is named in words, and the reserves are the class's own  — all named; reserves 485.3 vs the class's 485.3 kg
+  PASS  Business jet, analysed: every mission segment is named in words, and the reserves are the class's own  — all named; reserves 505.4 vs the class's 505.4 kg
   PASS  Jet airliner: sized and analysed results are the class's own  — MTOW 78800 kg, OEW 43583 kg, wing 130.7 m²
   PASS  Jet airliner: zero-fuel + fuel = take-off mass, and the weight groups add to the empty mass
   PASS  Jet airliner: mission segments add to the mission fuel  — 18671.8 vs 18671.8 kg
+  PASS  Jet airliner, analysed: the mission list flies the fuel carried over the range reported, or says it is the design mission  — flies what it carries: 19385.9 kg, 3102.6 nm
+  PASS  Jet airliner, sized: every mission segment is named in words, and the reserves are the class's own  — all named; reserves 2883.6 vs the class's 2883.6 kg
+  PASS  Jet airliner, analysed: every mission segment is named in words, and the reserves are the class's own  — all named; reserves 2860.3 vs the class's 2860.3 kg
   PASS  an unknown aircraft type is refused
 
 2. Matching chart
@@ -3782,12 +3794,220 @@ AIRCRAFT ENGINE GATE
   PASS  the Eq. (10) chord-referral contradiction is carried in the open, both values reported  — bare 1.280 against chord-referred 1.766; applying the referral takes the single-slotted CR-2214 case from +3.2 % to about +17 %, so the measurement contradicts it
   PASS  a leading-edge device replaces the section maximum lift rather than adding to it  — DATCOM: "Maximum lift increments of leading-edge and trailing-edge flaps cannot, in general, be added"
   PASS  the module declares that it is not wired into the sizing loop
-AIRCRAFT ENGINE GATE PASSED (166 checks)
+AIRCRAFT ENGINE GATE PASSED (176 checks)
 ```
 
 </details>
 
-<details><summary><code>turboprop.mjs</code> — exit 0, 136 ms</summary>
+<details><summary><code>aircraft-build-fly.mjs</code> — exit 0, 4418 ms</summary>
+
+```
+AIRCRAFT BUILD & FLY GATE
+========================================================================
+
+1. The plan is the general arrangement, read not recomputed
+  PASS  trainer/size: 6 steps, 37 facts (10 drawn), body 8.3 m, span 11.1 m
+  PASS  trainer/analyse: 6 steps, 37 facts (10 drawn), body 8.3 m, span 11.0 m
+  PASS  turboprop/size: 6 steps, 43 facts (9 drawn), body 27.2 m, span 28.6 m
+  PASS  turboprop/analyse: 6 steps, 43 facts (9 drawn), body 27.2 m, span 27.1 m
+  PASS  bizjet/size: 6 steps, 42 facts (9 drawn), body 17.7 m, span 20.1 m
+  PASS  bizjet/analyse: 6 steps, 42 facts (9 drawn), body 17.7 m, span 22.0 m
+  PASS  transport/size: 6 steps, 42 facts (9 drawn), body 38.0 m, span 35.1 m
+  PASS  transport/analyse: 6 steps, 42 facts (9 drawn), body 38.0 m, span 34.3 m
+
+2. The mission profile prints the sizing's numbers and no others
+  PASS  trainer/size: takeoff drawn, climb partly, cruise derived, descent drawn, landing drawn
+  PASS  trainer/analyse: refuses, and says why  — This result carries no mission (an analysed aircraft with no fuel breakdown), so there is nothing to fly.
+  PASS  turboprop/size: takeoff drawn, climb drawn, cruise sized, descent drawn, landing drawn
+  PASS  turboprop/analyse: takeoff drawn, climb drawn, cruise sized, descent drawn, landing drawn
+  PASS  bizjet/size: takeoff drawn, climb sized, cruise sized, descent sized, landing drawn
+  PASS  bizjet/analyse: takeoff drawn, climb sized, cruise sized, descent sized, landing drawn
+  PASS  transport/size: takeoff drawn, climb sized, cruise sized, descent sized, landing drawn
+  PASS  transport/analyse: takeoff drawn, climb sized, cruise sized, descent sized, landing drawn
+  PASS  only an analysed design with no fuel breakdown is refused  — 1 refused
+  PASS  a replay of a design mission says so, with the fuel carried and the range it reaches  — turboprop/analyse
+
+3. The tabs render, and say "not computed" where nothing was
+  PASS  trainer/size: Build renders its first step, drawn rows say "not computed"  — 8262 characters, 3 drawn row(s)
+  PASS  trainer/size: Fly renders, prints each sized time, and "not computed" in every row missing one  — 19691 characters
+  PASS  trainer/analyse: Build renders its first step, drawn rows say "not computed"  — 8262 characters, 3 drawn row(s)
+  PASS  trainer/analyse: Fly renders the refusal  — 591 characters
+  PASS  turboprop/size: Build renders its first step, drawn rows say "not computed"  — 8267 characters, 3 drawn row(s)
+  PASS  turboprop/size: Fly renders, prints each sized time, and "not computed" in every row missing one  — 20501 characters
+  PASS  turboprop/analyse: Build renders its first step, drawn rows say "not computed"  — 8267 characters, 3 drawn row(s)
+  PASS  turboprop/analyse: Fly renders, prints each sized time, and "not computed" in every row missing one  — 20880 characters
+  PASS  bizjet/size: Build renders its first step, drawn rows say "not computed"  — 8261 characters, 3 drawn row(s)
+  PASS  bizjet/size: Fly renders, prints each sized time, and "not computed" in every row missing one  — 19170 characters
+  PASS  bizjet/analyse: Build renders its first step, drawn rows say "not computed"  — 8261 characters, 3 drawn row(s)
+  PASS  bizjet/analyse: Fly renders, prints each sized time, and "not computed" in every row missing one  — 19422 characters
+  PASS  transport/size: Build renders its first step, drawn rows say "not computed"  — 8267 characters, 3 drawn row(s)
+  PASS  transport/size: Fly renders, prints each sized time, and "not computed" in every row missing one  — 18806 characters
+  PASS  transport/analyse: Build renders its first step, drawn rows say "not computed"  — 8267 characters, 3 drawn row(s)
+  PASS  transport/analyse: Fly renders, prints each sized time, and "not computed" in every row missing one  — 18808 characters
+
+4. three.js stays out of the studio's first load
+  PASS  no tab module imports three or the scene statically  — BuildTab, FlyTab, ui, plan, mission-profile
+  PASS  the scene is fetched by a dynamic import
+  PASS  the studio imports the tabs, not the scene
+
+5. Each check rejects a copy broken the way it guards against
+  PASS  the unbroken copies the mutants start from are clean  — 0 problem(s)
+  PASS  rejects a drawn leg given a time  — landing: drawn but carries a time or distance
+  PASS  rejects a sized climb 1% longer than the sizing's  — climb: prints 188.20011218525948 nm, the sizing has 186.33674473788068
+  PASS  rejects a sized cruise fuel off by 1 kg  — cruise: prints 13121.271689155583 kg, the sizing has 13120.271689155583
+  PASS  rejects a derived cruise time that is not distance ÷ speed  — cruise: derived time is not distance ÷ speed
+  PASS  rejects a partly-sized climb that prints a distance  — climb: path drawn but prints a distance
+  PASS  rejects a drawn climb that lengthens the flight  — track 522.0 nm is not the sized 518.0 nm plus the runway rolls
+  PASS  rejects a gap between two legs  — climb→cruise: a gap along the track
+  PASS  rejects a replay that ends in the air  — does not start and end on the ground at the ends of the track
+  PASS  rejects a plan whose span is not the GA's  — span 35.85022820222335 ≠ GA 35.14728255119936
+  PASS  rejects a drawn fact that carries a number  — fuselage/Nose length: drawn but carries 1.5
+  PASS  rejects a printed wing area that is not the GA's  — wing/Area: prints 132.03013602552187, GA has 130.72290695596226
+
+AIRCRAFT BUILD & FLY GATE PASSED (49 checks)
+```
+
+</details>
+
+<details><summary><code>aircraft-free-flight.mjs</code> — exit 0, 16676 ms</summary>
+
+```
+AIRCRAFT FREE-FLIGHT GATE
+========================================================================
+
+1. The start
+  PASS  trainer/size: starts at the sized cruise point, at the mass listed there, trimmed  — 8500 ft, M 0.193, 1171 kg (less 10.3 kg), throttle 100.0 %; full throttle gives 1.16 of 1.18 kN, as the sizing flags
+  PASS  trainer/analyse: starts at the sized cruise point, at the mass listed there, trimmed  — 8500 ft, M 0.193, 1157 kg (less 0.0 kg), throttle 87.8 %
+  PASS  turboprop/size: starts at the sized cruise point, at the mass listed there, trimmed  — 11397 ft, M 0.410, 25397 kg (less 0.0 kg), throttle 82.9 %
+  PASS  turboprop/analyse: starts at the sized cruise point, at the mass listed there, trimmed  — 12108 ft, M 0.410, 22800 kg (less 0.0 kg), throttle 87.5 %
+  PASS  bizjet/size: starts at the sized cruise point, at the mass listed there, trimmed  — 43000 ft, M 0.780, 12014 kg (less 533.6 kg), throttle 86.7 %
+  PASS  bizjet/analyse: starts at the sized cruise point, at the mass listed there, trimmed  — 36000 ft, M 0.780, 13162 kg (less 809.2 kg), throttle 97.3 %
+  PASS  transport/size: starts at the sized cruise point, at the mass listed there, trimmed  — 35000 ft, M 0.785, 76434 kg (less 2365.6 kg), throttle 85.9 %
+  PASS  transport/analyse: starts at the sized cruise point, at the mass listed there, trimmed  — 35000 ft, M 0.785, 76500 kg (less 2515.8 kg), throttle 88.6 %
+
+2. The drag
+  PASS  trainer/size: the drag is the class's own polar  — all 29 points of the class's curve; cruise L/D 9.752 vs 9.752
+  PASS  trainer/analyse: the drag is the class's own polar  — all 29 points of the class's curve; cruise L/D 9.803 vs 9.803
+  PASS  turboprop/size: the drag is the class's own polar  — all 29 points of the class's curve; cruise L/D 12.876 vs 12.876
+  PASS  turboprop/analyse: the drag is the class's own polar  — all 29 points of the class's curve; cruise L/D 12.493 vs 12.493
+  PASS  bizjet/size: the drag is the class's own polar  — the class's polar at each Mach and height; start of cruise L/D 17.705 vs 17.705, end of cruise L/D 14.893 vs 14.893
+  PASS  bizjet/analyse: the drag is the class's own polar  — the class's polar at each Mach and height; start of cruise L/D 17.979 vs 17.979, end of cruise L/D 14.022 vs 14.022
+  PASS  transport/size: the drag is the class's own polar  — the class's polar at each Mach and height; start of cruise L/D 18.837 vs 18.837, end of cruise L/D 17.512 vs 17.512
+  PASS  transport/analyse: the drag is the class's own polar  — the class's polar at each Mach and height; start of cruise L/D 18.695 vs 18.695, end of cruise L/D 17.480 vs 17.480
+
+3. Steady level turns
+  PASS  trainer/size: a steady level turn holds n = 1/cos φ and turns at g·tan φ/V  — 30° 5.139°/s, radius 0.38 nm; 45° 9.066°/s, radius 0.21 nm; 60° 16.801°/s, radius 0.10 nm
+  PASS  trainer/analyse: a steady level turn holds n = 1/cos φ and turns at g·tan φ/V  — 30° 5.085°/s, radius 0.39 nm; 45° 8.881°/s, radius 0.22 nm; 60° 16.369°/s, radius 0.11 nm
+  PASS  turboprop/size: a steady level turn holds n = 1/cos φ and turns at g·tan φ/V  — 30° 2.422°/s, radius 1.71 nm; 45° 4.195°/s, radius 0.99 nm
+  PASS  turboprop/analyse: a steady level turn holds n = 1/cos φ and turns at g·tan φ/V  — 30° 2.428°/s, radius 1.70 nm; 45° 4.217°/s, radius 0.98 nm
+  PASS  bizjet/size: a steady level turn holds n = 1/cos φ and turns at g·tan φ/V  — 30° 1.409°/s, radius 5.05 nm; 45° 2.449°/s, radius 2.89 nm
+  PASS  bizjet/analyse: a steady level turn holds n = 1/cos φ and turns at g·tan φ/V  — 30° 1.410°/s, radius 5.05 nm; 45° 2.449°/s, radius 2.89 nm
+  PASS  transport/size: a steady level turn holds n = 1/cos φ and turns at g·tan φ/V  — 30° 1.394°/s, radius 5.17 nm; 45° 2.428°/s, radius 2.93 nm
+  PASS  transport/analyse: a steady level turn holds n = 1/cos φ and turns at g·tan φ/V  — 30° 1.394°/s, radius 5.16 nm; 45° 2.431°/s, radius 2.92 nm
+
+4. The stall, against the POH
+  PASS  the trainer, at the POH's 2,550 lb and 174 ft², stalls in level turns at the Cessna 172S POH's speeds  — 0° 53.0 (POH 53), 30° 56.9 (POH 57), 45° 63.0 (POH 63), 60° 74.9 (POH 75) kt
+
+5. The limits
+  PASS  trainer/size: hard manoeuvres keep 0 ≤ n ≤ limit, CL ≤ CLmax and the bank and path limits; the warnings fire  — peak CL 100.0 % of CLmax, peak n 95.9 % of the limit; warned: g, stall
+  PASS  trainer/analyse: hard manoeuvres keep 0 ≤ n ≤ limit, CL ≤ CLmax and the bank and path limits; the warnings fire  — peak CL 100.0 % of CLmax, peak n 95.9 % of the limit; warned: g, stall
+  PASS  turboprop/size: hard manoeuvres keep 0 ≤ n ≤ limit, CL ≤ CLmax and the bank and path limits; the warnings fire  — peak CL 100.0 % of CLmax, peak n 100.0 % of the limit; warned: g, stall
+  PASS  turboprop/analyse: hard manoeuvres keep 0 ≤ n ≤ limit, CL ≤ CLmax and the bank and path limits; the warnings fire  — peak CL 100.0 % of CLmax, peak n 100.0 % of the limit; warned: g, stall
+  PASS  bizjet/size: hard manoeuvres keep 0 ≤ n ≤ limit, CL ≤ CLmax and the bank and path limits; the warnings fire  — peak CL 100.0 % of CLmax, peak n 100.0 % of the limit; warned: g, deck, stall
+  PASS  bizjet/analyse: hard manoeuvres keep 0 ≤ n ≤ limit, CL ≤ CLmax and the bank and path limits; the warnings fire  — peak CL 100.0 % of CLmax, peak n 100.0 % of the limit; warned: g, stall
+  PASS  transport/size: hard manoeuvres keep 0 ≤ n ≤ limit, CL ≤ CLmax and the bank and path limits; the warnings fire  — peak CL 100.0 % of CLmax, peak n 100.0 % of the limit; warned: g, stall
+  PASS  transport/analyse: hard manoeuvres keep 0 ≤ n ≤ limit, CL ≤ CLmax and the bank and path limits; the warnings fire  — peak CL 100.0 % of CLmax, peak n 99.4 % of the limit; warned: g, stall
+
+6. Energy
+  PASS  trainer/size: energy height changes by the integral of (T − D)V/W  — -155.41 m vs -155.41 m over 24.0 s
+  PASS  trainer/analyse: energy height changes by the integral of (T − D)V/W  — -149.95 m vs -149.95 m over 24.0 s
+  PASS  turboprop/size: energy height changes by the integral of (T − D)V/W  — -76.48 m vs -76.48 m over 24.0 s
+  PASS  turboprop/analyse: energy height changes by the integral of (T − D)V/W  — -82.46 m vs -82.46 m over 24.0 s
+  PASS  bizjet/size: energy height changes by the integral of (T − D)V/W  — -346.23 m vs -346.23 m over 24.0 s
+  PASS  bizjet/analyse: energy height changes by the integral of (T − D)V/W  — -341.04 m vs -341.04 m over 24.0 s
+  PASS  transport/size: energy height changes by the integral of (T − D)V/W  — -327.78 m vs -327.78 m over 24.0 s
+  PASS  transport/analyse: energy height changes by the integral of (T − D)V/W  — -329.62 m vs -329.62 m over 24.0 s
+
+7. Fuel
+  PASS  trainer/size: mass falls by the fuel burned, a dry tank stops the thrust, cruise fuel is the class's  — cruise over 518 nm burns 94.7 kg, the class 92.7 kg (+2.09 %)
+  PASS  trainer/analyse: mass falls by the fuel burned, a dry tank stops the thrust, cruise fuel is the class's  — no cruise segment in this list
+  PASS  turboprop/size: mass falls by the fuel burned, a dry tank stops the thrust, cruise fuel is the class's  — cruise over 715 nm burns 2475.8 kg, the class 2395.4 kg (+3.35 %)
+  PASS  turboprop/analyse: mass falls by the fuel burned, a dry tank stops the thrust, cruise fuel is the class's  — the list is the design mission's, not this aeroplane's flight: cruise not compared
+  PASS  bizjet/size: mass falls by the fuel burned, a dry tank stops the thrust, cruise fuel is the class's  — cruise over 2369 nm burns 2400.4 kg, the class 2391.5 kg (+0.37 %)
+  PASS  bizjet/analyse: mass falls by the fuel burned, a dry tank stops the thrust, cruise fuel is the class's  — cruise over 2508 nm burns 3442.9 kg, the class 3415.4 kg (+0.81 %)
+  PASS  transport/size: mass falls by the fuel burned, a dry tank stops the thrust, cruise fuel is the class's  — cruise over 2639 nm burns 13155.5 kg, the class 13120.3 kg (+0.27 %)
+  PASS  transport/analyse: mass falls by the fuel burned, a dry tank stops the thrust, cruise fuel is the class's  — cruise over 2757 nm burns 13752.0 kg, the class 13715.2 kg (+0.27 %)
+
+8. Roll
+  PASS  trainer/size: rolls at the MIL-F-8785C Level 1 rate for its class and holds the bank  — Class I: 60° in 1.7 s = 35.3°/s
+  PASS  trainer/analyse: rolls at the MIL-F-8785C Level 1 rate for its class and holds the bank  — Class I: 60° in 1.7 s = 35.3°/s
+  PASS  turboprop/size: rolls at the MIL-F-8785C Level 1 rate for its class and holds the bank  — Class II-L: 45° in 1.9 s = 23.7°/s
+  PASS  turboprop/analyse: rolls at the MIL-F-8785C Level 1 rate for its class and holds the bank  — Class II-L: 45° in 1.9 s = 23.7°/s
+  PASS  bizjet/size: rolls at the MIL-F-8785C Level 1 rate for its class and holds the bank  — Class II-L: 45° in 1.9 s = 23.7°/s
+  PASS  bizjet/analyse: rolls at the MIL-F-8785C Level 1 rate for its class and holds the bank  — Class II-L: 45° in 1.9 s = 23.7°/s
+  PASS  transport/size: rolls at the MIL-F-8785C Level 1 rate for its class and holds the bank  — Class III: 30° in 2 s = 15.0°/s
+  PASS  transport/analyse: rolls at the MIL-F-8785C Level 1 rate for its class and holds the bank  — Class III: 30° in 2 s = 15.0°/s
+
+9. Clean CLmax
+  PASS  clean CLmax: the trainer's from the POH stall, the others the middle of Scholz's range and held inside it  — trainer 1.541 sourced, turboprop 1.500 assumed, bizjet 1.600 assumed, transport 1.500 assumed
+
+10. The endings
+  PASS  trainer/size: ends at the ground or the Mach edge, at the ceiling, and when too slow  — ground at 12.0 s, ceiling at 0.1 s, slow at 0.7 s
+  PASS  trainer/analyse: ends at the ground or the Mach edge, at the ceiling, and when too slow  — ground at 12.0 s, ceiling at 0.1 s, slow at 0.7 s
+  PASS  turboprop/size: ends at the ground or the Mach edge, at the ceiling, and when too slow  — ground at 11.7 s, ceiling at 0.1 s, slow at 1.7 s
+  PASS  turboprop/analyse: ends at the ground or the Mach edge, at the ceiling, and when too slow  — ground at 11.7 s, ceiling at 0.1 s, slow at 1.7 s
+  PASS  bizjet/size: ends at the ground or the Mach edge, at the ceiling, and when too slow  — mach at 15.2 s, ceiling at 0.1 s, slow at 2.5 s
+  PASS  bizjet/analyse: ends at the ground or the Mach edge, at the ceiling, and when too slow  — mach at 16.9 s, ceiling at 0.1 s, slow at 2.1 s
+  PASS  transport/size: ends at the ground or the Mach edge, at the ceiling, and when too slow  — mach at 15.7 s, ceiling at 0.1 s, slow at 3.1 s
+  PASS  transport/analyse: ends at the ground or the Mach edge, at the ceiling, and when too slow  — mach at 15.6 s, ceiling at 0.1 s, slow at 3.2 s
+
+11. The sources
+  PASS  trainer/size: every number the model adds is in its sources table, labelled  — 14 rows: derived, sized, sourced, drawn
+  PASS  trainer/analyse: every number the model adds is in its sources table, labelled  — 14 rows: derived, sized, sourced, drawn
+  PASS  turboprop/size: every number the model adds is in its sources table, labelled  — 14 rows: derived, sized, sourced, assumed, drawn
+  PASS  turboprop/analyse: every number the model adds is in its sources table, labelled  — 14 rows: derived, sized, sourced, assumed, drawn
+  PASS  bizjet/size: every number the model adds is in its sources table, labelled  — 14 rows: derived, sized, sourced, assumed, drawn
+  PASS  bizjet/analyse: every number the model adds is in its sources table, labelled  — 14 rows: derived, sized, sourced, assumed, drawn
+  PASS  transport/size: every number the model adds is in its sources table, labelled  — 14 rows: derived, sized, sourced, assumed, drawn
+  PASS  transport/analyse: every number the model adds is in its sources table, labelled  — 14 rows: derived, sized, sourced, assumed, drawn
+
+12. The tab renders, prints its sources, and keeps three.js lazy
+  PASS  trainer/size: renders its readouts and every source row, says what it is not  — 24051 characters
+  PASS  trainer/analyse: renders its readouts and every source row, says what it is not  — 23634 characters
+  PASS  turboprop/size: renders its readouts and every source row, says what it is not, offers the assumed CLmax  — 24481 characters
+  PASS  turboprop/analyse: renders its readouts and every source row, says what it is not, offers the assumed CLmax  — 24573 characters
+  PASS  bizjet/size: renders its readouts and every source row, says what it is not, offers the assumed CLmax  — 24457 characters
+  PASS  bizjet/analyse: renders its readouts and every source row, says what it is not, offers the assumed CLmax  — 24457 characters
+  PASS  transport/size: renders its readouts and every source row, says what it is not, offers the assumed CLmax  — 24485 characters
+  PASS  transport/analyse: renders its readouts and every source row, says what it is not, offers the assumed CLmax  — 24485 characters
+  PASS  neither the tab nor the model imports three or the scene statically  — FreeFlyTab.jsx, free-flight.js
+  PASS  the studio lists the tab as "Fly · yourself"
+  PASS  the scene exports the free-flight mount
+
+13. The checks can fail: each is run on a copy of the model broken the way it guards against
+  PASS  the unbroken copy the mutants start from passes every group they use  — turn, stall, limits, energy, fuel, roll, clmax, endings, start, polar, sources
+  PASS  rejects the turn rate without the load factor  — trainer/size 30°: turn rate 4.4503°/s vs g·tan φ/V 5.1387°/s
+  PASS  rejects the lift not tilted by the bank  — trainer/size 30°: not level: 694.7 ft in 20 s
+  PASS  rejects the stall at sea-level density  — stall at 0° of bank: 50.69 kt EAS, the POH's 53 KCAS
+  PASS  rejects the lift not capped at CLmax  — trainer/size: CL 1.5451 above CLmax 1.5410 at 1.46 s
+  PASS  rejects no gravity along the path  — trainer/size: energy height changed 705.48 m, specific excess power integrates to -147.24 m
+  PASS  rejects thrust without the propeller efficiency  — trainer/size: cruise fuel over 518 nm: 81.2 kg, the class's 92.7 kg (-12.38 %)
+  PASS  rejects the fuel burned not taken off the mass  — trainer/size: the mass fell by 0.0000 kg while 0.0597 kg of fuel burned
+  PASS  rejects a tank that never quite runs dry  — trainer/size: an empty tank: fuel 0.0000 kg, mass fell 0.0500 kg, thrust 1665.6 N
+  PASS  rejects the roll rate in degrees, not radians  — trainer/size: full roll for 1.7 s gives 75.0000°, the specification's 60°
+  PASS  rejects an assumed CLmax not held to its range  — turboprop: a chosen CLmax of 9 and 0.1 gives 9.000 and 0.100, its range 1.2–1.8
+  PASS  rejects no ceiling  — trainer/size: expected to end at ceiling, ended null at 24498 ft
+  PASS  rejects a trim 2 % short  — trainer/analyse: trim off: thrust 1180.2 N vs drag 1157.1 N
+  PASS  rejects the start mass ignoring the fuel burned before cruise  — trainer/size: start mass 1181.8 kg, fuel 110.1 kg; want take-off mass less the 10.3 kg listed before cruise
+  PASS  rejects the polar's induced term misread  — trainer/size: polar at CL 0.050 gives CD 0.02982, the class's 0.02974
+  PASS  rejects a drawn number left out of the sources  — trainer/size: the drawn stickLagS (0.5 s) is not in the sources table
+
+AIRCRAFT FREE-FLIGHT GATE PASSED (101 checks)
+```
+
+</details>
+
+<details><summary><code>turboprop.mjs</code> — exit 0, 1120 ms</summary>
 
 ```
 TURBOPROP GATE
@@ -3872,7 +4092,7 @@ TURBOPROP GATE PASSED (59 checks)
 
 </details>
 
-<details><summary><code>formula-register.mjs</code> — exit 0, 111 ms</summary>
+<details><summary><code>formula-register.mjs</code> — exit 0, 919 ms</summary>
 
 ```
 ==============================================================================
@@ -3899,7 +4119,7 @@ FORMULA REGISTER GATE PASSED (14 checks, 2429 formulas verified against source)
 
 </details>
 
-<details><summary><code>phase2-ledger.mjs</code> — exit 0, 114 ms</summary>
+<details><summary><code>phase2-ledger.mjs</code> — exit 0, 1154 ms</summary>
 
 ```
 ==============================================================================
@@ -3951,7 +4171,7 @@ PHASE 2 LEDGER GATE PASSED (25 checks, 1288 relations, 7685 of 25760 determinati
 
 </details>
 
-<details><summary><code>report-manifest.mjs</code> — exit 0, 75 ms</summary>
+<details><summary><code>report-manifest.mjs</code> — exit 0, 624 ms</summary>
 
 ```
 ==============================================================================
@@ -3959,13 +4179,13 @@ REPORT MANIFEST GATE — the runner's harness list against the report's
 ==============================================================================
 
 -- 1. both manifests parse, and parse into something --
-  PASS  the npm test script parses into harness invocations  — 122 invocations, 121 distinct
-  PASS  the shared harness manifest is a well-formed list of [file, proves]  — 76 entries, 76 distinct
+  PASS  the npm test script parses into harness invocations  — 124 invocations, 123 distinct
+  PASS  the shared harness manifest is a well-formed list of [file, proves]  — 78 entries, 78 distinct
   PASS  neither manifest lists the same harness twice  — runner repeats 1 (golden-master runs twice, by design), report repeats 0
   PASS  the shared manifest exports HARNESSES and nothing else  — exports: HARNESSES
   PASS  the shared manifest declares nothing besides the list, so the whole-file skip in constants.mjs cannot hide a constant  — 0 other declaration(s), 0 import(s) — it must execute nothing when imported
-  PASS  every harness the runner names exists on disk  — all 121 present
-  PASS  every harness the report names exists on disk  — all 76 present
+  PASS  every harness the runner names exists on disk  — all 123 present
+  PASS  every harness the report names exists on disk  — all 78 present
 
 -- 2. a harness that holds an AUDIT/ artefact to the code must be reported --
   PASS  formula-register.mjs is described in the report  — holds AUDIT/FORMULA-REGISTER.md to the source it was extracted from
@@ -3976,7 +4196,7 @@ REPORT MANIFEST GATE — the runner's harness list against the report's
   PASS  report-manifest.mjs is run by npm test  — in the test script
 
 -- 3. every reported harness is actually gated in npm test --
-  PASS  no harness is described in the report but left out of the test script  — all 76 reported harnesses run in npm test
+  PASS  no harness is described in the report but left out of the test script  — all 78 reported harnesses run in npm test
 
 -- 4. the runner-only population is pinned, so a NEW omission fails --
   PASS  the number of harnesses that run but are not described has not grown  — 45 runner-only, pinned at 45
@@ -3996,15 +4216,15 @@ REPORT MANIFEST GATE — the runner's harness list against the report's
     unverified-leverage.mjs        unverified-triage.mjs          vertical-cg.mjs                volocity.mjs
     wing-modes.mjs
 
-  on disk but in neither manifest (10): aircraft-build-fly.mjs, calibrate.mjs, drone-build-fly.mjs, drone-live-flight.mjs, evtol-build-lab.mjs, mission-flight-3d.mjs, report.mjs, sensitivity.mjs, test-flight.mjs, ui-audit.mjs
+  on disk but in neither manifest (9): calibrate.mjs, drone-build-fly.mjs, drone-live-flight.mjs, evtol-build-lab.mjs, mission-flight-3d.mjs, report.mjs, sensitivity.mjs, test-flight.mjs, ui-audit.mjs
 
-REPORT MANIFEST GATE PASSED (16 checks, runner 121, report 76, runner-only 45)
+REPORT MANIFEST GATE PASSED (16 checks, runner 123, report 78, runner-only 45)
 ==============================================================================
 ```
 
 </details>
 
-<details><summary><code>paper-claims.mjs</code> — exit 0, 13949 ms</summary>
+<details><summary><code>paper-claims.mjs</code> — exit 0, 61059 ms</summary>
 
 ```
 PAPER CLAIM GATE
@@ -4056,7 +4276,7 @@ PASS: all 39 numeric claims in paper/ are reproduced by the harnesses
 
 </details>
 
-<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 543 ms</summary>
+<details><summary><code>vtol-autopilot.mjs</code> — exit 0, 2527 ms</summary>
 
 ```
 VTOL AUTOPILOT GATE
@@ -4114,7 +4334,7 @@ VTOL AUTOPILOT GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-frames.mjs</code> — exit 0, 78 ms</summary>
+<details><summary><code>drone-frames.mjs</code> — exit 0, 327 ms</summary>
 
 ```
 DRONE FRAME GATE
@@ -4137,7 +4357,7 @@ DRONE FRAME GATE PASSED (12 checks)
 
 </details>
 
-<details><summary><code>drone-components.mjs</code> — exit 0, 85 ms</summary>
+<details><summary><code>drone-components.mjs</code> — exit 0, 343 ms</summary>
 
 ```
 DRONE COMPONENT CATALOGUE GATE
@@ -4179,7 +4399,7 @@ DRONE COMPONENT CATALOGUE GATE PASSED (13 checks)
 
 </details>
 
-<details><summary><code>drone-rotor.mjs</code> — exit 0, 127 ms</summary>
+<details><summary><code>drone-rotor.mjs</code> — exit 0, 608 ms</summary>
 
 ```
 DRONE ROTOR GATE
@@ -4239,7 +4459,7 @@ DRONE ROTOR GATE PASSED (14 checks)
 
 </details>
 
-<details><summary><code>drone-motor.mjs</code> — exit 0, 118 ms</summary>
+<details><summary><code>drone-motor.mjs</code> — exit 0, 388 ms</summary>
 
 ```
 DRONE MOTOR GATE
@@ -4335,7 +4555,7 @@ DRONE MOTOR GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-esc.mjs</code> — exit 0, 112 ms</summary>
+<details><summary><code>drone-esc.mjs</code> — exit 0, 447 ms</summary>
 
 ```
 DRONE ESC GATE
@@ -4401,7 +4621,7 @@ DRONE ESC GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-battery.mjs</code> — exit 0, 114 ms</summary>
+<details><summary><code>drone-battery.mjs</code> — exit 0, 330 ms</summary>
 
 ```
 DRONE BATTERY GATE
@@ -4463,7 +4683,7 @@ DRONE BATTERY GATE PASSED (27 checks)
 
 </details>
 
-<details><summary><code>drone-sizing.mjs</code> — exit 0, 162 ms</summary>
+<details><summary><code>drone-sizing.mjs</code> — exit 0, 460 ms</summary>
 
 ```
 DRONE SIZING GATE
@@ -4514,7 +4734,7 @@ DRONE SIZING GATE PASSED (31 checks)
 
 </details>
 
-<details><summary><code>drone-trade.mjs</code> — exit 0, 1829 ms</summary>
+<details><summary><code>drone-trade.mjs</code> — exit 0, 4001 ms</summary>
 
 ```
 DRONE TRADE GATE
@@ -4562,7 +4782,7 @@ DRONE TRADE GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-airframe.mjs</code> — exit 0, 170 ms</summary>
+<details><summary><code>drone-airframe.mjs</code> — exit 0, 393 ms</summary>
 
 ```
 DRONE AIRFRAME GATE
@@ -4620,7 +4840,7 @@ DRONE AIRFRAME GATE PASSED (33 checks)
 
 </details>
 
-<details><summary><code>drone-dynamics.mjs</code> — exit 0, 2797 ms</summary>
+<details><summary><code>drone-dynamics.mjs</code> — exit 0, 5255 ms</summary>
 
 ```
 DRONE DYNAMICS GATE
@@ -4689,7 +4909,7 @@ DRONE DYNAMICS GATE PASSED (38 checks)
 
 </details>
 
-<details><summary><code>drone-playback.mjs</code> — exit 0, 1247 ms</summary>
+<details><summary><code>drone-playback.mjs</code> — exit 0, 1811 ms</summary>
 
 ```
 ════════════════════════════════════════════════════════════════════════════
@@ -4794,7 +5014,7 @@ DRONE PLAYBACK GATE PASSED
 
 </details>
 
-<details><summary><code>drone-risk.mjs</code> — exit 0, 341 ms</summary>
+<details><summary><code>drone-risk.mjs</code> — exit 0, 495 ms</summary>
 
 ```
 DRONE RISK GATE
@@ -4847,7 +5067,7 @@ DRONE RISK GATE PASSED (23 checks)
 
 </details>
 
-<details><summary><code>drone-avionics.mjs</code> — exit 0, 203 ms</summary>
+<details><summary><code>drone-avionics.mjs</code> — exit 0, 330 ms</summary>
 
 ```
 DRONE AVIONICS GATE
@@ -4898,7 +5118,7 @@ DRONE AVIONICS GATE PASSED (26 checks)
 
 </details>
 
-<details><summary><code>drone-autopilot.mjs</code> — exit 0, 270 ms</summary>
+<details><summary><code>drone-autopilot.mjs</code> — exit 0, 531 ms</summary>
 
 ```
 DRONE AUTOPILOT GATE
@@ -4979,7 +5199,7 @@ DRONE AUTOPILOT GATE PASSED (52 checks)
 
 </details>
 
-<details><summary><code>drone-obstacles.mjs</code> — exit 0, 158 ms</summary>
+<details><summary><code>drone-obstacles.mjs</code> — exit 0, 304 ms</summary>
 
 ```
 DRONE OBSTACLE GATE
@@ -5069,7 +5289,7 @@ DRONE OBSTACLE GATE PASSED (32 checks)
 
 </details>
 
-<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 17900 ms</summary>
+<details><summary><code>drone-flight-energy.mjs</code> — exit 0, 25574 ms</summary>
 
 ```
 DRONE FLIGHT ENERGY GATE
@@ -5117,7 +5337,7 @@ DRONE FLIGHT ENERGY GATE PASSED (29 checks)
 
 </details>
 
-<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 10354 ms</summary>
+<details><summary><code>drone-flight-worker.mjs</code> — exit 0, 22454 ms</summary>
 
 ```
 DRONE FLIGHT WORKER GATE
@@ -5147,7 +5367,7 @@ DRONE FLIGHT WORKER GATE PASSED (19 checks)
 
 </details>
 
-<details><summary><code>drone-regulatory.mjs</code> — exit 0, 143 ms</summary>
+<details><summary><code>drone-regulatory.mjs</code> — exit 0, 285 ms</summary>
 
 ```
 DRONE REGULATORY GATE

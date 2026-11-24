@@ -188,12 +188,14 @@ export function MissionTab({ result }) {
   const total = segs.reduce((s, x) => s + x.kg, 0);
   return (
     <>
-      <Card title="Mission fuel by segment">
+      <Card title={result.missionIsDesign ? "Fuel the design mission needs at this weight, by segment" : "Mission fuel by segment"}>
         <HBarChart rows={segs.map((s) => ({ name: s.name, value: Math.round(s.kg), reserve: s.reserve }))}
           colorBy={(r) => (r.reserve ? SC.caution : SC.advisory)} />
         <Table head={["Segment", "Fuel (kg)", "Share", "Time (min)", "Distance (nm)"]} numCols={[1, 2, 3, 4]}
           rows={segs.map((s) => [s.name + (s.reserve ? " (reserve)" : ""), fmt(s.kg), `${fmt(100 * s.kg / total, 1)} %`,
                                  Number.isFinite(s.minutes) ? fmt(s.minutes) : "—", Number.isFinite(s.nm) ? fmt(s.nm) : "—"])} />
+        {result.missionIsDesign && <Note>Analysed: these are the {fmt(result.designRangeNm)} nm design mission's fuel needs at this weight,
+          {" "}{fmt(total)} kg. This aircraft carries {fmt(result.fuelKg)} kg and, keeping the same reserves, reaches {fmt(result.rangeNm)} nm on it.</Note>}
         {result.topOfClimbFt && <Note>Top of climb {fmt(result.topOfClimbFt)} ft; trip time {fmt(result.missionTimes?.trip)} min.</Note>}
       </Card>
     </>

@@ -176,12 +176,12 @@ function normalize(id, mode, r) {
                     toWeight: r.powerToMass, toWeightUnit: "W/kg", governedBy: r.powerGovernedBy ?? "given",
                     group: grp },
       cruise: { mach: p.cruiseMach, speedKt: r.cruise.V / KT, altFt: r.cruise.altFt, LD: r.cruise.E, LDmax: r.cruise.eMax, cl: r.cruise.cl },
-      rangeNm: mode === "analyse" ? r.rangeNm : p.designRange, designRangeNm: p.designRange,
+      rangeNm: mode === "analyse" ? r.rangeNm : p.designRange, designRangeNm: p.designRange, missionIsDesign: mode === "analyse",
       weightGroups: [group("Structure (FLOPS)", w.structure, FLOPS_LABELS), group("Propulsion (GASP / Hamilton Standard)", w.propulsion, FLOPS_LABELS),
                      group("Systems and equipment (FLOPS)", w.systems, FLOPS_LABELS), group("Operating items (FLOPS)", w.operating, FLOPS_LABELS)],
       mission: [
-        { name: `Trip (${f.method === "roskam" ? "Roskam fractions + " : ""}Breguet cruise ${p.designRange} nm)`, kg: tripKg, nm: p.designRange },
-        { name: `Reserves (${p.alternateNm} nm alternate, ${p.reserveMin} min hold)`, kg: resKg, reserve: true },
+        { name: `Trip${mode === "analyse" ? " the design mission needs at this weight" : ""} (${f.method === "roskam" ? "Roskam fractions + " : ""}Breguet cruise ${p.designRange} nm)`, kg: tripKg, nm: p.designRange },
+        { name: `Reserves${mode === "analyse" ? " the design mission needs" : ""} (${p.alternateNm} nm alternate, ${p.reserveMin} min hold)`, kg: resKg, reserve: true },
       ],
     };
   }
@@ -193,8 +193,8 @@ function normalize(id, mode, r) {
   const LBtoKg = (v) => kg(v);
   const segs = mis ? Object.entries(mis.segmentsLb).filter(([, v]) => v > 0).map(([k, v]) => ({
     name: { taxi: "Taxi out", takeoff: "Take-off", climb: "Climb", cruise: "Cruise", descent: "Descent",
-            contingency: "Contingency", alternate: "To alternate", final: "Final reserve / hold" }[k] ?? k,
-    kg: LBtoKg(v), reserve: ["contingency", "alternate", "final"].includes(k),
+            contingency: "Contingency", missedApproach: "Missed approach", alternate: "To alternate", final: "Final reserve / hold" }[k] ?? k,
+    kg: LBtoKg(v), reserve: ["contingency", "missedApproach", "alternate", "final"].includes(k),
     minutes: mis.times?.[k], nm: mis.distances?.[k] })) : [];
   if (!mis && r.fuel) {
     const trip = r.fuel.trip ?? r.fuel.cruise;

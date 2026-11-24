@@ -165,6 +165,20 @@ for (const c of CASES) {
   check(`${c.type}/${c.mode}: ${prof.legs.map((l) => `${l.key} ${l.prov}`).join(", ")}`, probs.length === 0, probs.slice(0, 3).join(" | "));
 }
 check("only an analysed design with no fuel breakdown is refused", refused <= 1, `${refused} refused`);
+{
+  const bad = [], design = [];
+  for (const c of CASES) {
+    const prof = M.missionProfileOf(c.result);
+    if (!prof.ok) continue;
+    const want = c.result.missionIsDesign === true;
+    if (want) design.push(`${c.type}/${c.mode}`);
+    if (prof.missionIsDesign !== want) bad.push(`${c.type}/${c.mode}: flag ${prof.missionIsDesign} vs ${want}`);
+    if (want && !(near(prof.fuelCarriedKg, c.result.fuelKg) && near(prof.reachNm, c.result.rangeNm)))
+      bad.push(`${c.type}/${c.mode}: carries ${prof.fuelCarriedKg} vs ${c.result.fuelKg}, reach ${prof.reachNm} vs ${c.result.rangeNm}`);
+  }
+  check("a replay of a design mission says so, with the fuel carried and the range it reaches",
+        bad.length === 0 && design.length >= 1, bad.join(" | ") || design.join(", "));
+}
 
 /* ── 3 ─────────────────────────────────────────────────────────────── */
 console.log("\n3. The tabs render, and say \"not computed\" where nothing was");

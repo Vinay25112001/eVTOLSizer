@@ -63,6 +63,39 @@ for (const id of E.TYPE_IDS) {
     check(`${t.label}: mission segments add to the mission fuel`, rel(segSum, r.fuelKg) < (id === "turboprop" ? 1e-6 : 1e-6),
           `${segSum.toFixed(1)} vs ${r.fuelKg.toFixed(1)} kg`);
   }
+  /* The ANALYSED list: it flies the fuel the aircraft carries over the
+     range it reports, or it says it is the design mission at this weight.
+     The turboprop's analysed list (the registered split, FORMULA-SIZING-003)
+     once printed 3,025 kg over a 715 nm trip, beside a 164 nm range and
+     1,405 kg of fuel, with nothing saying which was which. */
+  if (a.mission.length) {
+    const segSum = a.mission.reduce((s, x) => s + x.kg, 0);
+    const legNm = a.mission.filter((x) => !x.reserve && Number.isFinite(x.nm)).reduce((s, x) => s + x.nm, 0);
+    const flies = a.missionIsDesign !== true && rel(segSum, a.fuelKg) < 1e-6 && rel(legNm, a.rangeNm) < 1e-6;
+    const says = a.missionIsDesign === true && r.missionIsDesign !== true && rel(legNm, a.designRangeNm) < 1e-6
+      && a.mission.every((x) => /design mission needs/.test(x.name));
+    check(`${t.label}, analysed: the mission list flies the fuel carried over the range reported, or says it is the design mission`,
+          flies || says, flies ? `flies what it carries: ${segSum.toFixed(1)} kg, ${legNm.toFixed(1)} nm`
+            : says ? `design mission: needs ${segSum.toFixed(1)} kg over ${legNm.toFixed(1)} nm; carries ${a.fuelKg.toFixed(1)} kg, reaches ${a.rangeNm.toFixed(1)} nm`
+            : `${segSum.toFixed(1)} kg over ${legNm.toFixed(1)} nm beside ${a.fuelKg.toFixed(1)} kg and ${a.rangeNm.toFixed(1)} nm, unlabelled`);
+  }
+  /* Every segment is named in words and the reserves are the class's
+     own: the bizjet's missed approach was listed under its code key
+     "missedApproach" AND counted as trip fuel. */
+  for (const [job, x] of [["sized", r], ["analysed", a]]) {
+    if (!x.mission.length) continue;
+    const coded = x.mission.filter((s) => /^[a-z]+[A-Z]\w*$/.test(s.name)).map((s) => s.name);
+    let resOk = true, resDetail = "";
+    const lb = x.raw?.fuel?.mission?.segmentsLb;
+    if (lb) {
+      const ownRes = ["contingency", "missedApproach", "alternate", "final"].reduce((s, k) => s + (lb[k] ?? 0), 0) * LB;
+      const shown = x.mission.filter((s) => s.reserve).reduce((s, y) => s + y.kg, 0);
+      resOk = ownRes === 0 ? shown === 0 : rel(shown, ownRes) < 1e-9;
+      resDetail = `; reserves ${shown.toFixed(1)} vs the class's ${ownRes.toFixed(1)} kg`;
+    }
+    check(`${t.label}, ${job}: every mission segment is named in words, and the reserves are the class's own`,
+          coded.length === 0 && resOk, (coded.length ? `unlabelled: ${coded.join(", ")}` : "all named") + resDetail);
+  }
 }
 {
   let threw = false; try { E.designAircraft({ type: "glider" }); } catch { threw = true; }

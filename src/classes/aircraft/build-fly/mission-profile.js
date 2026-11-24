@@ -153,6 +153,11 @@ export function missionProfileOf(result) {
     flightMinutes: flown.length === legs.filter((l) => l.kind !== "ground" && l.kind !== "landing").length
       ? flown.reduce((a, l) => a + l.minutes, 0) : null,
     reserves, other,
+    /* An analysed turboprop's list is the fuel its design mission needs at
+       this weight (the class's registered split), not the fuel it carries;
+       the replay flies that mission and says so, with what is carried. */
+    missionIsDesign: result.missionIsDesign === true,
+    fuelCarriedKg: result.fuelKg ?? null, reachNm: result.rangeNm ?? null,
     playSeconds: legs.reduce((a, l) => a + PLAY_SECONDS[l.kind], 0),
   };
 }

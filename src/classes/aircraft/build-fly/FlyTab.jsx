@@ -129,9 +129,18 @@ export function AircraftFlyTab({ result, setTab }) {
         <Stat k="Cruise altitude"><Num v={profile.altFt} u="ft" /></Stat>
         {Number.isFinite(profile.mach) && <Stat k="Cruise Mach">{fmt(profile.mach, 3)}</Stat>}
         {profile.belowAsked && <Stat k="Top of climb, flown"><Num v={profile.cruiseFt} u="ft" /></Stat>}
-        <Stat k="Mission distance, sized"><Num v={profile.missionNm} u="nm" /></Stat>
+        <Stat k={profile.missionIsDesign ? "Design mission distance" : "Mission distance, sized"}><Num v={profile.missionNm} u="nm" /></Stat>
         <Stat k="Flight time, sized">{Number.isFinite(profile.flightMinutes) ? `${fmt(profile.flightMinutes, 0)} min` : <NOT />}</Stat>
       </dl>
+
+      {profile.missionIsDesign && (
+        <p style={{ fontSize: T.body, color: SC.caution, fontFamily: SANS, margin: `0 0 ${S.md}px`, lineHeight: 1.5 }}>
+          Analysed: this replay flies the design mission at this weight, which needs{" "}
+          <Num v={profile.legs.reduce((a, l) => a + (Number.isFinite(l.kg) ? l.kg : 0), 0) + profile.reserves.reduce((a, r) => a + r.kg, 0)} u="kg" /> of fuel.
+          This aircraft carries <Num v={profile.fuelCarriedKg} u="kg" /> and, keeping the same reserves, reaches{" "}
+          <Num v={profile.reachNm} u="nm" /> on it.
+        </p>
+      )}
 
       {profile.belowAsked && (
         <p style={{ fontSize: T.body, color: SC.caution, fontFamily: SANS, margin: `0 0 ${S.md}px`, lineHeight: 1.5 }}>
@@ -208,8 +217,8 @@ export function AircraftFlyTab({ result, setTab }) {
               <li key={r.name}>{r.name}: <Num v={r.kg} u="kg" />{Number.isFinite(r.minutes) ? ` · ${fmt(r.minutes, 0)} min` : ""} <span style={{ color: SC.muted }}>(reserve)</span></li>
             ))}
             {profile.other.map((o) => (
-              <li key={o.name}><span style={{ fontFamily: MONO }}>{o.name}</span>: <Num v={o.kg} u="kg" />{" "}
-                <span style={{ color: SC.muted }}>(booked by the sizing under this name, which it gives no label)</span></li>
+              <li key={o.name}>{o.name}: <Num v={o.kg} u="kg" />{" "}
+                <span style={{ color: SC.muted }}>(booked by the sizing; not a phase this replay flies)</span></li>
             ))}
           </ul>
         </div>
